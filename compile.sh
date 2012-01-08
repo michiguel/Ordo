@@ -1,4 +1,4 @@
 #!/bin/sh
 
-gcc -DNDEBUG mystr.c ordo.c -lm -o ordo
+gcc -DNDEBUG -I myopt -Wall -Wextra myopt/myopt.c mystr.c proginfo.c main.c -lm -o ordo
 

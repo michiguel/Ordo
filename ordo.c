@@ -8,14 +8,7 @@
 #include <assert.h>
 
 #include "mystr.h"
-
-/*
-#include "pgnread.h"
-#include "maindef.h"
-#include "dbgdef.h"
-*/
-
-
+#include "proginfo.h"
 
 typedef int bool_t;
 
@@ -110,10 +103,36 @@ static bool_t 	isblackcmd (const char *s);
 
 int main(int argc, char *argv[ ])
 {
+	int parnumber = 1;
+
 	if (argc < 1)
 		return EXIT_FAILURE;
 
-	if (pgn_getresults (argv[1])) {
+	/*----------------------------------*\
+	|	Return version
+	\*----------------------------------*/
+	if (argc > 1 && 0==strcmp(argv[1],"-v")) {
+		printf ("%s %s\n",proginfo_name(),proginfo_version());
+		return 0;
+	}
+
+	if (argc > 1 && 0==strcmp(argv[1],"-a")) {
+		if (argc > 2) {
+			if (1 != sscanf(argv[2],"%lf", &general_average)) {
+				exit(EXIT_FAILURE);
+			} else {
+				printf("Average rating = %lf\n",general_average);
+				parnumber = 3;	
+			}
+		} else {
+				fprintf(stderr,"parameter missing.\n");
+				exit(EXIT_FAILURE);
+		}
+	}
+
+	/*==== CALCULATIONS ====*/
+
+	if (pgn_getresults (argv[parnumber])) {
 		printf ("Success reading\n");
 	} else {
 		printf ("Problems reading\n");
@@ -655,7 +674,8 @@ calc_obtained_playedby (void)
 	}
 }
 
-void
+
+void
 init_rating (void)
 {
 	int i;
@@ -817,7 +837,7 @@ calc_rating (void)
 			calc_expected();
 			curdev = deviation();
 
-			if (!(curdev < olddev)) {
+			if (curdev >= olddev) {
 				ratings_restore();
 				calc_expected();
 				curdev = deviation();	
@@ -844,5 +864,5 @@ xpect (double a, double b)
 {
 	double k = 173;
 	double diff = a - b;
-	return 1.0 / (1 + exp(-diff/k));
+	return 1.0 / (1.0 + exp(-diff/k));
 }
