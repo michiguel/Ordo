@@ -1,2 +1,5 @@
 ordo
 *.o
+*.pgn
+*.csv
+
