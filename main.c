@@ -639,7 +639,7 @@ fpgnscan (FILE *fpgn)
 				printf ("*"); fflush(stdout);
 			}
 			if ((game_counter%40000)==0) {
-				printf ("  %4dk\n", game_counter/1000); fflush(stdout);
+				printf ("  %4ldk\n", game_counter/1000); fflush(stdout);
 			}
 		}
 
