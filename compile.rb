@@ -2,25 +2,28 @@
 
 if ARGV[0] == 'gcc'
 
-	$NEWPATH=''
+	puts 'gcc selected'
+	$ADDPATH=''
 	$CC='gcc'
 	$NAME='ordo'
 
 elsif ARGV[0] == 'win32'  
 
-	$NEWPATH='/home/miguel/install/mingw-w32-bin_x86_64-linux_20111220/bin'
+	puts 'win32 selected'
+	$ADDPATH='/home/miguel/mingw/w32/bin'
 	$CC='i686-w64-mingw32-gcc'
 	$NAME='ordo-win32'
 
 elsif ARGV[0] == 'win64' 
 
-	$NEWPATH='/home/miguel/mingw-w64/bin'
+	puts 'win64 selected'
+	$ADDPATH='/home/miguel/mingw/w64/bin'
 	$CC='x86_64-w64-mingw32-gcc' 
 	$NAME='ordo-win64'
 
 else 
 
-	$NEWPATH=''
+	$ADDPATH=''
 	$CC=''
 	$NAME=''
 	puts 'no parameter given'
@@ -35,7 +38,7 @@ $WARNINGS='-Wwrite-strings -Wconversion -Wshadow -Wparentheses -Wlogical-op -Wun
 $OPT='-O2'
 $LIB='-lm'
 $SRC='myopt/myopt.c mystr.c proginfo.c main.c'
-$EXE='-o ordo'
+$EXE='-o ' + $NAME
 
 #=====================
 fragments = []
@@ -53,6 +56,7 @@ fragments.each do |x|
 	line += ' ' + x
 end
 
-system 'PATH=$PATH:' + $NEWPATH
+ENV['PATH'] += ':' + $ADDPATH
+
 system line
 
