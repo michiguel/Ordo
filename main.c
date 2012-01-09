@@ -62,7 +62,7 @@ static void usage (void);
 		" -h        print this help\n"
 		" -v        print version number and exit\n"
 		" -L        display the license information\n"
-		" -q        quiet (no output except error messages)\n"
+		" -q        quiet (no screen progress updates)\n"
 		" -a <avg>  set general rating average\n"
 		" -i <file> input file\n"
 		" -o <file> output file (comma separated value format)\n"
@@ -176,14 +176,13 @@ int main (int argc, char *argv[])
 {
 	int op;
 	char *inputf, *outputf;
-	int version_mode, help_mode, license_mode, input_mode, output_mode;
+	int version_mode, help_mode, license_mode, input_mode;
 
 	/* defaults */
 	version_mode = FALSE;
 	license_mode = FALSE;
 	help_mode    = FALSE;
 	input_mode   = FALSE;
-	output_mode  = FALSE;
 	QUIET_MODE   = FALSE;
 	inputf       = NULL;
 	outputf      = NULL;
@@ -198,8 +197,7 @@ int main (int argc, char *argv[])
 			case 'i': 	input_mode = TRUE;
 					 	inputf = opt_arg;
 						break;
-			case 'o': 	output_mode = TRUE;
-					 	outputf = opt_arg;
+			case 'o': 	outputf = opt_arg;
 						break;
 			case 'a': 	
 						if (1 != sscanf(opt_arg,"%lf", &general_average)) {
