@@ -81,13 +81,13 @@ const char *OPTION_LIST = "vhi:qLa:o:";
 
 #define PGNSTRSIZE 1024
 
-enum {
+enum RESULTS {
 	WHITE_WIN = 0,
 	BLACK_WIN = 2,
 	RESULT_DRAW = 1
 };
 
-char *Result_string[] = {"1-0", "=-=", "0-1"};
+const char *Result_string[] = {"1-0", "=-=", "0-1"};
 
 struct pgn_result {	
 	int 	wtag_present;
@@ -290,7 +290,7 @@ static void parameter_error(void) {	printf ("Error in parameters\n"); return;}
 static void
 example (void)
 {
-	char *example_options = "-a 2500 -i file.pgn -o output.csv";
+	const char *example_options = "-a 2500 -i file.pgn -o output.csv";
 	fprintf (stderr, "\n"
 		"quick example: %s %s\n"
 		"%s"
@@ -303,7 +303,7 @@ example (void)
 static void
 usage (void)
 {
-	char *usage_options = "[-OPTION]";
+	const char *usage_options = "[-OPTION]";
 	fprintf (stderr, "\n"
 		"usage: %s %s\n"
 		"%s"
