@@ -244,11 +244,11 @@ int main (int argc, char *argv[])
 	}
 	if ((argc - opt_index) > 1) {
 		/* too many parameters */
-		fprintf (stderr, "Extra parameters parameters present\n");
+		fprintf (stderr, "Extra parameters present\n");
 		exit(EXIT_FAILURE);
 	}
 	if (input_mode && argc != opt_index) {
-		fprintf (stderr, "Extra parameters parameters present\n");
+		fprintf (stderr, "Extra parameters present\n");
 		exit(EXIT_FAILURE);
 	}
 	if (!input_mode && argc == opt_index) {
@@ -484,12 +484,15 @@ pgn_all_report (const char *outputf)
 
 	qsort (sorted, N_players, sizeof (sorted[0]), compareit);
 
-	printf ("\nSORTED by RATING\n");
+//	printf ("\nSORTED by RATING\n");
+
+	printf("\n%30s:  %5s    %6s  %5s  %4s\n", 
+			"ENGINE", "RATING", "POINTS", "PLAYED", "%");
 
 	for (i = 0; i < N_players; i++) {
 		j = sorted[i];
-		printf("%30s: %6.1f / %5d, %4.1f%s   rating = %4.1f\n", 
-			Name[j], obtained[j], playedby[j], 100.0*obtained[j]/playedby[j], "%", ratingof[j]);
+		printf("%30s:  %5.1f    %6.1f   %5d   %4.1f%s\n", 
+			Name[j], ratingof[j], obtained[j], playedby[j], 100.0*obtained[j]/playedby[j], "%");
 	}
 
 	/* output in a comma separated value file */
