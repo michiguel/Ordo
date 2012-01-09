@@ -30,11 +30,11 @@ static const char SWITCH_CHAR = '-';
 static const char UNKNOWN_CHAR = '?';
 
 int opt_index = 1;       /* first option should be argv[1] */
-char *opt_arg = NULL;    /* global option argument pointer */
+const char *opt_arg = NULL;    /* global option argument pointer */
 
 int options(int argc, char *argv[], const char *legal)
 {
-	static char *posn = "";  /* position in argv[opt_index] */
+	static const char *posn = "";  /* position in argv[opt_index] */
 	char *legal_index = NULL;
 	int letter = 0;
 

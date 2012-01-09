@@ -56,8 +56,9 @@ fragments.each do |x|
 	line += ' ' + x
 end
 
-oldpath = ENV['PATH']
-ENV['PATH'] = oldpath + ':' + $ADDPATH
+if ($ADDPATH != '')
+	ENV['PATH'] += ':' + $ADDPATH
+end
 
 system line
 
