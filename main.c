@@ -177,7 +177,6 @@ int main (int argc, char *argv[])
 	int op;
 	char *inputf, *outputf;
 	int version_mode, help_mode, license_mode, input_mode, output_mode;
-	double general_average;
 
 	/* defaults */
 	version_mode = FALSE;
