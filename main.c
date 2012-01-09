@@ -231,7 +231,7 @@ int main (int argc, char *argv[])
 	if (argc < 2) {
 		fprintf (stderr, "%s %s\n",proginfo_name(),proginfo_version());
 		fprintf (stderr, "%s", copyright_str);
-		fprintf (stderr, "for help type:\n%s -h\n\n", proginfo_name());		
+		fprintf (stderr, "for help type:\n%s -h\n\n", proginfo_name());
 		exit (EXIT_FAILURE);
 	}
 	if (help_mode) {
@@ -261,15 +261,14 @@ int main (int argc, char *argv[])
 
 	/*==== CALCULATIONS ====*/
 
-	if (pgn_getresults(inputf)) {
-		printf ("Success reading\n");
-	} else {
-		printf ("Problems reading\n");
+	if (!pgn_getresults(inputf)) {
+		printf ("Problems reading results\n");
 		return EXIT_FAILURE; 
 	}
 	init_rating();
 
-	printf ("====================================\n");
+	//printf ("\nIterations:\n");
+	printf ("\n");
 
 	calc_rating();
 	pgn_all_report (outputf);
@@ -485,7 +484,7 @@ pgn_all_report (const char *outputf)
 
 //	printf ("\nSORTED by RATING\n");
 
-	printf("\n%30s:  %5s    %6s  %5s  %4s\n", 
+	printf("\n%30s: %7s %9s %7s %6s\n", 
 			"ENGINE", "RATING", "POINTS", "PLAYED", "%");
 
 	for (i = 0; i < N_players; i++) {
@@ -546,7 +545,7 @@ fpgnscan (FILE *fpgn)
 	if (NULL == fpgn)
 		return FALSE;
 
-	printf("\nscanning games (x1000): \n"); fflush(stdout);
+	printf("\nimporting results (x1000): \n"); fflush(stdout);
 
 	pgn_result_reset  (&result);
 
@@ -639,11 +638,14 @@ fpgnscan (FILE *fpgn)
 			if ((game_counter%1000)==0) {
 				printf ("*"); fflush(stdout);
 			}
+			if ((game_counter%40000)==0) {
+				printf ("  %4dk\n", game_counter/1000); fflush(stdout);
+			}
 		}
 
 	} /* while */
 
-	printf("\ntotal games: %7ld \n", game_counter); fflush(stdout);
+	printf("  total games: %7ld \n", game_counter); fflush(stdout);
 
 	return TRUE;
 
@@ -987,6 +989,7 @@ calc_rating (void)
 	int i, rounds;
 	double delta, denom;
 	double olddev, curdev;
+	int phase = 0;
 
 	int n = 20;
 
@@ -999,6 +1002,8 @@ calc_rating (void)
 	init_rating();
 	calc_expected();
 	olddev = curdev = deviation();
+
+	printf ("%3s %4s %10s\n", "phase", "iteration", "deviation");
 
 	while (n-->0) {
 		double outputdev;
@@ -1025,7 +1030,8 @@ calc_rating (void)
 
 		outputdev = sqrt(curdev)/N_players;
 
-		printf ("rounds: %d, deviation: %f\n", i, outputdev);
+		printf ("%3d %7d %14.5f\n", phase, i, outputdev);
+		phase++;
 	}
 
 	printf ("done\n");
