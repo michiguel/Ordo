@@ -485,7 +485,7 @@ pgn_all_report (const char *outputf)
 //	printf ("\nSORTED by RATING\n");
 
 	printf("\n%30s: %7s %9s %7s %6s\n", 
-			"ENGINE", "RATING", "POINTS", "PLAYED", "%");
+			"ENGINE", "RATING", "POINTS", "PLAYED", "(%)");
 
 	for (i = 0; i < N_players; i++) {
 		j = sorted[i];
