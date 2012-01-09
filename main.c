@@ -143,7 +143,7 @@ void			ratings_backup  (void);
 
 /*------------------------------------------------------------------------*/
 
-static void		report_error 	(int n);
+static void		report_error 	(long int n);
 
 static void		skip_comment 	(FILE *f, long int *counter);
 static void		read_tagln 		(FILE *f, char s[], char t[], int sz, long int *counter);
@@ -165,6 +165,7 @@ static bool_t 	isblackcmd (const char *s);
 
 
 static bool_t	pgn_getresults (const char *pgn);
+static bool_t 	is_complete (struct pgn_result *p);
 
 /*
 |
@@ -336,9 +337,9 @@ playeridx_from_str (const char *s, int *idx)
 static bool_t
 addplayer (const char *s, int *idx)
 {
-	int i;
-	int remaining = &Labelbuffer[LABELBUFFERSIZE] - Labelbuffer_end - 1;
-	int len = strlen(s);
+	long int i;
+	long int remaining = (long int) (&Labelbuffer[LABELBUFFERSIZE] - Labelbuffer_end - 1);
+	long int len = (long int) strlen(s);
 
 
 	if (len < remaining && N_players < MAXPLAYERS) {
@@ -376,9 +377,9 @@ pgn_getresults (const char *pgn)
 
 
 static void 
-report_error (int n)
+report_error (long int n)
 {
-	fprintf(stderr, "\nParsing error in line: %d\n", n+1);
+	fprintf(stderr, "\nParsing error in line: %ld\n", n+1);
 
 }
 
@@ -404,7 +405,7 @@ skip_comment (FILE *f, long int *counter)
 }
 
 
-void
+static void
 pgn_result_reset (struct pgn_result *p)
 {
 	p->wtag_present   = FALSE;
@@ -415,7 +416,7 @@ pgn_result_reset (struct pgn_result *p)
 	p->result = 0;
 }
 
-void
+static void
 pgn_result_report (struct pgn_result *p)
 {
 	int i, j;
@@ -447,17 +448,17 @@ pgn_result_report (struct pgn_result *p)
 	return;
 }
 
-	int
-	compareit (const void *a, const void *b)
-	{
-		const int *ja = (const int *) a;
-		const int *jb = (const int *) b;
+static int
+compareit (const void *a, const void *b)
+{
+	const int *ja = (const int *) a;
+	const int *jb = (const int *) b;
 
-		const double da = ratingof[*ja];
-		const double db = ratingof[*jb];
-     
-		return (da < db) - (da > db);
-	}
+	const double da = ratingof[*ja];
+	const double db = ratingof[*jb];
+    
+	return (da < db) - (da > db);
+}
 
 
 void
@@ -478,7 +479,7 @@ pgn_all_report (const char *outputf)
 		sorted[j] = j;
 	}
 
-	qsort (sorted, N_players, sizeof (sorted[0]), compareit);
+	qsort (sorted, (size_t)N_players, sizeof (sorted[0]), compareit);
 
 //	printf ("\nSORTED by RATING\n");
 
@@ -520,7 +521,7 @@ pgn_all_report (const char *outputf)
 
 
 
-bool_t 
+static bool_t 
 is_complete (struct pgn_result *p)
 {
 	return p->wtag_present && p->btag_present && p->result_present;
@@ -939,6 +940,7 @@ ratings_backup (void)
 	}	
 }
 
+#if 0
 void
 show_backup (void)
 {
@@ -958,7 +960,7 @@ show_current (void)
 		printf ("%d: %f\n",j,ratingof[j]);
 	}	
 }
-
+#endif
 
 double 
 deviation (void)
@@ -974,7 +976,7 @@ deviation (void)
 	return accum;
 }
 
-
+#if 0
 void
 show_partial(void)
 {
@@ -984,7 +986,7 @@ show_partial(void)
 			Name[j], playedby[j], obtained[j], expected[j], ratingof[j]);
 	}
 }
-
+#endif
 
 void
 calc_rating (void)
