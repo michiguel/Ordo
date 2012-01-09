@@ -265,7 +265,7 @@ int main (int argc, char *argv[])
 	init_rating();
 
 	if (!QUIET_MODE) {
-		printf("Average rating = %lf\n",general_average);
+		printf("\nset average rating = %lf\n",general_average);
 		printf ("\n");
 	}
 
