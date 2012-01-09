@@ -1,4 +1,6 @@
 ordo
+ordo-win32
+ordo-win64
 *.o
 *.pgn
 *.csv
