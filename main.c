@@ -202,10 +202,8 @@ int main (int argc, char *argv[])
 					 	outputf = opt_arg;
 						break;
 			case 'a': 	
-						if (1 == sscanf(opt_arg,"%lf", &general_average)) {
-							printf("Average rating = %lf\n",general_average);
-						} else {
-							printf("wrong average parameter\n");
+						if (1 != sscanf(opt_arg,"%lf", &general_average)) {
+							fprintf(stderr, "wrong average parameter\n");
 							exit(EXIT_FAILURE);
 						}
 						break;
@@ -267,8 +265,10 @@ int main (int argc, char *argv[])
 	}
 	init_rating();
 
-	//printf ("\nIterations:\n");
-	printf ("\n");
+	if (!QUIET_MODE) {
+		printf("Average rating = %lf\n",general_average);
+		printf ("\n");
+	}
 
 	calc_rating();
 	pgn_all_report (outputf);
@@ -545,7 +545,8 @@ fpgnscan (FILE *fpgn)
 	if (NULL == fpgn)
 		return FALSE;
 
-	printf("\nimporting results (x1000): \n"); fflush(stdout);
+	if (!QUIET_MODE) 
+		printf("\nimporting results (x1000): \n"); fflush(stdout);
 
 	pgn_result_reset  (&result);
 
@@ -635,17 +636,21 @@ fpgnscan (FILE *fpgn)
 			pgn_result_report (&result);
 			pgn_result_reset  (&result);
 			game_counter++;
-			if ((game_counter%1000)==0) {
-				printf ("*"); fflush(stdout);
-			}
-			if ((game_counter%40000)==0) {
-				printf ("  %4ldk\n", game_counter/1000); fflush(stdout);
+
+			if (!QUIET_MODE) {
+				if ((game_counter%1000)==0) {
+					printf ("*"); fflush(stdout);
+				}
+				if ((game_counter%40000)==0) {
+					printf ("  %4ldk\n", game_counter/1000); fflush(stdout);
+				}
 			}
 		}
 
 	} /* while */
 
-	printf("  total games: %7ld \n", game_counter); fflush(stdout);
+	if (!QUIET_MODE) 
+		printf("  total games: %7ld \n", game_counter); fflush(stdout);
 
 	return TRUE;
 
@@ -1003,7 +1008,8 @@ calc_rating (void)
 	calc_expected();
 	olddev = curdev = deviation();
 
-	printf ("%3s %4s %10s\n", "phase", "iteration", "deviation");
+	if (!QUIET_MODE) 
+		printf ("%3s %4s %10s\n", "phase", "iteration", "deviation");
 
 	while (n-->0) {
 		double outputdev;
@@ -1030,11 +1036,13 @@ calc_rating (void)
 
 		outputdev = sqrt(curdev)/N_players;
 
-		printf ("%3d %7d %14.5f\n", phase, i, outputdev);
+		if (!QUIET_MODE) 
+			printf ("%3d %7d %14.5f\n", phase, i, outputdev);
 		phase++;
 	}
 
-	printf ("done\n");
+	if (!QUIET_MODE) 
+		printf ("done\n");
 }
 
 
