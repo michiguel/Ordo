@@ -65,12 +65,13 @@ static void usage (void);
 		" -q        quiet (no screen progress updates)\n"
 		" -a <avg>  set general rating average\n"
 		" -i <file> input file\n"
-		" -o <file> output file (comma separated value format)\n"
+		" -c <file> output file (comma separated value format)\n"
+		" -o <file> output file (text format), goes to the screen if not present\n"
 		"\n"
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		;
 
-const char *OPTION_LIST = "vhi:qLa:o:";
+const char *OPTION_LIST = "vhi:qLa:o:c:";
 
 /*
 |
@@ -130,7 +131,7 @@ static int 		N_games = 0;
 
 static bool_t	playeridx_from_str (const char *s, int *idx);
 static bool_t	addplayer (const char *s, int *i);
-void			pgn_all_report (const char *outputf);
+void			pgn_all_report (FILE *csvf, FILE *textf);
 void			calc_obtained_playedby (void);
 void			init_rating (void);
 void			calc_expected (void);
@@ -175,8 +176,13 @@ static bool_t 	is_complete (struct pgn_result *p);
 
 int main (int argc, char *argv[])
 {
+	bool_t csvf_opened;
+	bool_t textf_opened;
+	FILE *csvf;
+	FILE *textf;
+
 	int op;
-	const char *inputf, *outputf;
+	const char *inputf, *textstr, *csvstr;
 	int version_mode, help_mode, license_mode, input_mode;
 
 	/* defaults */
@@ -186,7 +192,8 @@ int main (int argc, char *argv[])
 	input_mode   = FALSE;
 	QUIET_MODE   = FALSE;
 	inputf       = NULL;
-	outputf      = NULL;
+	textstr 	 = NULL;
+	csvstr       = NULL;
 
 	while (END_OF_OPTIONS != (op = options (argc, argv, OPTION_LIST))) {
 		switch (op) {
@@ -198,7 +205,9 @@ int main (int argc, char *argv[])
 			case 'i': 	input_mode = TRUE;
 					 	inputf = opt_arg;
 						break;
-			case 'o': 	outputf = opt_arg;
+			case 'c': 	csvstr = opt_arg;
+						break;
+			case 'o': 	textstr = opt_arg;
 						break;
 			case 'a': 	
 						if (1 != sscanf(opt_arg,"%lf", &general_average)) {
@@ -269,8 +278,36 @@ int main (int argc, char *argv[])
 		printf ("\n");
 	}
 
+	textf = NULL;
+	textf_opened = FALSE;
+	if (textstr == NULL) {
+		textf = stdout;
+	} else {
+		textf = fopen (textstr, "w");
+		if (textf == NULL) {
+			fprintf(stderr, "Errors with file: %s\n",textstr);			
+		} else {
+			textf_opened = TRUE;
+		}
+	}
+
+	csvf = NULL;
+	csvf_opened = FALSE;
+	if (csvstr != NULL) {
+		csvf = fopen (csvstr, "w");
+		if (csvf == NULL) {
+			fprintf(stderr, "Errors with file: %s\n",csvstr);			
+		} else {
+			csvf_opened = TRUE;
+		}
+	}
+
 	calc_rating();
-	pgn_all_report (outputf);
+
+	pgn_all_report (csvf, textf);
+	
+	if (textf_opened) fclose (textf);
+	if (csvf_opened)  fclose (csvf); 
 
 	/*==== END CALCULATION ====*/
 
@@ -462,18 +499,12 @@ compareit (const void *a, const void *b)
 
 
 void
-pgn_all_report (const char *outputf)
+pgn_all_report (FILE *csvf, FILE *textf)
 {
+	FILE *f;
 	int i, j;
 
 	calc_obtained_playedby ();
-
-	#if 0
-	for (j = 0; j < N_players; j++) {
-		printf("%30s: %6.1f / %5d, %4.1f%s   rating = %4.1f\n", 
-			Name[j], obtained[j], playedby[j], 100.0*obtained[j]/playedby[j], "%", ratingof[j]);
-	}
-	#endif
 
 	for (j = 0; j < N_players; j++) {
 		sorted[j] = j;
@@ -481,38 +512,38 @@ pgn_all_report (const char *outputf)
 
 	qsort (sorted, (size_t)N_players, sizeof (sorted[0]), compareit);
 
-//	printf ("\nSORTED by RATING\n");
+	/* output in text format */
+	f = textf;
+	if (f != NULL) {
 
-	printf("\n%30s: %7s %9s %7s %6s\n", 
+		fprintf(f, "\n%30s: %7s %9s %7s %6s\n", 
 			"ENGINE", "RATING", "POINTS", "PLAYED", "(%)");
 
-	for (i = 0; i < N_players; i++) {
-		j = sorted[i];
-		printf("%30s:  %5.1f    %6.1f   %5d   %4.1f%s\n", 
-			Name[j], ratingof[j], obtained[j], playedby[j], 100.0*obtained[j]/playedby[j], "%");
+		for (i = 0; i < N_players; i++) {
+			j = sorted[i];
+			fprintf(f, "%30s:  %5.1f    %6.1f   %5d   %4.1f%s\n", 
+				Name[j], ratingof[j], obtained[j], playedby[j], 100.0*obtained[j]/playedby[j], "%");
+		}
 	}
 
-	/* output in a comma separated value file */
-	if (outputf != NULL)
-	{
-		FILE *f = fopen (outputf, "w");
-		if (f != NULL) {
 
-			for (i = 0; i < N_players; i++) {
-				j = sorted[i];
-				fprintf(f, "\"%21s\", %6.1f,"
-				",%.2f"
-				",%d"
-				",%.2f"
-				"\n"		
-				,Name[j]
-				,ratingof[j] 
-				,obtained[j]
-				,playedby[j]
-				,100.0*obtained[j]/playedby[j] 
+	/* output in a comma separated value file */
+
+	f = csvf;
+	if (f != NULL) {
+		for (i = 0; i < N_players; i++) {
+			j = sorted[i];
+			fprintf(f, "\"%21s\", %6.1f,"
+			",%.2f"
+			",%d"
+			",%.2f"
+			"\n"		
+			,Name[j]
+			,ratingof[j] 
+			,obtained[j]
+			,playedby[j]
+			,100.0*obtained[j]/playedby[j] 
 			);
-		}
-		fclose (f);
 		}
 	}
 
