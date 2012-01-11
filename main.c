@@ -64,14 +64,14 @@ static void usage (void);
 		" -L        display the license information\n"
 		" -q        quiet (no screen progress updates)\n"
 		" -a <avg>  set general rating average\n"
-		" -i <file> input file\n"
+		" -p <file> input file in .pgn format\n"
 		" -c <file> output file (comma separated value format)\n"
 		" -o <file> output file (text format), goes to the screen if not present\n"
 		"\n"
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		;
 
-const char *OPTION_LIST = "vhi:qLa:o:c:";
+const char *OPTION_LIST = "vhp:qLa:o:c:";
 
 /*
 |
@@ -202,7 +202,7 @@ int main (int argc, char *argv[])
 						license_mode = TRUE;
 						break;
 			case 'h':	help_mode = TRUE;		break;
-			case 'i': 	input_mode = TRUE;
+			case 'p': 	input_mode = TRUE;
 					 	inputf = opt_arg;
 						break;
 			case 'c': 	csvstr = opt_arg;
