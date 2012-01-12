@@ -7,6 +7,7 @@
 
 #include "mystr.h"
 #include "proginfo.h"
+#include "boolean.h"
 
 /*
 |
@@ -32,12 +33,6 @@ const char *license_str =
 static void parameter_error(void);
 static void example (void);
 static void usage (void);
-
-/* TYPES */
-
-	typedef int bool_t;
-	#define FALSE 0
-	#define TRUE !FALSE
 
 /* VARIABLES */
 
