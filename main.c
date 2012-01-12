@@ -100,10 +100,23 @@ struct pgn_result {
 };
 
 
-
 #define MAXGAMES 1000000
 #define LABELBUFFERSIZE 100000
 #define MAXPLAYERS 10000
+
+struct DATA {	
+	char	Labelbuffer[LABELBUFFERSIZE];
+	char *	Labelbuffer_end;
+	char *	Name   [MAXPLAYERS];
+	int 	N_players;
+	int 	Whiteplayer	[MAXGAMES];
+	int 	Blackplayer	[MAXGAMES];
+	int 	Score		[MAXGAMES];
+	int 	N_games;
+};
+struct DATA DB;
+static void 	data_init (struct DATA *d);
+
 
 static char		Labelbuffer[LABELBUFFERSIZE] = {'\0'};
 static char 	*Labelbuffer_end = Labelbuffer;
@@ -267,6 +280,8 @@ int main (int argc, char *argv[])
 
 	/*==== CALCULATIONS ====*/
 
+	data_init (&DB);
+
 	if (!pgn_getresults(inputf)) {
 		printf ("Problems reading results from: %s\n", inputf);
 		return EXIT_FAILURE; 
@@ -354,6 +369,17 @@ usage (void)
 |	ORDO ROUTINES
 |
 \**/
+
+
+static void
+data_init (struct DATA *d)
+{
+	d->Labelbuffer[0] = '\0';
+	d->Labelbuffer_end = d->Labelbuffer;
+	d->N_players = 0;
+	d->N_games = 0;
+}
+
 
 static bool_t
 playeridx_from_str (const char *s, int *idx)
