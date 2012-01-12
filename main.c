@@ -268,14 +268,14 @@ int main (int argc, char *argv[])
 	/*==== CALCULATIONS ====*/
 
 	if (!pgn_getresults(inputf)) {
-		printf ("Problems reading results\n");
+		printf ("Problems reading results from: %s\n", inputf);
 		return EXIT_FAILURE; 
 	}
+
 	init_rating();
 
 	if (!QUIET_MODE) {
-		printf("\nset average rating = %lf\n",general_average);
-		printf ("\n");
+		printf("\nset average rating = %lf\n\n",general_average);
 	}
 
 	textf = NULL;
