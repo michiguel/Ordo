@@ -7,20 +7,8 @@
 
 #include "mystr.h"
 #include "proginfo.h"
-
-/*
-|
-|	GENERAL OPTIONS
-|
-\*--------------------------------------------------------------*/
-
-/* TYPES */
-
-	typedef int bool_t;
-	#define FALSE 0
-	#define TRUE !FALSE
-
-/* VARIABLES */
+#include "pgnget.h"
+#include "boolean.h"
 
 /*
 |
@@ -73,13 +61,11 @@ static char 	*Labelbuffer_end = Labelbuffer;
 /* players */
 static char 	*Name   [MAXPLAYERS];
 static double	obtained[MAXPLAYERS];
-static double	expected[MAXPLAYERS];
+//static double	expected[MAXPLAYERS];
 static int		playedby[MAXPLAYERS]; /* N games played by player "i" */
 static double	ratingof[MAXPLAYERS]; /* rating current */
-static double	ratingbk[MAXPLAYERS]; /* rating backup  */
+//static double	ratingbk[MAXPLAYERS]; /* rating backup  */
 static int 		N_players = 0;
-
-static double	general_average = 2300.0;
 
 static int		sorted  [MAXPLAYERS]; /* sorted index by rating */
 
@@ -123,8 +109,6 @@ static bool_t 	fpgnscan (FILE *fpgn, bool_t quiet);
 static bool_t 	iswhitecmd (const char *s);
 static bool_t 	isblackcmd (const char *s);
 
-
-static bool_t	pgn_getresults (const char *pgn);
 static bool_t 	is_complete (struct pgn_result *p);
 
 /*

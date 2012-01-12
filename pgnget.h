@@ -2,6 +2,7 @@
 #define H_PGNGET
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
+#include "boolean.h"
 
 extern bool_t pgn_getresults (const char *pgn);
 
