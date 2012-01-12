@@ -543,16 +543,10 @@ is_complete (struct pgn_result *p)
 static bool_t
 fpgnscan (FILE *fpgn)
 {
-
-	struct pgn_result result;
-
-	int			c;
-
-//	bool_t		skiprest = FALSE;
-	long int	line_counter = 0;
-	long int	game_counter = 0;
-
-//	int			endresult = 0;
+	struct pgn_result 	result;
+	int					c;
+	long int			line_counter = 0;
+	long int			game_counter = 0;
 
 	if (NULL == fpgn)
 		return FALSE;
@@ -742,9 +736,7 @@ skip_string (FILE *f, long int *counter)
 
 static void
 read_stringln (FILE *f, char s[], int sz)
-
 /* read the string until " unless there is an EOF of EOL */
-
 {
 	int		c;
 	char	buffer[PGNSTRSIZE];
