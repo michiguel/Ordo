@@ -51,20 +51,6 @@ struct DATA {
 struct DATA DB;
 static void 	data_init (struct DATA *d);
 
-
-static char		Labelbuffer[LABELBUFFERSIZE] = {'\0'};
-static char 	*Labelbuffer_end = Labelbuffer;
-
-/* players */
-static char 	*Name   [MAXPLAYERS];
-static int 		N_players = 0;
-
-/* games */
-static int 		Whiteplayer	[MAXGAMES];
-static int 		Blackplayer	[MAXGAMES];
-static int 		Score		[MAXGAMES];
-static int 		N_games = 0;
-
 /*------------------------------------------------------------------------*/
 
 static bool_t	playeridx_from_str (const char *s, int *idx);
@@ -127,8 +113,8 @@ playeridx_from_str (const char *s, int *idx)
 {
 	int i;
 	bool_t found;
-	for (i = 0, found = FALSE; !found && i < N_players; i++) {
-		found = (0 == strcmp (s, Name[i]) );
+	for (i = 0, found = FALSE; !found && i < DB.n_players; i++) {
+		found = (0 == strcmp (s, DB.name[i]) );
 		if (found) *idx = i;
 	}
 	return found;
@@ -138,21 +124,21 @@ static bool_t
 addplayer (const char *s, int *idx)
 {
 	long int i;
-	char *b = Labelbuffer_end;
-	long int remaining = (long int) (&Labelbuffer[LABELBUFFERSIZE] - b - 1);
+	char *b = DB.labels_end;
+	long int remaining = (long int) (&DB.labels[LABELBUFFERSIZE] - b - 1);
 	long int len = (long int) strlen(s);
-	bool_t success = len < remaining && N_players < MAXPLAYERS;
+	bool_t success = len < remaining && DB.n_players < MAXPLAYERS;
 
 	if (success) {
-		*idx = N_players;
-		Name[N_players++] = b;
+		*idx = DB.n_players;
+		DB.name[DB.n_players++] = b;
 		for (i = 0; i < len; i++)  {
 			*b++ = *s++;
 		}
 		*b++ = '\0';
 	}
 
-	Labelbuffer_end = b;
+	DB.labels_end = b;
 	return success;
 }
 
@@ -206,10 +192,10 @@ pgn_result_collect (struct pgn_result *p)
 	}
 
 	if (ok) {
-		Whiteplayer [N_games] = i;
-		Blackplayer [N_games] = j;
-		Score       [N_games] = p->result;
-		N_games++;
+		DB.white [DB.n_games] = i;
+		DB.black [DB.n_games] = j;
+		DB.score [DB.n_games] = p->result;
+		DB.n_games++;
 	}
 
 	return ok;
