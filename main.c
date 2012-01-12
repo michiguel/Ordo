@@ -397,18 +397,21 @@ static bool_t
 addplayer (const char *s, int *idx)
 {
 	long int i;
-	long int remaining = (long int) (&Labelbuffer[LABELBUFFERSIZE] - Labelbuffer_end - 1);
+	char *b = Labelbuffer_end;
+	long int remaining = (long int) (&Labelbuffer[LABELBUFFERSIZE] - b - 1);
 	long int len = (long int) strlen(s);
 	bool_t success = len < remaining && N_players < MAXPLAYERS;
 
 	if (success) {
 		*idx = N_players;
-		Name[N_players++] = Labelbuffer_end;
+		Name[N_players++] = b;
 		for (i = 0; i < len; i++)  {
-			*Labelbuffer_end++ = *s++;
+			*b++ = *s++;
 		}
-		*Labelbuffer_end++ = '\0';
+		*b++ = '\0';
 	}
+
+	Labelbuffer_end = b;
 	return success;
 }
 
