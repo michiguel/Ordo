@@ -161,10 +161,6 @@ static void		skip_string 	(FILE *f, long int *counter);
 static void		read_stringln 	(FILE *f, char s[], int sz);
 
 static int		res2int 		(const char *s);
-#if 0
-static bool_t	issep 			(int c);
-static bool_t	isend 			(const char *token);
-#endif
 static bool_t	isresultcmd 	(const char *s);
 
 static bool_t 	fpgnscan (FILE *fpgn);
@@ -796,22 +792,6 @@ read_stringln (FILE *f, char s[], int sz)
 	mystrncpy (s, buffer, sz);
 }
 
-#if 0
-static bool_t
-issep (int c) 
-{
-	return 	isspace(c) || c == '.' || c == '{' || c == '(';
-}
-
-static bool_t
-isend (const char *token)
-{
-	return	   !strcmp(token,"1-0") 
-			|| !strcmp(token,"0-1") 
-			|| !strcmp(token,"1/2-1/2");
-}
-#endif
-
 static bool_t
 isresultcmd (const char *s)
 {
@@ -964,28 +944,6 @@ ratings_backup (void)
 	}	
 }
 
-#if 0
-void
-show_backup (void)
-{
-	int j;
-	printf ("backup\n");
-	for (j = 0; j < N_players; j++) {
-		printf ("%d: %f\n",j,ratingbk[j]);
-	}	
-}
-
-void
-show_current (void)
-{
-	int j;
-	printf ("current\n");
-	for (j = 0; j < N_players; j++) {
-		printf ("%d: %f\n",j,ratingof[j]);
-	}	
-}
-#endif
-
 double 
 deviation (void)
 {
@@ -999,18 +957,6 @@ deviation (void)
 	}		
 	return accum;
 }
-
-#if 0
-void
-show_partial(void)
-{
-	int j;
-	for (j = 0; j < N_players; j++) {
-		printf("%21s: p=%d, o=%4.1f,  e=%4.1f, rating = %4.1f\n", 
-			Name[j], playedby[j], obtained[j], expected[j], ratingof[j]);
-	}
-}
-#endif
 
 void
 calc_rating (void)
