@@ -2,11 +2,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include <math.h>
-#include <assert.h>
 
 #include "mystr.h"
-#include "proginfo.h"
 #include "pgnget.h"
 #include "boolean.h"
 
@@ -60,14 +57,7 @@ static char 	*Labelbuffer_end = Labelbuffer;
 
 /* players */
 static char 	*Name   [MAXPLAYERS];
-static double	obtained[MAXPLAYERS];
-//static double	expected[MAXPLAYERS];
-static int		playedby[MAXPLAYERS]; /* N games played by player "i" */
-static double	ratingof[MAXPLAYERS]; /* rating current */
-//static double	ratingbk[MAXPLAYERS]; /* rating backup  */
 static int 		N_players = 0;
-
-static int		sorted  [MAXPLAYERS]; /* sorted index by rating */
 
 /* games */
 static int 		Whiteplayer	[MAXGAMES];
@@ -239,72 +229,6 @@ pgn_result_report (struct pgn_result *p)
 
 	return ok;
 }
-
-static int
-compareit (const void *a, const void *b)
-{
-	const int *ja = (const int *) a;
-	const int *jb = (const int *) b;
-
-	const double da = ratingof[*ja];
-	const double db = ratingof[*jb];
-    
-	return (da < db) - (da > db);
-}
-
-
-void
-pgn_all_report (FILE *csvf, FILE *textf)
-{
-	FILE *f;
-	int i, j;
-
-	calc_obtained_playedby ();
-
-	for (j = 0; j < N_players; j++) {
-		sorted[j] = j;
-	}
-
-	qsort (sorted, (size_t)N_players, sizeof (sorted[0]), compareit);
-
-	/* output in text format */
-	f = textf;
-	if (f != NULL) {
-
-		fprintf(f, "\n%30s: %7s %9s %7s %6s\n", 
-			"ENGINE", "RATING", "POINTS", "PLAYED", "(%)");
-
-		for (i = 0; i < N_players; i++) {
-			j = sorted[i];
-			fprintf(f, "%30s:  %5.1f    %6.1f   %5d   %4.1f%s\n", 
-				Name[j], ratingof[j], obtained[j], playedby[j], 100.0*obtained[j]/playedby[j], "%");
-		}
-	}
-
-
-	/* output in a comma separated value file */
-
-	f = csvf;
-	if (f != NULL) {
-		for (i = 0; i < N_players; i++) {
-			j = sorted[i];
-			fprintf(f, "\"%21s\", %6.1f,"
-			",%.2f"
-			",%d"
-			",%.2f"
-			"\n"		
-			,Name[j]
-			,ratingof[j] 
-			,obtained[j]
-			,playedby[j]
-			,100.0*obtained[j]/playedby[j] 
-			);
-		}
-	}
-
-	return;
-}
-
 
 
 static bool_t 
