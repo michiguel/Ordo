@@ -139,7 +139,7 @@ static int 		N_games = 0;
 
 static bool_t	playeridx_from_str (const char *s, int *idx);
 static bool_t	addplayer (const char *s, int *i);
-void			pgn_all_report (FILE *csvf, FILE *textf);
+void			all_report (FILE *csvf, FILE *textf);
 void			calc_obtained_playedby (void);
 void			init_rating (void);
 void			calc_expected (void);
@@ -314,7 +314,7 @@ int main (int argc, char *argv[])
 
 	calc_rating();
 
-	pgn_all_report (csvf, textf);
+	all_report (csvf, textf);
 	
 	if (textf_opened) fclose (textf);
 	if (csvf_opened)  fclose (csvf); 
@@ -497,7 +497,7 @@ compareit (const void *a, const void *b)
 
 
 void
-pgn_all_report (FILE *csvf, FILE *textf)
+all_report (FILE *csvf, FILE *textf)
 {
 	FILE *f;
 	int i, j;
