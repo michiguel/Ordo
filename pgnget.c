@@ -69,19 +69,6 @@ static int 		N_games = 0;
 
 static bool_t	playeridx_from_str (const char *s, int *idx);
 static bool_t	addplayer (const char *s, int *i);
-//void			pgn_all_report (FILE *csvf, FILE *textf);
-//void			calc_obtained_playedby (void);
-//void			init_rating (void);
-//void			calc_expected (void);
-//double			xpect (double a, double b);
-//void			adjust_rating (double delta);
-//void			calc_rating (void);
-//double 			deviation (void);
-//void			ratings_restore (void);
-//void			ratings_backup  (void);
-
-/*------------------------------------------------------------------------*/
-
 static void		report_error 	(long int n);
 static void		skip_comment 	(FILE *f, long int *counter);
 static void		read_tagln 		(FILE *f, char s[], char t[], int sz, long int *counter);
