@@ -69,42 +69,49 @@ static int 		N_games = 0;
 
 static bool_t	playeridx_from_str (const char *s, int *idx);
 static bool_t	addplayer (const char *s, int *i);
-void			pgn_all_report (FILE *csvf, FILE *textf);
-void			calc_obtained_playedby (void);
-void			init_rating (void);
-void			calc_expected (void);
-double			xpect (double a, double b);
-void			adjust_rating (double delta);
-void			calc_rating (void);
-double 			deviation (void);
-void			ratings_restore (void);
-void			ratings_backup  (void);
+//void			pgn_all_report (FILE *csvf, FILE *textf);
+//void			calc_obtained_playedby (void);
+//void			init_rating (void);
+//void			calc_expected (void);
+//double			xpect (double a, double b);
+//void			adjust_rating (double delta);
+//void			calc_rating (void);
+//double 			deviation (void);
+//void			ratings_restore (void);
+//void			ratings_backup  (void);
 
 /*------------------------------------------------------------------------*/
 
 static void		report_error 	(long int n);
-
 static void		skip_comment 	(FILE *f, long int *counter);
 static void		read_tagln 		(FILE *f, char s[], char t[], int sz, long int *counter);
 static void		skip_variation 	(FILE *f, long int *counter);
 static void		skip_string 	(FILE *f, long int *counter);
 static void		read_stringln 	(FILE *f, char s[], int sz);
-
 static int		res2int 		(const char *s);
-
 static bool_t	isresultcmd 	(const char *s);
-
 static bool_t 	fpgnscan (FILE *fpgn, bool_t quiet);
-
 static bool_t 	iswhitecmd (const char *s);
 static bool_t 	isblackcmd (const char *s);
-
 static bool_t 	is_complete (struct pgn_result *p);
 
 /*
 |
 |
 \*--------------------------------------------------------------*/
+
+bool_t
+pgn_getresults (const char *pgn)
+{
+	FILE *fpgn;
+	bool_t ok = FALSE;
+	if (NULL != (fpgn = fopen (pgn, "r"))) {
+		ok = fpgnscan (fpgn, FALSE /************************ QUIET MODE ***************************************/);
+		fclose(fpgn);
+	}
+	return ok;
+}
+
 /*--------------------------------------------------------------*\
 |
 |
@@ -159,22 +166,6 @@ static void report_error (long int n)
 {
 	fprintf(stderr, "\nParsing error in line: %ld\n", n+1);
 }
-
-/****************************************************************************/
-
-bool_t
-pgn_getresults (const char *pgn)
-{
-	FILE *fpgn;
-	bool_t ok = FALSE;
-	if (NULL != (fpgn = fopen (pgn, "r"))) {
-		ok = fpgnscan (fpgn, FALSE /************************ QUIET MODE ***************************************/);
-		fclose(fpgn);
-	}
-	return ok;
-}
-
-/****************************************************************************/
 
 static void
 skip_comment (FILE *f, long int *counter) 
