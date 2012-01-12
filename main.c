@@ -435,36 +435,28 @@ pgn_result_reset (struct pgn_result *p)
 	p->result = 0;
 }
 
-static void
+static bool_t
 pgn_result_report (struct pgn_result *p)
 {
 	int i, j;
-	bool_t ok;
+	bool_t ok = TRUE;
 
-/*	printf ("%12s vs. %12s : %s\n", p->wtag, p->btag, Result_string[p->result]);*/
-
-
-	if (!playeridx_from_str (p->wtag, &i)) {
+	if (ok && !playeridx_from_str (p->wtag, &i)) {
 		ok = addplayer (p->wtag, &i);
-		if (!ok) {
-			fprintf (stderr, "out of memory\n");
-			exit(EXIT_FAILURE);
-		}
 	}
 
-	if (!playeridx_from_str (p->btag, &j)) {
+	if (ok && !playeridx_from_str (p->btag, &j)) {
 		ok = addplayer (p->btag, &j);
-		if (!ok) {
-			fprintf (stderr, "out of memory\n");
-			exit(EXIT_FAILURE);
-		}
 	}
 
-	Whiteplayer [N_games] = i;
-	Blackplayer [N_games] = j;
-	Score       [N_games] = p->result;
-	N_games++;
-	return;
+	if (ok) {
+		Whiteplayer [N_games] = i;
+		Blackplayer [N_games] = j;
+		Score       [N_games] = p->result;
+		N_games++;
+	}
+
+	return ok;
 }
 
 static int
@@ -639,7 +631,10 @@ fpgnscan (FILE *fpgn)
 		} /* switch */
 
 		if (is_complete (&result)) {
-			pgn_result_report (&result);
+			if (!pgn_result_report (&result)) {
+				fprintf (stderr, "out of memory\n");
+				exit(EXIT_FAILURE);
+			}
 			pgn_result_reset  (&result);
 			game_counter++;
 
