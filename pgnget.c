@@ -39,14 +39,14 @@ struct pgn_result {
 #define MAXPLAYERS 10000
 
 struct DATA {	
-	char	Labelbuffer[LABELBUFFERSIZE];
-	char *	Labelbuffer_end;
-	char *	Name   [MAXPLAYERS];
-	int 	N_players;
-	int 	Whiteplayer	[MAXGAMES];
-	int 	Blackplayer	[MAXGAMES];
-	int 	Score		[MAXGAMES];
-	int 	N_games;
+	int 	n_players;
+	int 	n_games;
+	char	labels[LABELBUFFERSIZE];
+	char *	labels_end;
+	char *	name	[MAXPLAYERS];
+	int 	white	[MAXGAMES];
+	int 	black	[MAXGAMES];
+	int 	score	[MAXGAMES];
 };
 struct DATA DB;
 static void 	data_init (struct DATA *d);
@@ -82,6 +82,10 @@ static bool_t 	iswhitecmd (const char *s);
 static bool_t 	isblackcmd (const char *s);
 static bool_t 	is_complete (struct pgn_result *p);
 
+static void 	pgn_result_reset (struct pgn_result *p);
+static bool_t 	pgn_result_collect (struct pgn_result *p);
+
+
 /*
 |
 |
@@ -92,6 +96,9 @@ pgn_getresults (const char *pgn, bool_t quiet)
 {
 	FILE *fpgn;
 	bool_t ok = FALSE;
+
+	data_init (&DB);
+
 	if (NULL != (fpgn = fopen (pgn, "r"))) {
 		ok = fpgnscan (fpgn, quiet);
 		fclose(fpgn);
@@ -108,10 +115,10 @@ pgn_getresults (const char *pgn, bool_t quiet)
 static void
 data_init (struct DATA *d)
 {
-	d->Labelbuffer[0] = '\0';
-	d->Labelbuffer_end = d->Labelbuffer;
-	d->N_players = 0;
-	d->N_games = 0;
+	d->labels[0] = '\0';
+	d->labels_end = d->labels;
+	d->n_players = 0;
+	d->n_games = 0;
 }
 
 
@@ -185,7 +192,7 @@ pgn_result_reset (struct pgn_result *p)
 }
 
 static bool_t
-pgn_result_report (struct pgn_result *p)
+pgn_result_collect (struct pgn_result *p)
 {
 	int i, j;
 	bool_t ok = TRUE;
@@ -314,7 +321,7 @@ fpgnscan (FILE *fpgn, bool_t quiet)
 		} /* switch */
 
 		if (is_complete (&result)) {
-			if (!pgn_result_report (&result)) {
+			if (!pgn_result_collect (&result)) {
 				fprintf (stderr, "out of memory\n");
 				exit(EXIT_FAILURE);
 			}
