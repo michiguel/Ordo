@@ -395,29 +395,20 @@ addplayer (const char *s, int *idx)
 static bool_t
 pgn_getresults (const char *pgn)
 {
-
 	FILE *fpgn;
-	bool_t ok = TRUE;
-
-	if (NULL == (fpgn = fopen (pgn, "r"))) {
-		printf ("Cannot open %s\n", pgn);
-		return FALSE;
+	bool_t ok = FALSE;
+	if (NULL != (fpgn = fopen (pgn, "r"))) {
+		ok = fpgnscan (fpgn);
+		fclose(fpgn);
 	}
-
-	ok = fpgnscan (fpgn);
-
-	fclose(fpgn);
 	return ok;
-
 }
-
 
 
 static void 
 report_error (long int n)
 {
 	fprintf(stderr, "\nParsing error in line: %ld\n", n+1);
-
 }
 
 
