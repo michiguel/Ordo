@@ -4,4 +4,4 @@ ordo-win64
 *.o
 *.pgn
 *.csv
-
+release/*
