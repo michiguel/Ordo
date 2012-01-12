@@ -360,10 +360,6 @@ playeridx_from_str (const char *s, int *idx)
 {
 	int i;
 	bool_t found;
-
-	if (N_players == 0)
-		return FALSE;
-
 	for (i = 0, found = FALSE; !found && i < N_players; i++) {
 		found = (0 == strcmp (s, Name[i]) );
 		if (found) *idx = i;
@@ -377,19 +373,17 @@ addplayer (const char *s, int *idx)
 	long int i;
 	long int remaining = (long int) (&Labelbuffer[LABELBUFFERSIZE] - Labelbuffer_end - 1);
 	long int len = (long int) strlen(s);
+	bool_t success = len < remaining && N_players < MAXPLAYERS;
 
-
-	if (len < remaining && N_players < MAXPLAYERS) {
+	if (success) {
 		*idx = N_players;
 		Name[N_players++] = Labelbuffer_end;
 		for (i = 0; i < len; i++)  {
 			*Labelbuffer_end++ = *s++;
 		}
 		*Labelbuffer_end++ = '\0';
-		return TRUE;
 	}
-	else
-		return FALSE;
+	return success;
 }
 
 static bool_t
@@ -404,13 +398,10 @@ pgn_getresults (const char *pgn)
 	return ok;
 }
 
-
-static void 
-report_error (long int n)
+static void report_error (long int n) 
 {
 	fprintf(stderr, "\nParsing error in line: %ld\n", n+1);
 }
-
 
 /**********************************************************************************************************************/
 
