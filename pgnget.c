@@ -101,12 +101,12 @@ static bool_t 	is_complete (struct pgn_result *p);
 \*--------------------------------------------------------------*/
 
 bool_t
-pgn_getresults (const char *pgn)
+pgn_getresults (const char *pgn, bool_t quiet)
 {
 	FILE *fpgn;
 	bool_t ok = FALSE;
 	if (NULL != (fpgn = fopen (pgn, "r"))) {
-		ok = fpgnscan (fpgn, FALSE /************************ QUIET MODE ***************************************/);
+		ok = fpgnscan (fpgn, quiet);
 		fclose(fpgn);
 	}
 	return ok;
