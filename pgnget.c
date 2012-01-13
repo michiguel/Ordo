@@ -42,7 +42,7 @@ struct DATA {
 	int 	n_players;
 	int 	n_games;
 	char	labels[LABELBUFFERSIZE];
-	int		labels_end_idx;
+	size_t	labels_end_idx;
 	char *	name	[MAXPLAYERS];
 	int 	white	[MAXGAMES];
 	int 	black	[MAXGAMES];
