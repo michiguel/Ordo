@@ -129,7 +129,7 @@ void			init_rating (void);
 void			calc_expected (void);
 double			xpect (double a, double b);
 void			adjust_rating (double delta);
-void			calc_rating (void);
+void			calc_rating (bool_t quiet);
 double 			deviation (void);
 void			ratings_restore (void);
 void			ratings_backup  (void);
@@ -295,7 +295,7 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	calc_rating();
+	calc_rating(QUIET_MODE);
 
 	all_report (csvf, textf);
 	
@@ -549,7 +549,7 @@ deviation (void)
 }
 
 void
-calc_rating (void)
+calc_rating (bool_t quiet)
 {
 	int i, rounds;
 	double delta, denom;
@@ -568,7 +568,7 @@ calc_rating (void)
 	calc_expected();
 	olddev = curdev = deviation();
 
-	if (!QUIET_MODE) 
+	if (!quiet) 
 		printf ("%3s %4s %10s\n", "phase", "iteration", "deviation");
 
 	while (n-->0) {
@@ -596,12 +596,12 @@ calc_rating (void)
 
 		outputdev = sqrt(curdev)/N_players;
 
-		if (!QUIET_MODE) 
+		if (!quiet) 
 			printf ("%3d %7d %14.5f\n", phase, i, outputdev);
 		phase++;
 	}
 
-	if (!QUIET_MODE) 
+	if (!quiet) 
 		printf ("done\n");
 }
 
