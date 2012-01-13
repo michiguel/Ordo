@@ -258,11 +258,13 @@ int main (int argc, char *argv[])
 
 	/*==== CALCULATIONS ====*/
 
-	if (!pgn_getresults(inputf, FALSE /*****************************************************/)) {
+	if (!pgn_getresults(inputf, QUIET_MODE)) {
 		printf ("Problems reading results from: %s\n", inputf);
 		return EXIT_FAILURE; 
 	}
-transform_DB();
+	
+	transform_DB(); /* convert DB to global variables */
+
 	init_rating();
 
 	if (!QUIET_MODE) {
