@@ -137,25 +137,25 @@ void			ratings_backup  (void);
 /*------------------------------------------------------------------------*/
 
 static void 
-transform_DB(void)
+transform_DB(struct DATA *db)
 {
 	int i;
 	ptrdiff_t x;
-	for (x = 0; x < DB.labels_end_idx; x++) {
-		Labelbuffer[x] = DB.labels[x];
+	for (x = 0; x < db->labels_end_idx; x++) {
+		Labelbuffer[x] = db->labels[x];
 	}
-	Labelbuffer_end = Labelbuffer + DB.labels_end_idx;
-	N_players = DB.n_players;
-	N_games   = DB.n_games;
+	Labelbuffer_end = Labelbuffer + db->labels_end_idx;
+	N_players = db->n_players;
+	N_games   = db->n_games;
 
-	for (i = 0; i < DB.n_players; i++) {
-		Name[i] = Labelbuffer + DB.name[i];
+	for (i = 0; i < db->n_players; i++) {
+		Name[i] = Labelbuffer + db->name[i];
 	}
 
-	for (i = 0; i < DB.n_games; i++) {
-		Whiteplayer[i] = DB.white[i];
-		Blackplayer[i] = DB.black[i]; 
-		Score[i]       = DB.score[i];
+	for (i = 0; i < db->n_games; i++) {
+		Whiteplayer[i] = db->white[i];
+		Blackplayer[i] = db->black[i]; 
+		Score[i]       = db->score[i];
 	}
 }
 
@@ -263,7 +263,7 @@ int main (int argc, char *argv[])
 		return EXIT_FAILURE; 
 	}
 	
-	transform_DB(); /* convert DB to global variables */
+	transform_DB(&DB); /* convert DB to global variables */
 
 	init_rating();
 
