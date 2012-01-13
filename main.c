@@ -391,9 +391,7 @@ all_report (FILE *csvf, FILE *textf)
 		}
 	}
 
-
 	/* output in a comma separated value file */
-
 	f = csvf;
 	if (f != NULL) {
 		for (i = 0; i < N_players; i++) {
