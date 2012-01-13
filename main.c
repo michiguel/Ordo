@@ -122,8 +122,11 @@ static int 		N_games = 0;
 
 /*------------------------------------------------------------------------*/
 
+#if 0
 static bool_t	playeridx_from_str (const char *s, int *idx);
 static bool_t	addplayer (const char *s, int *i);
+#endif
+
 void			all_report (FILE *csvf, FILE *textf);
 void			calc_obtained_playedby (void);
 void			init_rating (void);
@@ -136,49 +139,42 @@ void			ratings_restore (void);
 void			ratings_backup  (void);
 
 /*------------------------------------------------------------------------*/
-
+#if 0
 static void		report_error 	(long int n);
-
 static void		skip_comment 	(FILE *f, long int *counter);
 static void		read_tagln 		(FILE *f, char s[], char t[], int sz, long int *counter);
 static void		skip_variation 	(FILE *f, long int *counter);
 static void		skip_string 	(FILE *f, long int *counter);
 static void		read_stringln 	(FILE *f, char s[], int sz);
-
 static int		res2int 		(const char *s);
 static bool_t	isresultcmd 	(const char *s);
-
 static bool_t 	fpgnscan (FILE *fpgn);
-
 static bool_t 	iswhitecmd (const char *s);
 static bool_t 	isblackcmd (const char *s);
-
-
 static bool_t 	is_complete (struct pgn_result *p);
+#endif
 
-
-
-
-static void transform(void)
+static void 
+transform_DB(void)
 {
-int i;
+	int i;
 
-for (i = 0; i < DB.labels_end_idx; i++) {
-	Labelbuffer[i] = DB.labels[i];
-}
-Labelbuffer_end = Labelbuffer + DB.labels_end_idx;
-N_players = DB.n_players;
-N_games   = DB.n_games;
+	for (i = 0; i < DB.labels_end_idx; i++) {
+		Labelbuffer[i] = DB.labels[i];
+	}
+	Labelbuffer_end = Labelbuffer + DB.labels_end_idx;
+	N_players = DB.n_players;
+	N_games   = DB.n_games;
 
-for (i = 0; i < DB.n_players; i++) {
-	Name[i] = Labelbuffer + DB.name[i];
-}
+	for (i = 0; i < DB.n_players; i++) {
+		Name[i] = Labelbuffer + DB.name[i];
+	}
 
-for (i = 0; i < DB.n_games; i++) {
-	Whiteplayer[i] = DB.white[i];
-	Blackplayer[i] = DB.black[i]; 
-	Score[i]       = DB.score[i];
-}
+	for (i = 0; i < DB.n_games; i++) {
+		Whiteplayer[i] = DB.white[i];
+		Blackplayer[i] = DB.black[i]; 
+		Score[i]       = DB.score[i];
+	}
 }
 
 /*
@@ -284,7 +280,7 @@ int main (int argc, char *argv[])
 		printf ("Problems reading results from: %s\n", inputf);
 		return EXIT_FAILURE; 
 	}
-transform();
+transform_DB();
 	init_rating();
 
 	if (!QUIET_MODE) {
@@ -368,7 +364,7 @@ usage (void)
 |
 \**/
 
-
+#if 0
 static bool_t
 playeridx_from_str (const char *s, int *idx)
 {
@@ -402,7 +398,9 @@ addplayer (const char *s, int *idx)
 	Labelbuffer_end = b;
 	return success;
 }
+#endif
 
+#if 0
 static void report_error (long int n) 
 {
 	fprintf(stderr, "\nParsing error in line: %ld\n", n+1);
@@ -463,6 +461,7 @@ pgn_result_report (struct pgn_result *p)
 
 	return ok;
 }
+#endif
 
 static int
 compareit (const void *a, const void *b)
@@ -530,136 +529,11 @@ all_report (FILE *csvf, FILE *textf)
 }
 
 
-
+#if 0
 static bool_t 
 is_complete (struct pgn_result *p)
 {
 	return p->wtag_present && p->btag_present && p->result_present;
-}
-
-static bool_t
-fpgnscan (FILE *fpgn)
-{
-	struct pgn_result 	result;
-	int					c;
-	long int			line_counter = 0;
-	long int			game_counter = 0;
-
-	if (NULL == fpgn)
-		return FALSE;
-
-	if (!QUIET_MODE) 
-		printf("\nimporting results (x1000): \n"); fflush(stdout);
-
-	pgn_result_reset  (&result);
-
-	while (EOF != (c = fgetc(fpgn))) {
-
-		if (c == '\n') {
-			line_counter++;
-			continue;
-		}
-
-		if (isspace(c) || c == '.') {
-			continue;
-		}
-
-		switch (c) {
-
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-			case '0':
-
-				break;
-
-			case 'R':
-			case 'N':
-			case 'B':
-			case 'K':
-			case 'Q':
-			case 'a':
-			case 'b':
-			case 'c':
-			case 'd':
-			case 'e':
-			case 'f':
-			case 'g':
-			case 'h':
-			case 'O':
-
-			case '+': case '#': case 'x': case '/': case '-': case '=':
-
-				break;
-
-			case '*':
-			
-				break;
-
-			case '[': 
-				{	char cmmd[PGNSTRSIZE], prm [PGNSTRSIZE];
-					read_tagln(fpgn, cmmd, prm, sizeof(cmmd), &line_counter); 
-					if (isresultcmd(cmmd)) {
-						result.result = res2int (prm);
-						result.result_present = TRUE;
-					}
-					if (iswhitecmd(cmmd)) {
-						strcpy (result.wtag, prm);
-						result.wtag_present = TRUE;
-					}
-					if (isblackcmd(cmmd)) {
-						strcpy (result.btag, prm);
-						result.btag_present = TRUE;
-					}
-				}
-				break;
-
-			case '{':
-				skip_comment(fpgn, &line_counter);
-				break;
-
-			case '(':
-				skip_variation(fpgn, &line_counter);
-				break;
-
-			default:
-				report_error (line_counter);
-				printf("unrecognized character: %c :%d\n",c,c);
-				break;
-
-		} /* switch */
-
-		if (is_complete (&result)) {
-			if (!pgn_result_report (&result)) {
-				fprintf (stderr, "out of memory\n");
-				exit(EXIT_FAILURE);
-			}
-			pgn_result_reset  (&result);
-			game_counter++;
-
-			if (!QUIET_MODE) {
-				if ((game_counter%1000)==0) {
-					printf ("*"); fflush(stdout);
-				}
-				if ((game_counter%40000)==0) {
-					printf ("  %4ldk\n", game_counter/1000); fflush(stdout);
-				}
-			}
-		}
-
-	} /* while */
-
-	if (!QUIET_MODE) 
-		printf("  total games: %7ld \n", game_counter); fflush(stdout);
-
-	return TRUE;
-
 }
 
 
@@ -808,6 +682,7 @@ res2int (const char *s)
 	} else
 		return RESULT_DRAW;
 }
+#endif
 
 /************************************************************************/
 
