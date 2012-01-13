@@ -42,7 +42,7 @@ struct DATA {
 	int 	n_players;
 	int 	n_games;
 	char	labels[LABELBUFFERSIZE];
-	char *	labels_end;
+	int		labels_end_idx;
 	char *	name	[MAXPLAYERS];
 	int 	white	[MAXGAMES];
 	int 	black	[MAXGAMES];
@@ -102,7 +102,7 @@ static void
 data_init (struct DATA *d)
 {
 	d->labels[0] = '\0';
-	d->labels_end = d->labels;
+	d->labels_end_idx = 0;
 	d->n_players = 0;
 	d->n_games = 0;
 }
@@ -124,7 +124,7 @@ static bool_t
 addplayer (const char *s, int *idx)
 {
 	long int i;
-	char *b = DB.labels_end;
+	char *b = DB.labels + DB.labels_end_idx;
 	long int remaining = (long int) (&DB.labels[LABELBUFFERSIZE] - b - 1);
 	long int len = (long int) strlen(s);
 	bool_t success = len < remaining && DB.n_players < MAXPLAYERS;
@@ -138,7 +138,7 @@ addplayer (const char *s, int *idx)
 		*b++ = '\0';
 	}
 
-	DB.labels_end = b;
+	DB.labels_end_idx = b - DB.labels;
 	return success;
 }
 
