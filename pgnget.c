@@ -43,7 +43,7 @@ struct DATA {
 	int 	n_games;
 	char	labels[LABELBUFFERSIZE];
 	size_t	labels_end_idx;
-	char *	name	[MAXPLAYERS];
+	size_t	name	[MAXPLAYERS];
 	int 	white	[MAXGAMES];
 	int 	black	[MAXGAMES];
 	int 	score	[MAXGAMES];
@@ -114,7 +114,9 @@ playeridx_from_str (const char *s, int *idx)
 	int i;
 	bool_t found;
 	for (i = 0, found = FALSE; !found && i < DB.n_players; i++) {
-		found = (0 == strcmp (s, DB.name[i]) );
+		size_t x = DB.name[i];
+		char * l = DB.labels + x;	
+		found = (0 == strcmp (s, l) );
 		if (found) *idx = i;
 	}
 	return found;
@@ -130,8 +132,9 @@ addplayer (const char *s, int *idx)
 	bool_t success = len < remaining && DB.n_players < MAXPLAYERS;
 
 	if (success) {
-		*idx = DB.n_players;
-		DB.name[DB.n_players++] = b;
+		int x = DB.n_players++;
+		*idx = x;
+		DB.name[x] = b - DB.labels;
 		for (i = 0; i < len; i++)  {
 			*b++ = *s++;
 		}
