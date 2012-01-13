@@ -6,6 +6,7 @@
 #include "mystr.h"
 #include "pgnget.h"
 #include "boolean.h"
+#include "ordolim.h"
 
 /*
 |
@@ -33,6 +34,8 @@ struct pgn_result {
 	char 	btag[PGNSTRSIZE];
 };
 
+/*
+
 
 #define MAXGAMES 1000000
 #define LABELBUFFERSIZE 100000
@@ -47,7 +50,7 @@ struct DATA {
 	int 	white	[MAXGAMES];
 	int 	black	[MAXGAMES];
 	int 	score	[MAXGAMES];
-};
+};*/
 struct DATA DB;
 static void 	data_init (struct DATA *d);
 
@@ -485,15 +488,6 @@ res2int (const char *s)
 }
 
 /************************************************************************/
-
-
-
-
-
-
-
-
-
 
 
 

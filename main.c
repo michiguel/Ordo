@@ -8,6 +8,7 @@
 #include "mystr.h"
 #include "proginfo.h"
 #include "boolean.h"
+#include "pgnget.h"
 
 /*
 |
@@ -83,8 +84,6 @@ enum RESULTS {
 	RESULT_DRAW = 1
 };
 
-const char *Result_string[] = {"1-0", "=-=", "0-1"};
-
 struct pgn_result {	
 	int 	wtag_present;
 	int 	btag_present;
@@ -98,20 +97,6 @@ struct pgn_result {
 #define MAXGAMES 1000000
 #define LABELBUFFERSIZE 100000
 #define MAXPLAYERS 10000
-
-struct DATA {	
-	char	Labelbuffer[LABELBUFFERSIZE];
-	char *	Labelbuffer_end;
-	char *	Name   [MAXPLAYERS];
-	int 	N_players;
-	int 	Whiteplayer	[MAXGAMES];
-	int 	Blackplayer	[MAXGAMES];
-	int 	Score		[MAXGAMES];
-	int 	N_games;
-};
-struct DATA DB;
-static void 	data_init (struct DATA *d);
-
 
 static char		Labelbuffer[LABELBUFFERSIZE] = {'\0'};
 static char 	*Labelbuffer_end = Labelbuffer;
@@ -169,8 +154,32 @@ static bool_t 	iswhitecmd (const char *s);
 static bool_t 	isblackcmd (const char *s);
 
 
-static bool_t	pgn_getresults (const char *pgn);
 static bool_t 	is_complete (struct pgn_result *p);
+
+
+
+
+static void transform(void)
+{
+int i;
+
+for (i = 0; i < DB.labels_end_idx; i++) {
+	Labelbuffer[i] = DB.labels[i];
+}
+Labelbuffer_end = Labelbuffer + DB.labels_end_idx;
+N_players = DB.n_players;
+N_games   = DB.n_games;
+
+for (i = 0; i < DB.n_players; i++) {
+	Name[i] = Labelbuffer + DB.name[i];
+}
+
+for (i = 0; i < DB.n_games; i++) {
+	Whiteplayer[i] = DB.white[i];
+	Blackplayer[i] = DB.black[i]; 
+	Score[i]       = DB.score[i];
+}
+}
 
 /*
 |
@@ -271,13 +280,11 @@ int main (int argc, char *argv[])
 
 	/*==== CALCULATIONS ====*/
 
-	data_init (&DB);
-
-	if (!pgn_getresults(inputf)) {
+	if (!pgn_getresults(inputf, FALSE /*****************************************************/)) {
 		printf ("Problems reading results from: %s\n", inputf);
 		return EXIT_FAILURE; 
 	}
-
+transform();
 	init_rating();
 
 	if (!QUIET_MODE) {
@@ -362,16 +369,6 @@ usage (void)
 \**/
 
 
-static void
-data_init (struct DATA *d)
-{
-	d->Labelbuffer[0] = '\0';
-	d->Labelbuffer_end = d->Labelbuffer;
-	d->N_players = 0;
-	d->N_games = 0;
-}
-
-
 static bool_t
 playeridx_from_str (const char *s, int *idx)
 {
@@ -404,18 +401,6 @@ addplayer (const char *s, int *idx)
 
 	Labelbuffer_end = b;
 	return success;
-}
-
-static bool_t
-pgn_getresults (const char *pgn)
-{
-	FILE *fpgn;
-	bool_t ok = FALSE;
-	if (NULL != (fpgn = fopen (pgn, "r"))) {
-		ok = fpgnscan (fpgn);
-		fclose(fpgn);
-	}
-	return ok;
 }
 
 static void report_error (long int n) 
