@@ -2,18 +2,19 @@
 #define H_PGNGET
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
+#include <stddef.h>
 #include "boolean.h"
 #include "ordolim.h"
 
 struct DATA {	
-	int 	n_players;
-	int 	n_games;
-	char	labels[LABELBUFFERSIZE];
-	size_t	labels_end_idx;
-	size_t	name	[MAXPLAYERS];
-	int 	white	[MAXGAMES];
-	int 	black	[MAXGAMES];
-	int 	score	[MAXGAMES];
+	int 		n_players;
+	int 		n_games;
+	char		labels[LABELBUFFERSIZE];
+	ptrdiff_t	labels_end_idx;
+	ptrdiff_t	name	[MAXPLAYERS];
+	int 		white	[MAXGAMES];
+	int 		black	[MAXGAMES];
+	int 		score	[MAXGAMES];
 };
 extern struct DATA DB;
 

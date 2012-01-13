@@ -117,7 +117,7 @@ playeridx_from_str (const char *s, int *idx)
 	int i;
 	bool_t found;
 	for (i = 0, found = FALSE; !found && i < DB.n_players; i++) {
-		size_t x = DB.name[i];
+		ptrdiff_t x = DB.name[i];
 		char * l = DB.labels + x;	
 		found = (0 == strcmp (s, l) );
 		if (found) *idx = i;

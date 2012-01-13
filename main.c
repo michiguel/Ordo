@@ -4,6 +4,7 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
+#include <stddef.h>
 
 #include "mystr.h"
 #include "proginfo.h"
@@ -139,9 +140,9 @@ static void
 transform_DB(void)
 {
 	int i;
-
-	for (i = 0; i < DB.labels_end_idx; i++) {
-		Labelbuffer[i] = DB.labels[i];
+	ptrdiff_t x;
+	for (x = 0; x < DB.labels_end_idx; x++) {
+		Labelbuffer[x] = DB.labels[x];
 	}
 	Labelbuffer_end = Labelbuffer + DB.labels_end_idx;
 	N_players = DB.n_players;
