@@ -136,28 +136,7 @@ void			ratings_backup  (void);
 
 /*------------------------------------------------------------------------*/
 
-static void 
-transform_DB(struct DATA *db)
-{
-	int i;
-	ptrdiff_t x;
-	for (x = 0; x < db->labels_end_idx; x++) {
-		Labelbuffer[x] = db->labels[x];
-	}
-	Labelbuffer_end = Labelbuffer + db->labels_end_idx;
-	N_players = db->n_players;
-	N_games   = db->n_games;
-
-	for (i = 0; i < db->n_players; i++) {
-		Name[i] = Labelbuffer + db->name[i];
-	}
-
-	for (i = 0; i < db->n_games; i++) {
-		Whiteplayer[i] = db->white[i];
-		Blackplayer[i] = db->black[i]; 
-		Score[i]       = db->score[i];
-	}
-}
+static void 	transform_DB(struct DATA *db);
 
 /*
 |
@@ -348,6 +327,28 @@ usage (void)
 |
 \**/
 
+static void 
+transform_DB(struct DATA *db)
+{
+	int i;
+	ptrdiff_t x;
+	for (x = 0; x < db->labels_end_idx; x++) {
+		Labelbuffer[x] = db->labels[x];
+	}
+	Labelbuffer_end = Labelbuffer + db->labels_end_idx;
+	N_players = db->n_players;
+	N_games   = db->n_games;
+
+	for (i = 0; i < db->n_players; i++) {
+		Name[i] = Labelbuffer + db->name[i];
+	}
+
+	for (i = 0; i < db->n_games; i++) {
+		Whiteplayer[i] = db->white[i];
+		Blackplayer[i] = db->black[i]; 
+		Score[i]       = db->score[i];
+	}
+}
 
 static int
 compareit (const void *a, const void *b)
