@@ -34,23 +34,6 @@ struct pgn_result {
 	char 	btag[PGNSTRSIZE];
 };
 
-/*
-
-
-#define MAXGAMES 1000000
-#define LABELBUFFERSIZE 100000
-#define MAXPLAYERS 10000
-
-struct DATA {	
-	int 	n_players;
-	int 	n_games;
-	char	labels[LABELBUFFERSIZE];
-	size_t	labels_end_idx;
-	size_t	name	[MAXPLAYERS];
-	int 	white	[MAXGAMES];
-	int 	black	[MAXGAMES];
-	int 	score	[MAXGAMES];
-};*/
 struct DATA DB;
 static void 	data_init (struct DATA *d);
 
@@ -197,6 +180,7 @@ pgn_result_collect (struct pgn_result *p)
 		ok = addplayer (p->btag, &j);
 	}
 
+	ok = ok && DB.n_games < MAXGAMES;
 	if (ok) {
 		DB.white [DB.n_games] = i;
 		DB.black [DB.n_games] = j;
@@ -314,7 +298,7 @@ fpgnscan (FILE *fpgn, bool_t quiet)
 
 		if (is_complete (&result)) {
 			if (!pgn_result_collect (&result)) {
-				fprintf (stderr, "out of memory\n");
+				fprintf (stderr, "\nCould not collect game: Limits reached\n");
 				exit(EXIT_FAILURE);
 			}
 			pgn_result_reset  (&result);

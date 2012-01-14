@@ -95,11 +95,6 @@ struct pgn_result {
 	char 	btag[PGNSTRSIZE];
 };
 
-
-#define MAXGAMES 1000000
-#define LABELBUFFERSIZE 100000
-#define MAXPLAYERS 10000
-
 static char		Labelbuffer[LABELBUFFERSIZE] = {'\0'};
 static char 	*Labelbuffer_end = Labelbuffer;
 
