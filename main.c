@@ -105,6 +105,8 @@ static int		playedby[MAXPLAYERS]; /* N games played by player "i" */
 static double	ratingof[MAXPLAYERS]; /* rating current */
 static double	ratingbk[MAXPLAYERS]; /* rating backup  */
 
+static double	Rating_results[MAXPLAYERS];
+
 /*------------------------------------------------------------------------*/
 
 void			all_report (FILE *csvf, FILE *textf);
@@ -117,6 +119,11 @@ void			calc_rating (bool_t quiet);
 double 			deviation (void);
 void			ratings_restore (void);
 void			ratings_backup  (void);
+
+
+static void 	ratings_results (void);
+
+static void		simulate_scores(void);
 
 /*------------------------------------------------------------------------*/
 
@@ -258,9 +265,18 @@ int main (int argc, char *argv[])
 		}
 	}
 
+randfast_init (132456);
+
 	calc_rating(QUIET_MODE);
 
+ratings_results();
+
 	all_report (csvf, textf);
+
+simulate_scores();
+calc_rating(QUIET_MODE);
+all_report (csvf, textf);
+
 	
 	if (textf_opened) fclose (textf);
 	if (csvf_opened)  fclose (csvf); 
@@ -516,6 +532,42 @@ ratings_backup (void)
 		ratingbk[j] = ratingof[j];
 	}	
 }
+
+#if 1
+void
+ratings_results (void)
+{
+	int j;
+	for (j = 0; j < N_players; j++) {
+		Rating_results[j] = ratingof[j];
+	}	
+}
+
+static void
+simulate_scores(void)
+{
+	long int i, w, b, z, y;
+	double f;
+	double	*rating = Rating_results;
+
+	for (i = 0; i < N_games; i++) {
+
+		w = Whiteplayer[i];
+		b = Blackplayer[i];
+
+		f = xpect (rating[w], rating[b]);
+
+		z = (unsigned)(f * (0xffff+1));
+		y = randfast32() & 0xffff;
+
+		if (y < z) {
+			Score [i] = WHITE_WIN;
+		} else {
+			Score [i] = BLACK_WIN;
+		}
+	}
+}
+#endif
 
 double 
 deviation (void)
