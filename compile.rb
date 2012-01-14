@@ -7,6 +7,20 @@ if ARGV[0] == 'gcc'
 	$CC='gcc'
 	$NAME='ordo'
 
+elsif ARGV[0] == 'gcc64'
+
+	puts 'gcc selected'
+	$ADDPATH=''
+	$CC='gcc'
+	$NAME='ordo-linux64'
+
+elsif ARGV[0] == 'gcc32'
+
+	puts 'gcc32 selected'
+	$ADDPATH=''
+	$CC='gcc -m32'
+	$NAME='ordo-linux32'
+
 elsif ARGV[0] == 'win32'  
 
 	puts 'win32 selected'
@@ -37,7 +51,7 @@ $INCLUDE='-I myopt'
 $WARNINGS='-Wwrite-strings -Wconversion -Wshadow -Wparentheses -Wlogical-op -Wunused -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement -W -Wall -Wextra'
 $OPT='-O2'
 $LIB='-lm'
-$SRC='myopt/myopt.c mystr.c proginfo.c main.c'
+$SRC='myopt/myopt.c mystr.c proginfo.c pgnget.c randfast.c main.c'
 $EXE='-o ' + $NAME
 
 #=====================

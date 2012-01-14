@@ -4,10 +4,13 @@
 #include <string.h>
 #include <math.h>
 #include <assert.h>
+#include <stddef.h>
 
 #include "mystr.h"
 #include "proginfo.h"
 #include "boolean.h"
+#include "pgnget.h"
+#include "randfast.h"
 
 /*
 |
@@ -83,8 +86,6 @@ enum RESULTS {
 	RESULT_DRAW = 1
 };
 
-const char *Result_string[] = {"1-0", "=-=", "0-1"};
-
 struct pgn_result {	
 	int 	wtag_present;
 	int 	btag_present;
@@ -93,25 +94,6 @@ struct pgn_result {
 	char 	wtag[PGNSTRSIZE];
 	char 	btag[PGNSTRSIZE];
 };
-
-
-#define MAXGAMES 1000000
-#define LABELBUFFERSIZE 100000
-#define MAXPLAYERS 10000
-
-struct DATA {	
-	char	Labelbuffer[LABELBUFFERSIZE];
-	char *	Labelbuffer_end;
-	char *	Name   [MAXPLAYERS];
-	int 	N_players;
-	int 	Whiteplayer	[MAXGAMES];
-	int 	Blackplayer	[MAXGAMES];
-	int 	Score		[MAXGAMES];
-	int 	N_games;
-};
-struct DATA DB;
-static void 	data_init (struct DATA *d);
-
 
 static char		Labelbuffer[LABELBUFFERSIZE] = {'\0'};
 static char 	*Labelbuffer_end = Labelbuffer;
@@ -137,44 +119,20 @@ static int 		N_games = 0;
 
 /*------------------------------------------------------------------------*/
 
-static bool_t	playeridx_from_str (const char *s, int *idx);
-static bool_t	addplayer (const char *s, int *i);
-void			pgn_all_report (FILE *csvf, FILE *textf);
+void			all_report (FILE *csvf, FILE *textf);
 void			calc_obtained_playedby (void);
 void			init_rating (void);
 void			calc_expected (void);
 double			xpect (double a, double b);
 void			adjust_rating (double delta);
-void			calc_rating (void);
+void			calc_rating (bool_t quiet);
 double 			deviation (void);
 void			ratings_restore (void);
 void			ratings_backup  (void);
 
 /*------------------------------------------------------------------------*/
 
-static void		report_error 	(long int n);
-
-static void		skip_comment 	(FILE *f, long int *counter);
-static void		read_tagln 		(FILE *f, char s[], char t[], int sz, long int *counter);
-static void		skip_variation 	(FILE *f, long int *counter);
-static void		skip_string 	(FILE *f, long int *counter);
-static void		read_stringln 	(FILE *f, char s[], int sz);
-
-static int		res2int 		(const char *s);
-#if 0
-static bool_t	issep 			(int c);
-static bool_t	isend 			(const char *token);
-#endif
-static bool_t	isresultcmd 	(const char *s);
-
-static bool_t 	fpgnscan (FILE *fpgn);
-
-static bool_t 	iswhitecmd (const char *s);
-static bool_t 	isblackcmd (const char *s);
-
-
-static bool_t	pgn_getresults (const char *pgn);
-static bool_t 	is_complete (struct pgn_result *p);
+static void 	transform_DB(struct DATA *db);
 
 /*
 |
@@ -275,12 +233,12 @@ int main (int argc, char *argv[])
 
 	/*==== CALCULATIONS ====*/
 
-	data_init (&DB);
-
-	if (!pgn_getresults(inputf)) {
+	if (!pgn_getresults(inputf, QUIET_MODE)) {
 		printf ("Problems reading results from: %s\n", inputf);
 		return EXIT_FAILURE; 
 	}
+	
+	transform_DB(&DB); /* convert DB to global variables */
 
 	init_rating();
 
@@ -312,9 +270,9 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	calc_rating();
+	calc_rating(QUIET_MODE);
 
-	pgn_all_report (csvf, textf);
+	all_report (csvf, textf);
 	
 	if (textf_opened) fclose (textf);
 	if (csvf_opened)  fclose (csvf); 
@@ -365,122 +323,27 @@ usage (void)
 |
 \**/
 
-
-static void
-data_init (struct DATA *d)
-{
-	d->Labelbuffer[0] = '\0';
-	d->Labelbuffer_end = d->Labelbuffer;
-	d->N_players = 0;
-	d->N_games = 0;
-}
-
-
-static bool_t
-playeridx_from_str (const char *s, int *idx)
+static void 
+transform_DB(struct DATA *db)
 {
 	int i;
-	bool_t found;
-	for (i = 0, found = FALSE; !found && i < N_players; i++) {
-		found = (0 == strcmp (s, Name[i]) );
-		if (found) *idx = i;
+	ptrdiff_t x;
+	for (x = 0; x < db->labels_end_idx; x++) {
+		Labelbuffer[x] = db->labels[x];
 	}
-	return found;
-}
+	Labelbuffer_end = Labelbuffer + db->labels_end_idx;
+	N_players = db->n_players;
+	N_games   = db->n_games;
 
-static bool_t
-addplayer (const char *s, int *idx)
-{
-	long int i;
-	char *b = Labelbuffer_end;
-	long int remaining = (long int) (&Labelbuffer[LABELBUFFERSIZE] - b - 1);
-	long int len = (long int) strlen(s);
-	bool_t success = len < remaining && N_players < MAXPLAYERS;
-
-	if (success) {
-		*idx = N_players;
-		Name[N_players++] = b;
-		for (i = 0; i < len; i++)  {
-			*b++ = *s++;
-		}
-		*b++ = '\0';
+	for (i = 0; i < db->n_players; i++) {
+		Name[i] = Labelbuffer + db->name[i];
 	}
 
-	Labelbuffer_end = b;
-	return success;
-}
-
-static bool_t
-pgn_getresults (const char *pgn)
-{
-	FILE *fpgn;
-	bool_t ok = FALSE;
-	if (NULL != (fpgn = fopen (pgn, "r"))) {
-		ok = fpgnscan (fpgn);
-		fclose(fpgn);
+	for (i = 0; i < db->n_games; i++) {
+		Whiteplayer[i] = db->white[i];
+		Blackplayer[i] = db->black[i]; 
+		Score[i]       = db->score[i];
 	}
-	return ok;
-}
-
-static void report_error (long int n) 
-{
-	fprintf(stderr, "\nParsing error in line: %ld\n", n+1);
-}
-
-/**********************************************************************************************************************/
-
-static void
-skip_comment (FILE *f, long int *counter) 
-{
-	int c;
-	while (EOF != (c = fgetc(f))) {
-		
-		if (c == '\n')
-			*counter += 1;
-
-		if (c == '\"') {
-			skip_string (f, counter);
-			continue;
-		}
-		if (c == '}') 
-			break;
-	}	
-}
-
-
-static void
-pgn_result_reset (struct pgn_result *p)
-{
-	p->wtag_present   = FALSE;
-	p->btag_present   = FALSE;
-	p->result_present = FALSE;	
-	p->wtag[0] = '\0';
-	p->btag[0] = '\0';
-	p->result = 0;
-}
-
-static bool_t
-pgn_result_report (struct pgn_result *p)
-{
-	int i, j;
-	bool_t ok = TRUE;
-
-	if (ok && !playeridx_from_str (p->wtag, &i)) {
-		ok = addplayer (p->wtag, &i);
-	}
-
-	if (ok && !playeridx_from_str (p->btag, &j)) {
-		ok = addplayer (p->btag, &j);
-	}
-
-	if (ok) {
-		Whiteplayer [N_games] = i;
-		Blackplayer [N_games] = j;
-		Score       [N_games] = p->result;
-		N_games++;
-	}
-
-	return ok;
 }
 
 static int
@@ -497,7 +360,7 @@ compareit (const void *a, const void *b)
 
 
 void
-pgn_all_report (FILE *csvf, FILE *textf)
+all_report (FILE *csvf, FILE *textf)
 {
 	FILE *f;
 	int i, j;
@@ -524,9 +387,7 @@ pgn_all_report (FILE *csvf, FILE *textf)
 		}
 	}
 
-
 	/* output in a comma separated value file */
-
 	f = csvf;
 	if (f != NULL) {
 		for (i = 0; i < N_players; i++) {
@@ -546,302 +407,6 @@ pgn_all_report (FILE *csvf, FILE *textf)
 	}
 
 	return;
-}
-
-
-
-static bool_t 
-is_complete (struct pgn_result *p)
-{
-	return p->wtag_present && p->btag_present && p->result_present;
-}
-
-static bool_t
-fpgnscan (FILE *fpgn)
-{
-	struct pgn_result 	result;
-	int					c;
-	long int			line_counter = 0;
-	long int			game_counter = 0;
-
-	if (NULL == fpgn)
-		return FALSE;
-
-	if (!QUIET_MODE) 
-		printf("\nimporting results (x1000): \n"); fflush(stdout);
-
-	pgn_result_reset  (&result);
-
-	while (EOF != (c = fgetc(fpgn))) {
-
-		if (c == '\n') {
-			line_counter++;
-			continue;
-		}
-
-		if (isspace(c) || c == '.') {
-			continue;
-		}
-
-		switch (c) {
-
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-			case '0':
-
-				break;
-
-			case 'R':
-			case 'N':
-			case 'B':
-			case 'K':
-			case 'Q':
-			case 'a':
-			case 'b':
-			case 'c':
-			case 'd':
-			case 'e':
-			case 'f':
-			case 'g':
-			case 'h':
-			case 'O':
-
-			case '+': case '#': case 'x': case '/': case '-': case '=':
-
-				break;
-
-			case '*':
-			
-				break;
-
-			case '[': 
-				{	char cmmd[PGNSTRSIZE], prm [PGNSTRSIZE];
-					read_tagln(fpgn, cmmd, prm, sizeof(cmmd), &line_counter); 
-					if (isresultcmd(cmmd)) {
-						result.result = res2int (prm);
-						result.result_present = TRUE;
-					}
-					if (iswhitecmd(cmmd)) {
-						strcpy (result.wtag, prm);
-						result.wtag_present = TRUE;
-					}
-					if (isblackcmd(cmmd)) {
-						strcpy (result.btag, prm);
-						result.btag_present = TRUE;
-					}
-				}
-				break;
-
-			case '{':
-				skip_comment(fpgn, &line_counter);
-				break;
-
-			case '(':
-				skip_variation(fpgn, &line_counter);
-				break;
-
-			default:
-				report_error (line_counter);
-				printf("unrecognized character: %c :%d\n",c,c);
-				break;
-
-		} /* switch */
-
-		if (is_complete (&result)) {
-			if (!pgn_result_report (&result)) {
-				fprintf (stderr, "out of memory\n");
-				exit(EXIT_FAILURE);
-			}
-			pgn_result_reset  (&result);
-			game_counter++;
-
-			if (!QUIET_MODE) {
-				if ((game_counter%1000)==0) {
-					printf ("*"); fflush(stdout);
-				}
-				if ((game_counter%40000)==0) {
-					printf ("  %4ldk\n", game_counter/1000); fflush(stdout);
-				}
-			}
-		}
-
-	} /* while */
-
-	if (!QUIET_MODE) 
-		printf("  total games: %7ld \n", game_counter); fflush(stdout);
-
-	return TRUE;
-
-}
-
-
-static void  
-read_tagln (FILE *f, char s[], char t[], int sz, long int *counter)
-{
-	int c;
-	char prmstr [PGNSTRSIZE];
-	char cmmd   [PGNSTRSIZE];
-	char buf    [PGNSTRSIZE];
-	char *p = cmmd;	
-	char *limit = cmmd + PGNSTRSIZE - 1;
-
-	while (p < limit && EOF != (c = fgetc(f))) {
-
-		if (c == '\"') {
-			read_stringln (f, prmstr, sizeof(prmstr));
-			continue;
-		}
-
-		if (c == ']')
-			break;
-		
-		if (c == '\n') { 
-			*counter += 1;
-		}
-
-		*p++ = (char) c;
-	}
-	*p = '\0';
-
-	sscanf (cmmd,"%s", buf);
-	mystrncpy (s, buf, sz);
-	mystrncpy (t, prmstr, sz);
-
-}
-
-
-static void
-skip_variation (FILE *f, long int *counter)
-{
-	int level = 0;
-	int c;
-
-	while (EOF != (c = fgetc(f))) {
-		
-		if (c == '\n')
-			*counter += 1;
-
-		if (c == '(')
-			level++;
-
-		if (c == ')') { 
-			if (level == 0)
-				break;
-			else
-				level--;
-		}
-	}
-}
-
-static void
-skip_string (FILE *f, long int *counter)
-{
-	int c;
-	while (EOF != (c = fgetc(f))) {
-		if (c == '\n')
-			*counter += 1;
-		if (c == '\"') 
-			break;
-	}
-}
-
-
-static void
-read_stringln (FILE *f, char s[], int sz)
-/* read the string until " unless there is an EOF of EOL */
-{
-	int		c;
-	char	buffer[PGNSTRSIZE];
-	char	*p     = buffer;
-	char	*limit = buffer + PGNSTRSIZE - 1;
-
-	while (p < limit && EOF != (c = fgetc(f))) {
-		
-		/* end */
-		if (c == '\"') 
-			break;
-		
-		/* end */
-		if (c == '\n') { 
-			ungetc(c, f);
-			break;
-		}
-
-		/* escape sequence */
-		if (c == '\\') {
-			int cc = fgetc(f);
-			if (EOF == cc)
-				break;
-			if ('\"' == cc || '\\' == cc) {
-				*p++ = (char) cc;
-			} else {
-				*p++ = (char) c;
-				if (p < limit)
-					*p++ = (char) cc;				
-			}
-			continue;
-		} 
-		
-		*p++ = (char) c;
-
-	}
-	*p = '\0';
-	mystrncpy (s, buffer, sz);
-}
-
-#if 0
-static bool_t
-issep (int c) 
-{
-	return 	isspace(c) || c == '.' || c == '{' || c == '(';
-}
-
-static bool_t
-isend (const char *token)
-{
-	return	   !strcmp(token,"1-0") 
-			|| !strcmp(token,"0-1") 
-			|| !strcmp(token,"1/2-1/2");
-}
-#endif
-
-static bool_t
-isresultcmd (const char *s)
-{
-	return !strcmp(s,"Result") || !strcmp(s,"result");
-}
-
-static bool_t
-iswhitecmd (const char *s)
-{
-	return !strcmp(s,"White") || !strcmp(s,"white");
-}
-
-static bool_t
-isblackcmd (const char *s)
-{
-	return !strcmp(s,"Black") || !strcmp(s,"black");
-}
-
-
-static int
-res2int (const char *s)
-{
-	if (!strcmp(s, "1-0")) {
-		return WHITE_WIN;
-	} else if (!strcmp(s, "0-1")) {
-		return BLACK_WIN;
-	} else if (!strcmp(s, "1/2-1/2")) {
-		return RESULT_DRAW;
-	} else
-		return RESULT_DRAW;
 }
 
 /************************************************************************/
@@ -964,28 +529,6 @@ ratings_backup (void)
 	}	
 }
 
-#if 0
-void
-show_backup (void)
-{
-	int j;
-	printf ("backup\n");
-	for (j = 0; j < N_players; j++) {
-		printf ("%d: %f\n",j,ratingbk[j]);
-	}	
-}
-
-void
-show_current (void)
-{
-	int j;
-	printf ("current\n");
-	for (j = 0; j < N_players; j++) {
-		printf ("%d: %f\n",j,ratingof[j]);
-	}	
-}
-#endif
-
 double 
 deviation (void)
 {
@@ -1000,20 +543,8 @@ deviation (void)
 	return accum;
 }
 
-#if 0
 void
-show_partial(void)
-{
-	int j;
-	for (j = 0; j < N_players; j++) {
-		printf("%21s: p=%d, o=%4.1f,  e=%4.1f, rating = %4.1f\n", 
-			Name[j], playedby[j], obtained[j], expected[j], ratingof[j]);
-	}
-}
-#endif
-
-void
-calc_rating (void)
+calc_rating (bool_t quiet)
 {
 	int i, rounds;
 	double delta, denom;
@@ -1032,7 +563,7 @@ calc_rating (void)
 	calc_expected();
 	olddev = curdev = deviation();
 
-	if (!QUIET_MODE) 
+	if (!quiet) 
 		printf ("%3s %4s %10s\n", "phase", "iteration", "deviation");
 
 	while (n-->0) {
@@ -1060,12 +591,12 @@ calc_rating (void)
 
 		outputdev = sqrt(curdev)/N_players;
 
-		if (!QUIET_MODE) 
+		if (!quiet) 
 			printf ("%3d %7d %14.5f\n", phase, i, outputdev);
 		phase++;
 	}
 
-	if (!QUIET_MODE) 
+	if (!quiet) 
 		printf ("done\n");
 }
 

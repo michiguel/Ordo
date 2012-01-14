@@ -1,2 +1,2 @@
-#define VERSION "v0.2.8-gitignore"
+#define VERSION "v0.3-gi1-comp1"
 
