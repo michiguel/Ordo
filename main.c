@@ -10,6 +10,7 @@
 #include "proginfo.h"
 #include "boolean.h"
 #include "pgnget.h"
+#include "randfast.h"
 
 /*
 |

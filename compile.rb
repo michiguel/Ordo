@@ -37,7 +37,7 @@ $INCLUDE='-I myopt'
 $WARNINGS='-Wwrite-strings -Wconversion -Wshadow -Wparentheses -Wlogical-op -Wunused -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement -W -Wall -Wextra'
 $OPT='-O2'
 $LIB='-lm'
-$SRC='myopt/myopt.c mystr.c proginfo.c pgnget.c main.c'
+$SRC='myopt/myopt.c mystr.c proginfo.c pgnget.c randfast.c main.c'
 $EXE='-o ' + $NAME
 
 #=====================

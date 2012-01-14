@@ -5,6 +5,8 @@
 #include <stddef.h>
 #include "ordolim.h"
 
+typedef unsigned long int  uint32_t;
+
 struct DATA {	
 	int 		n_players;
 	int 		n_games;
