@@ -551,8 +551,7 @@ calc_rating (bool_t quiet)
 	calc_expected();
 	olddev = curdev = deviation();
 
-	if (!quiet) 
-		printf ("%3s %4s %10s\n", "phase", "iteration", "deviation");
+	if (!quiet) printf ("%3s %4s %10s\n", "phase", "iteration", "deviation");
 
 	while (n-->0) {
 		double outputdev;
@@ -579,13 +578,11 @@ calc_rating (bool_t quiet)
 
 		outputdev = sqrt(curdev)/N_players;
 
-		if (!quiet) 
-			printf ("%3d %7d %14.5f\n", phase, i, outputdev);
+		if (!quiet) printf ("%3d %7d %14.5f\n", phase, i, outputdev);
 		phase++;
 	}
 
-	if (!quiet) 
-		printf ("done\n");
+	if (!quiet) printf ("done\n");
 }
 
 
