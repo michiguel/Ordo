@@ -77,22 +77,10 @@ const char *OPTION_LIST = "vhp:qLa:o:c:";
 |
 \*--------------------------------------------------------------*/
 
-
-#define PGNSTRSIZE 1024
-
 enum RESULTS {
 	WHITE_WIN = 0,
 	BLACK_WIN = 2,
 	RESULT_DRAW = 1
-};
-
-struct pgn_result {	
-	int 	wtag_present;
-	int 	btag_present;
-	int 	result_present;	
-	int 	result;
-	char 	wtag[PGNSTRSIZE];
-	char 	btag[PGNSTRSIZE];
 };
 
 static char		Labelbuffer[LABELBUFFERSIZE] = {'\0'};
@@ -100,22 +88,22 @@ static char 	*Labelbuffer_end = Labelbuffer;
 
 /* players */
 static char 	*Name   [MAXPLAYERS];
-static double	obtained[MAXPLAYERS];
-static double	expected[MAXPLAYERS];
-static int		playedby[MAXPLAYERS]; /* N games played by player "i" */
-static double	ratingof[MAXPLAYERS]; /* rating current */
-static double	ratingbk[MAXPLAYERS]; /* rating backup  */
 static int 		N_players = 0;
-
-static double	general_average = 2300.0;
-
-static int		sorted  [MAXPLAYERS]; /* sorted index by rating */
 
 /* games */
 static int 		Whiteplayer	[MAXGAMES];
 static int 		Blackplayer	[MAXGAMES];
 static int 		Score		[MAXGAMES];
 static int 		N_games = 0;
+
+/**/
+static double	general_average = 2300.0;
+static int		sorted  [MAXPLAYERS]; /* sorted index by rating */
+static double	obtained[MAXPLAYERS];
+static double	expected[MAXPLAYERS];
+static int		playedby[MAXPLAYERS]; /* N games played by player "i" */
+static double	ratingof[MAXPLAYERS]; /* rating current */
+static double	ratingbk[MAXPLAYERS]; /* rating backup  */
 
 /*------------------------------------------------------------------------*/
 
