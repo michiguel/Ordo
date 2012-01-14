@@ -298,7 +298,7 @@ fpgnscan (FILE *fpgn, bool_t quiet)
 
 		if (is_complete (&result)) {
 			if (!pgn_result_collect (&result)) {
-				fprintf (stderr, "\nCould not collect game: Limits reached\n");
+				fprintf (stderr, "\nCould not collect more games: Limits reached\n");
 				exit(EXIT_FAILURE);
 			}
 			pgn_result_reset  (&result);
