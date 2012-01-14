@@ -3,7 +3,7 @@
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
 
-#define MAXGAMES 5000000
+#define MAXGAMES 3000000
 #define LABELBUFFERSIZE 1000000
 #define MAXPLAYERS 50000
 
