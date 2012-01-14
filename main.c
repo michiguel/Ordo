@@ -592,7 +592,7 @@ calc_rating (bool_t quiet)
 double
 xpect (double a, double b)
 {
-	double k = 173;
+	double k = 1.0/173.0;
 	double diff = a - b;
-	return 1.0 / (1.0 + exp(-diff/k));
+	return 1.0 / (1.0 + exp(-diff*k));
 }
