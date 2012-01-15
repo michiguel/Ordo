@@ -66,11 +66,12 @@ static void usage (void);
 		" -c <file> output file (comma separated value format)\n"
 		" -o <file> output file (text format), goes to the screen if not present\n"
 		" -s  #     perform # simulations to calculate errors\n"
+		" -e <file> saves an error matrix, if -s was implemented\n"
 		"\n"
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		;
 
-const char *OPTION_LIST = "vhp:qLa:o:c:s:";
+const char *OPTION_LIST = "vhp:qLa:o:c:s:e:";
 
 /*
 |
@@ -157,7 +158,7 @@ int main (int argc, char *argv[])
 	FILE *textf;
 
 	int op;
-	const char *inputf, *textstr, *csvstr;
+	const char *inputf, *textstr, *csvstr, *ematstr;
 	int version_mode, help_mode, license_mode, input_mode;
 
 	/* defaults */
@@ -169,6 +170,7 @@ int main (int argc, char *argv[])
 	inputf       = NULL;
 	textstr 	 = NULL;
 	csvstr       = NULL;
+	ematstr 	 = NULL;
 
 	while (END_OF_OPTIONS != (op = options (argc, argv, OPTION_LIST))) {
 		switch (op) {
@@ -183,6 +185,8 @@ int main (int argc, char *argv[])
 			case 'c': 	csvstr = opt_arg;
 						break;
 			case 'o': 	textstr = opt_arg;
+						break;
+			case 'e': 	ematstr = opt_arg;
 						break;
 			case 'a': 	if (1 != sscanf(opt_arg,"%lf", &general_average)) {
 							fprintf(stderr, "wrong average parameter\n");
@@ -344,7 +348,8 @@ int main (int argc, char *argv[])
 
 	all_report (csvf, textf);
 
-errorsout ("errors.csv");
+if (Simulate > 1 && NULL != ematstr)
+errorsout (ematstr);
 
 	if (textf_opened) fclose (textf);
 	if (csvf_opened)  fclose (csvf); 
