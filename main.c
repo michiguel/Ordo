@@ -117,9 +117,13 @@ static long 	Simulate = 0;
 
 #define MAXtablediff 100000
 
-static double	dsum1[MAXtablediff]; 
-static double	dsum2[MAXtablediff]; 
-static double	dsdev[MAXtablediff]; 
+struct DEVIATION_ACC {
+	double sum1;
+	double sum2;
+	double sdev;
+};
+
+struct DEVIATION_ACC sim[MAXtablediff];
 
 /*------------------------------------------------------------------------*/
 
@@ -298,9 +302,9 @@ int main (int argc, char *argv[])
 			sdev[i] = 0;
 		}
 		for (i = 0; i < MAXtablediff; i++) {
-			dsum1[i] = 0;
-			dsum2[i] = 0;
-			dsdev[i] = 0;
+			sim[i].sum1 = 0;
+			sim[i].sum2 = 0;
+			sim[i].sdev = 0;
 		}
 	}
 
@@ -327,8 +331,8 @@ int main (int argc, char *argv[])
 				for (j = 0; j < i; j++) {
 					ptrdiff_t idx = (i*i+i)/2+j;
 					double diff = ratingof[i] - ratingof[j];	
-					dsum1[idx] += diff; 
-					dsum2[idx] += diff * diff;
+					sim[idx].sum1 += diff; 
+					sim[idx].sum2 += diff * diff;
 				}
 			}
 		}
@@ -340,7 +344,7 @@ int main (int argc, char *argv[])
 
 
 		for (i = 0; i < MAXtablediff; i++) {
-			dsdev[i] = sqrt( dsum2[i]/n - (dsum1[i]/n) * (dsum1[i]/n));
+			sim[i].sdev = sqrt( sim[i].sum2/n - (sim[i].sum1/n) * (sim[i].sum1/n));
 		}
 
 	}
@@ -462,9 +466,7 @@ errorsout(const char *out)
 					idx = (x*x+x)/2+y;					
 				else
 					idx = (y*y+y)/2+x;
-				fprintf(f,",%.1f",dsdev[idx]);
-//if (j==0)
-//printf("y=%ld x=%ld %s,%s,%f,   1=%f 2=%f,   %ld\n",y,x,Name[y],Name[x],dsdev[idx],dsum1[idx],dsum2[idx],idx);
+				fprintf(f,",%.1f",sim[idx].sdev);
 			}
 
 			fprintf(f, "\n");
