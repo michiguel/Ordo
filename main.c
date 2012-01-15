@@ -65,11 +65,12 @@ static void usage (void);
 		" -p <file> input file in .pgn format\n"
 		" -c <file> output file (comma separated value format)\n"
 		" -o <file> output file (text format), goes to the screen if not present\n"
+		" -s  #     perform # simulations to calculate errors\n"
 		"\n"
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		;
 
-const char *OPTION_LIST = "vhp:qLa:o:c:";
+const char *OPTION_LIST = "vhp:qLa:o:c:s:";
 
 /*
 |
@@ -106,6 +107,12 @@ static double	ratingof[MAXPLAYERS]; /* rating current */
 static double	ratingbk[MAXPLAYERS]; /* rating backup  */
 
 static double	Rating_results[MAXPLAYERS];
+
+static double	sum1[MAXPLAYERS]; 
+static double	sum2[MAXPLAYERS]; 
+static double	sdev[MAXPLAYERS]; 
+
+static long 	Simulate = 0;
 
 /*------------------------------------------------------------------------*/
 
@@ -170,9 +177,13 @@ int main (int argc, char *argv[])
 						break;
 			case 'o': 	textstr = opt_arg;
 						break;
-			case 'a': 	
-						if (1 != sscanf(opt_arg,"%lf", &general_average)) {
+			case 'a': 	if (1 != sscanf(opt_arg,"%lf", &general_average)) {
 							fprintf(stderr, "wrong average parameter\n");
+							exit(EXIT_FAILURE);
+						}
+						break;
+			case 's': 	if (1 != sscanf(opt_arg,"%lu", &Simulate) || Simulate < 0) {
+							fprintf(stderr, "wrong simulation parameter\n");
 							exit(EXIT_FAILURE);
 						}
 						break;
@@ -265,19 +276,52 @@ int main (int argc, char *argv[])
 		}
 	}
 
-randfast_init (132456);
+randfast_init (1324561);
+{	long i;
+	for (i = 0; i < N_players; i++) {
+		sum1[i] = 0;
+		sum2[i] = 0;
+		sdev[i] = 0;
+	}
+}
 
 	calc_rating(QUIET_MODE);
 
 ratings_results();
 
+//	all_report (csvf, textf);
+
+{	long i;
+	long z = Simulate;
+	double n = (double) (z);
+
+	if (z > 1) {
+		while (z-->0) {
+			printf ("Simulation=%ld\n",z);
+			simulate_scores();
+			calc_rating(QUIET_MODE);
+			for (i = 0; i < N_players; i++) {
+				sum1[i] += ratingof[i];
+				sum2[i] += ratingof[i]*ratingof[i];
+			}
+		}
+
+
+		for (i = 0; i < N_players; i++) {
+			sdev[i] = sqrt(
+						sum2[i]/n - (sum1[i]/n) * (sum1[i]/n)
+					);
+//printf ("i=%ld, sum2=%lf, sum1=%lf\n",i,sum2[i], sum1[i]);
+		}
+
+	}
+}
+
+
 	all_report (csvf, textf);
-
-simulate_scores();
-calc_rating(QUIET_MODE);
-all_report (csvf, textf);
-
 	
+
+
 	if (textf_opened) fclose (textf);
 	if (csvf_opened)  fclose (csvf); 
 
@@ -356,8 +400,8 @@ compareit (const void *a, const void *b)
 	const int *ja = (const int *) a;
 	const int *jb = (const int *) b;
 
-	const double da = ratingof[*ja];
-	const double db = ratingof[*jb];
+	const double da = Rating_results[*ja];
+	const double db = Rating_results[*jb];
     
 	return (da < db) - (da > db);
 }
@@ -381,14 +425,27 @@ all_report (FILE *csvf, FILE *textf)
 	f = textf;
 	if (f != NULL) {
 
+if (Simulate < 2) {
 		fprintf(f, "\n%30s: %7s %9s %7s %6s\n", 
 			"ENGINE", "RATING", "POINTS", "PLAYED", "(%)");
 
 		for (i = 0; i < N_players; i++) {
 			j = sorted[i];
 			fprintf(f, "%30s:  %5.1f    %6.1f   %5d   %4.1f%s\n", 
-				Name[j], ratingof[j], obtained[j], playedby[j], 100.0*obtained[j]/playedby[j], "%");
+				Name[j], Rating_results[j], obtained[j], playedby[j], 100.0*obtained[j]/playedby[j], "%");
 		}
+} else {
+		fprintf(f, "\n%30s: %7s %6s %7s %7s %6s\n", 
+			"ENGINE", "RATING", "ERROR", "POINTS", "PLAYED", "(%)");
+
+		for (i = 0; i < N_players; i++) {
+			j = sorted[i];
+			fprintf(f, "%30s:  %5.1f  %5.1f  %6.1f   %5d   %4.1f%s\n", 
+				Name[j], Rating_results[j], sdev[j], obtained[j], playedby[j], 100.0*obtained[j]/playedby[j], "%");
+		}
+}
+
+
 	}
 
 	/* output in a comma separated value file */
@@ -599,11 +656,13 @@ calc_rating (bool_t quiet)
 
 	calc_obtained_playedby();
 
-	init_rating();
+//	init_rating();
 	calc_expected();
 	olddev = curdev = deviation();
 
 	if (!quiet) printf ("%3s %4s %10s\n", "phase", "iteration", "deviation");
+
+//("olddev=%lf\n",olddev);
 
 	while (n-->0) {
 		double outputdev;
@@ -617,11 +676,14 @@ calc_rating (bool_t quiet)
 			calc_expected();
 			curdev = deviation();
 
+//printf("curdev=%lf\n",curdev);
+
 			if (curdev >= olddev) {
 				ratings_restore();
 				calc_expected();
 				curdev = deviation();	
 				assert (curdev == olddev);
+//printf("break\n");
 				break;
 			};	
 		}
