@@ -114,6 +114,12 @@ static double	sdev[MAXPLAYERS];
 
 static long 	Simulate = 0;
 
+#define MAXtablediff 100000
+
+static double	dsum1[MAXtablediff]; 
+static double	dsum2[MAXtablediff]; 
+static double	dsdev[MAXtablediff]; 
+
 /*------------------------------------------------------------------------*/
 
 void			all_report (FILE *csvf, FILE *textf);
@@ -131,6 +137,7 @@ void			ratings_backup  (void);
 static void 	ratings_results (void);
 
 static void		simulate_scores(void);
+static void		errorsout(const char *out);
 
 /*------------------------------------------------------------------------*/
 
@@ -237,7 +244,7 @@ int main (int argc, char *argv[])
 		inputf = argv[opt_index++];
 	}
 
-	/*==== CALCULATIONS ====*/
+	/*==== SET INPUT ====*/
 
 	if (!pgn_getresults(inputf, QUIET_MODE)) {
 		printf ("Problems reading results from: %s\n", inputf);
@@ -276,22 +283,29 @@ int main (int argc, char *argv[])
 		}
 	}
 
-randfast_init (1324561);
-{	long i;
-	for (i = 0; i < N_players; i++) {
-		sum1[i] = 0;
-		sum2[i] = 0;
-		sdev[i] = 0;
+	/*==== CALCULATIONS ====*/
+
+	randfast_init (1324561);
+	
+	{	long i;
+		for (i = 0; i < N_players; i++) {
+			sum1[i] = 0;
+			sum2[i] = 0;
+			sdev[i] = 0;
+		}
+		for (i = 0; i < MAXtablediff; i++) {
+			dsum1[i] = 0;
+			dsum2[i] = 0;
+			dsdev[i] = 0;
+		}
 	}
-}
 
 	calc_rating(QUIET_MODE);
 
-ratings_results();
+	ratings_results();
 
-//	all_report (csvf, textf);
-
-{	long i;
+{	
+	long i,j;
 	long z = Simulate;
 	double n = (double) (z);
 
@@ -299,28 +313,38 @@ ratings_results();
 		while (z-->0) {
 			printf ("Simulation=%ld\n",z);
 			simulate_scores();
-			calc_rating(QUIET_MODE);
+			calc_rating(TRUE);
 			for (i = 0; i < N_players; i++) {
 				sum1[i] += ratingof[i];
 				sum2[i] += ratingof[i]*ratingof[i];
+			}
+
+			for (i = 0; i < N_players; i++) {
+				for (j = 0; j < i; j++) {
+					ptrdiff_t idx = (i*i+i)/2+j;
+					double diff = ratingof[i] - ratingof[j];	
+					dsum1[idx] += diff; 
+					dsum2[idx] += diff * diff;
+				}
 			}
 		}
 
 
 		for (i = 0; i < N_players; i++) {
-			sdev[i] = sqrt(
-						sum2[i]/n - (sum1[i]/n) * (sum1[i]/n)
-					);
-//printf ("i=%ld, sum2=%lf, sum1=%lf\n",i,sum2[i], sum1[i]);
+			sdev[i] = sqrt( sum2[i]/n - (sum1[i]/n) * (sum1[i]/n));
+		}
+
+
+		for (i = 0; i < MAXtablediff; i++) {
+			dsdev[i] = sqrt( dsum2[i]/n - (dsum1[i]/n) * (dsum1[i]/n));
 		}
 
 	}
 }
 
-
 	all_report (csvf, textf);
-	
 
+errorsout ("errors.csv");
 
 	if (textf_opened) fclose (textf);
 	if (csvf_opened)  fclose (csvf); 
@@ -406,6 +430,47 @@ compareit (const void *a, const void *b)
 	return (da < db) - (da > db);
 }
 
+static void
+errorsout(const char *out)
+{
+	FILE *f;
+	ptrdiff_t idx;
+	long i,j,y,x;
+ 
+	if (NULL != (f = fopen (out, "w"))) {
+
+		fprintf(f, "\"N\",\"NAME\"");	
+		for (i = 0; i < N_players; i++) {
+			fprintf(f, ",%ld",i);		
+		}
+		fprintf(f, "\n");	
+
+		for (i = 0; i < N_players; i++) {
+			y = sorted[i];
+
+			fprintf(f, "%ld,\"%21s\"",i,Name[y]);
+
+			for (j = 0; j < i; j++) {
+				x = sorted[j];
+
+				if (y < x) 
+					idx = (x*x+x)/2+y;					
+				else
+					idx = (y*y+y)/2+x;
+				fprintf(f,",%.1f",dsdev[idx]);
+//if (j==0)
+//printf("y=%ld x=%ld %s,%s,%f,   1=%f 2=%f,   %ld\n",y,x,Name[y],Name[x],dsdev[idx],dsum1[idx],dsum2[idx],idx);
+			}
+
+			fprintf(f, "\n");
+
+		}
+		fclose(f);
+	} else {
+		fprintf(stderr, "Errors with file: %s\n",out);	
+	}
+	return;
+}
 
 void
 all_report (FILE *csvf, FILE *textf)
@@ -656,13 +721,10 @@ calc_rating (bool_t quiet)
 
 	calc_obtained_playedby();
 
-//	init_rating();
 	calc_expected();
 	olddev = curdev = deviation();
 
 	if (!quiet) printf ("%3s %4s %10s\n", "phase", "iteration", "deviation");
-
-//("olddev=%lf\n",olddev);
 
 	while (n-->0) {
 		double outputdev;
@@ -676,14 +738,11 @@ calc_rating (bool_t quiet)
 			calc_expected();
 			curdev = deviation();
 
-//printf("curdev=%lf\n",curdev);
-
 			if (curdev >= olddev) {
 				ratings_restore();
 				calc_expected();
 				curdev = deviation();	
 				assert (curdev == olddev);
-//printf("break\n");
 				break;
 			};	
 		}
