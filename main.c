@@ -348,8 +348,8 @@ int main (int argc, char *argv[])
 
 	all_report (csvf, textf);
 
-if (Simulate > 1 && NULL != ematstr)
-errorsout (ematstr);
+	if (Simulate > 1 && NULL != ematstr)
+		errorsout (ematstr);
 
 	if (textf_opened) fclose (textf);
 	if (csvf_opened)  fclose (csvf); 
