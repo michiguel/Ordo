@@ -1,6 +1,13 @@
 #include "randfast.h"
 #include "datatype.h"
 
+/*
+|
+|	Random number generator taken from
+|	http://www.burtleburtle.net/bob/rand/talksmall.html
+|
+*/
+
 typedef struct ranctx { 
 	uint32_t a; 
 	uint32_t b; 
