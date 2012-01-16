@@ -115,15 +115,13 @@ static double	sdev[MAXPLAYERS];
 
 static long 	Simulate = 0;
 
-#define MAXtablediff 100000
-
 struct DEVIATION_ACC {
 	double sum1;
 	double sum2;
 	double sdev;
 };
 
-struct DEVIATION_ACC sim[MAXtablediff];
+struct DEVIATION_ACC *sim = NULL;
 
 /*------------------------------------------------------------------------*/
 
@@ -301,11 +299,6 @@ int main (int argc, char *argv[])
 			sum2[i] = 0;
 			sdev[i] = 0;
 		}
-		for (i = 0; i < MAXtablediff; i++) {
-			sim[i].sum1 = 0;
-			sim[i].sum2 = 0;
-			sim[i].sdev = 0;
-		}
 	}
 
 	calc_rating(QUIET_MODE);
@@ -316,6 +309,20 @@ int main (int argc, char *argv[])
 	long i,j;
 	long z = Simulate;
 	double n = (double) (z);
+	ptrdiff_t est = (size_t)((N_players*N_players-N_players)/2); /* elements of simulation table */
+	ptrdiff_t idx;
+	size_t allocsize = sizeof(struct DEVIATION_ACC) * (size_t)est;
+	double diff;
+
+sim = malloc(allocsize);
+
+if (sim != NULL) {
+
+	for (idx = 0; idx < est; idx++) {
+		sim[idx].sum1 = 0;
+		sim[idx].sum2 = 0;
+		sim[idx].sdev = 0;
+	}
 
 	if (z > 1) {
 		while (z-->0) {
@@ -327,36 +334,39 @@ int main (int argc, char *argv[])
 				sum2[i] += ratingof[i]*ratingof[i];
 			}
 
-			for (i = 0; i < N_players; i++) {
+
+			for (i = 0; i < (N_players); i++) {
 				for (j = 0; j < i; j++) {
-					ptrdiff_t idx = (i*i+i)/2+j;
-					double diff = ratingof[i] - ratingof[j];	
+					idx = (i*i-i)/2+j;
+					assert(idx < est || !printf("idx=%ld est=%ld\n",idx,est));
+					diff = ratingof[i] - ratingof[j];	
 					sim[idx].sum1 += diff; 
 					sim[idx].sum2 += diff * diff;
 				}
 			}
 		}
 
-
 		for (i = 0; i < N_players; i++) {
 			sdev[i] = sqrt( sum2[i]/n - (sum1[i]/n) * (sum1[i]/n));
 		}
 
-
-		for (i = 0; i < MAXtablediff; i++) {
+		for (i = 0; i < est; i++) {
 			sim[i].sdev = sqrt( sim[i].sum2/n - (sim[i].sum1/n) * (sim[i].sum1/n));
 		}
 
 	}
 }
+}
+
 
 	all_report (csvf, textf);
-
 	if (Simulate > 1 && NULL != ematstr)
 		errorsout (ematstr);
 
 	if (textf_opened) fclose (textf);
 	if (csvf_opened)  fclose (csvf); 
+
+	if (sim != NULL) free(sim);
 
 	/*==== END CALCULATION ====*/
 
@@ -463,16 +473,18 @@ errorsout(const char *out)
 				x = sorted[j];
 
 				if (y < x) 
-					idx = (x*x+x)/2+y;					
+					idx = (x*x-x)/2+y;					
 				else
-					idx = (y*y+y)/2+x;
+					idx = (y*y-y)/2+x;
 				fprintf(f,",%.1f",sim[idx].sdev);
 			}
 
 			fprintf(f, "\n");
 
 		}
+
 		fclose(f);
+
 	} else {
 		fprintf(stderr, "Errors with file: %s\n",out);	
 	}
@@ -507,6 +519,7 @@ if (Simulate < 2) {
 				Name[j], Rating_results[j], obtained[j], playedby[j], 100.0*obtained[j]/playedby[j], "%");
 		}
 } else {
+
 		fprintf(f, "\n%30s: %7s %6s %7s %7s %6s\n", 
 			"ENGINE", "RATING", "ERROR", "POINTS", "PLAYED", "(%)");
 

@@ -6,6 +6,15 @@ if ARGV[0] == 'gcc'
 	$ADDPATH=''
 	$CC='gcc'
 	$NAME='ordo'
+	$SWITCHES='-DNDEBUG'
+
+elsif ARGV[0] == 'debug'
+
+	puts 'gcc debug'
+	$ADDPATH=''
+	$CC='gcc'
+	$NAME='ordo'
+	$SWITCHES=''
 
 elsif ARGV[0] == 'gcc64'
 
@@ -13,6 +22,7 @@ elsif ARGV[0] == 'gcc64'
 	$ADDPATH=''
 	$CC='gcc'
 	$NAME='ordo-linux64'
+	$SWITCHES='-DNDEBUG'
 
 elsif ARGV[0] == 'gcc32'
 
@@ -20,6 +30,7 @@ elsif ARGV[0] == 'gcc32'
 	$ADDPATH=''
 	$CC='gcc -m32'
 	$NAME='ordo-linux32'
+	$SWITCHES='-DNDEBUG'
 
 elsif ARGV[0] == 'win32'  
 
@@ -27,6 +38,7 @@ elsif ARGV[0] == 'win32'
 	$ADDPATH='/home/miguel/mingw/w32/bin'
 	$CC='i686-w64-mingw32-gcc'
 	$NAME='ordo-win32'
+	$SWITCHES='-DNDEBUG'
 
 elsif ARGV[0] == 'win64' 
 
@@ -34,6 +46,7 @@ elsif ARGV[0] == 'win64'
 	$ADDPATH='/home/miguel/mingw/w64/bin'
 	$CC='x86_64-w64-mingw32-gcc' 
 	$NAME='ordo-win64'
+	$SWITCHES='-DNDEBUG'
 
 else 
 
@@ -46,7 +59,6 @@ end
 
 #=====================
 
-$SWITCHES='-DNDEBUG'
 $INCLUDE='-I myopt'
 $WARNINGS='-Wwrite-strings -Wconversion -Wshadow -Wparentheses -Wlogical-op -Wunused -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement -W -Wall -Wextra'
 $OPT='-O2'
