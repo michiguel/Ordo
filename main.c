@@ -82,7 +82,8 @@ const char *OPTION_LIST = "vhp:qLa:o:c:s:e:";
 enum RESULTS {
 	WHITE_WIN = 0,
 	BLACK_WIN = 2,
-	RESULT_DRAW = 1
+	RESULT_DRAW = 1,
+	DISCARD = 3
 };
 
 static char		Labelbuffer[LABELBUFFERSIZE] = {'\0'};
@@ -569,6 +570,8 @@ calc_obtained_playedby (void)
 
 	for (i = 0; i < N_games; i++) {
 	
+		if (Score[i] == DISCARD) continue;
+
 		w = Whiteplayer[i];
 		b = Blackplayer[i];
 		s = Score[i];		
@@ -586,7 +589,7 @@ calc_obtained_playedby (void)
 
 		playedby[w] += 1;
 		playedby[b] += 1;
-		
+
 	}
 }
 
@@ -616,6 +619,8 @@ calc_expected (void)
 
 	for (i = 0; i < N_games; i++) {
 	
+		if (Score[i] == DISCARD) continue;
+
 		w = Whiteplayer[i];
 		b = Blackplayer[i];
 
@@ -693,6 +698,8 @@ simulate_scores(void)
 	double	*rating = Rating_results;
 
 	for (i = 0; i < N_games; i++) {
+
+		if (Score[i] == DISCARD) continue;
 
 		w = Whiteplayer[i];
 		b = Blackplayer[i];
