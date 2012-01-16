@@ -66,7 +66,7 @@ static void usage (void);
 		" -c <file> output file (comma separated value format)\n"
 		" -o <file> output file (text format), goes to the screen if not present\n"
 		" -s  #     perform # simulations to calculate errors\n"
-		" -e <file> saves an error matrix, if -s was implemented\n"
+		" -e <file> saves an error matrix, if -s was used\n"
 		"\n"
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		;
