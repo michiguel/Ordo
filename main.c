@@ -310,7 +310,7 @@ int main (int argc, char *argv[])
 	long i,j;
 	long z = Simulate;
 	double n = (double) (z);
-	ptrdiff_t est = (size_t)((N_players*N_players-N_players)/2); /* elements of simulation table */
+	ptrdiff_t est = (ptrdiff_t)((N_players*N_players-N_players)/2); /* elements of simulation table */
 	ptrdiff_t idx;
 	size_t allocsize = sizeof(struct DEVIATION_ACC) * (size_t)est;
 	double diff;
@@ -327,9 +327,9 @@ if (sim != NULL) {
 
 	if (z > 1) {
 		while (z-->0) {
-			printf ("Simulation=%ld\n",z);
+			if (!QUIET_MODE) printf ("Simulation=%ld/%ld\n",Simulate-z,Simulate);
 			simulate_scores();
-			calc_rating(TRUE);
+			calc_rating(QUIET_MODE);
 			for (i = 0; i < N_players; i++) {
 				sum1[i] += ratingof[i];
 				sum2[i] += ratingof[i]*ratingof[i];
@@ -706,7 +706,7 @@ simulate_scores(void)
 
 		f = xpect (rating[w], rating[b]);
 
-		z = (unsigned)(f * (0xffff+1));
+		z = (long)((unsigned)(f * (0xffff+1)));
 		y = randfast32() & 0xffff;
 
 		if (y < z) {
@@ -782,7 +782,7 @@ calc_rating (bool_t quiet)
 		phase++;
 	}
 
-	if (!quiet) printf ("done\n");
+	if (!quiet) printf ("done\n\n");
 }
 
 
