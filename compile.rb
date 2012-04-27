@@ -72,10 +72,9 @@ fragments << $SWITCHES
 fragments << $INCLUDE
 fragments << $WARNINGS
 fragments << $OPT
-fragments << $LIB
 fragments << $EXE
 fragments << $SRC
-
+fragments << $LIB
 
 line=$CC
 fragments.each do |x|
