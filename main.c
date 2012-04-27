@@ -109,6 +109,7 @@ static double	ratingof[MAXPLAYERS]; /* rating current */
 static double	ratingbk[MAXPLAYERS]; /* rating backup  */
 
 static double	Rating_results[MAXPLAYERS];
+static double	Obtained_results[MAXPLAYERS];
 
 static double	sum1[MAXPLAYERS]; 
 static double	sum2[MAXPLAYERS]; 
@@ -517,7 +518,7 @@ if (Simulate < 2) {
 		for (i = 0; i < N_players; i++) {
 			j = sorted[i];
 			fprintf(f, "%30s:  %5.1f    %6.1f   %5d   %4.1f%s\n", 
-				Name[j], Rating_results[j], obtained[j], playedby[j], 100.0*obtained[j]/playedby[j], "%");
+				Name[j], Rating_results[j], Obtained_results[j], playedby[j], 100.0*Obtained_results[j]/playedby[j], "%");
 		}
 } else {
 
@@ -527,7 +528,7 @@ if (Simulate < 2) {
 		for (i = 0; i < N_players; i++) {
 			j = sorted[i];
 			fprintf(f, "%30s:  %5.1f  %5.1f  %6.1f   %5d   %4.1f%s\n", 
-				Name[j], Rating_results[j], sdev[j], obtained[j], playedby[j], 100.0*obtained[j]/playedby[j], "%");
+				Name[j], Rating_results[j], sdev[j], Obtained_results[j], playedby[j], 100.0*Obtained_results[j]/playedby[j], "%");
 		}
 }
 
@@ -688,6 +689,9 @@ ratings_results (void)
 	for (j = 0; j < N_players; j++) {
 		Rating_results[j] = ratingof[j];
 	}	
+	for (j = 0; j < N_players; j++) {
+		Obtained_results[j] = obtained[j];
+	}
 }
 
 static void
