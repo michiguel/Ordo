@@ -387,7 +387,7 @@ static void parameter_error(void) {	printf ("Error in parameters\n"); return;}
 static void
 example (void)
 {
-	const char *example_options = "-a 2500 -i file.pgn -o output.csv";
+	const char *example_options = "-a 2500 -p file.pgn -o output.csv";
 	fprintf (stderr, "\n"
 		"quick example: %s %s\n"
 		"%s"
