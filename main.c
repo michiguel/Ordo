@@ -57,21 +57,23 @@ static void usage (void);
 		;
 
 	static const char *help_str =
-		" -h        print this help\n"
-		" -v        print version number and exit\n"
-		" -L        display the license information\n"
-		" -q        quiet (no screen progress updates)\n"
-		" -a <avg>  set general rating average\n"
-		" -p <file> input file in .pgn format\n"
-		" -c <file> output file (comma separated value format)\n"
-		" -o <file> output file (text format), goes to the screen if not present\n"
-		" -s  #     perform # simulations to calculate errors\n"
-		" -e <file> saves an error matrix, if -s was used\n"
+		" -h         print this help\n"
+		" -v         print version number and exit\n"
+		" -L         display the license information\n"
+		" -q         quiet (no screen progress updates)\n"
+		" -a <avg>   set general rating average\n"
+		" -w <value> white advantage value (default=0.0)\n"
+		" -z <value> scaling: rating that means a winning chance of 0.731 (default=173)\n"
+		" -p <file>  input file in .pgn format\n"
+		" -c <file>  output file (comma separated value format)\n"
+		" -o <file>  output file (text format), goes to the screen if not present\n"
+		" -s  #      perform # simulations to calculate errors\n"
+		" -e <file>  saves an error matrix, if -s was used\n"
 		"\n"
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		;
 
-const char *OPTION_LIST = "vhp:qLa:o:c:s:e:";
+const char *OPTION_LIST = "vhp:qLa:o:c:s:w:z:e:";
 
 /*
 |
@@ -116,6 +118,10 @@ static double	sum2[MAXPLAYERS];
 static double	sdev[MAXPLAYERS]; 
 
 static long 	Simulate = 0;
+
+static double	White_advantage = 0;
+static double	Inv_beta = 173.0;
+static double	BETA = 1.0/173.0;
 
 struct DEVIATION_ACC {
 	double sum1;
@@ -199,6 +205,16 @@ int main (int argc, char *argv[])
 						break;
 			case 's': 	if (1 != sscanf(opt_arg,"%lu", &Simulate) || Simulate < 0) {
 							fprintf(stderr, "wrong simulation parameter\n");
+							exit(EXIT_FAILURE);
+						}
+						break;
+			case 'w': 	if (1 != sscanf(opt_arg,"%lf", &White_advantage)) {
+							fprintf(stderr, "wrong white advantage parameter\n");
+							exit(EXIT_FAILURE);
+						}
+						break;
+			case 'z': 	if (1 != sscanf(opt_arg,"%lf", &Inv_beta)) {
+							fprintf(stderr, "wrong scaling parameter\n");
 							exit(EXIT_FAILURE);
 						}
 						break;
@@ -294,6 +310,8 @@ int main (int argc, char *argv[])
 	/*==== CALCULATIONS ====*/
 
 	randfast_init (1324561);
+
+	BETA = 1.0/Inv_beta;
 	
 	{	long i;
 		for (i = 0; i < N_players; i++) {
@@ -628,7 +646,7 @@ calc_expected (void)
 		rw = ratingof[w];
 		rb = ratingof[b];
 
-		f = xpect (rw, rb);
+		f = xpect (rw + White_advantage, rb);
 		expected [w] += f;
 		expected [b] += 1.0 - f;	
 	}
@@ -708,7 +726,7 @@ simulate_scores(void)
 		w = Whiteplayer[i];
 		b = Blackplayer[i];
 
-		f = xpect (rating[w], rating[b]);
+		f = xpect (rating[w] + White_advantage, rating[b]);
 
 		z = (long)((unsigned)(f * (0xffff+1)));
 		y = randfast32() & 0xffff;
@@ -793,7 +811,6 @@ calc_rating (bool_t quiet)
 double
 xpect (double a, double b)
 {
-	double k = 1.0/173.0;
 	double diff = a - b;
-	return 1.0 / (1.0 + exp(-diff*k));
+	return 1.0 / (1.0 + exp(-diff*BETA));
 }
