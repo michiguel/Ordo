@@ -757,26 +757,22 @@ deviation (void)
 void
 calc_rating (bool_t quiet)
 {
-	int i, rounds;
-	double delta, denom;
-	double olddev, curdev;
-	int phase = 0;
+	double 	olddev, curdev, outputdev;
+	int 	i;
 
-	int n = 20;
-
-	delta = 100.0;
-	denom = 2;
-	rounds = 10000;
+	int		rounds = 10000;
+	double 	delta = 100.0;
+	double 	denom = 2;
+	int 	phase = 0;
+	int 	n = 20;
 
 	calc_obtained_playedby();
-
 	calc_expected();
 	olddev = curdev = deviation();
 
 	if (!quiet) printf ("%3s %4s %10s\n", "phase", "iteration", "deviation");
 
 	while (n-->0) {
-		double outputdev;
 
 		for (i = 0; i < rounds; i++) {
 
@@ -796,7 +792,7 @@ calc_rating (bool_t quiet)
 			};	
 		}
 
-		delta = delta /denom;
+		delta = delta/denom;
 
 		outputdev = sqrt(curdev)/N_players;
 
