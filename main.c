@@ -40,6 +40,7 @@ static void usage (void);
 /* VARIABLES */
 
 	static bool_t QUIET_MODE;
+	static bool_t ADJUST_WHITE_ADVANTAGE;
 
 	static const char *copyright_str = 
 		"Copyright (c) 2012 Miguel A. Ballicora\n"
@@ -63,6 +64,7 @@ static void usage (void);
 		" -q         quiet (no screen progress updates)\n"
 		" -a <avg>   set general rating average\n"
 		" -w <value> white advantage value (default=0.0)\n"
+		" -W         white advantage, automatically adjusted\n"
 		" -z <value> scaling: rating that means a winning chance of 0.731 (default=173)\n"
 		" -p <file>  input file in .pgn format\n"
 		" -c <file>  output file (comma separated value format)\n"
@@ -73,7 +75,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		;
 
-const char *OPTION_LIST = "vhp:qLa:o:c:s:w:z:e:";
+const char *OPTION_LIST = "vhp:qWLa:o:c:s:w:z:e:";
 
 /*
 |
@@ -154,6 +156,11 @@ static void		errorsout(const char *out);
 
 static void 	transform_DB(struct DATA *db);
 
+/*------------------------------------------------------------------------*/
+
+static double 	overallerror_fwadv (double wadv);
+static double 	adjust_wadv (double start_wadv);
+
 /*
 |
 |	MAIN
@@ -177,6 +184,7 @@ int main (int argc, char *argv[])
 	help_mode    = FALSE;
 	input_mode   = FALSE;
 	QUIET_MODE   = FALSE;
+	ADJUST_WHITE_ADVANTAGE = FALSE;
 	inputf       = NULL;
 	textstr 	 = NULL;
 	csvstr       = NULL;
@@ -219,6 +227,7 @@ int main (int argc, char *argv[])
 						}
 						break;
 			case 'q':	QUIET_MODE = TRUE;	break;
+			case 'W':	ADJUST_WHITE_ADVANTAGE = TRUE;	break;
 			case '?': 	parameter_error();
 						exit(EXIT_FAILURE);
 						break;
@@ -322,62 +331,68 @@ int main (int argc, char *argv[])
 	}
 
 	calc_rating(QUIET_MODE);
-
 	ratings_results();
 
-{	
-	long i,j;
-	long z = Simulate;
-	double n = (double) (z);
-	ptrdiff_t est = (ptrdiff_t)((N_players*N_players-N_players)/2); /* elements of simulation table */
-	ptrdiff_t idx;
-	size_t allocsize = sizeof(struct DEVIATION_ACC) * (size_t)est;
-	double diff;
-
-sim = malloc(allocsize);
-
-if (sim != NULL) {
-
-	for (idx = 0; idx < est; idx++) {
-		sim[idx].sum1 = 0;
-		sim[idx].sum2 = 0;
-		sim[idx].sdev = 0;
+	if (ADJUST_WHITE_ADVANTAGE) {
+		double new_wadv = adjust_wadv (White_advantage);
+		printf ("\nAdjusted White Advantage = %f\n\n",new_wadv);
+		White_advantage = new_wadv;
+	
+		calc_rating(QUIET_MODE);
+		ratings_results();
 	}
 
-	if (z > 1) {
-		while (z-->0) {
-			if (!QUIET_MODE) printf ("Simulation=%ld/%ld\n",Simulate-z,Simulate);
-			simulate_scores();
-			calc_rating(QUIET_MODE);
-			for (i = 0; i < N_players; i++) {
-				sum1[i] += ratingof[i];
-				sum2[i] += ratingof[i]*ratingof[i];
+	/* Simulation block */
+	{	
+		long i,j;
+		long z = Simulate;
+		double n = (double) (z);
+		ptrdiff_t est = (ptrdiff_t)((N_players*N_players-N_players)/2); /* elements of simulation table */
+		ptrdiff_t idx;
+		size_t allocsize = sizeof(struct DEVIATION_ACC) * (size_t)est;
+		double diff;
+
+		sim = malloc(allocsize);
+
+		if (sim != NULL) {
+
+			for (idx = 0; idx < est; idx++) {
+				sim[idx].sum1 = 0;
+				sim[idx].sum2 = 0;
+				sim[idx].sdev = 0;
 			}
+	
+			if (z > 1) {
+				while (z-->0) {
+					if (!QUIET_MODE) printf ("Simulation=%ld/%ld\n",Simulate-z,Simulate);
+					simulate_scores();
+					calc_rating(QUIET_MODE);
+					for (i = 0; i < N_players; i++) {
+						sum1[i] += ratingof[i];
+						sum2[i] += ratingof[i]*ratingof[i];
+					}
+	
+					for (i = 0; i < (N_players); i++) {
+						for (j = 0; j < i; j++) {
+							idx = (i*i-i)/2+j;
+							assert(idx < est || !printf("idx=%ld est=%ld\n",idx,est));
+							diff = ratingof[i] - ratingof[j];	
+							sim[idx].sum1 += diff; 
+							sim[idx].sum2 += diff * diff;
+						}
+					}
+				}
 
-
-			for (i = 0; i < (N_players); i++) {
-				for (j = 0; j < i; j++) {
-					idx = (i*i-i)/2+j;
-					assert(idx < est || !printf("idx=%ld est=%ld\n",idx,est));
-					diff = ratingof[i] - ratingof[j];	
-					sim[idx].sum1 += diff; 
-					sim[idx].sum2 += diff * diff;
+				for (i = 0; i < N_players; i++) {
+					sdev[i] = sqrt( sum2[i]/n - (sum1[i]/n) * (sum1[i]/n));
+				}
+	
+				for (i = 0; i < est; i++) {
+					sim[i].sdev = sqrt( sim[i].sum2/n - (sim[i].sum1/n) * (sim[i].sum1/n));
 				}
 			}
 		}
-
-		for (i = 0; i < N_players; i++) {
-			sdev[i] = sqrt( sum2[i]/n - (sum1[i]/n) * (sum1[i]/n));
-		}
-
-		for (i = 0; i < est; i++) {
-			sim[i].sdev = sqrt( sim[i].sum2/n - (sim[i].sum1/n) * (sim[i].sum1/n));
-		}
-
 	}
-}
-}
-
 
 	all_report (csvf, textf);
 	if (Simulate > 1 && NULL != ematstr)
@@ -810,3 +825,71 @@ xpect (double a, double b)
 	double diff = a - b;
 	return 1.0 / (1.0 + exp(-diff*BETA));
 }
+
+/*==================================================================*/
+
+static double
+overallerror_fwadv (double wadv)
+{
+	int i;
+	double e, e2, f, rw, rb;
+	double s[3];
+
+	s[WHITE_WIN] = 1.0;
+	s[BLACK_WIN] = 0.0;
+	s[RESULT_DRAW] = 0.5;
+
+	assert (WHITE_WIN < 3);
+	assert (BLACK_WIN < 3);
+	assert (RESULT_DRAW < 3);
+	assert (DISCARD > 2);
+
+	e2 = 0;
+
+	for (i = 0; i < N_games; i++) {
+
+		if (Score[i] > 2) continue;
+
+		rw = ratingof[Whiteplayer[i]];
+		rb = ratingof[Blackplayer[i]];
+
+		f = xpect (rw + wadv, rb);
+
+		e   = f - s[Score[i]];
+		e2 += e * e;
+	}
+
+	return e2;
+}
+
+
+static double
+adjust_wadv (double start_wadv)
+{
+	double delta, wa, ei, ej, ek;
+
+	delta = 100.0;
+	wa = start_wadv;
+
+	do {	
+		ei = overallerror_fwadv (wa - delta);
+		ej = overallerror_fwadv (wa);
+		ek = overallerror_fwadv (wa + delta);
+
+		if (ei >= ej && ej <= ek) {
+			delta = delta / 2;
+		} else
+		if (ej >= ei && ei <= ek) {
+			wa -= delta;
+		} else
+		if (ei >= ek && ek <= ej) {
+			wa += delta;
+		}
+
+	} while (delta > 0.01 && -1000 < wa && wa < 1000);
+	
+	return wa;
+}
+
+
+
