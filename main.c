@@ -526,11 +526,25 @@ errorsout(const char *out)
 	return;
 }
 
+static size_t
+find_maxlen (char *nm[], long int n)
+{
+	size_t maxl = 0;
+	size_t length;
+	long int i;
+	for (i = 0; i < n; i++) {
+		length = strlen(nm[i]);
+		if (length > maxl) maxl = length;
+	}
+	return maxl;
+}
+
 void
 all_report (FILE *csvf, FILE *textf)
 {
 	FILE *f;
 	int i, j;
+size_t ml;
 
 	calc_obtained_playedby ();
 
@@ -544,23 +558,35 @@ all_report (FILE *csvf, FILE *textf)
 	f = textf;
 	if (f != NULL) {
 
+ml = find_maxlen (Name, N_players);
+printf ("max length=%ld\n", ml);
+if (ml > 50) ml = 50;
+
+
 if (Simulate < 2) {
-		fprintf(f, "\n%30s: %7s %9s %7s %6s\n", 
+		fprintf(f, "\n%s %-*s : %7s %9s %7s %6s\n", 
+			"   #", 			
+			(int)ml,
 			"ENGINE", "RATING", "POINTS", "PLAYED", "(%)");
 
 		for (i = 0; i < N_players; i++) {
 			j = sorted[i];
-			fprintf(f, "%30s:  %5.1f    %6.1f   %5d   %4.1f%s\n", 
+			fprintf(f, "%4d %-*s: %7.1f %9.1f   %5d   %4.1f%s\n", 
+				i+1,
+				(int)ml+1,
 				Name[j], Rating_results[j], Obtained_results[j], playedby[j], 100.0*Obtained_results[j]/playedby[j], "%");
 		}
 } else {
-
-		fprintf(f, "\n%30s: %7s %6s %7s %7s %6s\n", 
+		fprintf(f, "\n%s %-*s : %7s %6s %8s %7s %6s\n", 
+			"   #", 
+			(int)ml, 
 			"ENGINE", "RATING", "ERROR", "POINTS", "PLAYED", "(%)");
 
 		for (i = 0; i < N_players; i++) {
 			j = sorted[i];
-			fprintf(f, "%30s:  %5.1f  %5.1f  %6.1f   %5d   %4.1f%s\n", 
+			fprintf(f, "%4d %-*s: %7.1f %6.1f %8.1f   %5d   %4.1f%s\n", 
+				i+1,
+				(int)ml+1, 
 				Name[j], Rating_results[j], sdev[j], Obtained_results[j], playedby[j], 100.0*Obtained_results[j]/playedby[j], "%");
 		}
 }
