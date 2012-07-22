@@ -544,7 +544,7 @@ all_report (FILE *csvf, FILE *textf)
 {
 	FILE *f;
 	int i, j;
-size_t ml;
+	size_t ml;
 
 	calc_obtained_playedby ();
 
@@ -558,41 +558,39 @@ size_t ml;
 	f = textf;
 	if (f != NULL) {
 
-ml = find_maxlen (Name, N_players);
-printf ("max length=%ld\n", ml);
-if (ml > 50) ml = 50;
+		ml = find_maxlen (Name, N_players);
+		//intf ("max length=%ld\n", ml);
+		if (ml > 50) ml = 50;
 
-
-if (Simulate < 2) {
-		fprintf(f, "\n%s %-*s : %7s %9s %7s %6s\n", 
-			"   #", 			
-			(int)ml,
-			"ENGINE", "RATING", "POINTS", "PLAYED", "(%)");
-
-		for (i = 0; i < N_players; i++) {
-			j = sorted[i];
-			fprintf(f, "%4d %-*s: %7.1f %9.1f   %5d   %4.1f%s\n", 
-				i+1,
-				(int)ml+1,
-				Name[j], Rating_results[j], Obtained_results[j], playedby[j], 100.0*Obtained_results[j]/playedby[j], "%");
+		if (Simulate < 2) {
+			fprintf(f, "\n%s %-*s : %7s %9s %7s %6s\n", 
+				"   #", 			
+				(int)ml,
+				"ENGINE", "RATING", "POINTS", "PLAYED", "(%)");
+	
+			for (i = 0; i < N_players; i++) {
+				j = sorted[i];
+				fprintf(f, "%4d %-*s: %7.1f %9.1f   %5d   %4.1f%s\n", 
+					i+1,
+					(int)ml+1,
+					Name[j], Rating_results[j], Obtained_results[j], playedby[j], 100.0*Obtained_results[j]/playedby[j], "%");
+			}
+		} else {
+			fprintf(f, "\n%s %-*s : %7s %6s %8s %7s %6s\n", 
+				"   #", 
+				(int)ml, 
+				"ENGINE", "RATING", "ERROR", "POINTS", "PLAYED", "(%)");
+	
+			for (i = 0; i < N_players; i++) {
+				j = sorted[i];
+				fprintf(f, "%4d %-*s: %7.1f %6.1f %8.1f   %5d   %4.1f%s\n", 
+					i+1,
+					(int)ml+1, 
+					Name[j], Rating_results[j], sdev[j], Obtained_results[j], playedby[j], 100.0*Obtained_results[j]/playedby[j], "%");
+			}
 		}
-} else {
-		fprintf(f, "\n%s %-*s : %7s %6s %8s %7s %6s\n", 
-			"   #", 
-			(int)ml, 
-			"ENGINE", "RATING", "ERROR", "POINTS", "PLAYED", "(%)");
 
-		for (i = 0; i < N_players; i++) {
-			j = sorted[i];
-			fprintf(f, "%4d %-*s: %7.1f %6.1f %8.1f   %5d   %4.1f%s\n", 
-				i+1,
-				(int)ml+1, 
-				Name[j], Rating_results[j], sdev[j], Obtained_results[j], playedby[j], 100.0*Obtained_results[j]/playedby[j], "%");
-		}
-}
-
-
-	}
+	} /*if*/
 
 	/* output in a comma separated value file */
 	f = csvf;
