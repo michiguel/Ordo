@@ -58,24 +58,25 @@ static void usage (void);
 		;
 
 	static const char *help_str =
-		" -h         print this help\n"
-		" -v         print version number and exit\n"
-		" -L         display the license information\n"
-		" -q         quiet (no screen progress updates)\n"
-		" -a <avg>   set general rating average\n"
-		" -w <value> white advantage value (default=0.0)\n"
-		" -W         white advantage, automatically adjusted\n"
-		" -z <value> scaling: rating that means a winning chance of 0.731 (default=173)\n"
-		" -p <file>  input file in .pgn format\n"
-		" -c <file>  output file (comma separated value format)\n"
-		" -o <file>  output file (text format), goes to the screen if not present\n"
-		" -s  #      perform # simulations to calculate errors\n"
-		" -e <file>  saves an error matrix, if -s was used\n"
+		" -h          print this help\n"
+		" -v          print version number and exit\n"
+		" -L          display the license information\n"
+		" -q          quiet (no screen progress updates)\n"
+		" -a <avg>    set general rating average\n"
+		" -A <player> anchor: rating given by '-a' is fixed for <player>, if provided\n"
+		" -w <value>  white advantage value (default=0.0)\n"
+		" -W          white advantage, automatically adjusted\n"
+		" -z <value>  scaling: rating that means a winning chance of 0.731 (default=173)\n"
+		" -p <file>   input file in .pgn format\n"
+		" -c <file>   output file (comma separated value format)\n"
+		" -o <file>   output file (text format), goes to the screen if not present\n"
+		" -s  #       perform # simulations to calculate errors\n"
+		" -e <file>   saves an error matrix, if -s was used\n"
 		"\n"
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		;
 
-const char *OPTION_LIST = "vhp:qWLa:o:c:s:w:z:e:";
+const char *OPTION_LIST = "vhp:qWLa:A:o:c:s:w:z:e:";
 
 /*
 |
@@ -96,6 +97,11 @@ static char 	*Labelbuffer_end = Labelbuffer;
 /* players */
 static char 	*Name   [MAXPLAYERS];
 static int 		N_players = 0;
+
+enum 			{MAX_ANCHORSIZE=256};
+static bool_t	Anchor_use = TRUE;
+static int		Anchor = 0;
+static char		Anchor_name[MAX_ANCHORSIZE] = "";
 
 /* games */
 static int 		Whiteplayer	[MAXGAMES];
@@ -155,6 +161,7 @@ static void		errorsout(const char *out);
 /*------------------------------------------------------------------------*/
 
 static void 	transform_DB(struct DATA *db);
+static bool_t	find_anchor_player(int *anchor);
 
 /*------------------------------------------------------------------------*/
 
@@ -209,6 +216,14 @@ int main (int argc, char *argv[])
 			case 'a': 	if (1 != sscanf(opt_arg,"%lf", &general_average)) {
 							fprintf(stderr, "wrong average parameter\n");
 							exit(EXIT_FAILURE);
+						}
+						break;
+			case 'A': 	if (strlen(opt_arg) < MAX_ANCHORSIZE-1) {
+							strcpy (Anchor_name, opt_arg);
+							Anchor_use = TRUE;
+						} else {
+							fprintf(stderr, "ERROR: anchor name is too long\n");
+							exit(EXIT_FAILURE);	
 						}
 						break;
 			case 's': 	if (1 != sscanf(opt_arg,"%lu", &Simulate) || Simulate < 0) {
@@ -280,11 +295,20 @@ int main (int argc, char *argv[])
 	/*==== SET INPUT ====*/
 
 	if (!pgn_getresults(inputf, QUIET_MODE)) {
-		printf ("Problems reading results from: %s\n", inputf);
+		fprintf (stderr, "Problems reading results from: %s\n", inputf);
 		return EXIT_FAILURE; 
 	}
 	
 	transform_DB(&DB); /* convert DB to global variables */
+
+	if (Anchor_use) {
+		if (!find_anchor_player(&Anchor)) {
+			fprintf (stderr, "ERROR: No games of anchor player, mispelled, wrong capital letters, or extra spaces = \"%s\"\n", Anchor_name);
+			return EXIT_FAILURE; 			
+		} else {
+			printf("anchor selected: %d, %s\n",Anchor, Anchor_name);
+		}
+	}
 
 	init_rating();
 
@@ -470,6 +494,21 @@ transform_DB(struct DATA *db)
 		Blackplayer[i] = db->black[i]; 
 		Score[i]       = db->score[i];
 	}
+}
+
+static bool_t
+find_anchor_player(int *anchor)
+{
+	int i;
+	bool_t found = FALSE;
+	for (i = 0; i < N_players; i++) {
+		//printf ("%d, %s\n",i,Name[i]);
+		if (!strcmp(Name[i], Anchor_name)) {
+			*anchor = i;
+			found = TRUE;
+		} 
+	}
+	return found;
 }
 
 static int
@@ -713,6 +752,10 @@ adjust_rating (double delta)
 
 	average = accum / N_players;
 	excess  = average - general_average;
+
+	if (Anchor_use) {
+		excess  = ratingof[Anchor] - general_average;	
+	}
 
 	for (j = 0; j < N_players; j++) {
 		ratingof[j] -= excess;
