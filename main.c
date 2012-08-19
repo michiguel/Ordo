@@ -99,7 +99,7 @@ static char 	*Name   [MAXPLAYERS];
 static int 		N_players = 0;
 
 enum 			{MAX_ANCHORSIZE=256};
-static bool_t	Anchor_use = TRUE;
+static bool_t	Anchor_use = FALSE;
 static int		Anchor = 0;
 static char		Anchor_name[MAX_ANCHORSIZE] = "";
 
