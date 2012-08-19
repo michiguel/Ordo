@@ -1,7 +1,11 @@
 ordo
-ordo-win32
-ordo-win64
+ordo-win*
+ordo-linux*
+ordoprep*
+*~
 *.o
 *.pgn
 *.csv
 release/*
+install.sh
+pgn/
