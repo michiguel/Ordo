@@ -276,15 +276,17 @@ int main (int argc, char *argv[])
 	}
 	if ((argc - opt_index) > 1) {
 		/* too many parameters */
-		fprintf (stderr, "Extra parameters present\n");
+		fprintf (stderr, "ERROR: Extra parameters present\n");
+		fprintf (stderr, "Make sure to surround parameters with \"quotes\" if they contain spaces\n\n");
 		exit(EXIT_FAILURE);
 	}
 	if (input_mode && argc != opt_index) {
 		fprintf (stderr, "Extra parameters present\n");
+		fprintf (stderr, "Make sure to surround parameters with \"quotes\" if they contain spaces\n\n");
 		exit(EXIT_FAILURE);
 	}
 	if (!input_mode && argc == opt_index) {
-		fprintf (stderr, "Need file name to proceed\n");
+		fprintf (stderr, "Need file name to proceed\n\n");
 		exit(EXIT_FAILURE);
 	}
 	/* get folder, should be only one at this point */
@@ -304,6 +306,7 @@ int main (int argc, char *argv[])
 	if (Anchor_use) {
 		if (!find_anchor_player(&Anchor)) {
 			fprintf (stderr, "ERROR: No games of anchor player, mispelled, wrong capital letters, or extra spaces = \"%s\"\n", Anchor_name);
+			fprintf (stderr, "Surround the name with \"quotes\" if it contains spaces");
 			return EXIT_FAILURE; 			
 		} else {
 			printf("anchor selected: %d, %s\n",Anchor, Anchor_name);
