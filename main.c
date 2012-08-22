@@ -160,6 +160,7 @@ void			calc_encounters (void);
 void			calc_obtained_playedby_ENC (void);
 void			calc_expected_ENC (void);
 void			calc_expected_ORI (void);
+void			shrink_ENC (void);
 
 void			all_report (FILE *csvf, FILE *textf);
 void			calc_obtained_playedby_ORI (void);
@@ -683,6 +684,19 @@ all_report (FILE *csvf, FILE *textf)
 
 /************************************************************************/
 
+static int compare_ENC (const void * a, const void * b)
+{
+	const struct ENC *ap = a;
+	const struct ENC *bp = b;
+	if (ap->wh == bp->wh && ap->bl == bp->bl) return 0;
+	if (ap->wh == bp->wh) {
+		if (ap->bl > bp->bl) return 1; else return -1;
+	} else {	 
+		if (ap->wh > bp->wh) return 1; else return -1;
+	}
+	return 0;	
+}
+
 void
 calc_encounters (void)
 {
@@ -704,6 +718,12 @@ calc_encounters (void)
 		e++;
 	}
 	N_encounters = e;
+
+
+shrink_ENC ();
+qsort (Encounter, (size_t)N_encounters, sizeof(struct ENC), compare_ENC);
+shrink_ENC ();
+
 }
 
 
@@ -790,6 +810,52 @@ calc_obtained_playedby_ORI (void)
 	}
 }
 
+static struct ENC 
+encounter_merge (const struct ENC *a, const struct ENC *b)
+{
+		struct ENC r;	
+		assert(a->wh == b->wh);
+		assert(a->bl == b->bl);
+		r.wh = a->wh;
+		r.bl = a->bl; 
+		r.wscore = a->wscore + b->wscore;
+		r.played = a->played + b->played;
+		return r;
+}
+
+void
+shrink_ENC (void)
+{
+	int e, j, g;
+
+	for (j = 0; j < N_players; j++) {
+		expected[j] = 0.0;	
+	}	
+
+	g = 0;
+	for (e = 1; e < N_encounters; e++) {
+	
+		if (Encounter[e].wh == Encounter[g].wh && Encounter[e].bl == Encounter[g].bl) {
+			Encounter[g] = encounter_merge (&Encounter[g], &Encounter[e]);
+		}
+		else {
+			g++;
+			Encounter[g] = Encounter[e];
+		}
+	}
+	g++;
+
+printf ("\n");
+printf ("OLD N_games     =%d\n", N_games);
+printf ("OLD N_encounters=%d\n", N_encounters);
+	if (N_encounters > 0) 
+		N_encounters = g;
+printf ("NEW N_encounters=%d\n", N_encounters);
+printf ("\n");
+
+}
+
+//=====================================
 
 void
 init_rating (void)
