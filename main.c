@@ -157,7 +157,9 @@ struct DEVIATION_ACC *sim = NULL;
 /*------------------------------------------------------------------------*/
 
 void			calc_encounters (void);
-void			calc_obtained_playedby_fromenc (void);
+void			calc_obtained_playedby_ENC (void);
+void			calc_expected_ENC (void);
+void			calc_expected_ORI (void);
 
 void			all_report (FILE *csvf, FILE *textf);
 void			calc_obtained_playedby (void);
@@ -608,7 +610,7 @@ all_report (FILE *csvf, FILE *textf)
 
 #ifdef NEW_ENC
 	calc_encounters();
-	calc_obtained_playedby_fromenc();
+	calc_obtained_playedby_ENC();
 #else
 	calc_obtained_playedby();
 #endif
@@ -706,7 +708,7 @@ calc_encounters (void)
 
 
 void
-calc_obtained_playedby_fromenc (void)
+calc_obtained_playedby_ENC (void)
 {
 	int e, j, w, b;
 
@@ -726,6 +728,30 @@ calc_obtained_playedby_fromenc (void)
 		playedby[w] += Encounter[e].played;
 		playedby[b] += Encounter[e].played;
 
+	}
+}
+
+void
+calc_expected_ENC (void)
+{
+	int e, j, w, b;
+	double f, rw, rb;
+
+	for (j = 0; j < N_players; j++) {
+		expected[j] = 0.0;	
+	}	
+
+	for (e = 0; e < N_encounters; e++) {
+	
+		w = Encounter[e].wh;
+		b = Encounter[e].bl;
+
+		rw = ratingof[w];
+		rb = ratingof[b];
+
+		f = xpect (rw + White_advantage, rb);
+		expected [w] += Encounter[e].played * f;
+		expected [b] += Encounter[e].played * (1.0 - f);	
 	}
 }
 
@@ -779,6 +805,16 @@ init_rating (void)
 
 void
 calc_expected (void)
+{
+#ifdef NEW_ENC
+	calc_expected_ENC();
+#else
+	calc_expected_ORI();
+#endif
+}
+
+void
+calc_expected_ORI (void)
 {
 	int i, j, w, b;
 	double f, rw, rb;
@@ -923,7 +959,7 @@ calc_rating (bool_t quiet)
 
 #ifdef NEW_ENC
 	calc_encounters();
-	calc_obtained_playedby_fromenc();
+	calc_obtained_playedby_ENC();
 #else
 	calc_obtained_playedby();
 #endif
