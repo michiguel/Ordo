@@ -109,6 +109,21 @@ static int 		Blackplayer	[MAXGAMES];
 static int 		Score		[MAXGAMES];
 static int 		N_games = 0;
 
+/* encounters */
+struct ENC {
+	double 	wscore;
+	int		played;
+	int 	wh;
+	int 	bl;
+};
+
+struct ENC 		Encounter[MAXENCOUNTERS];
+static int 		N_encounters = 0;
+
+#if 1
+#define NEW_ENC
+#endif
+
 /**/
 static double	general_average = 2300.0;
 static int		sorted  [MAXPLAYERS]; /* sorted index by rating */
@@ -140,6 +155,9 @@ struct DEVIATION_ACC {
 struct DEVIATION_ACC *sim = NULL;
 
 /*------------------------------------------------------------------------*/
+
+void			calc_encounters (void);
+void			calc_obtained_playedby_fromenc (void);
 
 void			all_report (FILE *csvf, FILE *textf);
 void			calc_obtained_playedby (void);
@@ -588,7 +606,12 @@ all_report (FILE *csvf, FILE *textf)
 	int i, j;
 	size_t ml;
 
-	calc_obtained_playedby ();
+#ifdef NEW_ENC
+	calc_encounters();
+	calc_obtained_playedby_fromenc();
+#else
+	calc_obtained_playedby();
+#endif
 
 	for (j = 0; j < N_players; j++) {
 		sorted[j] = j;
@@ -659,6 +682,54 @@ all_report (FILE *csvf, FILE *textf)
 /************************************************************************/
 
 void
+calc_encounters (void)
+{
+	int i, e = 0;
+
+	for (i = 0; i < N_games; i++) {
+
+		if (Score[i] >= DISCARD) continue;
+
+		switch (Score[i]) {
+			case WHITE_WIN: 	Encounter[e].wscore = 1.0; break;
+			case RESULT_DRAW:	Encounter[e].wscore = 0.5; break;
+			case BLACK_WIN:		Encounter[e].wscore = 0.0; break;
+		}
+
+		Encounter[e].wh = Whiteplayer[i];
+		Encounter[e].bl = Blackplayer[i];
+		Encounter[e].played = 1;
+		e++;
+	}
+	N_encounters = e;
+}
+
+
+void
+calc_obtained_playedby_fromenc (void)
+{
+	int e, j, w, b;
+
+	for (j = 0; j < N_players; j++) {
+		obtained[j] = 0.0;	
+		playedby[j] = 0;
+	}	
+
+	for (e = 0; e < N_encounters; e++) {
+	
+		w = Encounter[e].wh;
+		b = Encounter[e].bl;
+
+		obtained[w] += Encounter[e].wscore;
+		obtained[b] += (double)Encounter[e].played - Encounter[e].wscore;
+
+		playedby[w] += Encounter[e].played;
+		playedby[b] += Encounter[e].played;
+
+	}
+}
+
+void
 calc_obtained_playedby (void)
 {
 	int i, j, w, b, s;
@@ -705,7 +776,6 @@ init_rating (void)
 		ratingbk[i] = general_average;
 	}
 }
-
 
 void
 calc_expected (void)
@@ -851,7 +921,13 @@ calc_rating (bool_t quiet)
 	int 	phase = 0;
 	int 	n = 20;
 
+#ifdef NEW_ENC
+	calc_encounters();
+	calc_obtained_playedby_fromenc();
+#else
 	calc_obtained_playedby();
+#endif
+
 	calc_expected();
 	olddev = curdev = deviation();
 

@@ -7,6 +7,7 @@
 #define LABELBUFFERSIZE 1000000
 #define MAXPLAYERS 50000
 
+#define MAXENCOUNTERS MAXGAMES
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif
