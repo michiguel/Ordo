@@ -719,11 +719,10 @@ calc_encounters (void)
 	}
 	N_encounters = e;
 
-
-shrink_ENC ();
-qsort (Encounter, (size_t)N_encounters, sizeof(struct ENC), compare_ENC);
-shrink_ENC ();
-
+	shrink_ENC ();
+	qsort (Encounter, (size_t)N_encounters, sizeof(struct ENC), compare_ENC);
+	shrink_ENC ();
+	printf ("Unique head to head encounters =%8.2f%s\n\n", 100.0*N_encounters/N_games, "%");
 }
 
 
@@ -828,9 +827,9 @@ shrink_ENC (void)
 {
 	int e, j, g;
 
-	for (j = 0; j < N_players; j++) {
-		expected[j] = 0.0;	
-	}	
+	for (j = 0; j < N_players; j++) {expected[j] = 0.0;}	
+
+	if (N_encounters == 0) return; 
 
 	g = 0;
 	for (e = 1; e < N_encounters; e++) {
@@ -844,15 +843,7 @@ shrink_ENC (void)
 		}
 	}
 	g++;
-
-printf ("\n");
-printf ("OLD N_games     =%d\n", N_games);
-printf ("OLD N_encounters=%d\n", N_encounters);
-	if (N_encounters > 0) 
-		N_encounters = g;
-printf ("NEW N_encounters=%d\n", N_encounters);
-printf ("\n");
-
+	N_encounters = g;
 }
 
 //=====================================
