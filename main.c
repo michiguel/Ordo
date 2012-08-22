@@ -162,7 +162,7 @@ void			calc_expected_ENC (void);
 void			calc_expected_ORI (void);
 
 void			all_report (FILE *csvf, FILE *textf);
-void			calc_obtained_playedby (void);
+void			calc_obtained_playedby_ORI (void);
 void			init_rating (void);
 void			calc_expected (void);
 double			xpect (double a, double b);
@@ -612,7 +612,7 @@ all_report (FILE *csvf, FILE *textf)
 	calc_encounters();
 	calc_obtained_playedby_ENC();
 #else
-	calc_obtained_playedby();
+	calc_obtained_playedby_ORI();
 #endif
 
 	for (j = 0; j < N_players; j++) {
@@ -756,7 +756,7 @@ calc_expected_ENC (void)
 }
 
 void
-calc_obtained_playedby (void)
+calc_obtained_playedby_ORI (void)
 {
 	int i, j, w, b, s;
 
@@ -961,7 +961,7 @@ calc_rating (bool_t quiet)
 	calc_encounters();
 	calc_obtained_playedby_ENC();
 #else
-	calc_obtained_playedby();
+	calc_obtained_playedby_ORI();
 #endif
 
 	calc_expected();
