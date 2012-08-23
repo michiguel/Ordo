@@ -632,14 +632,14 @@ all_report (FILE *csvf, FILE *textf)
 		if (ml > 50) ml = 50;
 
 		if (Simulate < 2) {
-			fprintf(f, "\n%s %-*s : %7s %9s %7s %6s\n", 
+			fprintf(f, "\n%s %-*s :%7s %9s %7s %6s\n", 
 				"   #", 			
 				(int)ml,
 				"ENGINE", "RATING", "POINTS", "PLAYED", "(%)");
 	
 			for (i = 0; i < N_players; i++) {
 				j = sorted[i];
-				fprintf(f, "%4d %-*s: %7.1f %9.1f   %5d   %4.1f%s\n", 
+				fprintf(f, "%4d %-*s:%7.1f %9.1f   %5d   %4.1f%s\n", 
 					i+1,
 					(int)ml+1,
 					Name[j], Rating_results[j], Obtained_results[j], playedby[j], 100.0*Obtained_results[j]/playedby[j], "%");
@@ -1058,11 +1058,11 @@ double kk = 1.0;
 			};	
 
 outputdev = 1000*sqrt(curdev/N_games);
-if (outputdev < 0.0001) break;
+if (outputdev < 0.000001) break;
 
  kk *= 0.995;
 		}
-//		delta = delta/denom;
+delta /= denom;
 kappa *= denom;
 		outputdev = 1000*sqrt(curdev/N_games);
 
@@ -1073,7 +1073,7 @@ kappa *= denom;
 		}
 		phase++;
 
-if (outputdev < 0.0001) break;
+if (outputdev < 0.000001) break;
 	}
 
 	if (!quiet) printf ("done\n\n");
