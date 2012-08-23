@@ -167,7 +167,7 @@ void			calc_obtained_playedby_ORI (void);
 void			init_rating (void);
 void			calc_expected (void);
 double			xpect (double a, double b);
-void			adjust_rating (double delta);
+double			adjust_rating (double delta, double kappa);
 void			calc_rating (bool_t quiet);
 double 			deviation (void);
 void			ratings_restore (void);
@@ -327,10 +327,10 @@ int main (int argc, char *argv[])
 	if (Anchor_use) {
 		if (!find_anchor_player(&Anchor)) {
 			fprintf (stderr, "ERROR: No games of anchor player, mispelled, wrong capital letters, or extra spaces = \"%s\"\n", Anchor_name);
-			fprintf (stderr, "Surround the name with \"quotes\" if it contains spaces");
+			fprintf (stderr, "Surround the name with \"quotes\" if it contains spaces\n\n");
 			return EXIT_FAILURE; 			
 		} else {
-			printf("anchor selected: %d, %s\n",Anchor, Anchor_name);
+			if (!QUIET_MODE) printf("anchor selected: %d, %s\n",Anchor, Anchor_name);
 		}
 	}
 
@@ -383,7 +383,8 @@ int main (int argc, char *argv[])
 
 	if (ADJUST_WHITE_ADVANTAGE) {
 		double new_wadv = adjust_wadv (White_advantage);
-		printf ("\nAdjusted White Advantage = %f\n\n",new_wadv);
+		if (!QUIET_MODE)
+			printf ("\nAdjusted White Advantage = %f\n\n",new_wadv);
 		White_advantage = new_wadv;
 	
 		calc_rating(QUIET_MODE);
@@ -722,7 +723,6 @@ calc_encounters (void)
 	shrink_ENC ();
 	qsort (Encounter, (size_t)N_encounters, sizeof(struct ENC), compare_ENC);
 	shrink_ENC ();
-	printf ("Unique head to head encounters =%8.2f%s\n\n", 100.0*N_encounters/N_games, "%");
 }
 
 
@@ -897,11 +897,12 @@ calc_expected_ORI (void)
 }
 
 
-void
-adjust_rating (double delta)
+double
+adjust_rating (double delta, double kappa)
 {
 	double y = 1.0;
 	double d;
+	double ymax = 0;
 	double accum = 0;
 	double excess, average;
 	int j;
@@ -910,8 +911,8 @@ adjust_rating (double delta)
 
 		d = (expected[j] - obtained[j])/playedby[j];
 		d = d < 0? -d: d;
-		y = d / (0.05 + d);
-
+		y = d / (kappa+d);
+if (y > ymax) ymax = y;
 		if (expected[j] > obtained [j]) {
 			ratingof[j] -= delta * y;
 		} else {
@@ -933,7 +934,8 @@ adjust_rating (double delta)
 	for (j = 0; j < N_players; j++) {
 		ratingof[j] -= excess;
 	}	
-
+	
+	return ymax * delta;
 }
 
 void
@@ -1004,7 +1006,7 @@ deviation (void)
 
 	for (accum = 0, j = 0; j < N_players; j++) {
 		diff = expected[j] - obtained [j];
-		accum += diff * diff;
+		accum += diff * diff / playedby[j];
 	}		
 	return accum;
 }
@@ -1017,13 +1019,16 @@ calc_rating (bool_t quiet)
 
 	int		rounds = 10000;
 	double 	delta = 200.0;
+	double 	kappa = 0.05;
 	double 	denom = 2;
 	int 	phase = 0;
 	int 	n = 20;
-
+double resol;
 #ifdef NEW_ENC
 	calc_encounters();
 	calc_obtained_playedby_ENC();
+	if (!quiet)
+		printf ("Unique head to head encounters =%8.2f%s\n\n", 100.0*N_encounters/N_games, "%");
 #else
 	calc_obtained_playedby_ORI();
 #endif
@@ -1034,13 +1039,13 @@ calc_rating (bool_t quiet)
 	if (!quiet) printf ("%3s %4s %10s\n", "phase", "iteration", "deviation");
 
 	while (n-->0) {
-
+double kk = 1.0;
 		for (i = 0; i < rounds; i++) {
 
 			ratings_backup();
 			olddev = curdev;
 
-			adjust_rating(delta);
+	resol = adjust_rating(delta,kappa*kk);
 			calc_expected();
 			curdev = deviation();
 
@@ -1051,14 +1056,24 @@ calc_rating (bool_t quiet)
 				assert (curdev == olddev);
 				break;
 			};	
+
+outputdev = 1000*sqrt(curdev/N_games);
+if (outputdev < 0.0001) break;
+
+ kk *= 0.995;
 		}
+//		delta = delta/denom;
+kappa *= denom;
+		outputdev = 1000*sqrt(curdev/N_games);
 
-		delta = delta/denom;
-
-		outputdev = sqrt(curdev)/N_players;
-
-		if (!quiet) printf ("%3d %7d %14.5f\n", phase, i, outputdev);
+		if (!quiet) {
+			printf ("%3d %7d %14.5f", phase, i, outputdev);
+			printf ("        r:%11f",resol);
+			printf ("\n");
+		}
 		phase++;
+
+if (outputdev < 0.0001) break;
 	}
 
 	if (!quiet) printf ("done\n\n");
