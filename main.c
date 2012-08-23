@@ -900,17 +900,24 @@ calc_expected_ORI (void)
 void
 adjust_rating (double delta)
 {
+	double y = 1.0;
+	double d;
 	double accum = 0;
 	double excess, average;
 	int j;
 
 	for (j = 0; j < N_players; j++) {
+
+		d = (expected[j] - obtained[j])/playedby[j];
+		d = d < 0? -d: d;
+		y = d / (0.05 + d);
+
 		if (expected[j] > obtained [j]) {
-			ratingof[j] -= delta;
+			ratingof[j] -= delta * y;
 		} else {
-			ratingof[j] += delta;
+			ratingof[j] += delta * y;
 		}
-	}	
+	}
 
 	for (accum = 0, j = 0; j < N_players; j++) {
 		accum += ratingof[j];
@@ -1009,7 +1016,7 @@ calc_rating (bool_t quiet)
 	int 	i;
 
 	int		rounds = 10000;
-	double 	delta = 100.0;
+	double 	delta = 200.0;
 	double 	denom = 2;
 	int 	phase = 0;
 	int 	n = 20;
