@@ -425,6 +425,11 @@ int main (int argc, char *argv[])
 	}
 
 	purge_players(QUIET_MODE);
+
+	calc_encounters();
+	calc_obtained_playedby_ENC();
+	if (!QUIET_MODE)	printf ("Unique head to head encounters =%8.2f%s\n\n", 100.0*N_encounters/N_games, "%");
+	
 	calc_rating(QUIET_MODE);
 	ratings_results();
 
@@ -1136,8 +1141,7 @@ double resol;
 #ifdef NEW_ENC
 	calc_encounters();
 	calc_obtained_playedby_ENC();
-	if (!quiet)
-		printf ("Unique head to head encounters =%8.2f%s\n\n", 100.0*N_encounters/N_games, "%");
+//	if (!quiet)	printf ("Unique head to head encounters =%8.2f%s\n\n", 100.0*N_encounters/N_games, "%");
 #else
 	calc_obtained_playedby_ORI();
 #endif
@@ -1145,7 +1149,7 @@ double resol;
 	calc_expected();
 	olddev = curdev = deviation();
 
-	if (!quiet) printf ("%3s %4s %10s\n", "phase", "iteration", "deviation");
+	if (!quiet) printf ("\n%3s %4s %10s %10s\n", "phase", "iteration", "deviation","resolution");
 
 	while (n-->0) {
 double kk = 1.0;
@@ -1177,7 +1181,7 @@ kappa *= denom;
 
 		if (!quiet) {
 			printf ("%3d %7d %14.5f", phase, i, outputdev);
-			printf ("        r:%11f",resol);
+			printf ("%11.5f",resol);
 			printf ("\n");
 		}
 		phase++;
