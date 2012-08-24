@@ -669,6 +669,9 @@ all_report (FILE *csvf, FILE *textf)
 	FILE *f;
 	int i, j;
 	size_t ml;
+	char sdev_str_buffer[80];
+	char *sdev_str_buffer;
+
 
 #ifdef NEW_ENC
 	calc_encounters();
@@ -713,10 +716,16 @@ all_report (FILE *csvf, FILE *textf)
 	
 			for (i = 0; i < N_players; i++) {
 				j = sorted[i];
-				fprintf(f, "%4d %-*s: %7.1f %6.1f %8.1f   %5d   %4.1f%s\n", 
+				if (sdev[j] > 0.00000001) {
+					sprintf(sdev_str_buffer, "%6.1f", sdev[j]);
+					sdev_str = sdev_str_buffer;
+				} else {
+					sdev_str = "---";
+				}
+				fprintf(f, "%4d %-*s: %7.1f %s %8.1f   %5d   %4.1f%s\n", 
 					i+1,
 					(int)ml+1, 
-					Name[j], Ratingof_results[j], sdev[j], Obtained_results[j], Playedby_results[j]
+					Name[j], Ratingof_results[j], sdev_str, Obtained_results[j], Playedby_results[j]
 						, Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], "%");
 			}
 		}
