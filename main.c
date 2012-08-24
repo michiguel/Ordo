@@ -702,14 +702,21 @@ all_report (FILE *csvf, FILE *textf)
 	
 			for (i = 0; i < N_players; i++) {
 				j = sorted[i];
-				fprintf(f, "%4d %-*s:%7.1f %9.1f   %5d   %4.1f%s\n", 
+				if (!Flagged[j]) {
+				fprintf(f, "%4d %-*s:%7.1f %9.1f %7d %6.1f%s\n", 
 					i+1,
 					(int)ml+1,
 					Name[j], Ratingof_results[j], Obtained_results[j], Playedby_results[j]
 						, Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j], "%");
+				} else {
+				fprintf(f, "%4d %-*s:%7s %9s %7s %6s%s\n", 
+					i+1,
+					(int)ml+1,
+					Name[j], "----", "----", "----", "----","%");
+				}
 			}
 		} else {
-			fprintf(f, "\n%s %-*s : %7s %6s %8s %7s %6s\n", 
+			fprintf(f, "\n%s %-*s :%7s %6s %8s %7s %6s\n", 
 				"   #", 
 				(int)ml, 
 				"ENGINE", "RATING", "ERROR", "POINTS", "PLAYED", "(%)");
@@ -722,7 +729,7 @@ all_report (FILE *csvf, FILE *textf)
 				} else {
 					sdev_str = "  ----";
 				}
-				fprintf(f, "%4d %-*s: %7.1f %s %8.1f   %5d   %4.1f%s\n", 
+				fprintf(f, "%4d %-*s:%7.1f %s %8.1f %7d %6.1f%s\n", 
 					i+1,
 					(int)ml+1, 
 					Name[j], Ratingof_results[j], sdev_str, Obtained_results[j], Playedby_results[j]
@@ -946,7 +953,7 @@ purge_players(bool_t quiet)
 			if (Flagged[j]) continue;
 			if (obtained[j] < 0.001 || playedby[j] - obtained[j] < 0.001) {
 				Flagged[j]= TRUE;
-				if (!quiet) printf ("--> purge %s\n", Name[j]);
+				if (!quiet) printf ("purge --> %s\n", Name[j]);
 				foundproblem = TRUE;
 				for (i = 0; i < N_games; i++) {
 					if (Whiteplayer[i] == j || Blackplayer[i] == j)
