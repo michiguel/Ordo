@@ -670,7 +670,7 @@ all_report (FILE *csvf, FILE *textf)
 	int i, j;
 	size_t ml;
 	char sdev_str_buffer[80];
-	char *sdev_str_buffer;
+	const char *sdev_str;
 
 
 #ifdef NEW_ENC
