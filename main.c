@@ -97,6 +97,7 @@ static char 	*Labelbuffer_end = Labelbuffer;
 /* players */
 static char 	*Name   [MAXPLAYERS];
 static int 		N_players = 0;
+static bool_t	Flagged [MAXPLAYERS];
 
 enum 			{MAX_ANCHORSIZE=256};
 static bool_t	Anchor_use = FALSE;
@@ -133,8 +134,9 @@ static int		playedby[MAXPLAYERS]; /* N games played by player "i" */
 static double	ratingof[MAXPLAYERS]; /* rating current */
 static double	ratingbk[MAXPLAYERS]; /* rating backup  */
 
-static double	Rating_results[MAXPLAYERS];
+static double	Ratingof_results[MAXPLAYERS];
 static double	Obtained_results[MAXPLAYERS];
+static int		Playedby_results[MAXPLAYERS];
 
 static double	sum1[MAXPLAYERS]; 
 static double	sum2[MAXPLAYERS]; 
@@ -161,6 +163,8 @@ void			calc_obtained_playedby_ENC (void);
 void			calc_expected_ENC (void);
 void			calc_expected_ORI (void);
 void			shrink_ENC (void);
+static void		purge_players(bool_t quiet);
+static void		clear_flagged (void);
 
 void			all_report (FILE *csvf, FILE *textf);
 void			calc_obtained_playedby_ORI (void);
@@ -175,6 +179,7 @@ void			ratings_backup  (void);
 
 
 static void 	ratings_results (void);
+static void 	ratings_for_purged (void);
 
 static void		simulate_scores(void);
 static void		errorsout(const char *out);
@@ -188,6 +193,47 @@ static bool_t	find_anchor_player(int *anchor);
 
 static double 	overallerror_fwadv (double wadv);
 static double 	adjust_wadv (double start_wadv);
+
+
+//
+#if 0
+static const char *Result_string[4] = {"1-0","1/2-1/2","0-1","*"};
+
+static void
+save_simulated(int num)
+{
+	int i;
+	const char *name_w;
+	const char *name_b;
+	const char *result;
+	char filename[256] = "";	
+	FILE *fout;
+
+	sprintf (filename, "simulated_%04d.pgn", num);
+
+	printf ("\n--> filename=%s\n\n",filename);
+
+	if (NULL != (fout = fopen (filename, "w"))) {
+
+		for (i = 0; i < N_games; i++) {
+
+			if (Score[i] == DISCARD) continue;
+	
+			name_w = Name [Whiteplayer[i]];
+			name_b = Name [Blackplayer[i]];		
+			result = Result_string[Score[i]];
+
+			fprintf(fout,"[White \"%s\"]\n",name_w);
+			fprintf(fout,"[Black \"%s\"]\n",name_b);
+			fprintf(fout,"[Result \"%s\"]\n",result);
+			fprintf(fout,"%s\n\n",result);
+		}
+
+		fclose(fout);
+	}
+}
+#endif
+//
 
 /*
 |
@@ -378,6 +424,7 @@ int main (int argc, char *argv[])
 		}
 	}
 
+	purge_players(QUIET_MODE);
 	calc_rating(QUIET_MODE);
 	ratings_results();
 
@@ -387,6 +434,7 @@ int main (int argc, char *argv[])
 			printf ("\nAdjusted White Advantage = %f\n\n",new_wadv);
 		White_advantage = new_wadv;
 	
+		purge_players(QUIET_MODE);
 		calc_rating(QUIET_MODE);
 		ratings_results();
 	}
@@ -414,8 +462,14 @@ int main (int argc, char *argv[])
 			if (z > 1) {
 				while (z-->0) {
 					if (!QUIET_MODE) printf ("Simulation=%ld/%ld\n",Simulate-z,Simulate);
+					clear_flagged ();
 					simulate_scores();
+
+					//save_simulated((int)z);
+					purge_players(QUIET_MODE);
 					calc_rating(QUIET_MODE);
+					ratings_for_purged ();
+
 					for (i = 0; i < N_players; i++) {
 						sum1[i] += ratingof[i];
 						sum2[i] += ratingof[i]*ratingof[i];
@@ -512,6 +566,7 @@ transform_DB(struct DATA *db)
 
 	for (i = 0; i < db->n_players; i++) {
 		Name[i] = Labelbuffer + db->name[i];
+		Flagged[i] = FALSE;
 	}
 
 	for (i = 0; i < db->n_games; i++) {
@@ -542,8 +597,8 @@ compareit (const void *a, const void *b)
 	const int *ja = (const int *) a;
 	const int *jb = (const int *) b;
 
-	const double da = Rating_results[*ja];
-	const double db = Rating_results[*jb];
+	const double da = Ratingof_results[*ja];
+	const double db = Ratingof_results[*jb];
     
 	return (da < db) - (da > db);
 }
@@ -642,7 +697,8 @@ all_report (FILE *csvf, FILE *textf)
 				fprintf(f, "%4d %-*s:%7.1f %9.1f   %5d   %4.1f%s\n", 
 					i+1,
 					(int)ml+1,
-					Name[j], Rating_results[j], Obtained_results[j], playedby[j], 100.0*Obtained_results[j]/playedby[j], "%");
+					Name[j], Ratingof_results[j], Obtained_results[j], Playedby_results[j]
+						, Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j], "%");
 			}
 		} else {
 			fprintf(f, "\n%s %-*s : %7s %6s %8s %7s %6s\n", 
@@ -655,7 +711,8 @@ all_report (FILE *csvf, FILE *textf)
 				fprintf(f, "%4d %-*s: %7.1f %6.1f %8.1f   %5d   %4.1f%s\n", 
 					i+1,
 					(int)ml+1, 
-					Name[j], Rating_results[j], sdev[j], Obtained_results[j], playedby[j], 100.0*Obtained_results[j]/playedby[j], "%");
+					Name[j], Ratingof_results[j], sdev[j], Obtained_results[j], Playedby_results[j]
+						, Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], "%");
 			}
 		}
 
@@ -672,10 +729,10 @@ all_report (FILE *csvf, FILE *textf)
 			",%.2f"
 			"\n"		
 			,Name[j]
-			,ratingof[j] 
-			,obtained[j]
-			,playedby[j]
-			,100.0*obtained[j]/playedby[j] 
+			,Ratingof_results[j] 
+			,Obtained_results[j]
+			,Playedby_results[j]
+			,Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j] 
 			);
 		}
 	}
@@ -860,6 +917,32 @@ init_rating (void)
 	}
 }
 
+static void
+purge_players(bool_t quiet)
+{
+	bool_t foundproblem;
+	int i,j;
+
+	do {
+		calc_encounters();
+		calc_obtained_playedby_ENC();
+
+		foundproblem = FALSE;
+		for (j = 0; j < N_players; j++) {
+			if (Flagged[j]) continue;
+			if (obtained[j] < 0.001 || playedby[j] - obtained[j] < 0.001) {
+				Flagged[j]= TRUE;
+				if (!quiet) printf ("--> purge %s\n", Name[j]);
+				foundproblem = TRUE;
+				for (i = 0; i < N_games; i++) {
+					if (Whiteplayer[i] == j || Blackplayer[i] == j)
+						Score[i] = DISCARD;
+				}
+			} 
+		}
+	} while (foundproblem);
+}
+
 void
 calc_expected (void)
 {
@@ -906,8 +989,12 @@ adjust_rating (double delta, double kappa)
 	double accum = 0;
 	double excess, average;
 	int j;
+	int flagged;
+
+	for (flagged = 0, j = 0; j < N_players; j++) {if (Flagged[j]) flagged++;}
 
 	for (j = 0; j < N_players; j++) {
+if (Flagged[j]) continue;
 
 		d = (expected[j] - obtained[j])/playedby[j];
 		d = d < 0? -d: d;
@@ -924,7 +1011,7 @@ if (y > ymax) ymax = y;
 		accum += ratingof[j];
 	}		
 
-	average = accum / N_players;
+	average = accum / (N_players-flagged);
 	excess  = average - general_average;
 
 	if (Anchor_use) {
@@ -932,7 +1019,7 @@ if (y > ymax) ymax = y;
 	}
 
 	for (j = 0; j < N_players; j++) {
-		ratingof[j] -= excess;
+		if (!Flagged[j]) ratingof[j] -= excess;
 	}	
 	
 	return ymax * delta;
@@ -957,16 +1044,36 @@ ratings_backup (void)
 }
 
 #if 1
-void
+static void
 ratings_results (void)
 {
 	int j;
+	ratings_for_purged();
 	for (j = 0; j < N_players; j++) {
-		Rating_results[j] = ratingof[j];
-	}	
-	for (j = 0; j < N_players; j++) {
+		Ratingof_results[j]   = ratingof[j];
 		Obtained_results[j] = obtained[j];
+		Playedby_results[j] = playedby[j];
 	}
+}
+
+static void
+clear_flagged (void)
+{
+	int j;
+	for (j = 0; j < N_players; j++) {
+		Flagged[j] = FALSE;
+	}	
+}
+
+static void
+ratings_for_purged (void)
+{
+	int j;
+	for (j = 0; j < N_players; j++) {
+		if (Flagged[j]) {
+			ratingof[j] = 0;
+		}
+	}	
 }
 
 static void
@@ -974,7 +1081,7 @@ simulate_scores(void)
 {
 	long int i, w, b, z, y;
 	double f;
-	double	*rating = Rating_results;
+	double	*rating = Ratingof_results;
 
 	for (i = 0; i < N_games; i++) {
 
@@ -1005,8 +1112,10 @@ deviation (void)
 	int j;
 
 	for (accum = 0, j = 0; j < N_players; j++) {
+if (!Flagged[j]) {
 		diff = expected[j] - obtained [j];
 		accum += diff * diff / playedby[j];
+}
 	}		
 	return accum;
 }
