@@ -42,21 +42,22 @@ static void 	data_init (struct DATA *d);
 static bool_t	playeridx_from_str (const char *s, int *idx);
 static bool_t	addplayer (const char *s, int *i);
 static void		report_error 	(long int n);
-static void		skip_comment 	(FILE *f, long int *counter);
-static void		read_tagln 		(FILE *f, char s[], char t[], int sz, long int *counter);
-static void		skip_variation 	(FILE *f, long int *counter);
-static void		skip_string 	(FILE *f, long int *counter);
-static void		read_stringln 	(FILE *f, char s[], int sz);
 static int		res2int 		(const char *s);
-static bool_t	isresultcmd 	(const char *s);
 static bool_t 	fpgnscan (FILE *fpgn, bool_t quiet);
-static bool_t 	iswhitecmd (const char *s);
-static bool_t 	isblackcmd (const char *s);
 static bool_t 	is_complete (struct pgn_result *p);
-
 static void 	pgn_result_reset (struct pgn_result *p);
 static bool_t 	pgn_result_collect (struct pgn_result *p);
 
+/*
+static void		skip_string 	(FILE *f, long int *counter);
+static void		read_stringln 	(FILE *f, char s[], int sz);
+static void		skip_comment 	(FILE *f, long int *counter);
+static void		read_tagln 		(FILE *f, char s[], char t[], int sz, long int *counter);
+static void		skip_variation 	(FILE *f, long int *counter);
+static bool_t	isresultcmd 	(const char *s);
+static bool_t 	iswhitecmd (const char *s);
+static bool_t 	isblackcmd (const char *s);
+*/
 
 /*
 |
@@ -136,6 +137,7 @@ static void report_error (long int n)
 	fprintf(stderr, "\nParsing error in line: %ld\n", n+1);
 }
 
+#if 0
 static void
 skip_comment (FILE *f, long int *counter) 
 {
@@ -153,7 +155,7 @@ skip_comment (FILE *f, long int *counter)
 			break;
 	}	
 }
-
+#endif
 
 static void
 pgn_result_reset (struct pgn_result *p)
@@ -198,11 +200,35 @@ is_complete (struct pgn_result *p)
 	return p->wtag_present && p->btag_present && p->result_present;
 }
 
+
+static void
+parsing_error(long line_counter)
+{
+	report_error (line_counter);
+	fprintf(stderr, "Parsing problems\n");
+	exit(EXIT_FAILURE);
+}
+
+
 static bool_t
 fpgnscan (FILE *fpgn, bool_t quiet)
 {
+#define MAX_MYLINE 40000
+
+	char myline[MAX_MYLINE];
+
+	const char *whitesep = "[White \"";
+	const char *whiteend = "\"]";
+	const char *blacksep = "[Black \"";
+	const char *blackend = "\"]";
+	const char *resulsep = "[Result \"";
+	const char *resulend = "\"]";
+
+	size_t whitesep_len, blacksep_len, resulsep_len;
+	char *x, *y;
+
 	struct pgn_result 	result;
-	int					c;
+//	int					c;
 	long int			line_counter = 0;
 	long int			game_counter = 0;
 
@@ -214,87 +240,46 @@ fpgnscan (FILE *fpgn, bool_t quiet)
 
 	pgn_result_reset  (&result);
 
-	while (EOF != (c = fgetc(fpgn))) {
+	whitesep_len = strlen(whitesep); 
+	blacksep_len = strlen(blacksep); 
+	resulsep_len = strlen(resulsep); 
 
-		if (c == '\n') {
-			line_counter++;
-			continue;
-		}
+	while (NULL != fgets(myline, MAX_MYLINE, fpgn)) {
 
-		if (isspace(c) || c == '.') {
-			continue;
-		}
+		line_counter++;
 
-		switch (c) {
-
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-			case '0':
-
-				break;
-
-			case 'R':
-			case 'N':
-			case 'B':
-			case 'K':
-			case 'Q':
-			case 'a':
-			case 'b':
-			case 'c':
-			case 'd':
-			case 'e':
-			case 'f':
-			case 'g':
-			case 'h':
-			case 'O':
-
-			case '+': case '#': case 'x': case '/': case '-': case '=':
-
-				break;
-
-			case '*':
-			
-				break;
-
-			case '[': 
-				{	char cmmd[PGNSTRSIZE], prm [PGNSTRSIZE];
-					read_tagln(fpgn, cmmd, prm, sizeof(cmmd), &line_counter); 
-					if (isresultcmd(cmmd)) {
-						result.result = res2int (prm);
-						result.result_present = TRUE;
-					}
-					if (iswhitecmd(cmmd)) {
-						strcpy (result.wtag, prm);
+		if (NULL != (x = strstr (myline, whitesep))) {
+			x += whitesep_len;
+			if (NULL != (y = strstr (myline, whiteend))) {
+				*y = '\0';
+						strcpy (result.wtag, x);
 						result.wtag_present = TRUE;
-					}
-					if (isblackcmd(cmmd)) {
-						strcpy (result.btag, prm);
+			} else {
+				parsing_error(line_counter);
+			}
+		}
+
+		if (NULL != (x = strstr (myline, blacksep))) {
+			x += blacksep_len;
+			if (NULL != (y = strstr (myline, blackend))) {
+				*y = '\0';
+						strcpy (result.btag, x);
 						result.btag_present = TRUE;
-					}
-				}
-				break;
+			} else {
+				parsing_error(line_counter);
+			}
+		}
 
-			case '{':
-				skip_comment(fpgn, &line_counter);
-				break;
-
-			case '(':
-				skip_variation(fpgn, &line_counter);
-				break;
-
-			default:
-				report_error (line_counter);
-				printf("unrecognized character: %c :%d\n",c,c);
-				break;
-
-		} /* switch */
+		if (NULL != (x = strstr (myline, resulsep))) {
+			x += resulsep_len;
+			if (NULL != (y = strstr (myline, resulend))) {
+				*y = '\0';
+						result.result = res2int (x);
+						result.result_present = TRUE;
+			} else {
+				parsing_error(line_counter);
+			}
+		}
 
 		if (is_complete (&result)) {
 			if (!pgn_result_collect (&result)) {
@@ -324,6 +309,7 @@ fpgnscan (FILE *fpgn, bool_t quiet)
 }
 
 
+#if 0
 static void  
 read_tagln (FILE *f, char s[], char t[], int sz, long int *counter)
 {
@@ -437,8 +423,9 @@ read_stringln (FILE *f, char s[], int sz)
 	*p = '\0';
 	mystrncpy (s, buffer, sz);
 }
+#endif
 
-
+#if 0
 static bool_t
 isresultcmd (const char *s)
 {
@@ -456,7 +443,7 @@ isblackcmd (const char *s)
 {
 	return !strcmp(s,"Black") || !strcmp(s,"black");
 }
-
+#endif
 
 static int
 res2int (const char *s)
@@ -467,8 +454,12 @@ res2int (const char *s)
 		return BLACK_WIN;
 	} else if (!strcmp(s, "1/2-1/2")) {
 		return RESULT_DRAW;
-	} else
+	} else {
+
+printf("result problems: %s\n",s);
+exit(0);
 		return RESULT_DRAW;
+}
 }
 
 /************************************************************************/
