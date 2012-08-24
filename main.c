@@ -720,7 +720,7 @@ all_report (FILE *csvf, FILE *textf)
 					sprintf(sdev_str_buffer, "%6.1f", sdev[j]);
 					sdev_str = sdev_str_buffer;
 				} else {
-					sdev_str = "---";
+					sdev_str = "  ----";
 				}
 				fprintf(f, "%4d %-*s: %7.1f %s %8.1f   %5d   %4.1f%s\n", 
 					i+1,
