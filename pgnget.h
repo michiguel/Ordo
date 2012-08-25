@@ -8,8 +8,8 @@
 
 enum RESULTS {
 	WHITE_WIN = 0,
-	BLACK_WIN = 2,
 	RESULT_DRAW = 1,
+	BLACK_WIN = 2,
 	DISCARD = 3
 };
 

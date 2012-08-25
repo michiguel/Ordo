@@ -378,12 +378,13 @@ fpgnscan (FILE *fpgn, bool_t quiet)
 //	int					c;
 	long int			line_counter = 0;
 	long int			game_counter = 0;
+	int					games_x_dot  = 2000;
 
 	if (NULL == fpgn)
 		return FALSE;
 
 	if (!quiet) 
-		printf("\nimporting results (x1000): \n"); fflush(stdout);
+		printf("\nLoading data (%d games x dot): \n\n",games_x_dot); fflush(stdout);
 
 	pgn_result_reset  (&result);
 
@@ -437,19 +438,20 @@ fpgnscan (FILE *fpgn, bool_t quiet)
 			game_counter++;
 
 			if (!quiet) {
-				if ((game_counter%1000)==0) {
-					printf ("*"); fflush(stdout);
+				if ((game_counter%games_x_dot)==0) {
+					printf ("."); fflush(stdout);
 				}
-				if ((game_counter%40000)==0) {
-					printf ("  %4ldk\n", game_counter/1000); fflush(stdout);
+				if ((game_counter%100000)==0) {
+					printf ("|  %4ldk\n", game_counter/1000); fflush(stdout);
 				}
 			}
 		}
 
 	} /* while */
 
-	if (!quiet) 
-		printf("  total games: %7ld \n", game_counter); fflush(stdout);
+//	if (!quiet) printf("|\n\nTotal games = %ld\n", game_counter); fflush(stdout);
+	if (!quiet) printf("|\n\n"); fflush(stdout);
+
 
 	return TRUE;
 }
@@ -602,10 +604,12 @@ res2int (const char *s)
 		return RESULT_DRAW;
 	} else if (!strcmp(s, "=-=")) {
 		return RESULT_DRAW;
+	} else if (!strcmp(s, "*")) {
+		return DISCARD;
 	} else {
 		fprintf(stderr, "PGN reading problems in Result tag: %s\n",s);
 		exit(0);
-		return RESULT_DRAW;
+		return DISCARD;
 	}
 }
 

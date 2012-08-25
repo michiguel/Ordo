@@ -141,6 +141,16 @@ static double	White_advantage = 0;
 static double	Inv_beta = 173.0;
 static double	BETA = 1.0/173.0;
 
+struct GAMESTATS {
+	long int
+		white_wins,
+		draws,
+		black_wins,
+		noresult;
+};
+
+static struct GAMESTATS	Game_stats;
+
 struct DEVIATION_ACC {
 	double sum1;
 	double sum2;
@@ -179,7 +189,7 @@ static void		errorsout(const char *out);
 
 /*------------------------------------------------------------------------*/
 
-static void 	transform_DB(struct DATA *db);
+static void 	transform_DB(struct DATA *db, struct GAMESTATS *gs);
 static bool_t	find_anchor_player(int *anchor);
 
 /*------------------------------------------------------------------------*/
@@ -361,7 +371,7 @@ int main (int argc, char *argv[])
 		return EXIT_FAILURE; 
 	}
 	
-	transform_DB(&DB); /* convert DB to global variables */
+	transform_DB(&DB, &Game_stats); /* convert DB to global variables */
 
 	if (Anchor_use) {
 		if (!find_anchor_player(&Anchor)) {
@@ -374,10 +384,6 @@ int main (int argc, char *argv[])
 	}
 
 	init_rating();
-
-	if (!QUIET_MODE) {
-		printf("\nset average rating = %lf\n\n",general_average);
-	}
 
 	textf = NULL;
 	textf_opened = FALSE;
@@ -421,7 +427,20 @@ int main (int argc, char *argv[])
 
 	calc_encounters();
 	calc_obtained_playedby_ENC();
-	if (!QUIET_MODE)	printf ("Unique head to head encounters =%8.2f%s\n\n", 100.0*N_encounters/N_games, "%");
+
+	if (!QUIET_MODE) {
+		printf ("Total games         = %8ld\n", Game_stats.white_wins
+											   +Game_stats.white_wins
+											   +Game_stats.draws
+											   +Game_stats.black_wins
+											   +Game_stats.noresult);
+		printf ("White wins          = %8ld\n", Game_stats.white_wins);
+		printf ("Draws               = %8ld\n", Game_stats.draws);
+		printf ("Black wins          = %8ld\n", Game_stats.black_wins);
+		printf ("No result           = %8ld\n", Game_stats.noresult);
+		printf ("Unique head to head = %8.2f%s\n", 100.0*N_encounters/N_games, "%");
+		printf ("Set average rating  = %8.1lf\n",general_average);
+	}
 	
 	calc_rating(QUIET_MODE);
 	ratings_results();
@@ -551,10 +570,12 @@ usage (void)
 \**/
 
 static void 
-transform_DB(struct DATA *db)
+transform_DB(struct DATA *db, struct GAMESTATS *gs)
 {
 	int i;
 	ptrdiff_t x;
+	long int gamestat[4] = {0,0,0,0};
+
 	for (x = 0; x < db->labels_end_idx; x++) {
 		Labelbuffer[x] = db->labels[x];
 	}
@@ -571,7 +592,15 @@ transform_DB(struct DATA *db)
 		Whiteplayer[i] = db->white[i];
 		Blackplayer[i] = db->black[i]; 
 		Score[i]       = db->score[i];
+		if (Score[i] <= DISCARD) gamestat[Score[i]]++;
 	}
+
+	gs->white_wins	= gamestat[WHITE_WIN];
+	gs->draws		= gamestat[RESULT_DRAW];
+	gs->black_wins	= gamestat[BLACK_WIN];
+	gs->noresult	= gamestat[DISCARD];
+
+	return;
 }
 
 static bool_t
