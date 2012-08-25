@@ -378,9 +378,10 @@ int main (int argc, char *argv[])
 			fprintf (stderr, "ERROR: No games of anchor player, mispelled, wrong capital letters, or extra spaces = \"%s\"\n", Anchor_name);
 			fprintf (stderr, "Surround the name with \"quotes\" if it contains spaces\n\n");
 			return EXIT_FAILURE; 			
-		} else {
-			if (!QUIET_MODE) printf("anchor selected: %d, %s\n",Anchor, Anchor_name);
-		}
+		} 
+//		else {
+//			if (!QUIET_MODE) printf("anchor selected: %d, %s\n",Anchor, Anchor_name);
+//		}
 	}
 
 	init_rating();
@@ -429,17 +430,21 @@ int main (int argc, char *argv[])
 	calc_obtained_playedby_ENC();
 
 	if (!QUIET_MODE) {
-		printf ("Total games         = %8ld\n", Game_stats.white_wins
+		printf ("Total games         %8ld\n", Game_stats.white_wins
 											   +Game_stats.white_wins
 											   +Game_stats.draws
 											   +Game_stats.black_wins
 											   +Game_stats.noresult);
-		printf ("White wins          = %8ld\n", Game_stats.white_wins);
-		printf ("Draws               = %8ld\n", Game_stats.draws);
-		printf ("Black wins          = %8ld\n", Game_stats.black_wins);
-		printf ("No result           = %8ld\n", Game_stats.noresult);
-		printf ("Unique head to head = %8.2f%s\n", 100.0*N_encounters/N_games, "%");
-		printf ("Set average rating  = %8.1lf\n",general_average);
+		printf ("White wins          %8ld\n", Game_stats.white_wins);
+		printf ("Draws               %8ld\n", Game_stats.draws);
+		printf ("Black wins          %8ld\n", Game_stats.black_wins);
+		printf ("No result           %8ld\n", Game_stats.noresult);
+		printf ("Unique head to head %8.2f%s\n", 100.0*N_encounters/N_games, "%");
+		printf ("Reference rating    %8.1lf",general_average);
+		if (Anchor_use) 
+			printf (" (set to \"%s\")\n", Anchor_name);
+		else	
+			printf (" (average of the pool)\n");	
 	}
 	
 	calc_rating(QUIET_MODE);
