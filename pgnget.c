@@ -23,12 +23,6 @@
 
 #define PGNSTRSIZE 1024
 
-enum RESULTS {
-	WHITE_WIN = 0,
-	BLACK_WIN = 2,
-	RESULT_DRAW = 1
-};
-
 //const char *Result_string[] = {"1-0", "=-=", "0-1"};
 
 struct pgn_result {	

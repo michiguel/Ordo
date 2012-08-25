@@ -84,13 +84,6 @@ const char *OPTION_LIST = "vhp:qWLa:A:o:c:s:w:z:e:";
 |
 \*--------------------------------------------------------------*/
 
-enum RESULTS {
-	WHITE_WIN = 0,
-	BLACK_WIN = 2,
-	RESULT_DRAW = 1,
-	DISCARD = 3
-};
-
 static char		Labelbuffer[LABELBUFFERSIZE] = {'\0'};
 static char 	*Labelbuffer_end = Labelbuffer;
 
@@ -170,13 +163,13 @@ void			all_report (FILE *csvf, FILE *textf);
 void			calc_obtained_playedby_ORI (void);
 void			init_rating (void);
 void			calc_expected (void);
-double			xpect (double a, double b);
 double			adjust_rating (double delta, double kappa);
 void			calc_rating (bool_t quiet);
 double 			deviation (void);
 void			ratings_restore (void);
 void			ratings_backup  (void);
 
+static double	xpect (double a, double b);
 
 static void 	ratings_results (void);
 static void 	ratings_for_purged (void);
@@ -1218,7 +1211,7 @@ if (outputdev < 0.000001) break;
 }
 
 
-double
+static double
 xpect (double a, double b)
 {
 //	double diff = a - b;
