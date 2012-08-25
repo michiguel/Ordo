@@ -832,7 +832,10 @@ void
 calc_expected_ENC (void)
 {
 	int e, j, w, b;
-	double f, rw, rb;
+	double f;
+#if 1
+	double wperf,bperf;
+#endif
 
 	for (j = 0; j < N_players; j++) {
 		expected[j] = 0.0;	
@@ -843,12 +846,18 @@ calc_expected_ENC (void)
 		w = Encounter[e].wh;
 		b = Encounter[e].bl;
 
-		rw = ratingof[w];
-		rb = ratingof[b];
+		f = xpect (ratingof[w] + White_advantage, ratingof[b]);
+#if 1
+		wperf = Encounter[e].played * f;
+		bperf = Encounter[e].played - wperf;
 
-		f = xpect (rw + White_advantage, rb);
-		expected [w] += Encounter[e].played * f;
-		expected [b] += Encounter[e].played * (1.0 - f);	
+		expected [w] += wperf; 
+		expected [b] += bperf; 
+#else
+
+		expected [w] += Encounter[e].played * f; 
+		expected [b] += Encounter[e].played * (1.0 - f); 
+#endif
 	}
 }
 
@@ -1212,8 +1221,8 @@ if (outputdev < 0.000001) break;
 double
 xpect (double a, double b)
 {
-	double diff = a - b;
-	return 1.0 / (1.0 + exp(-diff*BETA));
+//	double diff = a - b;
+	return 1.0 / (1.0 + exp((b-a)*BETA));
 }
 
 /*==================================================================*/

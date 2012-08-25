@@ -16,6 +16,14 @@ elsif ARGV[0] == 'debug'
 	$NAME='ordo'
 	$SWITCHES=''
 
+elsif ARGV[0] == 'profile'
+
+	puts 'gcc profile'
+	$ADDPATH=''
+	$CC='gcc'
+	$NAME='ordo'
+	$SWITCHES='-DNDEBUG -pg -fno-inline'
+
 elsif ARGV[0] == 'gcc64'
 
 	puts 'gcc selected'
@@ -85,5 +93,6 @@ if ($ADDPATH != '')
 	ENV['PATH'] += ':' + $ADDPATH
 end
 
+puts line
 system line
 
