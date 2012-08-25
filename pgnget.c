@@ -8,6 +8,12 @@
 #include "boolean.h"
 #include "ordolim.h"
 
+#if 0
+#define TESTHASH
+#endif
+
+//static void	hashstat(void);
+
 /*
 |
 |	ORDO DEFINITIONS
@@ -23,7 +29,7 @@ enum RESULTS {
 	RESULT_DRAW = 1
 };
 
-const char *Result_string[] = {"1-0", "=-=", "0-1"};
+//const char *Result_string[] = {"1-0", "=-=", "0-1"};
 
 struct pgn_result {	
 	int 	wtag_present;
@@ -39,7 +45,10 @@ static void 	data_init (struct DATA *d);
 
 /*------------------------------------------------------------------------*/
 
+#ifndef TESTHASH
 static bool_t	playeridx_from_str (const char *s, int *idx);
+#endif
+
 static bool_t	addplayer (const char *s, int *i);
 static void		report_error 	(long int n);
 static int		res2int 		(const char *s);
@@ -76,6 +85,8 @@ pgn_getresults (const char *pgn, bool_t quiet)
 		ok = fpgnscan (fpgn, quiet);
 		fclose(fpgn);
 	}
+
+	//hashstat();
 	return ok;
 }
 
@@ -94,7 +105,7 @@ data_init (struct DATA *d)
 	d->n_games = 0;
 }
 
-
+#ifndef TESTHASH
 static bool_t
 playeridx_from_str (const char *s, int *idx)
 {
@@ -108,6 +119,7 @@ playeridx_from_str (const char *s, int *idx)
 	}
 	return found;
 }
+#endif
 
 static bool_t
 addplayer (const char *s, int *idx)
@@ -157,6 +169,125 @@ skip_comment (FILE *f, long int *counter)
 }
 #endif
 
+#ifdef TESTHASH
+
+#define PEAXPOD 8
+#define PODBITS 12
+#define PODMASK ((1<<PODBITS)-1)
+#define PODMAX   (1<<PODBITS)
+#define PEA_REM_MAX (256*256)
+
+struct NAMEPEA {
+	int itos;
+	uint32_t hash;
+};
+
+struct NAMEPOD {
+	struct NAMEPEA pea[PEAXPOD];
+	int n;
+};
+
+struct NAMEPOD namehashtab[PODMAX];
+
+struct NAMEPEA nameremains[PEA_REM_MAX];
+int nameremains_n;
+
+static const char *get_DB_name(int i) {return DB.labels + DB.name[i];}
+
+#if 0
+static void
+hashstat(void)
+{
+	int i, level;
+	int hist[9] = {0,0,0,0,0,0,0,0,0};
+
+	for (i = 0; i < PODMAX; i++) {
+		level = namehashtab[i].n;
+		hist[level]++;
+	}
+	for (i = 0; i < 9; i++) {
+		printf ("level[%d]=%d\n",i,hist[i]);
+	}
+}
+#endif
+
+static bool_t
+name_ispresent (const char *s, uint32_t hash, /*out*/ int *out_index)
+{
+	struct NAMEPOD *ppod = &namehashtab[hash & PODMASK];
+	struct NAMEPEA *ppea;
+	int 			n;
+	bool_t 			found= FALSE;
+	int i;
+
+	ppea = ppod->pea;
+	n = ppod->n;
+	for (i = 0; i < n; i++) {
+		if (ppea[i].hash == hash && !strcmp(s, get_DB_name(ppea[i].itos))) {
+			found = TRUE;
+			*out_index = ppea[i].itos;
+			break;
+		}
+	}
+	if (found) return found;
+
+	ppea = nameremains;
+	n = nameremains_n;
+	for (i = 0; i < n; i++) {
+		if (ppea[i].hash == hash && !strcmp(s, get_DB_name(ppea[i].itos))) {
+			found = TRUE;
+			*out_index = ppea[i].itos;
+			break;
+		}
+	}
+
+	return found;
+}
+
+static bool_t
+name_register (uint32_t hash, int i)
+{
+	struct NAMEPOD *ppod = &namehashtab[hash & PODMASK];
+	struct NAMEPEA *ppea;
+	int 			n;
+
+	ppea = ppod->pea;
+	n = ppod->n;	
+
+	if (n < PEAXPOD) {
+		ppea[n].itos = i;
+		ppea[n].hash = hash;
+		ppod->n++;
+		return TRUE;
+	}
+	else if (nameremains_n < PEA_REM_MAX) {
+		nameremains[nameremains_n].itos = i;
+		nameremains[nameremains_n].hash = hash;
+		nameremains_n++;
+		return TRUE;
+	}
+	else {
+		return FALSE;
+	}
+}
+
+/*http://www.cse.yorku.ca/~oz/hash.html*/
+
+static uint32_t
+namehash(const char *str)
+{
+	uint32_t hash = 5381;
+	char chr;
+	unsigned int c;
+	while ('\0' != *str) {
+		chr = *str++;
+		c = (unsigned int) ((unsigned char)(chr));
+		hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+	}
+	return hash;
+}
+#endif
+
 static void
 pgn_result_reset (struct pgn_result *p)
 {
@@ -174,6 +305,7 @@ pgn_result_collect (struct pgn_result *p)
 	int i, j;
 	bool_t ok = TRUE;
 
+#ifndef TESTHASH
 	if (ok && !playeridx_from_str (p->wtag, &i)) {
 		ok = addplayer (p->wtag, &i);
 	}
@@ -181,6 +313,27 @@ pgn_result_collect (struct pgn_result *p)
 	if (ok && !playeridx_from_str (p->btag, &j)) {
 		ok = addplayer (p->btag, &j);
 	}
+#else
+{
+	int idx;
+	const char *tagstr;
+	uint32_t 	taghsh;
+
+	tagstr = p->wtag;
+	taghsh = namehash(tagstr);
+	if (ok && !name_ispresent (tagstr, taghsh, &idx)) {
+		ok = addplayer (tagstr, &idx) && name_register(taghsh,idx);
+	}
+	i = idx;
+
+	tagstr = p->btag;
+	taghsh = namehash(tagstr);
+	if (ok && !name_ispresent (tagstr, taghsh, &idx)) {
+		ok = addplayer (tagstr, &idx) && name_register(taghsh,idx);
+	}
+	j = idx;
+}
+#endif
 
 	ok = ok && DB.n_games < MAXGAMES;
 	if (ok) {
@@ -305,7 +458,6 @@ fpgnscan (FILE *fpgn, bool_t quiet)
 		printf("  total games: %7ld \n", game_counter); fflush(stdout);
 
 	return TRUE;
-
 }
 
 
@@ -454,12 +606,13 @@ res2int (const char *s)
 		return BLACK_WIN;
 	} else if (!strcmp(s, "1/2-1/2")) {
 		return RESULT_DRAW;
-	} else {
-
-printf("result problems: %s\n",s);
-exit(0);
+	} else if (!strcmp(s, "=-=")) {
 		return RESULT_DRAW;
-}
+	} else {
+		fprintf(stderr, "PGN reading problems in Result tag: %s\n",s);
+		exit(0);
+		return RESULT_DRAW;
+	}
 }
 
 /************************************************************************/
