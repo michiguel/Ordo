@@ -8,7 +8,7 @@
 #include "boolean.h"
 #include "ordolim.h"
 
-#if 0
+#if 1
 #define TESTHASH
 #endif
 
