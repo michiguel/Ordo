@@ -1,3 +1,5 @@
+#!/usr/bin/ruby
+
 def multichomp x
 	y = x
 	z = x.chomp

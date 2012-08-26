@@ -1,11 +1,15 @@
 #!/usr/bin/ruby
 
+$BASENAME='ordo'
+
+#============================
+
 if ARGV[0] == 'gcc'
 
 	puts 'gcc selected'
 	$ADDPATH=''
 	$CC='gcc'
-	$NAME='ordo'
+	$NAME=$BASENAME
 	$SWITCHES='-DNDEBUG'
 
 elsif ARGV[0] == 'debug'
@@ -13,15 +17,23 @@ elsif ARGV[0] == 'debug'
 	puts 'gcc debug'
 	$ADDPATH=''
 	$CC='gcc'
-	$NAME='ordo'
+	$NAME=$BASENAME
 	$SWITCHES=''
+
+elsif ARGV[0] == 'profile'
+
+	puts 'gcc profile'
+	$ADDPATH=''
+	$CC='gcc'
+	$NAME=$BASENAME
+	$SWITCHES='-DNDEBUG -pg -fno-inline'
 
 elsif ARGV[0] == 'gcc64'
 
 	puts 'gcc selected'
 	$ADDPATH=''
 	$CC='gcc'
-	$NAME='ordo-linux64'
+	$NAME=$BASENAME+'-linux64'
 	$SWITCHES='-DNDEBUG'
 
 elsif ARGV[0] == 'gcc32'
@@ -29,7 +41,7 @@ elsif ARGV[0] == 'gcc32'
 	puts 'gcc32 selected'
 	$ADDPATH=''
 	$CC='gcc -m32'
-	$NAME='ordo-linux32'
+	$NAME=$BASENAME+'-linux32'
 	$SWITCHES='-DNDEBUG'
 
 elsif ARGV[0] == 'win32'  
@@ -37,7 +49,7 @@ elsif ARGV[0] == 'win32'
 	puts 'win32 selected'
 	$ADDPATH='/home/miguel/mingw/w32/bin'
 	$CC='i686-w64-mingw32-gcc'
-	$NAME='ordo-win32'
+	$NAME=$BASENAME+'-win32'
 	$SWITCHES='-DNDEBUG'
 
 elsif ARGV[0] == 'win64' 
@@ -45,16 +57,17 @@ elsif ARGV[0] == 'win64'
 	puts 'win64 selected'
 	$ADDPATH='/home/miguel/mingw/w64/bin'
 	$CC='x86_64-w64-mingw32-gcc' 
-	$NAME='ordo-win64'
+	$NAME=$BASENAME+'-win64'
 	$SWITCHES='-DNDEBUG'
 
 else 
 
+	puts 'gcc selected by default'
 	$ADDPATH=''
-	$CC=''
-	$NAME=''
-	puts 'no parameter given'
-	exit
+	$CC='gcc'
+	$NAME=$BASENAME
+	$SWITCHES='-DNDEBUG'
+
 end
 
 #=====================
@@ -72,10 +85,9 @@ fragments << $SWITCHES
 fragments << $INCLUDE
 fragments << $WARNINGS
 fragments << $OPT
-fragments << $LIB
 fragments << $EXE
 fragments << $SRC
-
+fragments << $LIB
 
 line=$CC
 fragments.each do |x|
