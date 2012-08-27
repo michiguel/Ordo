@@ -30,7 +30,7 @@ elsif ARGV[0] == 'profile'
 
 elsif ARGV[0] == 'gcc64'
 
-	puts 'gcc selected'
+	puts 'gcc64 selected'
 	$ADDPATH=''
 	$CC='gcc'
 	$NAME=$BASENAME+'-linux64'
