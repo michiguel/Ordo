@@ -59,6 +59,7 @@ static void usage (void);
 
 	static const char *help_str =
 		" -h          print this help\n"
+		" -H          print just the switches\n"
 		" -v          print version number and exit\n"
 		" -L          display the license information\n"
 		" -q          quiet (no screen progress updates)\n"
@@ -76,7 +77,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		;
 
-const char *OPTION_LIST = "vhp:qWLa:A:o:c:s:w:z:e:";
+const char *OPTION_LIST = "vhHp:qWLa:A:o:c:s:w:z:e:";
 
 /*
 |
@@ -253,12 +254,13 @@ int main (int argc, char *argv[])
 
 	int op;
 	const char *inputf, *textstr, *csvstr, *ematstr;
-	int version_mode, help_mode, license_mode, input_mode;
+	int version_mode, help_mode, switch_mode, license_mode, input_mode;
 
 	/* defaults */
 	version_mode = FALSE;
 	license_mode = FALSE;
 	help_mode    = FALSE;
+	switch_mode  = FALSE;
 	input_mode   = FALSE;
 	QUIET_MODE   = FALSE;
 	ADJUST_WHITE_ADVANTAGE = FALSE;
@@ -274,6 +276,7 @@ int main (int argc, char *argv[])
 						license_mode = TRUE;
 						break;
 			case 'h':	help_mode = TRUE;		break;
+			case 'H':	switch_mode = TRUE;		break;
 			case 'p': 	input_mode = TRUE;
 					 	inputf = opt_arg;
 						break;
@@ -342,6 +345,10 @@ int main (int argc, char *argv[])
 		example();
 		usage();
 		printf ("%s\n", copyright_str);
+		exit (EXIT_SUCCESS);
+	}
+	if (switch_mode && !help_mode) {
+		usage();
 		exit (EXIT_SUCCESS);
 	}
 	if ((argc - opt_index) > 1) {
@@ -547,7 +554,7 @@ static void
 example (void)
 {
 	const char *example_options = "-a 2500 -p file.pgn -o output.csv";
-	fprintf (stderr, "\n"
+	printf ("\n"
 		"quick example: %s %s\n"
 		"%s"
 		, proginfo_name()
@@ -560,7 +567,7 @@ static void
 usage (void)
 {
 	const char *usage_options = "[-OPTION]";
-	fprintf (stderr, "\n"
+	printf ("\n"
 		"usage: %s %s\n"
 		"%s"
 		, proginfo_name()
