@@ -68,7 +68,7 @@ static void usage (void);
 		" -w <value>  white advantage value (default=0.0)\n"
 		" -W          white advantage, automatically adjusted\n"
 		" -z <value>  scaling: rating that means a winning chance of 0.731 (default=173)\n"
-		" -p <file>   input file in .pgn format\n"
+		" -p <file>   input file in PGN format\n"
 		" -c <file>   output file (comma separated value format)\n"
 		" -o <file>   output file (text format), goes to the screen if not present\n"
 		" -s  #       perform # simulations to calculate errors\n"
