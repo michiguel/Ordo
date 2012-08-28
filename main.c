@@ -437,8 +437,7 @@ int main (int argc, char *argv[])
 	calc_obtained_playedby_ENC();
 
 	if (!QUIET_MODE) {
-		printf ("Total games         %8ld\n", Game_stats.white_wins
-											   +Game_stats.white_wins
+		printf ("Total games         %8ld\n", 	Game_stats.white_wins
 											   +Game_stats.draws
 											   +Game_stats.black_wins
 											   +Game_stats.noresult);
