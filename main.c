@@ -67,7 +67,8 @@ static void usage (void);
 		" -A <player> anchor: rating given by '-a' is fixed for <player>, if provided\n"
 		" -w <value>  white advantage value (default=0.0)\n"
 		" -W          white advantage, automatically adjusted\n"
-		" -z <value>  scaling: rating that means a winning chance of 0.731 (default=173)\n"
+		" -z <value>  scaling: set rating for winning expectancy 76% (default=202)\n"
+		" -T		  Probability table display\n"
 		" -p <file>   input file in PGN format\n"
 		" -c <file>   output file (comma separated value format)\n"
 		" -o <file>   output file (text format), goes to the screen if not present\n"
@@ -77,7 +78,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		;
 
-const char *OPTION_LIST = "vhHp:qWLa:A:o:c:s:w:z:e:";
+const char *OPTION_LIST = "vhHp:qWLa:A:o:c:s:w:z:e:T";
 
 /*
 |
@@ -139,7 +140,8 @@ static double	sdev[MAXPLAYERS];
 static long 	Simulate = 0;
 
 static double	White_advantage = 0;
-static double	Inv_beta = 173.0;
+static double	Rtng_76 = 202;
+static double	Inv_beta = 175.25;
 static double	BETA = 1.0/173.0;
 
 struct GAMESTATS {
@@ -197,7 +199,7 @@ static bool_t	find_anchor_player(int *anchor);
 
 static double 	overallerror_fwadv (double wadv);
 static double 	adjust_wadv (double start_wadv);
-
+static void 	table_output(double Rtng_76);
 
 //
 #if 0
@@ -254,7 +256,7 @@ int main (int argc, char *argv[])
 
 	int op;
 	const char *inputf, *textstr, *csvstr, *ematstr;
-	int version_mode, help_mode, switch_mode, license_mode, input_mode;
+	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
 
 	/* defaults */
 	version_mode = FALSE;
@@ -262,6 +264,7 @@ int main (int argc, char *argv[])
 	help_mode    = FALSE;
 	switch_mode  = FALSE;
 	input_mode   = FALSE;
+	table_mode   = FALSE;
 	QUIET_MODE   = FALSE;
 	ADJUST_WHITE_ADVANTAGE = FALSE;
 	inputf       = NULL;
@@ -309,11 +312,12 @@ int main (int argc, char *argv[])
 							exit(EXIT_FAILURE);
 						}
 						break;
-			case 'z': 	if (1 != sscanf(opt_arg,"%lf", &Inv_beta)) {
+			case 'z': 	if (1 != sscanf(opt_arg,"%lf", &Rtng_76)) {
 							fprintf(stderr, "wrong scaling parameter\n");
 							exit(EXIT_FAILURE);
 						}
 						break;
+			case 'T':	table_mode = TRUE;	break;
 			case 'q':	QUIET_MODE = TRUE;	break;
 			case 'W':	ADJUST_WHITE_ADVANTAGE = TRUE;	break;
 			case '?': 	parameter_error();
@@ -349,6 +353,10 @@ int main (int argc, char *argv[])
 	}
 	if (switch_mode && !help_mode) {
 		usage();
+		exit (EXIT_SUCCESS);
+	}
+	if (table_mode) {
+		table_output(Rtng_76);
 		exit (EXIT_SUCCESS);
 	}
 	if ((argc - opt_index) > 1) {
@@ -421,6 +429,8 @@ int main (int argc, char *argv[])
 
 	randfast_init (1324561);
 
+	Inv_beta = Rtng_76/(-log(1.0/0.76-1.0));
+
 	BETA = 1.0/Inv_beta;
 	
 	{	long i;
@@ -437,10 +447,10 @@ int main (int argc, char *argv[])
 	calc_obtained_playedby_ENC();
 
 	if (!QUIET_MODE) {
-		printf ("Total games         %8ld\n", 	Game_stats.white_wins
-											   +Game_stats.draws
-											   +Game_stats.black_wins
-											   +Game_stats.noresult);
+		printf ("Total games         %8ld\n", Game_stats.white_wins
+											 +Game_stats.draws
+											 +Game_stats.black_wins
+											 +Game_stats.noresult);
 		printf ("White wins          %8ld\n", Game_stats.white_wins);
 		printf ("Draws               %8ld\n", Game_stats.draws);
 		printf ("Black wins          %8ld\n", Game_stats.black_wins);
@@ -1323,5 +1333,29 @@ adjust_wadv (double start_wadv)
 	return wa;
 }
 
+static double inv_xpect(double invbeta, double p) {return (-1.0*invbeta) * log(100.0/p-1.0);}
 
+static void
+table_output(double rtng_76)
+{
+	int p,h; 
 
+	double invbeta = rtng_76/(-log(1.0/0.76-1.0));
+
+	printf("\n%4s: Performance expected (%s)\n","p%","%");
+	printf("Rtng: Rating difference\n");
+	printf("\n");
+	for (p = 0; p < 5; p++) {
+		printf("%3s%6s   "," p%", "Rtng");
+	}
+	printf("\n");
+	for (p = 0; p < 58; p++) {printf("-");}	printf("\n");
+	for (p = 50; p < 60; p++) {
+		for (h = 0; h < 50; h+=10) {
+			printf ("%3d%6.1f   ", p+h   , (p+h)==50?0:inv_xpect (invbeta,(double)(p+h)));
+		}
+		printf ("\n");
+	}
+	for (p = 0; p < 58; p++) {printf("-");}	printf("\n");
+	printf("\n");
+}
