@@ -177,13 +177,11 @@ struct DEVIATION_ACC *sim = NULL;
 void			calc_encounters (void);
 void			calc_obtained_playedby_ENC (void);
 void			calc_expected_ENC (void);
-void			calc_expected_ORI (void);
 void			shrink_ENC (void);
 static void		purge_players(bool_t quiet);
 static void		clear_flagged (void);
 
 void			all_report (FILE *csvf, FILE *textf);
-void			calc_obtained_playedby_ORI (void);
 void			init_rating (void);
 void			calc_expected (void);
 double			adjust_rating (double delta, double kappa);
@@ -896,41 +894,6 @@ calc_expected_ENC (void)
 	}
 }
 
-void
-calc_obtained_playedby_ORI (void)
-{
-	int i, j, w, b, s;
-
-	for (j = 0; j < N_players; j++) {
-		obtained[j] = 0.0;	
-		playedby[j] = 0;
-	}	
-
-	for (i = 0; i < N_games; i++) {
-	
-		if (Score[i] == DISCARD) continue;
-
-		w = Whiteplayer[i];
-		b = Blackplayer[i];
-		s = Score[i];		
-
-		if (s == WHITE_WIN) {
-			obtained[w] += 1.0;
-		}
-		if (s == BLACK_WIN) {
-			obtained[b] += 1.0;
-		}
-		if (s == RESULT_DRAW) {
-			obtained[w] += 0.5;
-			obtained[b] += 0.5;
-		}
-
-		playedby[w] += 1;
-		playedby[b] += 1;
-
-	}
-}
-
 static struct ENC 
 encounter_merge (const struct ENC *a, const struct ENC *b)
 {
@@ -1013,33 +976,6 @@ calc_expected (void)
 {
 	calc_expected_ENC();
 }
-
-void
-calc_expected_ORI (void)
-{
-	int i, j, w, b;
-	double f, rw, rb;
-
-	for (j = 0; j < N_players; j++) {
-		expected[j] = 0.0;	
-	}	
-
-	for (i = 0; i < N_games; i++) {
-	
-		if (Score[i] == DISCARD) continue;
-
-		w = Whiteplayer[i];
-		b = Blackplayer[i];
-
-		rw = ratingof[w];
-		rb = ratingof[b];
-
-		f = xpect (rw + White_advantage, rb);
-		expected [w] += f;
-		expected [b] += 1.0 - f;	
-	}
-}
-
 
 double
 adjust_rating (double delta, double kappa)
