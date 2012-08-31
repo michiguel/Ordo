@@ -147,10 +147,12 @@ static double	sdev[MAXPLAYERS];
 
 static long 	Simulate = 0;
 
+#define INVBETA 175.25
+
 static double	White_advantage = 0;
 static double	Rtng_76 = 202;
-static double	Inv_beta = 175.25;
-static double	BETA = 1.0/173.0;
+static double	Inv_beta = INVBETA;
+static double	BETA = 1.0/INVBETA;
 
 struct GAMESTATS {
 	long int
