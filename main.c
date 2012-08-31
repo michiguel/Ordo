@@ -51,10 +51,13 @@ static void usage (void);
 		"Program to calculate individual ratings\n"
 		;
 
+	const char *example_options = 
+		"-a 2500 -p input.pgn -o output.txt";
+
 	static const char *example_str =
-		" Processes file.pgn and calculates ratings.\n"
-		" The general pool will average 2500\n"
-		" Output is in output.csv (to be imported with a spreadsheet program, excel etc.)\n"
+		"  - Processes input.pgn (PGN file) and calculates ratings.\n"
+		"  - The general pool will have an average of 2500\n"
+		"  - Output is in output.txt (text file)\n"
 		;
 
 	static const char *help_str =
@@ -62,21 +65,26 @@ static void usage (void);
 		" -H          print just the switches\n"
 		" -v          print version number and exit\n"
 		" -L          display the license information\n"
-		" -q          quiet (no screen progress updates)\n"
-		" -a <avg>    set general rating average\n"
+		" -q          quiet mode (no screen progress updates)\n"
+		" -a <avg>    set rating for the pool average\n"
 		" -A <player> anchor: rating given by '-a' is fixed for <player>, if provided\n"
 		" -w <value>  white advantage value (default=0.0)\n"
 		" -W          white advantage, automatically adjusted\n"
-		" -z <value>  scaling: set rating for winning expectancy 76% (default=202)\n"
-		" -T          see winning expectancy table\n"
+		" -z <value>  scaling: set rating for winning expectancy of 76% (default=202)\n"
+		" -T          display winning expectancy table\n"
 		" -p <file>   input file in PGN format\n"
 		" -c <file>   output file (comma separated value format)\n"
 		" -o <file>   output file (text format), goes to the screen if not present\n"
 		" -s  #       perform # simulations to calculate errors\n"
 		" -e <file>   saves an error matrix, if -s was used\n"
 		"\n"
-	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		;
+
+	const char *usage_options = 
+		"[-OPTION]";
+		;
+	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
+		
 
 const char *OPTION_LIST = "vhHp:qWLa:A:o:c:s:w:z:e:T";
 
@@ -562,7 +570,6 @@ static void parameter_error(void) {	printf ("Error in parameters\n"); return;}
 static void
 example (void)
 {
-	const char *example_options = "-a 2500 -p file.pgn -o output.csv";
 	printf ("\n"
 		"quick example: %s %s\n"
 		"%s"
@@ -575,7 +582,6 @@ example (void)
 static void
 usage (void)
 {
-	const char *usage_options = "[-OPTION]";
 	printf ("\n"
 		"usage: %s %s\n"
 		"%s"
