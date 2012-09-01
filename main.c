@@ -795,7 +795,7 @@ all_report (FILE *csvf, FILE *textf)
 	if (f != NULL) {
 		for (i = 0; i < N_players; i++) {
 			j = sorted[i];
-			fprintf(f, "\"%21s\", %6.1f,"
+			fprintf(f, "\"%s\", %6.1f,"
 			",%.2f"
 			",%d"
 			",%.2f"
