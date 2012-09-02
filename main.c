@@ -714,6 +714,13 @@ find_maxlen (char *nm[], long int n)
 	return maxl;
 }
 
+static bool_t 
+is_super_player(int j)
+{
+	return Obtained_results[j] < 0.01 || 
+			Playedby_results[j] - Obtained_results[j] < 0.01;
+}
+
 void
 all_report (FILE *csvf, FILE *textf)
 {
@@ -780,11 +787,24 @@ all_report (FILE *csvf, FILE *textf)
 				} else {
 					sdev_str = "  ----";
 				}
+				if (!Flagged[j]) {
 				fprintf(f, "%4d %-*s:%7.1f %s %8.1f %7d %6.1f%s\n", 
 					i+1,
 					(int)ml+1, 
 					Name[j], Ratingof_results[j], sdev_str, Obtained_results[j], Playedby_results[j]
 						, Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], "%");
+				} else if (!is_super_player(j)) {
+				fprintf(f, "%4d %-*s:%7.1f %s %8.1f %7d %6.1f%s\n", 
+					i+1,
+					(int)ml+1, 
+					Name[j], Ratingof_results[j], "  ****", Obtained_results[j], Playedby_results[j]
+						, Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], "%");
+				} else {
+				fprintf(f, "%4d %-*s:%7s %s %8s %7s %6s%s\n", 
+					i+1,
+					(int)ml+1,
+					Name[j], "----", "  ----", "----", "----", "----","%");
+				}
 			}
 		}
 
