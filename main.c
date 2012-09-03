@@ -102,10 +102,18 @@ static char 	*Name   [MAXPLAYERS];
 static int 		N_players = 0;
 static bool_t	Flagged [MAXPLAYERS];
 
-enum 			{MAX_ANCHORSIZE=256};
+enum 			AnchorSZ	{MAX_ANCHORSIZE=256};
 static bool_t	Anchor_use = FALSE;
 static int		Anchor = 0;
 static char		Anchor_name[MAX_ANCHORSIZE] = "";
+
+enum 			Player_Performance_Type {
+				PERF_NORMAL = 0,
+				PERF_SUPERWINNER = 1,
+				PERF_SUPERLOSER = 2
+};
+
+static int		Performance_type[MAXPLAYERS];
 
 /* games */
 static int 		Whiteplayer	[MAXGAMES];
@@ -129,7 +137,7 @@ static int 		N_encounters = 0;
 #endif
 
 /**/
-static double	general_average = 2300.0;
+static double	General_average = 2300.0;
 static int		sorted  [MAXPLAYERS]; /* sorted index by rating */
 static double	Obtained[MAXPLAYERS];
 static double	expected[MAXPLAYERS];
@@ -299,7 +307,7 @@ int main (int argc, char *argv[])
 						break;
 			case 'e': 	ematstr = opt_arg;
 						break;
-			case 'a': 	if (1 != sscanf(opt_arg,"%lf", &general_average)) {
+			case 'a': 	if (1 != sscanf(opt_arg,"%lf", &General_average)) {
 							fprintf(stderr, "wrong average parameter\n");
 							exit(EXIT_FAILURE);
 						}
@@ -463,7 +471,7 @@ int main (int argc, char *argv[])
 		printf ("Black wins          %8ld\n", Game_stats.black_wins);
 		printf ("No result           %8ld\n", Game_stats.noresult);
 		printf ("Unique head to head %8.2f%s\n", 100.0*N_encounters/N_games, "%");
-		printf ("Reference rating    %8.1lf",general_average);
+		printf ("Reference rating    %8.1lf",General_average);
 		if (Anchor_use) 
 			printf (" (set to \"%s\")\n", Anchor_name);
 		else	
@@ -960,10 +968,10 @@ init_rating (void)
 {
 	int i;
 	for (i = 0; i < N_players; i++) {
-		ratingof[i] = general_average;
+		ratingof[i] = General_average;
 	}
 	for (i = 0; i < N_players; i++) {
-		ratingbk[i] = general_average;
+		ratingbk[i] = General_average;
 	}
 }
 
@@ -1031,10 +1039,10 @@ adjust_rating (double delta, double kappa)
 	}		
 
 	average = accum / (N_players-flagged);
-	excess  = average - general_average;
+	excess  = average - General_average;
 
 	if (Anchor_use) {
-		excess  = ratingof[Anchor] - general_average;	
+		excess  = ratingof[Anchor] - General_average;	
 	}
 
 	for (j = 0; j < N_players; j++) {
