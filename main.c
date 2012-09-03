@@ -414,6 +414,24 @@ int main (int argc, char *argv[])
 		} 
 	}
 
+	if (!QUIET_MODE) {
+		printf ("Total games         %8ld\n", Game_stats.white_wins
+											 +Game_stats.draws
+											 +Game_stats.black_wins
+											 +Game_stats.noresult);
+		printf ("White wins          %8ld\n", Game_stats.white_wins);
+		printf ("Draws               %8ld\n", Game_stats.draws);
+		printf ("Black wins          %8ld\n", Game_stats.black_wins);
+		printf ("No result           %8ld\n", Game_stats.noresult);
+		printf ("Unique head to head %8.2f%s\n", 100.0*N_encounters/N_games, "%");
+		printf ("Reference rating    %8.1lf",General_average);
+		if (Anchor_use) 
+			printf (" (set to \"%s\")\n", Anchor_name);
+		else	
+			printf (" (average of the pool)\n");	
+		printf ("\n");	
+	}
+
 	init_rating();
 
 	textf = NULL;
@@ -461,23 +479,6 @@ set_super_players(QUIET_MODE);
 
 	calc_encounters();
 	calc_obtained_playedby_ENC();
-
-	if (!QUIET_MODE) {
-		printf ("Total games         %8ld\n", Game_stats.white_wins
-											 +Game_stats.draws
-											 +Game_stats.black_wins
-											 +Game_stats.noresult);
-		printf ("White wins          %8ld\n", Game_stats.white_wins);
-		printf ("Draws               %8ld\n", Game_stats.draws);
-		printf ("Black wins          %8ld\n", Game_stats.black_wins);
-		printf ("No result           %8ld\n", Game_stats.noresult);
-		printf ("Unique head to head %8.2f%s\n", 100.0*N_encounters/N_games, "%");
-		printf ("Reference rating    %8.1lf",General_average);
-		if (Anchor_use) 
-			printf (" (set to \"%s\")\n", Anchor_name);
-		else	
-			printf (" (average of the pool)\n");	
-	}
 	
 	calc_rating(QUIET_MODE);
 	ratings_results();
