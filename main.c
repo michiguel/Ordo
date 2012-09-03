@@ -1165,9 +1165,10 @@ deviation (void)
 #ifdef CALCIND_SWSL
 
 static double
-calc_ind_rating(double cume_score, double cume_total, double *rtng, int r)
+calc_ind_rating(double cume_score, double cume_total, double *rtng, double *weig, int r)
 {
-	return +4000 + cume_score + cume_total + r + rtng[0]/2000;
+printf ("Trucho\n");
+	return +4000 + cume_score + cume_total + r + weig[0]/2000 + rtng[0]/2000;
 }
 
 static void
@@ -1209,6 +1210,7 @@ rate_super_players(bool_t quiet)
 {
 double	cume_score = 0; 
 double	cume_total = 0;
+static double weig[MAXPLAYERS];
 static double rtng[MAXPLAYERS];
 int		r = 0;
  	
@@ -1216,13 +1218,15 @@ int		r = 0;
 			int n = myenc_n;
 			if (myenc[n].wh == j) {
 				int opp = myenc[n].bl;
-				rtng[r++] = Ratingof[opp];
+				weig[r	] = myenc[n].played;
+				rtng[r++] = Ratingof[opp] - White_advantage;
 				cume_score += myenc[n].wscore;
 				cume_total += myenc[n].played;
 		 	} else 
 			if (myenc[myenc_n].bl == j) {
 				int opp = myenc[n].wh;
-				rtng[r++] = Ratingof[opp];
+				weig[r	] = myenc[n].played;
+				rtng[r++] = Ratingof[opp] + White_advantage;
 				cume_score += myenc[n].played - myenc[n].wscore;
 				cume_total += myenc[n].played;
 			} else {
@@ -1232,7 +1236,7 @@ int		r = 0;
 			} 
 		}
 
-		Ratingof[j] = calc_ind_rating (cume_score-0.25, cume_total, rtng, r);
+		Ratingof[j] = calc_ind_rating (cume_score-0.25, cume_total, rtng, weig, r);
 		Flagged[j] = FALSE;
 }
 
