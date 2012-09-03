@@ -131,9 +131,9 @@ static int 		N_encounters = 0;
 /**/
 static double	general_average = 2300.0;
 static int		sorted  [MAXPLAYERS]; /* sorted index by rating */
-static double	obtained[MAXPLAYERS];
+static double	Obtained[MAXPLAYERS];
 static double	expected[MAXPLAYERS];
-static int		playedby[MAXPLAYERS]; /* N games played by player "i" */
+static int		Playedby[MAXPLAYERS]; /* N games played by player "i" */
 static double	ratingof[MAXPLAYERS]; /* rating current */
 static double	ratingbk[MAXPLAYERS]; /* rating backup  */
 
@@ -180,6 +180,8 @@ void			calc_expected_ENC (void);
 void			shrink_ENC (void);
 static void		purge_players(bool_t quiet);
 static void		clear_flagged (void);
+
+static void		set_super_players(bool_t quiet);
 
 void			all_report (FILE *csvf, FILE *textf);
 void			init_rating (void);
@@ -870,8 +872,8 @@ calc_obtained_playedby_ENC (void)
 	int e, j, w, b;
 
 	for (j = 0; j < N_players; j++) {
-		obtained[j] = 0.0;	
-		playedby[j] = 0;
+		Obtained[j] = 0.0;	
+		Playedby[j] = 0;
 	}	
 
 	for (e = 0; e < N_encounters; e++) {
@@ -879,11 +881,11 @@ calc_obtained_playedby_ENC (void)
 		w = Encounter[e].wh;
 		b = Encounter[e].bl;
 
-		obtained[w] += Encounter[e].wscore;
-		obtained[b] += (double)Encounter[e].played - Encounter[e].wscore;
+		Obtained[w] += Encounter[e].wscore;
+		Obtained[b] += (double)Encounter[e].played - Encounter[e].wscore;
 
-		playedby[w] += Encounter[e].played;
-		playedby[b] += Encounter[e].played;
+		Playedby[w] += Encounter[e].played;
+		Playedby[b] += Encounter[e].played;
 	}
 }
 
@@ -978,7 +980,7 @@ purge_players(bool_t quiet)
 		foundproblem = FALSE;
 		for (j = 0; j < N_players; j++) {
 			if (Flagged[j]) continue;
-			if (obtained[j] < 0.001 || playedby[j] - obtained[j] < 0.001) {
+			if (Obtained[j] < 0.001 || Playedby[j] - Obtained[j] < 0.001) {
 				Flagged[j]= TRUE;
 				if (!quiet) printf ("purge --> %s\n", Name[j]);
 				foundproblem = TRUE;
@@ -1013,11 +1015,11 @@ adjust_rating (double delta, double kappa)
 	for (j = 0; j < N_players; j++) {
 		if (Flagged[j]) continue;
 
-		d = (expected[j] - obtained[j])/playedby[j];
+		d = (expected[j] - Obtained[j])/Playedby[j];
 		d = d < 0? -d: d;
 		y = d / (kappa+d);
 		if (y > ymax) ymax = y;
-		if (expected[j] > obtained [j]) {
+		if (expected[j] > Obtained [j]) {
 			ratingof[j] -= delta * y;
 		} else {
 			ratingof[j] += delta * y;
@@ -1068,8 +1070,8 @@ ratings_results (void)
 	ratings_for_purged();
 	for (j = 0; j < N_players; j++) {
 		Ratingof_results[j]   = ratingof[j];
-		Obtained_results[j] = obtained[j];
-		Playedby_results[j] = playedby[j];
+		Obtained_results[j] = Obtained[j];
+		Playedby_results[j] = Playedby[j];
 	}
 }
 
@@ -1130,8 +1132,8 @@ deviation (void)
 
 	for (accum = 0, j = 0; j < N_players; j++) {
 		if (!Flagged[j]) {
-			diff = expected[j] - obtained [j];
-			accum += diff * diff / playedby[j];
+			diff = expected[j] - Obtained [j];
+			accum += diff * diff / Playedby[j];
 		}
 	}		
 	return accum;
@@ -1297,3 +1299,51 @@ table_output(double rtng_76)
 	for (p = 0; p < 58; p++) {printf("-");}	printf("\n");
 	printf("\n");
 }
+
+//
+static void
+set_super_players(bool_t quiet)
+{
+	static double 	obt [MAXPLAYERS];
+	static int		pla [MAXPLAYERS];
+
+	int e, j, w, b;
+
+	calc_encounters();
+
+	for (j = 0; j < N_players; j++) {
+		obt[j] = 0.0;	
+		pla[j] = 0;
+	}	
+
+	for (e = 0; e < N_encounters; e++) {
+		w = Encounter[e].wh;
+		b = Encounter[e].bl;
+
+		obt[w] += Encounter[e].wscore;
+		obt[b] += (double)Encounter[e].played - Encounter[e].wscore;
+
+		pla[w] += Encounter[e].played;
+		pla[b] += Encounter[e].played;
+
+	}
+
+	for (j = 0; j < N_players; j++) {
+		Performance_type[j] = PERF_NORMAL;
+		if (obt[j] < 0.001) {
+			Performance_type[j] = PERF_SUPERLOSER;			
+			if (!quiet) printf ("superloser --> %s\n", Name[j]);
+		}	
+		if (pla[j] - obt[j] < 0.001) {
+			Performance_type[j] = PERF_SUPERWINNER;
+			if (!quiet) printf ("superwinner --> %s\n", Name[j]);
+
+		}
+	}
+
+	for (j = 0; j < N_players; j++) {
+		obt[j] = 0.0;	
+		pla[j] = 0;
+	}	
+}
+
