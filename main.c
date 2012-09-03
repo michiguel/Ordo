@@ -857,6 +857,9 @@ calc_encounters (void)
 
 		if (Score[i] >= DISCARD) continue;
 
+if (Flagged[Whiteplayer[i]] || Flagged[Blackplayer[i]])
+	continue;
+
 		switch (Score[i]) {
 			case WHITE_WIN: 	Encounter[e].wscore = 1.0; break;
 			case RESULT_DRAW:	Encounter[e].wscore = 0.5; break;
@@ -981,7 +984,7 @@ static void
 purge_players(bool_t quiet)
 {
 	bool_t foundproblem;
-	int i,j;
+	int j;
 
 	do {
 		calc_encounters();
@@ -994,10 +997,13 @@ purge_players(bool_t quiet)
 				Flagged[j]= TRUE;
 				if (!quiet) printf ("purge --> %s\n", Name[j]);
 				foundproblem = TRUE;
-				for (i = 0; i < N_games; i++) {
-					if (Whiteplayer[i] == j || Blackplayer[i] == j)
-						Score[i] = DISCARD;
-				}
+// No need to discard games.
+// Flagging the players is enough
+//
+//				for (i = 0; i < N_games; i++) {
+//					if (Whiteplayer[i] == j || Blackplayer[i] == j)
+//						Score[i] = DISCARD;
+//				}
 			} 
 		}
 	} while (foundproblem);
@@ -1152,8 +1158,9 @@ deviation (void)
 
 //
 //====
-
+#if 1
 #define CALCIND_SWSL
+#endif
 
 #ifdef CALCIND_SWSL
 
@@ -1202,7 +1209,7 @@ rate_super_players(bool_t quiet)
 {
 double	cume_score = 0; 
 double	cume_total = 0;
-double	rtng[MAXPLAYERS];
+static double rtng[MAXPLAYERS];
 int		r = 0;
  	
 		while (myenc_n-->0) {
@@ -1231,6 +1238,7 @@ int		r = 0;
 
 	}
 
+	calc_encounters();
 	calc_obtained_playedby_ENC();
 }
 #endif
