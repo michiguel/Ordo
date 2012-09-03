@@ -1149,6 +1149,92 @@ deviation (void)
 	return accum;
 }
 
+
+//
+//====
+
+#define CALCIND_SWSL
+
+#ifdef CALCIND_SWSL
+
+static double
+calc_ind_rating(double cume_score, double cume_total, double *rtng, int r)
+{
+	return +4000 + cume_score + cume_total + r + rtng[0]/2000;
+}
+
+static void
+rate_super_players(bool_t quiet)
+{
+	int j, e;
+//
+	int myenc_n = 0;
+	static struct ENC myenc[MAXENCOUNTERS];
+//
+
+	calc_encounters();
+	calc_obtained_playedby_ENC();
+
+	for (j = 0; j < N_players; j++) {
+
+		if (Performance_type[j] != PERF_SUPERWINNER && Performance_type[j] != PERF_SUPERLOSER) 
+			continue;
+
+		myenc_n = 0; // reset
+
+		if (Performance_type[j] == PERF_SUPERWINNER)
+			if (!quiet) printf ("\nsuperwinner --> %s\n", Name[j]);
+
+		if (Performance_type[j] == PERF_SUPERLOSER) 
+			if (!quiet) printf ("\nsuperloser --> %s\n", Name[j]);
+
+		for (e = 0; e < N_encounters; e++) {
+			int w = Encounter[e].wh;
+			int b = Encounter[e].bl;
+			if (j == w && Performance_type[b] == PERF_NORMAL) {
+				myenc[myenc_n++] = Encounter[e];
+			} else
+			if (j == b && Performance_type[w] == PERF_NORMAL) {
+				myenc[myenc_n++] = Encounter[e];
+			}
+		}
+	
+{
+double	cume_score = 0; 
+double	cume_total = 0;
+double	rtng[MAXPLAYERS];
+int		r = 0;
+ 	
+		while (myenc_n-->0) {
+			int n = myenc_n;
+			if (myenc[n].wh == j) {
+				int opp = myenc[n].bl;
+				rtng[r++] = Ratingof[opp];
+				cume_score += myenc[n].wscore;
+				cume_total += myenc[n].played;
+		 	} else 
+			if (myenc[myenc_n].bl == j) {
+				int opp = myenc[n].wh;
+				rtng[r++] = Ratingof[opp];
+				cume_score += myenc[n].played - myenc[n].wscore;
+				cume_total += myenc[n].played;
+			} else {
+				fprintf(stderr,"ERROR!!\n");
+				exit(0);
+				continue;
+			} 
+		}
+
+		Ratingof[j] = calc_ind_rating (cume_score-0.25, cume_total, rtng, r);
+		Flagged[j] = FALSE;
+}
+
+	}
+
+	calc_obtained_playedby_ENC();
+}
+#endif
+
 void
 calc_rating (bool_t quiet)
 {
@@ -1209,6 +1295,11 @@ calc_rating (bool_t quiet)
 	}
 
 	if (!quiet) printf ("done\n\n");
+
+#ifdef CALCIND_SWSL
+rate_super_players(QUIET_MODE);
+#endif
+
 }
 
 
