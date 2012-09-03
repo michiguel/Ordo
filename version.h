@@ -1,2 +1,2 @@
-#define VERSION "v0.5.1-out7-cln2-csv1-nspp2"
+#define VERSION "v0.5.1-out7-cln2-csv1-nspp3"
 
