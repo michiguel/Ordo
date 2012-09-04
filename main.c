@@ -483,8 +483,8 @@ int main (int argc, char *argv[])
 set_super_players(QUIET_MODE);
 	purge_players(QUIET_MODE);
 
-	calc_encounters(ENCOUNTERS_NOFLAGGED);
-	calc_obtained_playedby_ENC();
+//	calc_encounters(ENCOUNTERS_NOFLAGGED);
+//	calc_obtained_playedby_ENC();
 	
 	calc_rating(QUIET_MODE);
 	ratings_results();
@@ -522,11 +522,14 @@ set_super_players(QUIET_MODE);
 	
 			if (z > 1) {
 				while (z-->0) {
-					if (!QUIET_MODE) printf ("Simulation=%ld/%ld\n",Simulate-z,Simulate);
+					if (!QUIET_MODE) printf ("\n==> Simulation:%ld/%ld\n",Simulate-z,Simulate);
 					clear_flagged ();
 					simulate_scores();
 
 					//save_simulated((int)z);
+
+set_super_players(QUIET_MODE);
+
 					purge_players(QUIET_MODE);
 					calc_rating(QUIET_MODE);
 					ratings_for_purged ();
@@ -1194,27 +1197,27 @@ rate_super_players(bool_t quiet)
 		myenc_n = 0; // reset
 
 		if (Performance_type[j] == PERF_SUPERWINNER)
-			if (!quiet) printf ("\nsuperwinner --> %s\n", Name[j]);
+			if (!quiet) printf ("rating estimation (all wins)   --> %s\n", Name[j]);
 
 		if (Performance_type[j] == PERF_SUPERLOSER) 
-			if (!quiet) printf ("\nsuperloser --> %s\n", Name[j]);
+			if (!quiet) printf ("rating estimation (all losses) --> %s\n", Name[j]);
 
-printf ("N_encounters=%d\n",N_encounters);
+//printf ("N_encounters=%d\n",N_encounters);
 
 		for (e = 0; e < N_encounters; e++) {
 			int w = Encounter[e].wh;
 			int b = Encounter[e].bl;
 			if (j == w /*&& Performance_type[b] == PERF_NORMAL*/) {
-printf ("myenc_n=%d\n",myenc_n);
+//printf ("myenc_n=%d\n",myenc_n);
 				myenc[myenc_n++] = Encounter[e];
 			} else
 			if (j == b /*&& Performance_type[w] == PERF_NORMAL*/) {
-printf ("myenc_n=%d\n",myenc_n);
+//printf ("myenc_n=%d\n",myenc_n);
 				myenc[myenc_n++] = Encounter[e];
 			}
 		}
 	
-printf ("myenc_n=%d\n",myenc_n);
+//printf ("myenc_n=%d\n",myenc_n);
 
 {
 double	cume_score = 0; 
@@ -1459,11 +1462,11 @@ set_super_players(bool_t quiet)
 		Performance_type[j] = PERF_NORMAL;
 		if (obt[j] < 0.001) {
 			Performance_type[j] = PERF_SUPERLOSER;			
-			if (!quiet) printf ("All losses --> %s\n", Name[j]);
+			if (!quiet) printf ("detected (all-losses player) --> %s\n", Name[j]);
 		}	
 		if (pla[j] - obt[j] < 0.001) {
 			Performance_type[j] = PERF_SUPERWINNER;
-			if (!quiet) printf ("All wins   --> %s\n", Name[j]);
+			if (!quiet) printf ("detected (all-wins player)   --> %s\n", Name[j]);
 
 		}
 	}
@@ -1484,7 +1487,7 @@ ind_expected (double x, double *rtng, double *weig, int n)
 	for (i = 0; i < n; i++) {
 		cume += weig[i] * xpect (x, rtng[i]);
 	}
-printf ("xp=%f\n",cume);
+//printf ("xp=%f\n",cume);
 	return cume;
 }
 
@@ -1522,25 +1525,25 @@ calc_ind_rating(double cume_score, double *rtng, double *weig, int r)
 double x = 2000;
 double xp;
 
-
+/*
 printf ("cume score = %f, r=%d\n", cume_score,r);
 for (i = 0; i < r; i++) {
 	printf ("r=%d, rtng=%f, weig=%f\n", r, rtng[i], weig[i]);
 }
 printf ("\n");
-
+*/
 	D = cume_score - ind_expected(x,rtng,weig,r) ;
 	curdev = D*D;
 	olddev = curdev;
 
-printf ("D=%f\n",D);
+//printf ("D=%f\n",D);
 
 	while (n-->0) {
 		double kk = 1.0;
-printf ("n=%d\n",n);
+//printf ("n=%d\n",n);
 
 		for (i = 0; i < rounds; i++) {
-printf ("i=%d\n",i);
+//printf ("i=%d\n",i);
 
 			oldx = x;
 			olddev = curdev;
@@ -1572,7 +1575,7 @@ printf ("i=%d\n",i);
 		if (curdev < 0.000001) break;
 	}
 
-printf ("curdev=%f\n",curdev);
+//printf ("curdev=%f\n",curdev);
 
 	return x;
 }
