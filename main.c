@@ -132,6 +132,12 @@ struct ENC {
 struct ENC 		Encounter[MAXENCOUNTERS];
 static int 		N_encounters = 0;
 
+
+enum SELECTIVITY {
+	ENCOUNTERS_FULL = 0,
+	ENCOUNTERS_NOFLAGGED = 1
+};
+
 #if 1
 #define NEW_ENC
 #endif
@@ -182,7 +188,7 @@ struct DEVIATION_ACC *sim = NULL;
 
 /*------------------------------------------------------------------------*/
 
-void			calc_encounters (void);
+void			calc_encounters (bool_t useflag);
 void			calc_obtained_playedby_ENC (void);
 void			calc_expected_ENC (void);
 void			shrink_ENC (void);
@@ -477,7 +483,7 @@ int main (int argc, char *argv[])
 set_super_players(QUIET_MODE);
 	purge_players(QUIET_MODE);
 
-	calc_encounters();
+	calc_encounters(ENCOUNTERS_NOFLAGGED);
 	calc_obtained_playedby_ENC();
 	
 	calc_rating(QUIET_MODE);
@@ -736,7 +742,7 @@ all_report (FILE *csvf, FILE *textf)
 	char sdev_str_buffer[80];
 	const char *sdev_str;
 
-	calc_encounters();
+	calc_encounters(ENCOUNTERS_NOFLAGGED);
 	calc_obtained_playedby_ENC();
 
 	for (j = 0; j < N_players; j++) {
@@ -849,7 +855,7 @@ static int compare_ENC (const void * a, const void * b)
 }
 
 void
-calc_encounters (void)
+calc_encounters (int selectivity)
 {
 	int i, e = 0;
 
@@ -857,9 +863,10 @@ calc_encounters (void)
 
 		if (Score[i] >= DISCARD) continue;
 
-if (Flagged[Whiteplayer[i]] || Flagged[Blackplayer[i]])
-	continue;
-
+if (selectivity == ENCOUNTERS_NOFLAGGED) {
+	if (Flagged[Whiteplayer[i]] || Flagged[Blackplayer[i]])
+		continue;
+}
 		switch (Score[i]) {
 			case WHITE_WIN: 	Encounter[e].wscore = 1.0; break;
 			case RESULT_DRAW:	Encounter[e].wscore = 0.5; break;
@@ -987,7 +994,7 @@ purge_players(bool_t quiet)
 	int j;
 
 	do {
-		calc_encounters();
+		calc_encounters(ENCOUNTERS_NOFLAGGED);
 		calc_obtained_playedby_ENC();
 
 		foundproblem = FALSE;
@@ -1165,11 +1172,7 @@ deviation (void)
 #ifdef CALCIND_SWSL
 
 static double
-calc_ind_rating(double cume_score, double cume_total, double *rtng, double *weig, int r)
-{
-printf ("Trucho\n");
-	return +4000 + cume_score + cume_total + r + weig[0]/2000 + rtng[0]/2000;
-}
+calc_ind_rating(double cume_score, double *rtng, double *weig, int r);
 
 static void
 rate_super_players(bool_t quiet)
@@ -1180,7 +1183,7 @@ rate_super_players(bool_t quiet)
 	static struct ENC myenc[MAXENCOUNTERS];
 //
 
-	calc_encounters();
+	calc_encounters(ENCOUNTERS_FULL);
 	calc_obtained_playedby_ENC();
 
 	for (j = 0; j < N_players; j++) {
@@ -1196,17 +1199,23 @@ rate_super_players(bool_t quiet)
 		if (Performance_type[j] == PERF_SUPERLOSER) 
 			if (!quiet) printf ("\nsuperloser --> %s\n", Name[j]);
 
+printf ("N_encounters=%d\n",N_encounters);
+
 		for (e = 0; e < N_encounters; e++) {
 			int w = Encounter[e].wh;
 			int b = Encounter[e].bl;
-			if (j == w && Performance_type[b] == PERF_NORMAL) {
+			if (j == w /*&& Performance_type[b] == PERF_NORMAL*/) {
+printf ("myenc_n=%d\n",myenc_n);
 				myenc[myenc_n++] = Encounter[e];
 			} else
-			if (j == b && Performance_type[w] == PERF_NORMAL) {
+			if (j == b /*&& Performance_type[w] == PERF_NORMAL*/) {
+printf ("myenc_n=%d\n",myenc_n);
 				myenc[myenc_n++] = Encounter[e];
 			}
 		}
 	
+printf ("myenc_n=%d\n",myenc_n);
+
 {
 double	cume_score = 0; 
 double	cume_total = 0;
@@ -1236,13 +1245,18 @@ int		r = 0;
 			} 
 		}
 
-		Ratingof[j] = calc_ind_rating (cume_score-0.25, cume_total, rtng, weig, r);
+if (Performance_type[j] == PERF_SUPERWINNER) {
+		Ratingof[j] = calc_ind_rating (cume_score-0.25, rtng, weig, r);
+}
+if (Performance_type[j] == PERF_SUPERLOSER) {
+		Ratingof[j] = calc_ind_rating (cume_score+0.25, rtng, weig, r);
+}
 		Flagged[j] = FALSE;
 }
 
 	}
 
-	calc_encounters();
+	calc_encounters(ENCOUNTERS_NOFLAGGED);
 	calc_obtained_playedby_ENC();
 }
 #endif
@@ -1261,7 +1275,7 @@ calc_rating (bool_t quiet)
 	int 	n = 20;
 	double resol;
 
-	calc_encounters();
+	calc_encounters(ENCOUNTERS_NOFLAGGED);
 	calc_obtained_playedby_ENC();
 	calc_expected();
 	olddev = curdev = deviation();
@@ -1422,7 +1436,7 @@ set_super_players(bool_t quiet)
 
 	int e, j, w, b;
 
-	calc_encounters();
+	calc_encounters(ENCOUNTERS_FULL);
 
 	for (j = 0; j < N_players; j++) {
 		obt[j] = 0.0;	
@@ -1458,5 +1472,108 @@ set_super_players(bool_t quiet)
 		obt[j] = 0.0;	
 		pla[j] = 0;
 	}	
+}
+
+
+//**************************************************************88
+static double
+ind_expected (double x, double *rtng, double *weig, int n)
+{
+	int i;
+	double cume = 0;
+	for (i = 0; i < n; i++) {
+		cume += weig[i] * xpect (x, rtng[i]);
+	}
+printf ("xp=%f\n",cume);
+	return cume;
+}
+
+static double 
+adjust_x (double x, double xp, double sc, double delta, double kappa)
+{
+	double y;
+	double	d;
+	d = xp - sc;
+	
+	d = d < 0? -d: d;
+	y = d / (kappa+d);
+	if (xp > sc) {
+		x -= delta * y;
+	} else {
+		x += delta * y;
+	}
+	return x;	
+}
+
+static double
+calc_ind_rating(double cume_score, double *rtng, double *weig, int r)
+{
+	int 	i;
+	double 	olddev, curdev;
+	int		rounds = 10000;
+	double 	delta = 200.0;
+	double 	kappa = 0.05;
+	double 	denom = 2;
+	int 	phase = 0;
+	int 	n = 20;
+
+	double  D,sc,oldx;
+
+double x = 2000;
+double xp;
+
+
+printf ("cume score = %f, r=%d\n", cume_score,r);
+for (i = 0; i < r; i++) {
+	printf ("r=%d, rtng=%f, weig=%f\n", r, rtng[i], weig[i]);
+}
+printf ("\n");
+
+	D = cume_score - ind_expected(x,rtng,weig,r) ;
+	curdev = D*D;
+	olddev = curdev;
+
+printf ("D=%f\n",D);
+
+	while (n-->0) {
+		double kk = 1.0;
+printf ("n=%d\n",n);
+
+		for (i = 0; i < rounds; i++) {
+printf ("i=%d\n",i);
+
+			oldx = x;
+			olddev = curdev;
+
+			sc = cume_score;
+			xp = ind_expected(x,rtng,weig,r);
+			x  = adjust_x (x, xp, sc, delta, kappa*kk);
+			xp = ind_expected(x,rtng,weig,r);
+			D = xp - sc;
+			curdev = D*D;
+
+			if (curdev >= olddev) {
+				x = oldx;
+				D = cume_score - ind_expected(x,rtng,weig,r) ;
+				curdev = D*D;	
+				assert (curdev == olddev);
+				break;
+			};	
+
+			if (curdev < 0.000001) break;
+			kk *= 0.995;
+		}
+
+		delta /= denom;
+		kappa *= denom;
+
+		phase++;
+
+		if (curdev < 0.000001) break;
+	}
+
+printf ("curdev=%f\n",curdev);
+
+	return x;
 }
 
