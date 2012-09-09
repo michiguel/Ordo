@@ -1197,10 +1197,10 @@ rate_super_players(bool_t quiet)
 		myenc_n = 0; // reset
 
 		if (Performance_type[j] == PERF_SUPERWINNER)
-			if (!quiet) printf ("rating estimation (all wins)   --> %s\n", Name[j]);
+			if (!quiet) printf ("  all wins   --> %s\n", Name[j]);
 
 		if (Performance_type[j] == PERF_SUPERLOSER) 
-			if (!quiet) printf ("rating estimation (all losses) --> %s\n", Name[j]);
+			if (!quiet) printf ("  all losses --> %s\n", Name[j]);
 
 //printf ("N_encounters=%d\n",N_encounters);
 
@@ -1283,7 +1283,8 @@ calc_rating (bool_t quiet)
 	calc_expected();
 	olddev = curdev = deviation();
 
-	if (!quiet) printf ("\n%3s %4s %10s %10s\n", "phase", "iteration", "deviation","resolution");
+	if (!quiet) printf ("\nConvergence rating calculation\n\n");
+	if (!quiet) printf ("%3s %4s %10s %10s\n", "phase", "iteration", "deviation","resolution");
 
 	while (n-->0) {
 		double kk = 1.0;
@@ -1326,6 +1327,7 @@ calc_rating (bool_t quiet)
 	if (!quiet) printf ("done\n\n");
 
 #ifdef CALCIND_SWSL
+	if (!quiet) printf ("Post-Convergence rating estimation\n\n");
 rate_super_players(QUIET_MODE);
 #endif
 
