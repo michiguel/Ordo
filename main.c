@@ -225,6 +225,8 @@ static double 	overallerror_fwadv (double wadv);
 static double 	adjust_wadv (double start_wadv);
 static void 	table_output(double Rtng_76);
 
+void scan_encounters(void);
+
 //
 #if 0
 static const char *Result_string[4] = {"1-0","1/2-1/2","0-1","*"};
@@ -480,6 +482,11 @@ int main (int argc, char *argv[])
 		}
 	}
 
+	/*=====================*/
+
+	calc_encounters(ENCOUNTERS_FULL);
+	scan_encounters(); exit(0);
+//
 set_super_players(QUIET_MODE);
 	purge_players(QUIET_MODE);
 
@@ -1582,3 +1589,127 @@ printf ("\n");
 	return x;
 }
 
+//=========================================
+
+typedef struct GROUP 			group_t;
+typedef struct CONNECT 			connect_t;
+typedef struct NODE 			node_t;
+typedef struct PARTICIPANT 		participant_t;
+
+struct GROUP {
+	group_t 		*next;
+	participant_t 	*participant;
+	connect_t		*connect;
+};
+
+struct CONNECT {
+	connect_t 		*next;
+	node_t			*node;
+};
+
+struct NODE {
+	group_t 		*group;
+};
+
+struct PARTICIPANT {
+	participant_t 	*next;
+	char 			*name;
+	int				id;
+};
+
+node_t 				gnode[MAXPLAYERS];
+group_t 			*glist;
+
+
+participant_t		prtcpnt_list[MAXPLAYERS];
+connect_t			cnnct_list[MAXPLAYERS];
+
+
+//
+
+static bool_t encounter_is_SW(struct ENC *e) {return (e->played - e->wscore) < 0.0001;}
+static bool_t encounter_is_SL(struct ENC *e) {return              e->wscore  < 0.0001;}
+
+struct ENC 		SE[MAXENCOUNTERS];
+static int 		N_se = 0;
+struct ENC 		SE2[MAXENCOUNTERS];
+static int 		N_se2 = 0;
+static int 		group_belong[MAXPLAYERS];
+static int		N_groups;
+
+void
+scan_encounters(void)
+{
+	int i,e,g;
+	struct ENC *pe;
+	int gw, gb, lowerg, higherg;
+
+	N_groups = N_players;
+	for (i = 0; i < N_players; i++) {
+		group_belong[i] = i;
+	}
+
+	for (e = 0; e < N_encounters; e++) {
+
+		pe = &Encounter[e];
+		if (encounter_is_SL(pe) || encounter_is_SW(pe)) {
+			SE[N_se++] = *pe;
+		} else {
+			gw = group_belong[pe->wh];
+			gb = group_belong[pe->bl];
+			if (gw != gb) {
+				lowerg   = gw < gb? gw : gb;
+				higherg  = gw > gb? gw : gb;
+				// join
+				for (i = 0; i < N_players; i++) {
+					if (group_belong[i] == higherg) {
+						group_belong[i] = lowerg;
+					}
+				}
+				N_groups--;
+			}
+		}
+
+	} //e
+
+
+	for (e = 0, N_se2 = 0 ; e < N_se; e++) {
+		int x,y;
+		x = SE[e].wh;
+		y = SE[e].bl;	
+		if (group_belong[x] != group_belong[y]) {
+			SE2[N_se2++] = SE[e];
+		}
+	}
+
+	for (e = 0; e < N_se2; e++) {
+		int x,y;
+		x = SE2[e].wh;
+		y = SE2[e].bl;	
+		printf ("%s - %s = %.1f/%d\n",Name[x], Name[y], SE2[e].wscore, SE2[e].played);
+	}
+
+	printf ("Players=%d\n",N_players);
+	printf ("Groups=%d\n",N_groups);
+	printf ("Joining encounters=%d\n\n",N_se2);
+	
+	{	
+	int c=1,j=1;
+	for (g = 0; g < N_players; g++) {
+		bool_t found;
+		for (i = 0, found = FALSE; !found && i < N_players; i++) {
+			found = group_belong[i] == g;
+		}
+		if (found) { 
+			printf ("GROUP=%d\n",j++);
+			for (i = 0; i < N_players; i++) {
+				if (group_belong[i] == g) {
+					printf ("%3d    %s\n",c++,Name[i]);
+				}
+			}
+			printf ("\n");
+		}
+	}
+	}
+	return;
+}
