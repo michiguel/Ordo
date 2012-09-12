@@ -226,6 +226,7 @@ static double 	adjust_wadv (double start_wadv);
 static void 	table_output(double Rtng_76);
 
 void scan_encounters(void);
+static void convert_to_groups(void);
 
 //
 #if 0
@@ -485,7 +486,10 @@ int main (int argc, char *argv[])
 	/*=====================*/
 
 	calc_encounters(ENCOUNTERS_FULL);
-	scan_encounters(); exit(0);
+	scan_encounters(); 
+	convert_to_groups();
+
+exit(0);
 //
 set_super_players(QUIET_MODE);
 	purge_players(QUIET_MODE);
@@ -1591,19 +1595,22 @@ printf ("\n");
 
 //=========================================
 
-typedef struct GROUP 			group_t;
-typedef struct CONNECT 			connect_t;
-typedef struct NODE 			node_t;
-typedef struct PARTICIPANT 		participant_t;
+typedef struct GROUP 		group_t;
+typedef struct CONNECT 		connection_t;
+typedef struct NODE 		node_t;
+typedef struct PARTICIPANT 	participant_t;
 
 struct GROUP {
 	group_t 		*next;
-	participant_t 	*participant;
-	connect_t		*connect;
+	participant_t 	*pstart;
+	participant_t 	*plast;
+	connection_t	*cstart;
+	connection_t	*clast;
+	int				id;
 };
 
 struct CONNECT {
-	connect_t 		*next;
+	connection_t 	*next;
 	node_t			*node;
 };
 
@@ -1617,15 +1624,99 @@ struct PARTICIPANT {
 	int				id;
 };
 
-node_t 				gnode[MAXPLAYERS];
-group_t 			*glist;
+node_t				Gnode[MAXPLAYERS];
 
+struct GROUP_BUFFER {
+	group_t		list[MAXPLAYERS];
+	int					n;
+} group_buffer;
 
-participant_t		prtcpnt_list[MAXPLAYERS];
-connect_t			cnnct_list[MAXPLAYERS];
+struct PARTICIPANT_BUFFER {
+	participant_t		list[MAXPLAYERS];
+	int					n;
+} participant_buffer;
 
+struct CONNECT_BUFFER {
+	connection_t		list[MAXPLAYERS];
+	int					n;
+} connection_buffer;
 
-//
+static void connect_init (void) {connection_buffer.n = 0;}
+static connection_t * connection_new (void) {return &connection_buffer.list[connection_buffer.n++];}
+
+static void participant_init (void) {participant_buffer.n = 0;}
+static participant_t * participant_new (void) {return &participant_buffer.list[participant_buffer.n++];}
+
+static void group_init (void) {group_buffer.n = 0;}
+static group_t * group_new (void) {return &group_buffer.list[group_buffer.n++];}
+static group_t * group_tail (void) {return group_buffer.n > 0? &group_buffer.list[group_buffer.n-1]:NULL;}
+static group_t * group_head (void) {return group_buffer.n > 0? &group_buffer.list[0]:NULL;}
+static group_t * group_reset(group_t *g)
+{		if (g == NULL) return NULL;
+		g->next = NULL;	g->pstart = NULL; g->plast = NULL; g->cstart = NULL; g->clast = NULL;
+		g->id = -1;
+		return g;
+}
+
+static void
+add_participant (group_t *g, int i)
+{
+	participant_t *nw = participant_new();
+	nw->next = NULL;
+	nw->name = Name[i];
+	nw->id = i;
+	if (g->pstart == NULL) {
+		g->pstart = nw; 
+		g->plast = nw;	
+	} else {
+		g->plast->next = nw;	
+		g->plast = nw;
+	}
+}
+
+static void
+add_connection (group_t *g, int i)
+{
+int group_id;
+	connection_t *nw = connection_new();
+	nw->next = NULL;
+	nw->node = &Gnode[i];
+
+group_id = -1;
+if (Gnode[i].group) group_id = Gnode[i].group->id;
+
+	if (g->cstart == NULL) {
+		g->cstart = nw; 
+		g->clast = nw;	
+	} else {
+		connection_t *l, *c;
+		bool_t found = FALSE;
+		for (c = g->cstart; !found && c != NULL; c = c->next) {
+			node_t *nd = c->node;
+			found = nd && nd->group && nd->group->id == group_id;
+		}
+
+		if (!found) {
+			l = g->clast;
+			l->next  = nw;
+			g->clast = nw;
+		}
+	}		
+}
+
+static group_t * group_find(int id)
+{
+	group_t * s;
+
+//	if (group_buffer.n == 0) return NULL;
+
+	for (s = group_head(); s != NULL; s = s->next) {
+		if (id == s->id) return s;
+	}
+	return NULL;
+}
+
+//=========================
 
 static bool_t encounter_is_SW(struct ENC *e) {return (e->played - e->wscore) < 0.0001;}
 static bool_t encounter_is_SL(struct ENC *e) {return              e->wscore  < 0.0001;}
@@ -1711,5 +1802,143 @@ scan_encounters(void)
 		}
 	}
 	}
+	return;
+}
+
+static void
+convert_general_init(void)
+{
+	int i;
+	connect_init();
+	participant_init();
+	group_init();
+	for (i = 0; i < N_players; i++) {
+		Gnode[i].group = NULL;
+	}
+	return;
+}
+
+static int get_iwin(struct ENC *pe) {return pe->wscore > 0.5? pe->wh: pe->bl;}
+static int get_ilos(struct ENC *pe) {return pe->wscore > 0.5? pe->bl: pe->wh;}
+
+static void
+enc2groups (struct ENC *pe)
+{
+	int iwin, ilos;
+	group_t *glw, *gll, *g, *f;
+
+	iwin = get_iwin(pe);
+	ilos = get_ilos(pe);
+
+//printf("iwin=%d ilos=%d\n",iwin,ilos);
+
+	if (Gnode[iwin].group == NULL) {
+
+		g = group_find (group_belong[iwin]);
+		if (g == NULL) {
+printf("creation W\n");
+			// creation
+			f = group_tail();
+			g = group_reset(group_new());		
+			if (f != NULL) f->next = g; 
+			g->id = group_belong[iwin];
+			Gnode[iwin].group = g;
+		}
+		glw = g;
+	} else {
+		glw = Gnode[iwin].group;
+	}
+
+	if (Gnode[ilos].group == NULL) {
+
+		g = group_find (group_belong[ilos]);
+		if (g == NULL) {
+printf("creation L\n");
+			// creation
+			f = group_tail();
+			g = group_reset(group_new());	
+			if (f != NULL) f->next = g; 
+			g->id = group_belong[ilos];
+			Gnode[ilos].group = g;
+		}
+		gll = g;
+	} else {
+		gll = Gnode[ilos].group;
+	}
+
+printf ("Add: %3d %3d = %s // %s\n", iwin, ilos, Name[iwin], Name[ilos]);
+printf ("Grp: %3d %3d \n", group_belong[iwin], group_belong[ilos]);
+{int i;
+	for (i = 0; i < group_buffer.n; i++) {
+		printf("groups --> %3d\n",group_buffer.list[i].id);
+	}
+}
+printf("\n");
+
+
+
+
+
+
+//	add_participant(glw, iwin);
+	Gnode[iwin].group = glw;
+
+//	add_participant(gll, ilos);
+	Gnode[ilos].group = gll;
+
+	add_connection (glw, ilos);
+
+}
+
+static void
+convert_to_groups(void)
+{
+	group_t *s;
+	participant_t *p;
+	connection_t *c;
+
+	int e;
+	convert_general_init();
+
+printf ("N_se2=%d\n",N_se2);
+
+	for (e = 0 ; e < N_se2; e++) {
+		enc2groups(&SE2[e]);
+	}
+
+{int i;
+for (i = 0; i < N_players; i++) {
+	int gb = group_belong[i];
+	group_t *g = group_find(gb);
+	add_participant(g, i);	
+}
+}
+
+printf ("groups added=%d\n",group_buffer.n);
+
+	for (s = group_head(); s != NULL; s = s->next) {
+
+		printf ("\ngroup=%d\n",s->id);
+		
+		for (p = s->pstart; p != NULL; p = p->next) {
+			printf ("name:%s\n",p->name);
+		}
+		
+		for (c = s->cstart; c != NULL; c = c->next) {
+
+			node_t *nd = c->node;
+			if (nd) {
+				group_t *gr = nd->group;
+				if (gr) {
+					printf ("point to:%d\n",gr->id);
+				} else {
+					printf ("point to group NULL\n");
+				}
+			} else {
+					printf ("point to node NULL\n");
+			}
+		}
+	}
+
 	return;
 }
