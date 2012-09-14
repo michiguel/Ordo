@@ -1606,8 +1606,10 @@ struct GROUP {
 	group_t 		*combined;
 	participant_t 	*pstart;
 	participant_t 	*plast;
-	connection_t	*cstart;
+	connection_t	*cstart; // beat to
 	connection_t	*clast;
+	connection_t	*lstart; // lost to
+	connection_t	*llast;
 	int				id;
 };
 
@@ -1655,7 +1657,9 @@ static group_t * group_tail (void) {return group_buffer.n > 0? &group_buffer.lis
 static group_t * group_head (void) {return group_buffer.n > 0? &group_buffer.list[0]:NULL;}
 static group_t * group_reset(group_t *g)
 {		if (g == NULL) return NULL;
-		g->next = NULL;	g->pstart = NULL; g->plast = NULL; g->cstart = NULL; g->clast = NULL;
+		g->next = NULL;	g->pstart = NULL; g->plast = NULL; 	
+		g->cstart = NULL; g->clast = NULL;
+		g->lstart = NULL; g->llast = NULL;
 		g->prev = NULL; g->combined = NULL;
 		g->id = -1;
 		return g;
@@ -1708,6 +1712,35 @@ if (Gnode[i].group) group_id = Gnode[i].group->id;
 			l = g->clast;
 			l->next  = nw;
 			g->clast = nw;
+		}
+	}		
+}
+
+static void
+add_revconn (group_t *g, int i)
+{
+int group_id;
+	connection_t *nw = connection_new();
+	nw->next = NULL;
+	nw->node = &Gnode[i];
+
+group_id = -1;
+if (Gnode[i].group) group_id = Gnode[i].group->id;
+
+	if (g->lstart == NULL) {
+		g->lstart = nw; 
+		g->llast = nw;	
+	} else {
+		connection_t *l, *c;
+		bool_t found = FALSE;
+		for (c = g->lstart; !found && c != NULL; c = c->next) {
+			node_t *nd = c->node;
+			found = nd && nd->group && nd->group->id == group_id;
+		}
+		if (!found) {
+			l = g->llast;
+			l->next  = nw;
+			g->llast = nw;
 		}
 	}		
 }
@@ -1884,6 +1917,8 @@ enc2groups (struct ENC *pe)
 	Gnode[ilos].group = gll;
 
 	add_connection (glw, ilos);
+
+	add_revconn (gll, iwin);
 }
 
 
@@ -1918,8 +1953,8 @@ printf ("N_se2=%d\n",N_se2);
 #endif
 
 
-group_combine(&group_buffer.list[1],&group_buffer.list[2]);
-group_combine(&group_buffer.list[1],&group_buffer.list[3]);
+//group_combine(&group_buffer.list[1],&group_buffer.list[2]);
+//group_combine(&group_buffer.list[1],&group_buffer.list[3]);
 group_combine(&group_buffer.list[0],&group_buffer.list[1]);
 
 printf ("groups added=%d\n",group_buffer.n);
@@ -1947,6 +1982,24 @@ printf ("groups added=%d\n",group_buffer.n);
 					printf ("point to node NULL\n");
 			}
 		}
+
+
+		for (c = s->lstart; c != NULL; c = c->next) {
+
+			node_t *nd = c->node;
+			if (nd) {
+				group_t *gr = nd->group;
+				if (gr) {
+					gr = group_combined(gr);
+					printf ("pointed by:%d\n",gr->id);
+				} else {
+					printf ("pointed by group NULL\n");
+				}
+			} else {
+					printf ("pointed by node NULL\n");
+			}
+		}
+
 	}
 	return;
 }
@@ -1974,4 +2027,9 @@ group_combine(group_t *g, group_t *h)
 	g->clast = h->clast;
 	h->clast = NULL;
 	h->cstart = NULL;
+
+	g->llast->next = h->lstart;
+	g->llast = h->llast;
+	h->llast = NULL;
+	h->lstart = NULL;
 }
