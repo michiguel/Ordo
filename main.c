@@ -1633,7 +1633,9 @@ node_t				Gnode[MAXPLAYERS];
 
 struct GROUP_BUFFER {
 	group_t		list[MAXPLAYERS];
-	int					n;
+	group_t		*tail;
+	group_t		*prehead;
+	int			n;
 } group_buffer;
 
 struct PARTICIPANT_BUFFER {
@@ -1652,19 +1654,68 @@ static connection_t * connection_new (void) {return &connection_buffer.list[conn
 static void participant_init (void) {participant_buffer.n = 0;}
 static participant_t * participant_new (void) {return &participant_buffer.list[participant_buffer.n++];}
 
-static void group_init (void) {group_buffer.n = 0;}
+// prototypes
+static group_t * group_new(void);
+static group_t * group_reset(group_t *g);
+static group_t * group_combined(group_t *g);
+
+// groupset functions
+
+static void groupset_init (void) 
+{
+	group_buffer.tail    = &group_buffer.list[0];
+	group_buffer.prehead = &group_buffer.list[0];
+	group_reset(group_buffer.prehead);
+	group_buffer.n = 1;
+}
+
+static group_t * groupset_tail (void) {
+	return group_buffer.tail;
+}
+static group_t * groupset_head (void) {
+	return group_buffer.prehead->next;
+}
+
+static void groupset_add (group_t *a) 
+{
+	group_t *t = groupset_tail();
+	t->next = a;
+	a->prev = t;
+	group_buffer.tail = a;
+}
+
+static group_t * groupset_find(int id)
+{
+	group_t * s;
+//
+	printf("find %d in --> ", id);
+	for (s = groupset_head(); s != NULL; s = s->next) {
+		printf("%d, ", s->id);
+	}
+	printf("\n");
+//
+	for (s = groupset_head(); s != NULL; s = s->next) {
+		if (id == s->id) return s;
+	}
+	return NULL;
+}
+
+//===
+
 static group_t * group_new  (void) {return &group_buffer.list[group_buffer.n++];}
-static group_t * group_tail (void) {return group_buffer.n > 0? &group_buffer.list[group_buffer.n-1]:NULL;}
-static group_t * group_head (void) {return group_buffer.n > 0? &group_buffer.list[0]:NULL;}
+
 static group_t * group_reset(group_t *g)
 {		if (g == NULL) return NULL;
-		g->next = NULL;	g->pstart = NULL; g->plast = NULL; 	
+		g->next = NULL;	
+		g->prev = NULL; 
+		g->combined = NULL;
+		g->pstart = NULL; g->plast = NULL; 	
 		g->cstart = NULL; g->clast = NULL;
 		g->lstart = NULL; g->llast = NULL;
-		g->prev = NULL; g->combined = NULL;
 		g->id = -1;
 		return g;
 }
+
 static group_t * group_combined(group_t *g)
 {
 	while (g->combined != NULL)
@@ -1744,15 +1795,6 @@ if (Gnode[i].group) group_id = Gnode[i].group->id;
 			g->llast = nw;
 		}
 	}		
-}
-
-static group_t * group_find(int id)
-{
-	group_t * s;
-	for (s = group_head(); s != NULL; s = s->next) {
-		if (id == s->id) return s;
-	}
-	return NULL;
 }
 
 //=========================
@@ -1847,7 +1889,7 @@ convert_general_init(void)
 	int i;
 	connect_init();
 	participant_init();
-	group_init();
+	groupset_init();
 	for (i = 0; i < N_players; i++) {
 		Gnode[i].group = NULL;
 	}
@@ -1868,15 +1910,30 @@ enc2groups (struct ENC *pe)
 
 	if (Gnode[iwin].group == NULL) {
 
-		g = group_find (group_belong[iwin]);
+		g = groupset_find (group_belong[iwin]);
 		if (g == NULL) {
+
+printf ("CREATION\n");
+
 			// creation
-			f = group_tail();
-			g = group_reset(group_new());		
-			if (f != NULL) f->next = g; 
+
+			g = group_reset(group_new());	
 			g->id = group_belong[iwin];
+
+#if 0
+			f = groupset_tail();
+			if (f != NULL) f->next = g; 
 			g->prev = f;
+			group_buffer.tail = g;
+#else
+			groupset_add(g);
+#endif
 			Gnode[iwin].group = g;
+
+
+groupset_find (group_belong[iwin]);
+//if (group_belong[iwin]) exit(0);
+printf ("/CREATION\n");
 		}
 		glw = g;
 	} else {
@@ -1885,14 +1942,19 @@ enc2groups (struct ENC *pe)
 
 	if (Gnode[ilos].group == NULL) {
 
-		g = group_find (group_belong[ilos]);
+		g = groupset_find (group_belong[ilos]);
 		if (g == NULL) {
 			// creation
-			f = group_tail();
 			g = group_reset(group_new());	
-			if (f != NULL) f->next = g; 
 			g->id = group_belong[ilos];
+#if 0
+			f = groupset_tail();
+			if (f != NULL) f->next = g; 
 			g->prev = f;
+			group_buffer.tail = g;
+#else
+			groupset_add(g);
+#endif
 			Gnode[ilos].group = g;
 		}
 		gll = g;
@@ -1936,7 +1998,7 @@ convert_to_groups(void)
 	int e;
 	convert_general_init();
 
-printf ("N_se2=%d\n",N_se2);
+printf ("~~~~~~~~`N_se2=%d\n",N_se2);
 
 	for (e = 0 ; e < N_se2; e++) {
 		enc2groups(&SE2[e]);
@@ -1946,13 +2008,22 @@ printf ("N_se2=%d\n",N_se2);
 {
 	int i;
 	for (i = 0; i < N_players; i++) {
-		int gb = group_belong[i];
-		group_t *g = group_find(gb);
+		int gb; 
+		group_t *g;
+
+printf ("~~~~~~~~ %d\n",i);
+		gb = group_belong[i];
+printf ("player %d\n",i);
+printf ("gbelong %d\n",gb);
+		g = groupset_find(gb);
+assert(g);
+printf ("add p %d\n",i);
 		add_participant(g, i);	
 	}
 }
 #endif
 
+printf ("~~~~~~~~\n");
 
 //group_gocombine(&group_buffer.list[1],&group_buffer.list[2]);
 //group_gocombine(&group_buffer.list[1],&group_buffer.list[3]);
@@ -1963,7 +2034,7 @@ simplify_all();
 
 printf ("groups added=%d\n",group_buffer.n);
 
-	for (s = group_head(); s != NULL; s = s->next) {
+	for (s = groupset_head(); s != NULL; s = s->next) {
 
 		printf ("\ngroup=%d\n",s->id);
 		
@@ -2090,7 +2161,7 @@ ba_done(struct BITARRAY *ba)
 
 
 static group_t *
-point_to_gr(connection_t *c)
+group_pointed(connection_t *c)
 {
 	node_t *nd; 
 	if (c == NULL) return NULL;
@@ -2119,7 +2190,7 @@ simplify_all(void)
 {
 	group_t *g;
 
-	g = group_head();
+	g = groupset_head();
 	do {
 		simplify(g);
 		g = group_next(g);
@@ -2150,7 +2221,7 @@ simplify (group_t *g)
 		beat_to = NULL;
 		do {
 			c = g->cstart; 
-			if (c && NULL != (beat_to = point_to_gr(c))) {
+			if (c && NULL != (beat_to = group_pointed(c))) {
 				id = beat_to->id;
 				if (id == oid) { 
 					// remove connection
@@ -2167,7 +2238,7 @@ simplify (group_t *g)
 			c = c->next;
 
 			while (c != NULL) {
-				beat_to = point_to_gr(c);
+				beat_to = group_pointed(c);
 				id = beat_to->id;
 				if (id == oid || ba_ison(&BA, id)) {
 					// remove connection and advance
@@ -2191,7 +2262,7 @@ simplify (group_t *g)
 
 		do {
 			c = g->lstart; 
-			if (c && NULL != (lost_to = point_to_gr(c))) {
+			if (c && NULL != (lost_to = group_pointed(c))) {
 				id = lost_to->id;
 				if (id == oid) { 
 					// remove connection
@@ -2215,7 +2286,7 @@ simplify (group_t *g)
 			c = c->next;
 
 			while (c != NULL && !gotta_combine) {
-				lost_to = point_to_gr(c);
+				lost_to = group_pointed(c);
 				id = lost_to->id;
 				if (id == oid || ba_ison(&BB, id)) {
 					// remove connection and advance
