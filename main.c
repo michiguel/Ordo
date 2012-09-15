@@ -227,6 +227,7 @@ static void 	table_output(double Rtng_76);
 
 void scan_encounters(void);
 static void convert_to_groups(void);
+static void	simplify_all(void);
 
 //
 #if 0
@@ -1923,7 +1924,7 @@ enc2groups (struct ENC *pe)
 
 
 static void
-group_combine(group_t *g, group_t *h);
+group_gocombine(group_t *g, group_t *h);
 
 static void
 convert_to_groups(void)
@@ -1953,9 +1954,12 @@ printf ("N_se2=%d\n",N_se2);
 #endif
 
 
-//group_combine(&group_buffer.list[1],&group_buffer.list[2]);
-//group_combine(&group_buffer.list[1],&group_buffer.list[3]);
-group_combine(&group_buffer.list[0],&group_buffer.list[1]);
+//group_gocombine(&group_buffer.list[1],&group_buffer.list[2]);
+//group_gocombine(&group_buffer.list[1],&group_buffer.list[3]);
+//group_gocombine(&group_buffer.list[0],&group_buffer.list[1]);
+
+
+simplify_all();
 
 printf ("groups added=%d\n",group_buffer.n);
 
@@ -2005,15 +2009,18 @@ printf ("groups added=%d\n",group_buffer.n);
 }
 
 static void
-group_combine(group_t *g, group_t *h)
+group_gocombine(group_t *g, group_t *h)
 {
 	// unlink h
 	group_t *pr = h->prev;
 	group_t *ne = h->next;
+
 	h->prev = NULL;
 	h->next = NULL;
+
 	assert(pr);
 	pr->next = ne;
+
 	if (ne) ne->prev = pr;
 	
 	h->combined = g;
@@ -2033,3 +2040,216 @@ group_combine(group_t *g, group_t *h)
 	h->llast = NULL;
 	h->lstart = NULL;
 }
+
+//======================
+
+typedef unsigned long long uint64_t;
+
+struct BITARRAY {
+	uint64_t pod[MAXPLAYERS/64];
+	long int max;
+};
+
+static void
+ba_put(struct BITARRAY *ba, long int x)
+{
+	if (x < ba->max) {
+		ba->pod[x/64] |= (uint64_t)1 << (x & 63);
+	}
+}
+
+static bool_t
+ba_ison(struct BITARRAY *ba, long int x)
+{
+	uint64_t y;
+	bool_t ret;
+	y = (uint64_t)1 & (
+						ba->pod[x/64] >> (x & 63)
+					);	
+	ret = y == 1;
+	return ret;
+}
+
+static void
+ba_init(struct BITARRAY *ba, long int max)
+{
+	long int i;
+	long int max_p = max/64;
+	ba->max = max;
+	for (i = 0; i < max_p; i++) ba->pod[i] = 0;
+}
+
+static void
+ba_done(struct BITARRAY *ba)
+{
+	long int i;
+	long int max_p = ba->max/64;
+	for (i = 0; i < max_p; i++) ba->pod[i] = 0;
+	ba->max = 0;
+}
+
+
+static group_t *
+point_to_gr(connection_t *c)
+{
+	node_t *nd; 
+	if (c == NULL) return NULL;
+	nd = c->node;
+	if (nd) {
+		group_t *gr = nd->group;
+		if (gr) {
+			gr = group_combined(gr);
+		} 
+		return gr;
+	} else {
+		return NULL;
+	}
+}
+
+struct BITARRAY BA, BB;
+
+static void simplify (group_t *g);
+static group_t *group_next(group_t *g)
+{
+	return g->next;
+}
+
+static void
+simplify_all(void)
+{
+	group_t *g;
+
+	g = group_head();
+	do {
+		simplify(g);
+		g = group_next(g);
+	} while (g);
+
+	return;
+}
+
+static void
+simplify (group_t *g)
+{
+	group_t 		*beat_to, *lost_to, *combine_with=NULL;
+	connection_t 	*c, *p;
+	int 			id, oid;
+	bool_t 			gotta_combine = FALSE;
+	bool_t			combined = FALSE;
+
+	id=-1;
+
+	do {
+
+		ba_init(&BA, MAXPLAYERS-1);
+		ba_init(&BB, MAXPLAYERS-2);
+
+		oid = g->id; // own id
+
+	// loop connections, examine id if repeated or self point (delete them)
+		beat_to = NULL;
+		do {
+			c = g->cstart; 
+			if (c && NULL != (beat_to = point_to_gr(c))) {
+				id = beat_to->id;
+				if (id == oid) { 
+					// remove connection
+					g->cstart = c->next; //FIXME mem leak? free(c)
+				}
+			}
+		} while (c && beat_to && id == oid);
+
+
+		if (c && beat_to) {
+
+			ba_put(&BA, id);
+			p = c;
+			c = c->next;
+
+			while (c != NULL) {
+				beat_to = point_to_gr(c);
+				id = beat_to->id;
+				if (id == oid || ba_ison(&BA, id)) {
+					// remove connection and advance
+					c = c->next; //FIXME mem leak? free(c)
+					p->next = c; 
+				}
+				else {
+					// remember and advance
+					ba_put(&BA, id);
+					p = c;
+					c = c->next;
+				}
+			}
+
+		}
+
+	//=====
+	// loop connections, examine id if repeated or self point (delete them)
+
+		lost_to = NULL;
+
+		do {
+			c = g->lstart; 
+			if (c && NULL != (lost_to = point_to_gr(c))) {
+				id = lost_to->id;
+				if (id == oid) { 
+					// remove connection
+					g->lstart = c->next; //FIXME mem leak?
+				}
+			}
+		} while (c && lost_to && id == oid);
+
+
+		if (c && lost_to) {
+
+			// GOTTACOMBINE?
+			if (ba_ison(&BA, id)) {
+				gotta_combine = TRUE;
+				combine_with = lost_to;
+			}
+			else gotta_combine = FALSE;
+
+			ba_put(&BB, id);
+			p = c;
+			c = c->next;
+
+			while (c != NULL && !gotta_combine) {
+				lost_to = point_to_gr(c);
+				id = lost_to->id;
+				if (id == oid || ba_ison(&BB, id)) {
+					// remove connection and advance
+					c = c->next;		
+					p->next = c; //FIXME mem leak?
+				}
+				else {
+					// remember and advance
+					ba_put(&BB, id);
+					p = c;
+					c = c->next;
+	
+					// GOTTACOMBINE?
+					if (ba_ison(&BA, id)) {
+						gotta_combine = TRUE;
+						combine_with = lost_to;
+					}
+					else gotta_combine = FALSE;
+				}
+			}
+		}
+
+		ba_done(&BA);
+		ba_done(&BB);
+
+		if (gotta_combine) {
+			group_gocombine(g,combine_with);
+			combined = TRUE;
+		} else {
+			combined = FALSE;
+		}
+	
+	} while (combined);
+
+	return;
+}
+
