@@ -1687,13 +1687,6 @@ static void groupset_add (group_t *a)
 static group_t * groupset_find(int id)
 {
 	group_t * s;
-//
-	printf("find %d in --> ", id);
-	for (s = groupset_head(); s != NULL; s = s->next) {
-		printf("%d, ", s->id);
-	}
-	printf("\n");
-//
 	for (s = groupset_head(); s != NULL; s = s->next) {
 		if (id == s->id) return s;
 	}
@@ -1903,7 +1896,7 @@ static void
 enc2groups (struct ENC *pe)
 {
 	int iwin, ilos;
-	group_t *glw, *gll, *g, *f;
+	group_t *glw, *gll, *g;
 
 	iwin = get_iwin(pe);
 	ilos = get_ilos(pe);
@@ -1912,28 +1905,11 @@ enc2groups (struct ENC *pe)
 
 		g = groupset_find (group_belong[iwin]);
 		if (g == NULL) {
-
-printf ("CREATION\n");
-
 			// creation
-
 			g = group_reset(group_new());	
 			g->id = group_belong[iwin];
-
-#if 0
-			f = groupset_tail();
-			if (f != NULL) f->next = g; 
-			g->prev = f;
-			group_buffer.tail = g;
-#else
 			groupset_add(g);
-#endif
 			Gnode[iwin].group = g;
-
-
-groupset_find (group_belong[iwin]);
-//if (group_belong[iwin]) exit(0);
-printf ("/CREATION\n");
 		}
 		glw = g;
 	} else {
@@ -1947,14 +1923,7 @@ printf ("/CREATION\n");
 			// creation
 			g = group_reset(group_new());	
 			g->id = group_belong[ilos];
-#if 0
-			f = groupset_tail();
-			if (f != NULL) f->next = g; 
-			g->prev = f;
-			group_buffer.tail = g;
-#else
 			groupset_add(g);
-#endif
 			Gnode[ilos].group = g;
 		}
 		gll = g;
@@ -1998,8 +1967,6 @@ convert_to_groups(void)
 	int e;
 	convert_general_init();
 
-printf ("~~~~~~~~`N_se2=%d\n",N_se2);
-
 	for (e = 0 ; e < N_se2; e++) {
 		enc2groups(&SE2[e]);
 	}
@@ -2010,20 +1977,13 @@ printf ("~~~~~~~~`N_se2=%d\n",N_se2);
 	for (i = 0; i < N_players; i++) {
 		int gb; 
 		group_t *g;
-
-printf ("~~~~~~~~ %d\n",i);
 		gb = group_belong[i];
-printf ("player %d\n",i);
-printf ("gbelong %d\n",gb);
 		g = groupset_find(gb);
-assert(g);
-printf ("add p %d\n",i);
+		assert(g);
 		add_participant(g, i);	
 	}
 }
 #endif
-
-printf ("~~~~~~~~\n");
 
 //group_gocombine(&group_buffer.list[1],&group_buffer.list[2]);
 //group_gocombine(&group_buffer.list[1],&group_buffer.list[3]);
@@ -2134,9 +2094,7 @@ ba_ison(struct BITARRAY *ba, long int x)
 {
 	uint64_t y;
 	bool_t ret;
-	y = (uint64_t)1 & (
-						ba->pod[x/64] >> (x & 63)
-					);	
+	y = (uint64_t)1 & (ba->pod[x/64] >> (x & 63));	
 	ret = y == 1;
 	return ret;
 }
