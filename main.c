@@ -1093,12 +1093,31 @@ ratings_for_purged (void)
 	}	
 }
 
+static int
+rand_threeway_wscore(double pwin, double pdraw)
+{	
+	long z,x,y;
+	z = (long)((unsigned)(pwin * (0xffff+1)));
+	x = (long)((unsigned)((pwin+pdraw) * (0xffff+1)));
+	y = randfast32() & 0xffff;
+
+	if (y < z) {
+		return WHITE_WIN;
+	} else if (y < x) {
+		return RESULT_DRAW;
+	} else {
+		return BLACK_WIN;		
+	}
+}
+
 static void
 simulate_scores(void)
 {
-	long int i, w, b, z, y;
+	long int i, w, b;
 	double f;
 	double	*rating = Ratingof_results;
+
+double pwin, pdraw, df, dr;
 
 	for (i = 0; i < N_games; i++) {
 
@@ -1109,14 +1128,27 @@ simulate_scores(void)
 
 		f = xpect (rating[w] + White_advantage, rating[b]);
 
-		z = (long)((unsigned)(f * (0xffff+1)));
-		y = randfast32() & 0xffff;
+dr = rating[w] + White_advantage - rating[b];
+df = 0.5 / (0.5 + exp(BETA*dr)); // empirical
+pdraw = f * df;
+pwin = f - pdraw/2;
+Score [i] = rand_threeway_wscore(pwin,pdraw);
 
-		if (y < z) {
-			Score [i] = WHITE_WIN;
-		} else {
-			Score [i] = BLACK_WIN;
-		}
+
+#if 0
+{
+	int x;
+	long int counter[4] = {0,0,0,0};
+
+	for (i = 0; i < 1000000; i++) {
+		x = rand_threeway_wscore(0.1, 0.2);
+		counter[x]++;
+	}
+	printf ("w=%ld d=%ld l=%ld\n", counter[0], counter[1], counter[2]);
+	exit(0);
+}
+#endif
+
 	}
 }
 #endif
