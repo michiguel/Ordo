@@ -1116,8 +1116,7 @@ simulate_scores(void)
 	long int i, w, b;
 	double f;
 	double	*rating = Ratingof_results;
-
-double pwin, pdraw, df, dr;
+	double pwin, pdraw, df, dr;
 
 	for (i = 0; i < N_games; i++) {
 
@@ -1128,26 +1127,11 @@ double pwin, pdraw, df, dr;
 
 		f = xpect (rating[w] + White_advantage, rating[b]);
 
-dr = rating[w] + White_advantage - rating[b];
-df = 0.5 / (0.5 + exp(BETA*dr)); // empirical
-pdraw = f * df;
-pwin = f - pdraw/2;
-Score [i] = rand_threeway_wscore(pwin,pdraw);
-
-
-#if 0
-{
-	int x;
-	long int counter[4] = {0,0,0,0};
-
-	for (i = 0; i < 1000000; i++) {
-		x = rand_threeway_wscore(0.1, 0.2);
-		counter[x]++;
-	}
-	printf ("w=%ld d=%ld l=%ld\n", counter[0], counter[1], counter[2]);
-	exit(0);
-}
-#endif
+		dr = rating[w] + White_advantage - rating[b];
+		df = 0.5 / (0.5 + exp(BETA*dr)); // empirical
+		pdraw = f * df;
+		pwin = f - pdraw/2;
+		Score [i] = rand_threeway_wscore(pwin,pdraw);
 
 	}
 }
