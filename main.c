@@ -1659,6 +1659,8 @@ static group_t * group_new(void);
 static group_t * group_reset(group_t *g);
 static group_t * group_combined(group_t *g);
 
+static group_t * group_pointed(connection_t *c);
+
 // groupset functions
 
 static void groupset_init (void) 
@@ -1942,14 +1944,9 @@ enc2groups (struct ENC *pe)
 	}
 #endif
 
-//	add_participant(glw, iwin);
 	Gnode[iwin].group = glw;
-
-//	add_participant(gll, ilos);
 	Gnode[ilos].group = gll;
-
 	add_connection (glw, ilos);
-
 	add_revconn (gll, iwin);
 }
 
@@ -1960,6 +1957,7 @@ group_gocombine(group_t *g, group_t *h);
 static void
 convert_to_groups(void)
 {
+	int i;
 	group_t *s;
 	participant_t *p;
 	connection_t *c;
@@ -1971,9 +1969,6 @@ convert_to_groups(void)
 		enc2groups(&SE2[e]);
 	}
 
-#if 1
-{
-	int i;
 	for (i = 0; i < N_players; i++) {
 		int gb; 
 		group_t *g;
@@ -1982,57 +1977,36 @@ convert_to_groups(void)
 		assert(g);
 		add_participant(g, i);	
 	}
-}
-#endif
 
-//group_gocombine(&group_buffer.list[1],&group_buffer.list[2]);
-//group_gocombine(&group_buffer.list[1],&group_buffer.list[3]);
-//group_gocombine(&group_buffer.list[0],&group_buffer.list[1]);
+	//group_gocombine(&group_buffer.list[1],&group_buffer.list[2]);
+	//group_gocombine(&group_buffer.list[1],&group_buffer.list[3]);
+	//group_gocombine(&group_buffer.list[0],&group_buffer.list[1]);
 
+	simplify_all();
 
-simplify_all();
-
-printf ("groups added=%d\n",group_buffer.n);
+	printf ("groups added=%d\n",group_buffer.n);
 
 	for (s = groupset_head(); s != NULL; s = s->next) {
 
 		printf ("\ngroup=%d\n",s->id);
 		
 		for (p = s->pstart; p != NULL; p = p->next) {
-			printf ("name:%s\n",p->name);
+			printf ("   %s\n",p->name);
 		}
-		
 		for (c = s->cstart; c != NULL; c = c->next) {
+			group_t *gr = group_pointed(c);
+			if (gr != NULL)
+				printf ("point to:%d\n",gr->id);
+			else
+				printf ("point to node NULL\n");
 
-			node_t *nd = c->node;
-			if (nd) {
-				group_t *gr = nd->group;
-				if (gr) {
-					gr = group_combined(gr);
-					printf ("point to:%d\n",gr->id);
-				} else {
-					printf ("point to group NULL\n");
-				}
-			} else {
-					printf ("point to node NULL\n");
-			}
 		}
-
-
 		for (c = s->lstart; c != NULL; c = c->next) {
-
-			node_t *nd = c->node;
-			if (nd) {
-				group_t *gr = nd->group;
-				if (gr) {
-					gr = group_combined(gr);
-					printf ("pointed by:%d\n",gr->id);
-				} else {
-					printf ("pointed by group NULL\n");
-				}
-			} else {
-					printf ("pointed by node NULL\n");
-			}
+			group_t *gr = group_pointed(c);
+			if (gr != NULL)
+				printf ("pointed by:%d\n",gr->id);
+			else
+				printf ("pointed by node NULL\n");
 		}
 
 	}
