@@ -1128,7 +1128,7 @@ simulate_scores(void)
 		f = xpect (rating[w] + White_advantage, rating[b]);
 
 		dr = rating[w] + White_advantage - rating[b];
-		df = 0.5 / (0.5 + exp(BETA*dr)); // empirical
+		df = 0.5 / (0.5 + exp(BETA*dr)); // empirical, draw contribution to points achieved
 		pdraw = f * df;
 		pwin = f - pdraw/2;
 		Score [i] = rand_threeway_wscore(pwin,pdraw);
