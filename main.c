@@ -2256,3 +2256,62 @@ simplify (group_t *g)
 	return;
 }
 
+
+//======================
+
+static group_t *
+group_next_pointed_by_beat(group_t *g)
+{
+	return NULL;
+}
+
+group_t *group_beathead(group_t *g)  {return NULL;}
+group_t *beat_next(void) {return NULL;}
+
+void
+finish_it(void)
+{
+	group_t *g, *h;
+	int own_id;
+	bool_t combined;
+	static int CHAIN[MAXPPLAYERS];
+	int *chain;
+
+	chain = CHAIN;
+
+	ba_init(&BA, MAXPLAYERS);
+
+	g = groupset_head();
+	own_id = g->id; // own id
+
+	do {
+
+		ba_put(&BA, own_id);
+		*chain++ = own_id;
+	
+		h = group_next_pointed_by_beat(g);
+		if (h == NULL) {
+	
+//			unlink g, separate it as isolated group, start over.
+
+		} else g = h;
+
+		own_id = g->id;
+
+		for (b = group_beathead(g); b != NULL; b = beat_next()) {
+
+			gp = group_pointed(b);
+			bi = gp->id;
+
+			if (ba_ison(&BA, bi)) {
+//				findprevious bi, combine... remember to include own id;
+				combined = TRUE
+				break;
+			}
+
+		}	
+
+	} (while !combined);
+
+	return;
+}
