@@ -228,7 +228,7 @@ static void 	table_output(double Rtng_76);
 void scan_encounters(void);
 static void convert_to_groups(void);
 static void	simplify_all(void);
-
+static void	finish_it(void);
 //
 #if 0
 static const char *Result_string[4] = {"1-0","1/2-1/2","0-1","*"};
@@ -1612,6 +1612,7 @@ struct GROUP {
 	connection_t	*lstart; // lost to
 	connection_t	*llast;
 	int				id;
+	bool_t			isolated;
 };
 
 struct CONNECT {
@@ -1708,6 +1709,7 @@ static group_t * group_reset(group_t *g)
 		g->cstart = NULL; g->clast = NULL;
 		g->lstart = NULL; g->llast = NULL;
 		g->id = -1;
+		g->isolated = FALSE;
 		return g;
 }
 
@@ -2010,6 +2012,9 @@ convert_to_groups(void)
 		}
 
 	}
+
+finish_it();
+
 	return;
 }
 
@@ -2259,59 +2264,136 @@ simplify (group_t *g)
 
 //======================
 
+static group_t *	group_final_list[MAXPLAYERS];
+static long			group_final_list_n = 0;
+
+static connection_t *group_beathead(group_t *g) {return g->cstart;} //FIXME
+static connection_t *beat_next(connection_t *b) {return b->next;} //FIXME
+
+static group_t *
+group_unlink(group_t *g)
+{
+	group_t *a, *b; 
+
+assert(g);
+
+	a = g->prev;
+	b = g->next;
+if (a) a->next = b;
+if (b) b->prev = a;
+	g->prev = NULL;
+	g->next = NULL;
+	g->isolated = TRUE;
+	return g;
+}
+
 static group_t *
 group_next_pointed_by_beat(group_t *g)
 {
-	return NULL;
+	group_t *gp;
+	connection_t *b;
+	if (g == NULL)	return NULL; 
+	b = group_beathead(g);
+	if (b == NULL)	return NULL; 
+
+gp = group_pointed(b);
+while (gp == NULL || gp->isolated) {
+	b = beat_next(b);
+	if (b == NULL) return NULL;
+	gp = group_pointed(b);
+} 
+
+	return gp;
 }
 
-group_t *group_beathead(group_t *g)  {return NULL;}
-group_t *beat_next(void) {return NULL;}
-
-void
+static void
 finish_it(void)
 {
-	group_t *g, *h;
-	int own_id;
-	bool_t combined;
-	static int CHAIN[MAXPPLAYERS];
+	group_t *g, *h, *gp;
+	connection_t *b;
+	int own_id, bi;
+	static int CHAIN[MAXPLAYERS];
 	int *chain;
+	bool_t startover;
+	bool_t combined;
+
+printf("finish_it\n");
+
+do {
+	startover = FALSE;
+	combined = FALSE;
 
 	chain = CHAIN;
 
 	ba_init(&BA, MAXPLAYERS);
 
 	g = groupset_head();
+	if (g == NULL) break;
+
 	own_id = g->id; // own id
+
+printf("analyze=%d\n",own_id);
 
 	do {
 
 		ba_put(&BA, own_id);
 		*chain++ = own_id;
-	
+
+printf("f1\n");
+
 		h = group_next_pointed_by_beat(g);
+
+printf("f2\n");
+
 		if (h == NULL) {
-	
-//			unlink g, separate it as isolated group, start over.
 
-		} else g = h;
+printf("h1\n");
 
-		own_id = g->id;
+			group_final_list[group_final_list_n++] = group_unlink(g);
 
-		for (b = group_beathead(g); b != NULL; b = beat_next()) {
+printf("h2\n");
 
-			gp = group_pointed(b);
-			bi = gp->id;
+			ba_done(&BA);
+			startover = TRUE;
 
-			if (ba_ison(&BA, bi)) {
-//				findprevious bi, combine... remember to include own id;
-				combined = TRUE
-				break;
-			}
+			// startover
+			//FIXME
+printf("startover 1 = group isolated --> %d\n",g->id);
+//exit(0);
 
-		}	
+		} else {
 
-	} (while !combined);
+
+			
+			g = h;
+
+			own_id = g->id;
+
+printf("g1=%d\n",own_id);
+
+			for (b = group_beathead(g); b != NULL; b = beat_next(b)) {
+
+printf("g2\n");
+
+				gp = group_pointed(b);
+				bi = gp->id;
+
+				if (ba_ison(&BA, bi)) {
+					//	findprevious bi, combine... remember to include own id;
+					combined = TRUE;
+					//FIXME
+printf("startover 2\n");
+exit(0);
+					break;
+				}
+
+			}	
+
+		}
+
+	} while (!combined && !startover);
+
+} while (startover);
 
 	return;
 }
