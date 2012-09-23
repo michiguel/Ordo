@@ -229,6 +229,7 @@ void scan_encounters(void);
 static void convert_to_groups(void);
 static void	simplify_all(void);
 static void	finish_it(void);
+
 //
 #if 0
 static const char *Result_string[4] = {"1-0","1/2-1/2","0-1","*"};
@@ -1662,6 +1663,9 @@ static group_t * group_combined(group_t *g);
 
 static group_t * group_pointed(connection_t *c);
 
+static void		final_list_output(void);
+static void		group_output(group_t *s);
+
 // groupset functions
 
 static void groupset_init (void) 
@@ -1961,8 +1965,8 @@ convert_to_groups(void)
 {
 	int i;
 	group_t *s;
-	participant_t *p;
-	connection_t *c;
+//	participant_t *p;
+//	connection_t *c;
 
 	int e;
 	convert_general_init();
@@ -1989,31 +1993,12 @@ convert_to_groups(void)
 	printf ("groups added=%d\n",group_buffer.n);
 
 	for (s = groupset_head(); s != NULL; s = s->next) {
-
 		printf ("\ngroup=%d\n",s->id);
-		
-		for (p = s->pstart; p != NULL; p = p->next) {
-			printf ("   %s\n",p->name);
-		}
-		for (c = s->cstart; c != NULL; c = c->next) {
-			group_t *gr = group_pointed(c);
-			if (gr != NULL)
-				printf ("point to:%d\n",gr->id);
-			else
-				printf ("point to node NULL\n");
-
-		}
-		for (c = s->lstart; c != NULL; c = c->next) {
-			group_t *gr = group_pointed(c);
-			if (gr != NULL)
-				printf ("pointed by:%d\n",gr->id);
-			else
-				printf ("pointed by node NULL\n");
-		}
-
+		group_output(s);
 	}
 
 finish_it();
+final_list_output();
 
 	return;
 }
@@ -2113,6 +2098,22 @@ group_pointed(connection_t *c)
 		return NULL;
 	}
 }
+
+
+static group_t *
+group_pointed_by_node(node_t *nd)
+{
+	if (nd) {
+		group_t *gr = nd->group;
+		if (gr) {
+			gr = group_combined(gr);
+		} 
+		return gr;
+	} else {
+		return NULL;
+	}
+}
+
 
 struct BITARRAY BA, BB;
 
@@ -2292,12 +2293,14 @@ group_next_pointed_by_beat(group_t *g)
 {
 	group_t *gp;
 	connection_t *b;
+	int own_id;
 	if (g == NULL)	return NULL; 
+	own_id = g->id;
 	b = group_beathead(g);
 	if (b == NULL)	return NULL; 
 
 gp = group_pointed(b);
-while (gp == NULL || gp->isolated) {
+while (gp == NULL || gp->isolated || gp->id == own_id) {
 	b = beat_next(b);
 	if (b == NULL) return NULL;
 	gp = group_pointed(b);
@@ -2309,6 +2312,7 @@ while (gp == NULL || gp->isolated) {
 static void
 finish_it(void)
 {
+int *chain_end;
 	group_t *g, *h, *gp;
 	connection_t *b;
 	int own_id, bi;
@@ -2380,10 +2384,42 @@ printf("g2\n");
 
 				if (ba_ison(&BA, bi)) {
 					//	findprevious bi, combine... remember to include own id;
-					combined = TRUE;
+
+	chain_end = chain;
+	while (chain-->CHAIN) {
+		if (*chain == bi) break;
+	}
+	{int *p;
+		for (p = CHAIN; p < chain_end; p++) {
+		}
+	}
+
+
+	{int *p;
+		for (p = chain; p < chain_end; p++) {
+
+
+{group_t *x, *y;
+			printf("combine x=%d y=%d\n",own_id, *p);
+x = group_pointed_by_node(Gnode + own_id);
+y = group_pointed_by_node(Gnode + *p);
+
+group_gocombine(x,y);
+
+
+combined = TRUE;
+startover = TRUE;
+break;
+}
+
+		}
+	}
+
+
+
 					//FIXME
 printf("startover 2\n");
-exit(0);
+
 					break;
 				}
 
@@ -2396,4 +2432,44 @@ exit(0);
 } while (startover);
 
 	return;
+}
+
+static void
+final_list_output(void)
+{
+	group_t *g;
+	int i;
+	for (i = 0; i < group_final_list_n; i++) {
+		g = group_final_list[i];
+		printf ("\ngroup=%d\n",g->id);
+		group_output(g);
+	}
+}
+
+
+
+static void
+group_output(group_t *s)
+{		
+	participant_t *p;
+	connection_t *c;
+
+		for (p = s->pstart; p != NULL; p = p->next) {
+			printf ("   %s\n",p->name);
+		}
+		for (c = s->cstart; c != NULL; c = c->next) {
+			group_t *gr = group_pointed(c);
+			if (gr != NULL)
+				printf ("point to:%d\n",gr->id);
+			else
+				printf ("point to node NULL\n");
+
+		}
+		for (c = s->lstart; c != NULL; c = c->next) {
+			group_t *gr = group_pointed(c);
+			if (gr != NULL)
+				printf ("pointed by:%d\n",gr->id);
+			else
+				printf ("pointed by node NULL\n");
+		}
 }
