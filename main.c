@@ -75,6 +75,7 @@ static void usage (void);
 		" -p <file>   input file in PGN format\n"
 		" -c <file>   output file (comma separated value format)\n"
 		" -o <file>   output file (text format), goes to the screen if not present\n"
+		" -g <file>   output file with groups connected\n"
 		" -s  #       perform # simulations to calculate errors\n"
 		" -e <file>   saves an error matrix, if -s was used\n"
 		"\n"
@@ -86,7 +87,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWLa:A:o:c:s:w:z:e:T";
+const char *OPTION_LIST = "vhHp:qWLa:A:o:g:c:s:w:z:e:T";
 
 /*
 |
@@ -225,8 +226,8 @@ static double 	overallerror_fwadv (double wadv);
 static double 	adjust_wadv (double start_wadv);
 static void 	table_output(double Rtng_76);
 
-void scan_encounters(void);
-static void convert_to_groups(void);
+static void scan_encounters(void);
+static void convert_to_groups(FILE *f);
 static void	simplify_all(void);
 static void	finish_it(void);
 
@@ -280,12 +281,15 @@ int main (int argc, char *argv[])
 {
 	bool_t csvf_opened;
 	bool_t textf_opened;
+	bool_t groupf_opened;
 	FILE *csvf;
 	FILE *textf;
+	FILE *groupf;
 
 	int op;
-	const char *inputf, *textstr, *csvstr, *ematstr;
+	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
+	bool_t group_is_output;
 
 	/* defaults */
 	version_mode = FALSE;
@@ -300,6 +304,8 @@ int main (int argc, char *argv[])
 	textstr 	 = NULL;
 	csvstr       = NULL;
 	ematstr 	 = NULL;
+	group_is_output = FALSE;
+	groupstr 	 = NULL;
 
 	while (END_OF_OPTIONS != (op = options (argc, argv, OPTION_LIST))) {
 		switch (op) {
@@ -315,6 +321,9 @@ int main (int argc, char *argv[])
 			case 'c': 	csvstr = opt_arg;
 						break;
 			case 'o': 	textstr = opt_arg;
+						break;
+			case 'g': 	group_is_output = TRUE;
+						groupstr = opt_arg;
 						break;
 			case 'e': 	ematstr = opt_arg;
 						break;
@@ -469,6 +478,20 @@ int main (int argc, char *argv[])
 		}
 	}
 
+	groupf_opened = FALSE;
+	groupf = NULL;
+	if (group_is_output) {
+		if (groupstr != NULL) {
+			groupf = fopen (groupstr, "w");
+			if (groupf == NULL) {
+				fprintf(stderr, "Errors with file: %s\n",groupstr);			
+				exit(EXIT_FAILURE);
+			} else {
+				groupf_opened = TRUE;
+			}
+		}
+	}
+
 	/*==== CALCULATIONS ====*/
 
 	randfast_init (1324561);
@@ -489,7 +512,8 @@ int main (int argc, char *argv[])
 
 	calc_encounters(ENCOUNTERS_FULL);
 	scan_encounters(); 
-	convert_to_groups();
+	if (group_is_output)
+		convert_to_groups(groupf);
 
 exit(0);
 //
@@ -578,8 +602,9 @@ set_super_players(QUIET_MODE);
 	if (Simulate > 1 && NULL != ematstr)
 		errorsout (ematstr);
 
-	if (textf_opened) fclose (textf);
-	if (csvf_opened)  fclose (csvf); 
+	if (textf_opened) 	fclose (textf);
+	if (csvf_opened)  	fclose (csvf); 
+	if (groupf_opened) 	fclose(groupf);
 
 	if (sim != NULL) free(sim);
 
@@ -1663,8 +1688,8 @@ static group_t * group_combined(group_t *g);
 
 static group_t * group_pointed(connection_t *c);
 
-static void		final_list_output(void);
-static void		group_output(group_t *s);
+static void		final_list_output(FILE *f);
+static void		group_output(FILE *f, group_t *s);
 
 // groupset functions
 
@@ -1810,7 +1835,7 @@ static int 		N_se2 = 0;
 static int 		group_belong[MAXPLAYERS];
 static int		N_groups;
 
-void
+static void
 scan_encounters(void)
 {
 	int i,e;
@@ -1964,7 +1989,7 @@ static void
 group_gocombine(group_t *g, group_t *h);
 
 static void
-convert_to_groups(void)
+convert_to_groups(FILE *f)
 {
 	int i;
 //	group_t *s;
@@ -1997,7 +2022,7 @@ convert_to_groups(void)
 //	}
 
 	finish_it();
-	final_list_output();
+	final_list_output(f);
 
 	return;
 }
@@ -2389,20 +2414,20 @@ finish_it(void)
 }
 
 static void
-final_list_output(void)
+final_list_output(FILE *f)
 {
 	group_t *g;
 	int i;
 	for (i = 0; i < group_final_list_n; i++) {
 		g = group_final_list[i];
-		printf ("\nGroup %d\n",g->id);
-		group_output(g);
+		fprintf (f,"\nGroup %d\n",g->id);
+		group_output(f,g);
 	}
 }
 
 
 static void
-group_output(group_t *s)
+group_output(FILE *f, group_t *s)
 {		
 	participant_t *p;
 	connection_t *c;
@@ -2410,20 +2435,20 @@ group_output(group_t *s)
 	assert(s);
 	own_id = s->id;
 	for (p = s->pstart; p != NULL; p = p->next) {
-		printf ("   %s\n",p->name);
+		fprintf (f,"   %s\n",p->name);
 	}
 	for (c = s->cstart; c != NULL; c = c->next) {
 		group_t *gr = group_pointed(c);
 		if (gr != NULL) {
-			if (gr->id != own_id) printf ("   --> wins against group:%d\n",gr->id);
+			if (gr->id != own_id) fprintf (f,"   --> wins against group:%d\n",gr->id);
 		} else
-			printf ("point to node NULL\n");
+			fprintf (f,"point to node NULL\n");
 	}
 	for (c = s->lstart; c != NULL; c = c->next) {
 		group_t *gr = group_pointed(c);
 		if (gr != NULL) {
-			if (gr->id != own_id) printf ("   --> losses against group:%d\n",gr->id);
+			if (gr->id != own_id) fprintf (f,"   --> losses against group:%d\n",gr->id);
 		} else
-			printf ("pointed by node NULL\n");
+			fprintf (f,"pointed by node NULL\n");
 	}
 }
