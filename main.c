@@ -2413,14 +2413,29 @@ finish_it(void)
 	return;
 }
 
+static int Get_new_id[MAXPLAYERS];
+
 static void
 final_list_output(FILE *f)
 {
 	group_t *g;
 	int i;
+	int new_id;
+	
+	for (i = 0; i < MAXPLAYERS; i++) {
+		Get_new_id[i] = -1;
+	}
+
+	new_id = 0;
 	for (i = 0; i < group_final_list_n; i++) {
 		g = group_final_list[i];
-		fprintf (f,"\nGroup %d\n",g->id);
+		new_id++;
+		Get_new_id[g->id] = new_id;
+	}
+
+	for (i = 0; i < group_final_list_n; i++) {
+		g = group_final_list[i];
+		fprintf (f,"\nGroup %d\n",Get_new_id[g->id]);
 		group_output(f,g);
 	}
 }
@@ -2440,14 +2455,14 @@ group_output(FILE *f, group_t *s)
 	for (c = s->cstart; c != NULL; c = c->next) {
 		group_t *gr = group_pointed(c);
 		if (gr != NULL) {
-			if (gr->id != own_id) fprintf (f,"   --> wins against group:%d\n",gr->id);
+			if (gr->id != own_id) fprintf (f,"   --> wins against group:%d\n",Get_new_id[gr->id]);
 		} else
 			fprintf (f,"point to node NULL\n");
 	}
 	for (c = s->lstart; c != NULL; c = c->next) {
 		group_t *gr = group_pointed(c);
 		if (gr != NULL) {
-			if (gr->id != own_id) fprintf (f,"   --> losses against group:%d\n",gr->id);
+			if (gr->id != own_id) fprintf (f,"   --> losses against group:%d\n",Get_new_id[gr->id]);
 		} else
 			fprintf (f,"pointed by node NULL\n");
 	}
