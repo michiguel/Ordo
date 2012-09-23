@@ -1853,7 +1853,7 @@ scan_encounters(void)
 			SE2[N_se2++] = SE[e];
 		}
 	}
-
+#if 0	
 	for (e = 0; e < N_se2; e++) {
 		int x,y;
 		x = SE2[e].wh;
@@ -1861,10 +1861,11 @@ scan_encounters(void)
 		printf ("%s - %s = %.1f/%d\n",Name[x], Name[y], SE2[e].wscore, SE2[e].played);
 	}
 
-	printf ("Players=%d\n",N_players);
-	printf ("Groups=%d\n",N_groups);
-	printf ("Joining encounters=%d\n\n",N_se2);
-	
+//	printf ("Players=%d\n",N_players);
+//	printf ("Groups=%d\n",N_groups);
+//	printf ("Joining encounters=%d\n\n",N_se2);
+
+
 	c = 1; j = 1;
 	for (g = 0; g < N_players; g++) {
 		bool_t found;
@@ -1881,6 +1882,7 @@ scan_encounters(void)
 			printf ("\n");
 		}
 	}
+#endif
 	return;
 }
 
