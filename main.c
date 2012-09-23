@@ -514,7 +514,7 @@ int main (int argc, char *argv[])
 	scan_encounters(); 
 	if (group_is_output) {
 		convert_to_groups(groupf);
-		exit(EXIT_SUCCESS);
+		//exit(EXIT_SUCCESS);
 	}
 
 	set_super_players(QUIET_MODE);
