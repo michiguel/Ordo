@@ -512,12 +512,12 @@ int main (int argc, char *argv[])
 
 	calc_encounters(ENCOUNTERS_FULL);
 	scan_encounters(); 
-	if (group_is_output)
+	if (group_is_output) {
 		convert_to_groups(groupf);
+		exit(EXIT_SUCCESS);
+	}
 
-exit(0);
-//
-set_super_players(QUIET_MODE);
+	set_super_players(QUIET_MODE);
 	purge_players(QUIET_MODE);
 
 //	calc_encounters(ENCOUNTERS_NOFLAGGED);
