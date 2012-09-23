@@ -1813,8 +1813,9 @@ static int		N_groups;
 void
 scan_encounters(void)
 {
-	int i,e,g;
-	int c=1,j=1;
+	int i,e;
+//	int g;
+//	int c=1,j=1;
 	struct ENC *pe;
 	int gw, gb, lowerg, higherg;
 
@@ -2394,7 +2395,7 @@ final_list_output(void)
 	int i;
 	for (i = 0; i < group_final_list_n; i++) {
 		g = group_final_list[i];
-		printf ("\nGroup=%d\n",g->id);
+		printf ("\nGroup %d\n",g->id);
 		group_output(g);
 	}
 }
