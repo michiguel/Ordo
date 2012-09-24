@@ -1950,6 +1950,8 @@ enc2groups (struct ENC *pe)
 	int iwin, ilos;
 	group_t *glw, *gll, *g;
 
+	assert(pe);
+
 	iwin = get_iwin(pe);
 	ilos = get_ilos(pe);
 
@@ -1987,9 +1989,9 @@ enc2groups (struct ENC *pe)
 		int i;
 		printf ("Add: %3d %3d = %s // %s\n", iwin, ilos, Name[iwin], Name[ilos]);
 		printf ("Grp: %3d %3d \n", group_belong[iwin], group_belong[ilos]);
-		for (i = 0; i < group_buffer.n; i++) {
-			printf("groups --> %3d\n",group_buffer.list[i].id);
-		}
+//		for (i = 0; i < group_buffer.n; i++) {
+//			printf("groups %d --> %3d\n",i, group_buffer.list[i].id);
+//		}
 		printf("\n");
 	}
 #endif
@@ -2005,6 +2007,24 @@ static void
 group_gocombine(group_t *g, group_t *h);
 
 static void
+ifisolated2group (int x)
+{
+	group_t *g;
+
+	if (Gnode[x].group == NULL) {
+		g = groupset_find (group_belong[x]);
+		if (g == NULL) {
+			// creation
+			g = group_reset(group_new());	
+			g->id = group_belong[x];
+			groupset_add(g);
+			Gnode[x].group = g;
+		}
+		Gnode[x].group = g;
+	} 
+}
+
+static void
 convert_to_groups(FILE *f)
 {
 	int i;
@@ -2017,6 +2037,10 @@ convert_to_groups(FILE *f)
 
 	for (e = 0 ; e < N_se2; e++) {
 		enc2groups(&SE2[e]);
+	}
+
+	for (i = 0; i < N_players; i++) {
+		ifisolated2group(i);
 	}
 
 	for (i = 0; i < N_players; i++) {
@@ -2454,6 +2478,7 @@ final_list_output(FILE *f)
 		fprintf (f,"\nGroup %d\n",Get_new_id[g->id]);
 		group_output(f,g);
 	}
+	fprintf(f,"\n");
 }
 
 
