@@ -7,5 +7,7 @@ ordoprep*
 *.pgn
 *.csv
 release/*
+released/*
 install.sh
 pgn/
+temp*.c
