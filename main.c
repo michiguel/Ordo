@@ -11,6 +11,7 @@
 #include "boolean.h"
 #include "pgnget.h"
 #include "randfast.h"
+#include "gauss.h"
 
 /*
 |
@@ -78,6 +79,7 @@ static void usage (void);
 		" -g <file>   output file with groups connected\n"
 		" -s  #       perform # simulations to calculate errors\n"
 		" -e <file>   saves an error matrix, if -s was used\n"
+		" -F <value>  confidence (%) to estimate error margins. Default is 95.0\n"
 		"\n"
 		;
 
@@ -87,7 +89,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWLa:A:o:g:c:s:w:z:e:T";
+const char *OPTION_LIST = "vhHp:qWLa:A:o:g:c:s:w:z:e:TF:";
 
 /*
 |
@@ -144,6 +146,7 @@ enum SELECTIVITY {
 #endif
 
 /**/
+static double	Confidence = 95;
 static double	General_average = 2300.0;
 static int		Sorted  [MAXPLAYERS]; /* sorted index by rating */
 static double	Obtained[MAXPLAYERS];
@@ -168,6 +171,7 @@ static double	White_advantage = 0;
 static double	Rtng_76 = 202;
 static double	Inv_beta = INVBETA;
 static double	BETA = 1.0/INVBETA;
+static double	Confidence_factor = 1.0;
 
 struct GAMESTATS {
 	long int
@@ -332,6 +336,13 @@ int main (int argc, char *argv[])
 							exit(EXIT_FAILURE);
 						}
 						break;
+			case 'F': 	if (1 != sscanf(opt_arg,"%lf", &Confidence) ||
+								(Confidence > 99.999 || Confidence < 50.001)
+							) {
+							fprintf(stderr, "wrong confidence parameter\n");
+							exit(EXIT_FAILURE);
+						}
+						break;
 			case 'A': 	if (strlen(opt_arg) < MAX_ANCHORSIZE-1) {
 							strcpy (Anchor_name, opt_arg);
 							Anchor_use = TRUE;
@@ -451,6 +462,11 @@ int main (int argc, char *argv[])
 			printf (" (average of the pool)\n");	
 		printf ("\n");	
 	}
+
+	//===
+
+	Confidence_factor = confidence2x(Confidence/100.0);
+	printf("confidence factor = %f\n",Confidence_factor);
 
 	init_rating();
 
@@ -739,7 +755,7 @@ errorsout(const char *out)
 					idx = (x*x-x)/2+y;					
 				else
 					idx = (y*y-y)/2+x;
-				fprintf(f,",%.1f",sim[idx].sdev);
+				fprintf(f,",%.1f",sim[idx].sdev * Confidence_factor);
 			}
 
 			fprintf(f, "\n");
@@ -830,7 +846,7 @@ all_report (FILE *csvf, FILE *textf)
 			for (i = 0; i < N_players; i++) {
 				j = Sorted[i];
 				if (Sdev[j] > 0.00000001) {
-					sprintf(sdev_str_buffer, "%6.1f", Sdev[j]);
+					sprintf(sdev_str_buffer, "%6.1f", Sdev[j] * Confidence_factor);
 					sdev_str = sdev_str_buffer;
 				} else {
 					sdev_str = "  ----";
