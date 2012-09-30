@@ -1288,8 +1288,8 @@ deviation (void)
 
 #ifdef CALCIND_SWSL
 
-// static double calc_ind_rating(double cume_score, double *rtng, double *weig, int r);
-static double calc_ind_rating_superplayer (int perf_type, double *rtng, double *weig, int r);
+static double calc_ind_rating(double cume_score, double *rtng, double *weig, int r);
+static double calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, double *weig, int r);
 
 static void
 rate_super_players(bool_t quiet)
@@ -1372,10 +1372,12 @@ if (Performance_type[j] == PERF_SUPERLOSER) {
 }
 #else
 if (Performance_type[j] == PERF_SUPERWINNER) {
-		Ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERWINNER, rtng, weig, r);
+		double ori_estimation = calc_ind_rating (cume_score-0.25, rtng, weig, r); 
+		Ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERWINNER, ori_estimation, rtng, weig, r);
 }
 if (Performance_type[j] == PERF_SUPERLOSER) {
-		Ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERLOSER, rtng, weig, r);
+		double ori_estimation = calc_ind_rating (cume_score+0.25, rtng, weig, r); 
+		Ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERLOSER,  ori_estimation, rtng, weig, r);
 }
 		Flagged[j] = FALSE;
 }
@@ -1606,7 +1608,7 @@ set_super_players(bool_t quiet)
 
 //**************************************************************
 
-#if 0
+#if 1
 static double
 ind_expected (double x, double *rtng, double *weig, int n)
 {
@@ -1615,7 +1617,6 @@ ind_expected (double x, double *rtng, double *weig, int n)
 	for (i = 0; i < n; i++) {
 		cume += weig[i] * xpect (x, rtng[i]);
 	}
-//printf ("xp=%f\n",cume);
 	return cume;
 }
 
@@ -1651,29 +1652,16 @@ calc_ind_rating(double cume_score, double *rtng, double *weig, int r)
 
 	double  D,sc,oldx;
 
-double x = 2000;
-double xp;
+	double x = 2000;
+	double xp;
 
-/*
-printf ("cume score = %f, r=%d\n", cume_score,r);
-for (i = 0; i < r; i++) {
-	printf ("r=%d, rtng=%f, weig=%f\n", r, rtng[i], weig[i]);
-}
-printf ("\n");
-*/
 	D = cume_score - ind_expected(x,rtng,weig,r) ;
 	curdev = D*D;
 	olddev = curdev;
 
-//printf ("D=%f\n",D);
-
 	while (n-->0) {
 		double kk = 1.0;
-//printf ("n=%d\n",n);
-
 		for (i = 0; i < rounds; i++) {
-//printf ("i=%d\n",i);
-
 			oldx = x;
 			olddev = curdev;
 
@@ -1703,8 +1691,6 @@ printf ("\n");
 
 		if (curdev < 0.000001) break;
 	}
-
-//printf ("curdev=%f\n",curdev);
 
 	return x;
 }
@@ -2585,7 +2571,6 @@ group_output(FILE *f, group_t *s)
 
 //===========================
 
-
 static double
 prob2absolute_result (int perftype, double myrating, double *rtng, double *weig, int n)
 {
@@ -2614,7 +2599,7 @@ prob2absolute_result (int perftype, double myrating, double *rtng, double *weig,
 
 
 static double
-calc_ind_rating_superplayer (int perf_type, double *rtng, double *weig, int r)
+calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, double *weig, int r)
 {
 	int 	i;
 	double 	old_unfit, cur_unfit;
@@ -2624,7 +2609,10 @@ calc_ind_rating_superplayer (int perf_type, double *rtng, double *weig, int r)
 	double fdelta;
 	double  D, oldx;
 
-	double x = 2000;
+	double x = x_estimated;
+
+
+printf ("x=%f, prob=%f\n",x, prob2absolute_result(perf_type, x, rtng, weig, r));
 
 	if (perf_type == PERF_SUPERLOSER) 
 		D = - 0.5 + prob2absolute_result(perf_type, x, rtng, weig, r);		
@@ -2642,6 +2630,8 @@ calc_ind_rating_superplayer (int perf_type, double *rtng, double *weig, int r)
 		old_unfit = cur_unfit;
 
 		x += fdelta;
+
+printf ("x=%f, prob=%f\n",x, prob2absolute_result(perf_type, x, rtng, weig, r));
 
 		if (perf_type == PERF_SUPERLOSER) 
 			D = - 0.5 + prob2absolute_result(perf_type, x, rtng, weig, r);		
