@@ -2611,9 +2611,6 @@ calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, do
 
 	double x = x_estimated;
 
-
-printf ("x=%f, prob=%f\n",x, prob2absolute_result(perf_type, x, rtng, weig, r));
-
 	if (perf_type == PERF_SUPERLOSER) 
 		D = - 0.5 + prob2absolute_result(perf_type, x, rtng, weig, r);		
 	else
@@ -2630,8 +2627,6 @@ printf ("x=%f, prob=%f\n",x, prob2absolute_result(perf_type, x, rtng, weig, r));
 		old_unfit = cur_unfit;
 
 		x += fdelta;
-
-printf ("x=%f, prob=%f\n",x, prob2absolute_result(perf_type, x, rtng, weig, r));
 
 		if (perf_type == PERF_SUPERLOSER) 
 			D = - 0.5 + prob2absolute_result(perf_type, x, rtng, weig, r);		
