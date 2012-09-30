@@ -466,7 +466,7 @@ int main (int argc, char *argv[])
 	//===
 
 	Confidence_factor = confidence2x(Confidence/100.0);
-	printf("confidence factor = %f\n",Confidence_factor);
+	// printf("confidence factor = %f\n",Confidence_factor);
 
 	init_rating();
 
