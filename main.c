@@ -790,6 +790,19 @@ is_super_player(int j)
 			Playedby_results[j] - Obtained_results[j] < 0.01;
 }
 
+static const char *SP_symbolstr[3] = {"<",">"," "};
+
+static const char *
+get_super_player_symbolstr(int j)
+{
+	if (Obtained_results[j] < 0.01) {
+		return SP_symbolstr[0];
+	} else if (Playedby_results[j] - Obtained_results[j] < 0.01) {
+		return SP_symbolstr[1];
+	} else
+		return SP_symbolstr[2];
+}
+
 void
 all_report (FILE *csvf, FILE *textf)
 {
@@ -817,7 +830,7 @@ all_report (FILE *csvf, FILE *textf)
 		if (ml > 50) ml = 50;
 
 		if (Simulate < 2) {
-			fprintf(f, "\n%s %-*s :%7s %9s %7s %6s\n", 
+			fprintf(f, "\n%s %-*s    :%7s %9s %7s %6s\n", 
 				"   #", 			
 				(int)ml,
 				"ENGINE", "RATING", "POINTS", "PLAYED", "(%)");
@@ -825,20 +838,23 @@ all_report (FILE *csvf, FILE *textf)
 			for (i = 0; i < N_players; i++) {
 				j = Sorted[i];
 				if (!Flagged[j]) {
-				fprintf(f, "%4d %-*s:%7.1f %9.1f %7d %6.1f%s\n", 
+				fprintf(f, "%4d %-*s %s :%7.1f %9.1f %7d %6.1f%s\n", 
 					i+1,
 					(int)ml+1,
-					Name[j], Ratingof_results[j], Obtained_results[j], Playedby_results[j]
+					Name[j],
+					get_super_player_symbolstr(j),
+					Ratingof_results[j], Obtained_results[j], Playedby_results[j]
 						, Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j], "%");
 				} else {
-				fprintf(f, "%4d %-*s:%7s %9s %7s %6s%s\n", 
+				fprintf(f, "%4d %-*s   :%7s %9s %7s %6s%s\n", 
 					i+1,
 					(int)ml+1,
-					Name[j], "----", "----", "----", "----","%");
+					Name[j], 
+					"----", "----", "----", "----","%");
 				}
 			}
 		} else {
-			fprintf(f, "\n%s %-*s :%7s %6s %8s %7s %6s\n", 
+			fprintf(f, "\n%s %-*s    :%7s %6s %8s %7s %6s\n", 
 				"   #", 
 				(int)ml, 
 				"ENGINE", "RATING", "ERROR", "POINTS", "PLAYED", "(%)");
@@ -852,22 +868,26 @@ all_report (FILE *csvf, FILE *textf)
 					sdev_str = "  ----";
 				}
 				if (!Flagged[j]) {
-				fprintf(f, "%4d %-*s:%7.1f %s %8.1f %7d %6.1f%s\n", 
+				fprintf(f, "%4d %-*s %s :%7.1f %s %8.1f %7d %6.1f%s\n", 
 					i+1,
 					(int)ml+1, 
-					Name[j], Ratingof_results[j], sdev_str, Obtained_results[j], Playedby_results[j]
+					Name[j],
+ 					get_super_player_symbolstr(j),
+					Ratingof_results[j], sdev_str, Obtained_results[j], Playedby_results[j]
 						, Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], "%");
 				} else if (!is_super_player(j)) {
-				fprintf(f, "%4d %-*s:%7.1f %s %8.1f %7d %6.1f%s\n", 
+				fprintf(f, "%4d %-*s   :%7.1f %s %8.1f %7d %6.1f%s\n", 
 					i+1,
 					(int)ml+1, 
-					Name[j], Ratingof_results[j], "  ****", Obtained_results[j], Playedby_results[j]
+					Name[j], 
+					Ratingof_results[j], "  ****", Obtained_results[j], Playedby_results[j]
 						, Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], "%");
 				} else {
-				fprintf(f, "%4d %-*s:%7s %s %8s %7s %6s%s\n", 
+				fprintf(f, "%4d %-*s   :%7s %s %8s %7s %6s%s\n", 
 					i+1,
 					(int)ml+1,
-					Name[j], "----", "  ----", "----", "----", "----","%");
+					Name[j], 
+					"----", "  ----", "----", "----", "----","%");
 				}
 			}
 		}
