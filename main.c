@@ -1192,13 +1192,43 @@ rand_threeway_wscore(double pwin, double pdraw)
 	}
 }
 
+
+static void
+get_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl)
+{
+	double f, dc, pdra, pwin, plos;
+	bool_t switched;
+	
+	switched = dr < 0;
+
+	if (switched) dr = -dr;
+		
+	f = xpect (dr,0);
+	dc = 0.5 / (0.5 + 1.23 * exp(dr/175.0));
+	pwin = f * (1 - dc);
+	plos = 1 - f;
+	pdra = 1 - pwin - plos;
+
+	if (switched) {
+		*pw = plos;
+		*pd = pdra;
+		*pl = pwin;
+	} else {
+		*pw = pwin;
+		*pd = pdra;
+		*pl = plos;
+	}
+	return;
+}
+
+
+
 static void
 simulate_scores(void)
 {
 	long int i, w, b;
-	double f;
 	double	*rating = Ratingof_results;
-	double pwin, pdraw, df, dr;
+	double pwin, pdraw, plos;
 
 	for (i = 0; i < N_games; i++) {
 
@@ -1207,14 +1237,8 @@ simulate_scores(void)
 		w = Whiteplayer[i];
 		b = Blackplayer[i];
 
-		f = xpect (rating[w] + White_advantage, rating[b]);
-
-		dr = rating[w] + White_advantage - rating[b];
-		df = 0.5 / (0.5 + exp(BETA*dr)); // empirical, draw contribution to points achieved
-		pdraw = f * df;
-		pwin = f - pdraw/2;
+		get_pWDL(rating[w] + White_advantage - rating[b], &pwin, &pdraw, &plos);
 		Score [i] = rand_threeway_wscore(pwin,pdraw);
-
 	}
 }
 #endif
@@ -1244,8 +1268,8 @@ deviation (void)
 
 #ifdef CALCIND_SWSL
 
-static double
-calc_ind_rating(double cume_score, double *rtng, double *weig, int r);
+// static double calc_ind_rating(double cume_score, double *rtng, double *weig, int r);
+static double calc_ind_rating_superplayer (int perf_type, double *rtng, double *weig, int r);
 
 static void
 rate_super_players(bool_t quiet)
@@ -1317,7 +1341,7 @@ int		r = 0;
 				continue;
 			} 
 		}
-
+#if 0
 if (Performance_type[j] == PERF_SUPERWINNER) {
 		Ratingof[j] = calc_ind_rating (cume_score-0.25, rtng, weig, r);
 }
@@ -1326,6 +1350,16 @@ if (Performance_type[j] == PERF_SUPERLOSER) {
 }
 		Flagged[j] = FALSE;
 }
+#else
+if (Performance_type[j] == PERF_SUPERWINNER) {
+		Ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERWINNER, rtng, weig, r);
+}
+if (Performance_type[j] == PERF_SUPERLOSER) {
+		Ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERLOSER, rtng, weig, r);
+}
+		Flagged[j] = FALSE;
+}
+#endif
 
 	}
 
@@ -1550,7 +1584,9 @@ set_super_players(bool_t quiet)
 }
 
 
-//**************************************************************88
+//**************************************************************
+
+#if 0
 static double
 ind_expected (double x, double *rtng, double *weig, int n)
 {
@@ -1579,6 +1615,7 @@ adjust_x (double x, double xp, double sc, double delta, double kappa)
 	}
 	return x;	
 }
+
 
 static double
 calc_ind_rating(double cume_score, double *rtng, double *weig, int r)
@@ -1651,6 +1688,7 @@ printf ("\n");
 
 	return x;
 }
+#endif
 
 //=========================================
 
@@ -2524,3 +2562,88 @@ group_output(FILE *f, group_t *s)
 			fprintf (f,"pointed by node NULL\n");
 	}
 }
+
+//===========================
+
+
+static double
+prob2absolute_result (int perftype, double myrating, double *rtng, double *weig, int n)
+{
+	int i;
+	double p, cume;
+	double pwin, pdraw, ploss;
+	assert(n);
+	assert(perftype == PERF_SUPERWINNER || perftype == PERF_SUPERLOSER);
+
+	cume = 1.0;
+	if (PERF_SUPERWINNER == perftype) {
+		for (i = 0; i < n; i++) {
+			get_pWDL(myrating - rtng[i], &pwin, &pdraw, &ploss);
+			p = pwin;
+			cume *= exp(weig[i] * log (p)); // p ^ weight
+		}	
+	} else {
+		for (i = 0; i < n; i++) {
+			get_pWDL(myrating - rtng[i], &pwin, &pdraw, &ploss);
+			p = ploss;
+			cume *= exp(weig[i] * log (p)); // p ^ weight
+		}
+	}
+	return cume;
+}
+
+
+static double
+calc_ind_rating_superplayer (int perf_type, double *rtng, double *weig, int r)
+{
+	int 	i;
+	double 	old_unfit, cur_unfit;
+	int		rounds = 2000;
+	double 	delta = 200.0;
+	double 	denom = 2;
+	double fdelta;
+	double  D, oldx;
+
+	double x = 2000;
+
+	if (perf_type == PERF_SUPERLOSER) 
+		D = - 0.5 + prob2absolute_result(perf_type, x, rtng, weig, r);		
+	else
+		D = + 0.5 - prob2absolute_result(perf_type, x, rtng, weig, r);
+
+	cur_unfit = D * D;
+	old_unfit = cur_unfit;
+
+	fdelta = D < 0? -delta:  delta;	
+
+	for (i = 0; i < rounds; i++) {
+
+		oldx = x;
+		old_unfit = cur_unfit;
+
+		x += fdelta;
+
+		if (perf_type == PERF_SUPERLOSER) 
+			D = - 0.5 + prob2absolute_result(perf_type, x, rtng, weig, r);		
+		else
+			D = + 0.5 - prob2absolute_result(perf_type, x, rtng, weig, r);
+
+		cur_unfit = D * D;
+		fdelta = D < 0? -delta: delta;
+
+
+		if (cur_unfit >= old_unfit) {
+			x = oldx;
+			cur_unfit = old_unfit;
+			delta /= denom;
+
+		} else {
+
+		}	
+
+		if (cur_unfit < 0.0000000001) break;
+	}
+
+	return x;
+}
+
