@@ -226,7 +226,6 @@ static double 	overallerror_fwadv (double wadv);
 static double 	adjust_wadv (double start_wadv);
 static void 	table_output(double Rtng_76);
 
-//
 #if 0
 static const char *Result_string[4] = {"1-0","1/2-1/2","0-1","*"};
 
@@ -264,7 +263,6 @@ save_simulated(int num)
 	}
 }
 #endif
-//
 
 /*
 |
@@ -572,7 +570,7 @@ int main (int argc, char *argv[])
 
 					//save_simulated((int)z);
 
-set_super_players(QUIET_MODE);
+					set_super_players(QUIET_MODE);
 
 					purge_players(QUIET_MODE);
 					calc_rating(QUIET_MODE);
@@ -931,10 +929,11 @@ calc_encounters (int selectivity)
 
 		if (Score[i] >= DISCARD) continue;
 
-if (selectivity == ENCOUNTERS_NOFLAGGED) {
-	if (Flagged[Whiteplayer[i]] || Flagged[Blackplayer[i]])
-		continue;
-}
+		if (selectivity == ENCOUNTERS_NOFLAGGED) {
+			if (Flagged[Whiteplayer[i]] || Flagged[Blackplayer[i]])
+				continue;
+		}
+
 		switch (Score[i]) {
 			case WHITE_WIN: 	Encounter[e].wscore = 1.0; break;
 			case RESULT_DRAW:	Encounter[e].wscore = 0.5; break;
@@ -1233,7 +1232,6 @@ get_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl)
 }
 
 
-
 static void
 simulate_scores(void)
 {
@@ -1271,7 +1269,6 @@ deviation (void)
 }
 
 
-//
 //====
 #if 1
 #define CALCIND_SWSL
@@ -1286,10 +1283,8 @@ static void
 rate_super_players(bool_t quiet)
 {
 	int j, e;
-//
 	int myenc_n = 0;
 	static struct ENC myenc[MAXENCOUNTERS];
-//
 
 	calc_encounters(ENCOUNTERS_FULL);
 	calc_obtained_playedby_ENC();
@@ -1307,73 +1302,58 @@ rate_super_players(bool_t quiet)
 		if (Performance_type[j] == PERF_SUPERLOSER) 
 			if (!quiet) printf ("  all losses --> %s\n", Name[j]);
 
-//printf ("N_encounters=%d\n",N_encounters);
-
 		for (e = 0; e < N_encounters; e++) {
 			int w = Encounter[e].wh;
 			int b = Encounter[e].bl;
 			if (j == w /*&& Performance_type[b] == PERF_NORMAL*/) {
-//printf ("myenc_n=%d\n",myenc_n);
 				myenc[myenc_n++] = Encounter[e];
 			} else
 			if (j == b /*&& Performance_type[w] == PERF_NORMAL*/) {
-//printf ("myenc_n=%d\n",myenc_n);
 				myenc[myenc_n++] = Encounter[e];
 			}
 		}
 	
-//printf ("myenc_n=%d\n",myenc_n);
 
-{
-double	cume_score = 0; 
-double	cume_total = 0;
-static double weig[MAXPLAYERS];
-static double rtng[MAXPLAYERS];
-int		r = 0;
+		{
+			double	cume_score = 0; 
+			double	cume_total = 0;
+			static double weig[MAXPLAYERS];
+			static double rtng[MAXPLAYERS];
+			int		r = 0;
  	
-		while (myenc_n-->0) {
-			int n = myenc_n;
-			if (myenc[n].wh == j) {
-				int opp = myenc[n].bl;
-				weig[r	] = myenc[n].played;
-				rtng[r++] = Ratingof[opp] - White_advantage;
-				cume_score += myenc[n].wscore;
-				cume_total += myenc[n].played;
-		 	} else 
-			if (myenc[myenc_n].bl == j) {
-				int opp = myenc[n].wh;
-				weig[r	] = myenc[n].played;
-				rtng[r++] = Ratingof[opp] + White_advantage;
-				cume_score += myenc[n].played - myenc[n].wscore;
-				cume_total += myenc[n].played;
-			} else {
-				fprintf(stderr,"ERROR!!\n");
-				exit(0);
-				continue;
-			} 
-		}
-#if 0
-if (Performance_type[j] == PERF_SUPERWINNER) {
-		Ratingof[j] = calc_ind_rating (cume_score-0.25, rtng, weig, r);
-}
-if (Performance_type[j] == PERF_SUPERLOSER) {
-		Ratingof[j] = calc_ind_rating (cume_score+0.25, rtng, weig, r);
-}
-		Flagged[j] = FALSE;
-}
-#else
-if (Performance_type[j] == PERF_SUPERWINNER) {
-		double ori_estimation = calc_ind_rating (cume_score-0.25, rtng, weig, r); 
-		Ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERWINNER, ori_estimation, rtng, weig, r);
-}
-if (Performance_type[j] == PERF_SUPERLOSER) {
-		double ori_estimation = calc_ind_rating (cume_score+0.25, rtng, weig, r); 
-		Ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERLOSER,  ori_estimation, rtng, weig, r);
-}
-		Flagged[j] = FALSE;
-}
-#endif
+			while (myenc_n-->0) {
+				int n = myenc_n;
+				if (myenc[n].wh == j) {
+					int opp = myenc[n].bl;
+					weig[r	] = myenc[n].played;
+					rtng[r++] = Ratingof[opp] - White_advantage;
+					cume_score += myenc[n].wscore;
+					cume_total += myenc[n].played;
+			 	} else 
+				if (myenc[myenc_n].bl == j) {
+					int opp = myenc[n].wh;
+					weig[r	] = myenc[n].played;
+					rtng[r++] = Ratingof[opp] + White_advantage;
+					cume_score += myenc[n].played - myenc[n].wscore;
+					cume_total += myenc[n].played;
+				} else {
+					fprintf(stderr,"ERROR!!\n");
+					exit(0);
+					continue;
+				} 
+			}
 
+			if (Performance_type[j] == PERF_SUPERWINNER) {
+				double ori_estimation = calc_ind_rating (cume_score-0.25, rtng, weig, r); 
+				Ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERWINNER, ori_estimation, rtng, weig, r);
+			}
+			if (Performance_type[j] == PERF_SUPERLOSER) {
+				double ori_estimation = calc_ind_rating (cume_score+0.25, rtng, weig, r); 
+				Ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERLOSER,  ori_estimation, rtng, weig, r);
+			}
+			Flagged[j] = FALSE;
+
+		}
 	}
 
 	calc_encounters(ENCOUNTERS_NOFLAGGED);
@@ -1445,7 +1425,7 @@ calc_rating (bool_t quiet)
 
 #ifdef CALCIND_SWSL
 	if (!quiet) printf ("Post-Convergence rating estimation\n\n");
-rate_super_players(QUIET_MODE);
+	rate_super_players(QUIET_MODE);
 #endif
 
 }
@@ -1549,7 +1529,7 @@ table_output(double rtng_76)
 	printf("\n");
 }
 
-//
+
 static void
 set_super_players(bool_t quiet)
 {
@@ -1595,7 +1575,6 @@ set_super_players(bool_t quiet)
 		pla[j] = 0;
 	}	
 }
-
 
 //**************************************************************
 
@@ -1686,12 +1665,6 @@ calc_ind_rating(double cume_score, double *rtng, double *weig, int r)
 	return x;
 }
 #endif
-
-//=========================================
-
-
-//=========================================
-
 
 //=========================================
 
