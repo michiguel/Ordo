@@ -11,29 +11,27 @@ struct ENC 		SE2[MAXENCOUNTERS];
 static int 		N_se2 = 0;
 static int 		group_belong[MAXPLAYERS];
 static int		N_groups;
+
+struct BITARRAY BA, BB;
+static int Get_new_id[MAXPLAYERS];
 //----------------------------------------------------------------------
 
-
-static void	simplify_all(void);
-static void	finish_it(void);
-
-//
-
-static void connect_init (void) {connection_buffer.n = 0;}
-static connection_t * connection_new (void) {return &connection_buffer.list[connection_buffer.n++];}
-
-static void participant_init (void) {participant_buffer.n = 0;}
-static participant_t * participant_new (void) {return &participant_buffer.list[participant_buffer.n++];}
+static void			simplify_all(void);
+static void			finish_it(void);
+static void 		connect_init (void) {connection_buffer.n = 0;}
+static connection_t * 
+					connection_new (void) {return &connection_buffer.list[connection_buffer.n++];}
+static void 		participant_init (void) {participant_buffer.n = 0;}
+static participant_t * 
+					participant_new (void) {return &participant_buffer.list[participant_buffer.n++];}
 
 // prototypes
-static group_t * group_new(void);
-static group_t * group_reset(group_t *g);
-static group_t * group_combined(group_t *g);
-
-static group_t * group_pointed(connection_t *c);
-
-static void		final_list_output(FILE *f);
-static void		group_output(FILE *f, group_t *s);
+static group_t * 	group_new(void);
+static group_t * 	group_reset(group_t *g);
+static group_t * 	group_combined(group_t *g);
+static group_t * 	group_pointed(connection_t *c);
+static void			final_list_output(FILE *f);
+static void			group_output(FILE *f, group_t *s);
 
 // groupset functions
 
@@ -45,12 +43,8 @@ static void groupset_init (void)
 	group_buffer.n = 1;
 }
 
-static group_t * groupset_tail (void) {
-	return group_buffer.tail;
-}
-static group_t * groupset_head (void) {
-	return group_buffer.prehead->next;
-}
+static group_t * groupset_tail (void) {return group_buffer.tail;}
+static group_t * groupset_head (void) {return group_buffer.prehead->next;}
 
 static void groupset_add (group_t *a) 
 {
@@ -112,13 +106,13 @@ add_participant (group_t *g, int i)
 static void
 add_connection (group_t *g, int i)
 {
-int group_id;
+	int group_id;
 	connection_t *nw = connection_new();
 	nw->next = NULL;
 	nw->node = &Gnode[i];
 
-group_id = -1;
-if (Gnode[i].group) group_id = Gnode[i].group->id;
+	group_id = -1;
+	if (Gnode[i].group) group_id = Gnode[i].group->id;
 
 	if (g->cstart == NULL) {
 		g->cstart = nw; 
@@ -141,13 +135,13 @@ if (Gnode[i].group) group_id = Gnode[i].group->id;
 static void
 add_revconn (group_t *g, int i)
 {
-int group_id;
+	int group_id;
 	connection_t *nw = connection_new();
 	nw->next = NULL;
 	nw->node = &Gnode[i];
 
-group_id = -1;
-if (Gnode[i].group) group_id = Gnode[i].group->id;
+	group_id = -1;
+	if (Gnode[i].group) group_id = Gnode[i].group->id;
 
 	if (g->lstart == NULL) {
 		g->lstart = nw; 
@@ -217,7 +211,6 @@ enc2groups (struct ENC *pe)
 	add_revconn (gll, iwin);
 }
 
-
 static void
 group_gocombine(group_t *g, group_t *h);
 
@@ -238,8 +231,6 @@ ifisolated2group (int x)
 		Gnode[x].group = g;
 	} 
 }
-
-
 
 static void
 convert_general_init(int N_plyrs)
@@ -324,8 +315,6 @@ group_gocombine(group_t *g, group_t *h)
 
 //======================
 
-typedef unsigned long long uint64_t;
-
 struct BITARRAY {
 	uint64_t pod[MAXPLAYERS/64];
 	long int max;
@@ -400,10 +389,8 @@ group_pointed_by_node(node_t *nd)
 	}
 }
 
-
-struct BITARRAY BA, BB;
-
 static void simplify (group_t *g);
+
 static group_t *group_next(group_t *g)
 {
 	return g->next;
@@ -663,19 +650,12 @@ finish_it(void)
 
 						break;
 					}
-
 				}	
-
 			}
-
 		} while (!combined && !startover);
-
 	} while (startover);
-
 	return;
 }
-
-static int Get_new_id[MAXPLAYERS];
 
 static void
 final_list_output(FILE *f)

@@ -2,6 +2,9 @@
 #define H_MYTYP
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
+typedef unsigned int  uint32_t;
+typedef unsigned long long uint64_t;
+
 struct ENC {
 	double 	wscore;
 	int		played;
