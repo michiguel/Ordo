@@ -1,2 +1,2 @@
-#define VERSION "v0.6-grp2"
+#define VERSION "v0.6-grp3"
 

@@ -2,6 +2,13 @@
 #include "groups.h"
 #include "mytypes.h"
 
+struct BITARRAY {
+	uint64_t pod[MAXPLAYERS/64];
+	long int max;
+};
+
+//---------------------------------------------------------------------
+
 static char 	**Namelist = NULL;
 
 //---------------------------------------------------------------------
@@ -315,10 +322,6 @@ group_gocombine(group_t *g, group_t *h)
 
 //======================
 
-struct BITARRAY {
-	uint64_t pod[MAXPLAYERS/64];
-	long int max;
-};
 
 static void
 ba_put(struct BITARRAY *ba, long int x)
