@@ -190,8 +190,8 @@ struct DEVIATION_ACC *sim = NULL;
 /*------------------------------------------------------------------------*/
 
 static int		calc_encounters (int selectivity, struct ENC *enc, int N_enc);
-void			calc_obtained_playedby_ENC (struct ENC *enc, int N_enc);
-void			calc_expected (struct ENC *enc, int N_enc);
+static void		calc_obtained_playedby (struct ENC *enc, int N_enc);
+static void		calc_expected (struct ENC *enc, int N_enc);
 
 static int		shrink_ENC (struct ENC *enc, int N_enc);
 static void		purge_players(bool_t quiet);
@@ -799,7 +799,7 @@ all_report (FILE *csvf, FILE *textf)
 	const char *sdev_str;
 
 	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter, N_encounters);
-	calc_obtained_playedby_ENC(Encounter, N_encounters);
+	calc_obtained_playedby(Encounter, N_encounters);
 
 	for (j = 0; j < N_players; j++) {
 		Sorted[j] = j;
@@ -951,9 +951,8 @@ calc_encounters (int selectivity, struct ENC *enc, int N_enc)
 	return N_enc;
 }
 
-
-void
-calc_obtained_playedby_ENC (struct ENC *enc, int N_enc)
+static void
+calc_obtained_playedby (struct ENC *enc, int N_enc)
 {
 	int e, j, w, b;
 
@@ -975,7 +974,7 @@ calc_obtained_playedby_ENC (struct ENC *enc, int N_enc)
 	}
 }
 
-void
+static void
 calc_expected (struct ENC *enc, int N_enc)
 {
 	int e, j, w, b;
@@ -1061,7 +1060,7 @@ purge_players(bool_t quiet)
 
 	do {
 		N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter, N_encounters);
-		calc_obtained_playedby_ENC(Encounter, N_encounters);
+		calc_obtained_playedby(Encounter, N_encounters);
 
 		foundproblem = FALSE;
 		for (j = 0; j < N_players; j++) {
@@ -1281,7 +1280,7 @@ rate_super_players(bool_t quiet)
 	static struct ENC myenc[MAXENCOUNTERS];
 
 	N_encounters = calc_encounters(ENCOUNTERS_FULL, Encounter, N_encounters);
-	calc_obtained_playedby_ENC(Encounter, N_encounters);
+	calc_obtained_playedby(Encounter, N_encounters);
 
 	for (j = 0; j < N_players; j++) {
 
@@ -1351,7 +1350,7 @@ rate_super_players(bool_t quiet)
 	}
 
 	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter, N_encounters);
-	calc_obtained_playedby_ENC(Encounter, N_encounters);
+	calc_obtained_playedby(Encounter, N_encounters);
 }
 #endif
 
@@ -1370,7 +1369,7 @@ calc_rating (bool_t quiet)
 	double resol;
 
 	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter, N_encounters);
-	calc_obtained_playedby_ENC(Encounter, N_encounters);
+	calc_obtained_playedby(Encounter, N_encounters);
 	calc_expected(Encounter, N_encounters);
 	olddev = curdev = deviation();
 
