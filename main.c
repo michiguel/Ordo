@@ -194,7 +194,7 @@ static void		calc_obtained_playedby (struct ENC *enc, int N_enc);
 static void		calc_expected (struct ENC *enc, int N_enc);
 
 static int		shrink_ENC (struct ENC *enc, int N_enc);
-static int		purge_players    (bool_t quiet, struct ENC *enc, int N_enc);
+static int		purge_players    (bool_t quiet, struct ENC *enc);
 static int		set_super_players(bool_t quiet, struct ENC *enc, int N_enc);
 
 static void		clear_flagged (void);
@@ -525,7 +525,7 @@ int main (int argc, char *argv[])
 	}
 
 	N_encounters = set_super_players(QUIET_MODE, Encounter, N_encounters);
-	N_encounters = purge_players(QUIET_MODE, Encounter, N_encounters);
+	N_encounters = purge_players(QUIET_MODE, Encounter);
 
 	calc_rating(QUIET_MODE);
 	ratings_results();
@@ -536,7 +536,7 @@ int main (int argc, char *argv[])
 			printf ("\nAdjusted White Advantage = %f\n\n",new_wadv);
 		White_advantage = new_wadv;
 	
-		N_encounters = purge_players(QUIET_MODE, Encounter, N_encounters);
+		N_encounters = purge_players(QUIET_MODE, Encounter);
 		calc_rating(QUIET_MODE);
 		ratings_results();
 	}
@@ -570,7 +570,7 @@ int main (int argc, char *argv[])
 					//save_simulated((int)z);
 
 					N_encounters = set_super_players(QUIET_MODE, Encounter, N_encounters);
-					N_encounters = purge_players(QUIET_MODE, Encounter, N_encounters);
+					N_encounters = purge_players(QUIET_MODE, Encounter);
 					calc_rating(QUIET_MODE);
 					ratings_for_purged ();
 
@@ -1055,10 +1055,11 @@ init_rating (void)
 }
 
 static int
-purge_players(bool_t quiet, struct ENC *enc, int N_enc)
+purge_players(bool_t quiet, struct ENC *enc)
 {
 	bool_t foundproblem;
 	int j;
+	int N_enc;
 
 	do {
 		N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, enc);
