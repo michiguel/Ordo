@@ -197,7 +197,7 @@ static int		shrink_ENC (struct ENC *enc, int N_enc);
 static int		purge_players(bool_t quiet, struct ENC *enc, int N_enc);
 static void		clear_flagged (void);
 
-static void		set_super_players(bool_t quiet);
+static int		set_super_players(bool_t quiet, struct ENC *enc, int N_enc);
 
 void			all_report (FILE *csvf, FILE *textf);
 void			init_rating (void);
@@ -522,7 +522,7 @@ int main (int argc, char *argv[])
 		exit(EXIT_SUCCESS);
 	}
 
-	set_super_players(QUIET_MODE);
+	N_encounters = set_super_players(QUIET_MODE, Encounter, N_encounters);
 	N_encounters = purge_players(QUIET_MODE, Encounter, N_encounters);
 
 	calc_rating(QUIET_MODE);
@@ -567,8 +567,7 @@ int main (int argc, char *argv[])
 
 					//save_simulated((int)z);
 
-					set_super_players(QUIET_MODE);
-
+					N_encounters = set_super_players(QUIET_MODE, Encounter, N_encounters);
 					N_encounters = purge_players(QUIET_MODE, Encounter, N_encounters);
 					calc_rating(QUIET_MODE);
 					ratings_for_purged ();
@@ -1518,30 +1517,30 @@ table_output(double rtng_76)
 }
 
 
-static void
-set_super_players(bool_t quiet)
+static int		
+set_super_players(bool_t quiet, struct ENC *enc, int N_enc)
 {
 	static double 	obt [MAXPLAYERS];
 	static int		pla [MAXPLAYERS];
 
 	int e, j, w, b;
 
-	N_encounters = calc_encounters(ENCOUNTERS_FULL, Encounter, N_encounters);
+	N_enc = calc_encounters(ENCOUNTERS_FULL, enc, N_enc);
 
 	for (j = 0; j < N_players; j++) {
 		obt[j] = 0.0;	
 		pla[j] = 0;
 	}	
 
-	for (e = 0; e < N_encounters; e++) {
-		w = Encounter[e].wh;
-		b = Encounter[e].bl;
+	for (e = 0; e < N_enc; e++) {
+		w = enc[e].wh;
+		b = enc[e].bl;
 
-		obt[w] += Encounter[e].wscore;
-		obt[b] += (double)Encounter[e].played - Encounter[e].wscore;
+		obt[w] += enc[e].wscore;
+		obt[b] += (double)enc[e].played - enc[e].wscore;
 
-		pla[w] += Encounter[e].played;
-		pla[b] += Encounter[e].played;
+		pla[w] += enc[e].played;
+		pla[b] += enc[e].played;
 
 	}
 
@@ -1562,6 +1561,8 @@ set_super_players(bool_t quiet)
 		obt[j] = 0.0;	
 		pla[j] = 0;
 	}	
+
+	return N_enc;
 }
 
 //**************************************************************
