@@ -194,7 +194,7 @@ static void		calc_obtained_playedby (struct ENC *enc, int N_enc);
 static void		calc_expected (struct ENC *enc, int N_enc);
 
 static int		shrink_ENC (struct ENC *enc, int N_enc);
-static void		purge_players(bool_t quiet);
+static int		purge_players(bool_t quiet, struct ENC *enc, int N_enc);
 static void		clear_flagged (void);
 
 static void		set_super_players(bool_t quiet);
@@ -523,7 +523,7 @@ int main (int argc, char *argv[])
 	}
 
 	set_super_players(QUIET_MODE);
-	purge_players(QUIET_MODE);
+	N_encounters = purge_players(QUIET_MODE, Encounter, N_encounters);
 
 	calc_rating(QUIET_MODE);
 	ratings_results();
@@ -534,7 +534,7 @@ int main (int argc, char *argv[])
 			printf ("\nAdjusted White Advantage = %f\n\n",new_wadv);
 		White_advantage = new_wadv;
 	
-		purge_players(QUIET_MODE);
+		N_encounters = purge_players(QUIET_MODE, Encounter, N_encounters);
 		calc_rating(QUIET_MODE);
 		ratings_results();
 	}
@@ -569,7 +569,7 @@ int main (int argc, char *argv[])
 
 					set_super_players(QUIET_MODE);
 
-					purge_players(QUIET_MODE);
+					N_encounters = purge_players(QUIET_MODE, Encounter, N_encounters);
 					calc_rating(QUIET_MODE);
 					ratings_for_purged ();
 
@@ -1052,15 +1052,15 @@ init_rating (void)
 	}
 }
 
-static void
-purge_players(bool_t quiet)
+static int
+purge_players(bool_t quiet, struct ENC *enc, int N_enc)
 {
 	bool_t foundproblem;
 	int j;
 
 	do {
-		N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter, N_encounters);
-		calc_obtained_playedby(Encounter, N_encounters);
+		N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, enc, N_enc);
+		calc_obtained_playedby(enc, N_enc);
 
 		foundproblem = FALSE;
 		for (j = 0; j < N_players; j++) {
@@ -1069,16 +1069,11 @@ purge_players(bool_t quiet)
 				Flagged[j]= TRUE;
 				if (!quiet) printf ("purge --> %s\n", Name[j]);
 				foundproblem = TRUE;
-// No need to discard games.
-// Flagging the players is enough
-//
-//				for (i = 0; i < N_games; i++) {
-//					if (Whiteplayer[i] == j || Blackplayer[i] == j)
-//						Score[i] = DISCARD;
-//				}
 			} 
 		}
 	} while (foundproblem);
+
+	return N_enc;
 }
 
 
