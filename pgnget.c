@@ -7,6 +7,7 @@
 #include "pgnget.h"
 #include "boolean.h"
 #include "ordolim.h"
+#include "mytypes.h"
 
 #if 1
 #define TESTHASH
