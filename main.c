@@ -204,7 +204,7 @@ static void		clear_flagged (void);
 void			all_report (FILE *csvf, FILE *textf);
 void			init_rating (void);
 double			adjust_rating (double delta, double kappa);
-void			calc_rating (bool_t quiet);
+static int		calc_rating (bool_t quiet, struct ENC *enc);
 double 			deviation (void);
 void			ratings_restore (void);
 void			ratings_backup  (void);
@@ -526,8 +526,9 @@ int main (int argc, char *argv[])
 
 	N_encounters = set_super_players(QUIET_MODE, Encounter);
 	N_encounters = purge_players(QUIET_MODE, Encounter);
+	N_encounters = calc_rating(QUIET_MODE, Encounter);
 
-	calc_rating(QUIET_MODE);
+
 	ratings_results();
 
 	if (ADJUST_WHITE_ADVANTAGE) {
@@ -537,7 +538,7 @@ int main (int argc, char *argv[])
 		White_advantage = new_wadv;
 	
 		N_encounters = purge_players(QUIET_MODE, Encounter);
-		calc_rating(QUIET_MODE);
+		N_encounters = calc_rating(QUIET_MODE, Encounter);
 		ratings_results();
 	}
 
@@ -571,7 +572,7 @@ int main (int argc, char *argv[])
 
 					N_encounters = set_super_players(QUIET_MODE, Encounter);
 					N_encounters = purge_players(QUIET_MODE, Encounter);
-					calc_rating(QUIET_MODE);
+					N_encounters = calc_rating(QUIET_MODE, Encounter);
 					ratings_for_purged ();
 
 					for (i = 0; i < N_players; i++) {
@@ -1355,11 +1356,12 @@ rate_super_players(bool_t quiet, struct ENC *enc)
 }
 #endif
 
-void
-calc_rating (bool_t quiet)
+static int
+calc_rating (bool_t quiet, struct ENC *enc)
 {
 	double 	olddev, curdev, outputdev;
 	int 	i;
+	int 	N_enc;
 
 	int		rounds = 10000;
 	double 	delta = 200.0;
@@ -1369,9 +1371,9 @@ calc_rating (bool_t quiet)
 	int 	n = 20;
 	double resol;
 
-	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
-	calc_obtained_playedby(Encounter, N_encounters);
-	calc_expected(Encounter, N_encounters);
+	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, enc);
+	calc_obtained_playedby(enc, N_enc);
+	calc_expected(enc, N_enc);
 	olddev = curdev = deviation();
 
 	if (!quiet) printf ("\nConvergence rating calculation\n\n");
@@ -1385,12 +1387,12 @@ calc_rating (bool_t quiet)
 			olddev = curdev;
 
 			resol = adjust_rating(delta,kappa*kk);
-			calc_expected(Encounter, N_encounters);
+			calc_expected(enc, N_enc);
 			curdev = deviation();
 
 			if (curdev >= olddev) {
 				ratings_restore();
-				calc_expected(Encounter, N_encounters);
+				calc_expected(enc, N_enc);
 				curdev = deviation();	
 				assert (curdev == olddev);
 				break;
@@ -1419,9 +1421,9 @@ calc_rating (bool_t quiet)
 
 #ifdef CALCIND_SWSL
 	if (!quiet) printf ("Post-Convergence rating estimation\n\n");
-	N_encounters = rate_super_players(QUIET_MODE, Encounter);
+	N_enc = rate_super_players(QUIET_MODE, enc);
 #endif
-
+	return N_enc;
 }
 
 
