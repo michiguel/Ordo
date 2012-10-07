@@ -1271,11 +1271,12 @@ static double calc_ind_rating(double cume_score, double *rtng, double *weig, int
 static double calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, double *weig, int r);
 
 static int
-rate_super_players(bool_t quiet, struct ENC *enc, int N_enc)
+rate_super_players(bool_t quiet, struct ENC *enc)
 {
 	int j, e;
 	int myenc_n = 0;
 	static struct ENC myenc[MAXENCOUNTERS];
+	int N_enc;
 
 	N_enc = calc_encounters(ENCOUNTERS_FULL, enc);
 	calc_obtained_playedby(enc, N_enc);
@@ -1418,7 +1419,7 @@ calc_rating (bool_t quiet)
 
 #ifdef CALCIND_SWSL
 	if (!quiet) printf ("Post-Convergence rating estimation\n\n");
-	N_encounters = rate_super_players(QUIET_MODE, Encounter, N_encounters);
+	N_encounters = rate_super_players(QUIET_MODE, Encounter);
 #endif
 
 }
