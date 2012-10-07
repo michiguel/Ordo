@@ -194,10 +194,12 @@ static void		calc_obtained_playedby (struct ENC *enc, int N_enc);
 static void		calc_expected (struct ENC *enc, int N_enc);
 
 static int		shrink_ENC (struct ENC *enc, int N_enc);
-static int		purge_players(bool_t quiet, struct ENC *enc, int N_enc);
+static int		purge_players    (bool_t quiet, struct ENC *enc, int N_enc);
+static int		set_super_players(bool_t quiet, struct ENC *enc, int N_enc);
+
 static void		clear_flagged (void);
 
-static int		set_super_players(bool_t quiet, struct ENC *enc, int N_enc);
+
 
 void			all_report (FILE *csvf, FILE *textf);
 void			init_rating (void);
@@ -1266,15 +1268,15 @@ deviation (void)
 static double calc_ind_rating(double cume_score, double *rtng, double *weig, int r);
 static double calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, double *weig, int r);
 
-static void
-rate_super_players(bool_t quiet)
+static int
+rate_super_players(bool_t quiet, struct ENC *enc, int N_enc)
 {
 	int j, e;
 	int myenc_n = 0;
 	static struct ENC myenc[MAXENCOUNTERS];
 
-	N_encounters = calc_encounters(ENCOUNTERS_FULL, Encounter, N_encounters);
-	calc_obtained_playedby(Encounter, N_encounters);
+	N_enc = calc_encounters(ENCOUNTERS_FULL, enc, N_enc);
+	calc_obtained_playedby(enc, N_enc);
 
 	for (j = 0; j < N_players; j++) {
 
@@ -1289,14 +1291,14 @@ rate_super_players(bool_t quiet)
 		if (Performance_type[j] == PERF_SUPERLOSER) 
 			if (!quiet) printf ("  all losses --> %s\n", Name[j]);
 
-		for (e = 0; e < N_encounters; e++) {
-			int w = Encounter[e].wh;
-			int b = Encounter[e].bl;
+		for (e = 0; e < N_enc; e++) {
+			int w = enc[e].wh;
+			int b = enc[e].bl;
 			if (j == w /*&& Performance_type[b] == PERF_NORMAL*/) {
-				myenc[myenc_n++] = Encounter[e];
+				myenc[myenc_n++] = enc[e];
 			} else
 			if (j == b /*&& Performance_type[w] == PERF_NORMAL*/) {
-				myenc[myenc_n++] = Encounter[e];
+				myenc[myenc_n++] = enc[e];
 			}
 		}
 	
@@ -1343,8 +1345,10 @@ rate_super_players(bool_t quiet)
 		}
 	}
 
-	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter, N_encounters);
-	calc_obtained_playedby(Encounter, N_encounters);
+	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, enc, N_enc);
+	calc_obtained_playedby(enc, N_enc);
+
+	return N_enc;
 }
 #endif
 
@@ -1412,7 +1416,7 @@ calc_rating (bool_t quiet)
 
 #ifdef CALCIND_SWSL
 	if (!quiet) printf ("Post-Convergence rating estimation\n\n");
-	rate_super_players(QUIET_MODE);
+	N_encounters = rate_super_players(QUIET_MODE, Encounter, N_encounters);
 #endif
 
 }
