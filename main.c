@@ -195,7 +195,7 @@ static void		calc_expected (struct ENC *enc, int N_enc);
 
 static int		shrink_ENC (struct ENC *enc, int N_enc);
 static int		purge_players    (bool_t quiet, struct ENC *enc);
-static int		set_super_players(bool_t quiet, struct ENC *enc, int N_enc);
+static int		set_super_players(bool_t quiet, struct ENC *enc);
 
 static void		clear_flagged (void);
 
@@ -524,7 +524,7 @@ int main (int argc, char *argv[])
 		exit(EXIT_SUCCESS);
 	}
 
-	N_encounters = set_super_players(QUIET_MODE, Encounter, N_encounters);
+	N_encounters = set_super_players(QUIET_MODE, Encounter);
 	N_encounters = purge_players(QUIET_MODE, Encounter);
 
 	calc_rating(QUIET_MODE);
@@ -569,7 +569,7 @@ int main (int argc, char *argv[])
 
 					//save_simulated((int)z);
 
-					N_encounters = set_super_players(QUIET_MODE, Encounter, N_encounters);
+					N_encounters = set_super_players(QUIET_MODE, Encounter);
 					N_encounters = purge_players(QUIET_MODE, Encounter);
 					calc_rating(QUIET_MODE);
 					ratings_for_purged ();
@@ -1524,12 +1524,13 @@ table_output(double rtng_76)
 
 
 static int		
-set_super_players(bool_t quiet, struct ENC *enc, int N_enc)
+set_super_players(bool_t quiet, struct ENC *enc)
 {
 	static double 	obt [MAXPLAYERS];
 	static int		pla [MAXPLAYERS];
 
 	int e, j, w, b;
+	int N_enc;
 
 	N_enc = calc_encounters(ENCOUNTERS_FULL, enc);
 
