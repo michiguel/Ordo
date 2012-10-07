@@ -189,9 +189,9 @@ struct DEVIATION_ACC *sim = NULL;
 
 /*------------------------------------------------------------------------*/
 
-void			calc_encounters (bool_t useflag);
-void			calc_obtained_playedby_ENC (void);
-void			calc_expected_ENC (void);
+void			calc_encounters (int selectivity, struct ENC *enc, int N_enc);
+void			calc_obtained_playedby_ENC (struct ENC *enc, int N_enc);
+void			calc_expected (struct ENC *enc, int N_enc);
 void			shrink_ENC (void);
 static void		purge_players(bool_t quiet);
 static void		clear_flagged (void);
@@ -200,7 +200,6 @@ static void		set_super_players(bool_t quiet);
 
 void			all_report (FILE *csvf, FILE *textf);
 void			init_rating (void);
-void			calc_expected (void);
 double			adjust_rating (double delta, double kappa);
 void			calc_rating (bool_t quiet);
 double 			deviation (void);
@@ -515,7 +514,7 @@ int main (int argc, char *argv[])
 
 	/*=====================*/
 
-	calc_encounters(ENCOUNTERS_FULL);
+	calc_encounters(ENCOUNTERS_FULL, Encounter, N_encounters);
 	scan_encounters(Encounter, N_encounters, N_players); 
 	if (group_is_output) {
 		convert_to_groups(groupf, N_players, Name);
@@ -525,9 +524,6 @@ int main (int argc, char *argv[])
 	set_super_players(QUIET_MODE);
 	purge_players(QUIET_MODE);
 
-//	calc_encounters(ENCOUNTERS_NOFLAGGED);
-//	calc_obtained_playedby_ENC();
-	
 	calc_rating(QUIET_MODE);
 	ratings_results();
 
@@ -801,8 +797,8 @@ all_report (FILE *csvf, FILE *textf)
 	char sdev_str_buffer[80];
 	const char *sdev_str;
 
-	calc_encounters(ENCOUNTERS_NOFLAGGED);
-	calc_obtained_playedby_ENC();
+	calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter, N_encounters);
+	calc_obtained_playedby_ENC(Encounter, N_encounters);
 
 	for (j = 0; j < N_players; j++) {
 		Sorted[j] = j;
@@ -921,7 +917,7 @@ static int compare_ENC (const void * a, const void * b)
 }
 
 void
-calc_encounters (int selectivity)
+calc_encounters (int selectivity, struct ENC *enc, int N_enc)
 {
 	int i, e = 0;
 
@@ -935,26 +931,26 @@ calc_encounters (int selectivity)
 		}
 
 		switch (Score[i]) {
-			case WHITE_WIN: 	Encounter[e].wscore = 1.0; break;
-			case RESULT_DRAW:	Encounter[e].wscore = 0.5; break;
-			case BLACK_WIN:		Encounter[e].wscore = 0.0; break;
+			case WHITE_WIN: 	enc[e].wscore = 1.0; break;
+			case RESULT_DRAW:	enc[e].wscore = 0.5; break;
+			case BLACK_WIN:		enc[e].wscore = 0.0; break;
 		}
 
-		Encounter[e].wh = Whiteplayer[i];
-		Encounter[e].bl = Blackplayer[i];
-		Encounter[e].played = 1;
+		enc[e].wh = Whiteplayer[i];
+		enc[e].bl = Blackplayer[i];
+		enc[e].played = 1;
 		e++;
 	}
 	N_encounters = e;
 
 	shrink_ENC ();
-	qsort (Encounter, (size_t)N_encounters, sizeof(struct ENC), compare_ENC);
+	qsort (enc, (size_t)N_enc, sizeof(struct ENC), compare_ENC);
 	shrink_ENC ();
 }
 
 
 void
-calc_obtained_playedby_ENC (void)
+calc_obtained_playedby_ENC (struct ENC *enc, int N_enc)
 {
 	int e, j, w, b;
 
@@ -963,21 +959,21 @@ calc_obtained_playedby_ENC (void)
 		Playedby[j] = 0;
 	}	
 
-	for (e = 0; e < N_encounters; e++) {
+	for (e = 0; e < N_enc; e++) {
 	
-		w = Encounter[e].wh;
-		b = Encounter[e].bl;
+		w = enc[e].wh;
+		b = enc[e].bl;
 
-		Obtained[w] += Encounter[e].wscore;
-		Obtained[b] += (double)Encounter[e].played - Encounter[e].wscore;
+		Obtained[w] += enc[e].wscore;
+		Obtained[b] += (double)enc[e].played - enc[e].wscore;
 
-		Playedby[w] += Encounter[e].played;
-		Playedby[b] += Encounter[e].played;
+		Playedby[w] += enc[e].played;
+		Playedby[b] += enc[e].played;
 	}
 }
 
 void
-calc_expected_ENC (void)
+calc_expected (struct ENC *enc, int N_enc)
 {
 	int e, j, w, b;
 	double f;
@@ -987,15 +983,15 @@ calc_expected_ENC (void)
 		Expected[j] = 0.0;	
 	}	
 
-	for (e = 0; e < N_encounters; e++) {
+	for (e = 0; e < N_enc; e++) {
 	
-		w = Encounter[e].wh;
-		b = Encounter[e].bl;
+		w = enc[e].wh;
+		b = enc[e].bl;
 
 		f = xpect (Ratingof[w] + White_advantage, Ratingof[b]);
 
-		wperf = Encounter[e].played * f;
-		bperf = Encounter[e].played - wperf;
+		wperf = enc[e].played * f;
+		bperf = enc[e].played - wperf;
 
 		Expected [w] += wperf; 
 		Expected [b] += bperf; 
@@ -1061,8 +1057,8 @@ purge_players(bool_t quiet)
 	int j;
 
 	do {
-		calc_encounters(ENCOUNTERS_NOFLAGGED);
-		calc_obtained_playedby_ENC();
+		calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter, N_encounters);
+		calc_obtained_playedby_ENC(Encounter, N_encounters);
 
 		foundproblem = FALSE;
 		for (j = 0; j < N_players; j++) {
@@ -1083,11 +1079,6 @@ purge_players(bool_t quiet)
 	} while (foundproblem);
 }
 
-void
-calc_expected (void)
-{
-	calc_expected_ENC();
-}
 
 double
 adjust_rating (double delta, double kappa)
@@ -1286,8 +1277,8 @@ rate_super_players(bool_t quiet)
 	int myenc_n = 0;
 	static struct ENC myenc[MAXENCOUNTERS];
 
-	calc_encounters(ENCOUNTERS_FULL);
-	calc_obtained_playedby_ENC();
+	calc_encounters(ENCOUNTERS_FULL, Encounter, N_encounters);
+	calc_obtained_playedby_ENC(Encounter, N_encounters);
 
 	for (j = 0; j < N_players; j++) {
 
@@ -1356,8 +1347,8 @@ rate_super_players(bool_t quiet)
 		}
 	}
 
-	calc_encounters(ENCOUNTERS_NOFLAGGED);
-	calc_obtained_playedby_ENC();
+	calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter, N_encounters);
+	calc_obtained_playedby_ENC(Encounter, N_encounters);
 }
 #endif
 
@@ -1375,9 +1366,9 @@ calc_rating (bool_t quiet)
 	int 	n = 20;
 	double resol;
 
-	calc_encounters(ENCOUNTERS_NOFLAGGED);
-	calc_obtained_playedby_ENC();
-	calc_expected();
+	calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter, N_encounters);
+	calc_obtained_playedby_ENC(Encounter, N_encounters);
+	calc_expected(Encounter, N_encounters);
 	olddev = curdev = deviation();
 
 	if (!quiet) printf ("\nConvergence rating calculation\n\n");
@@ -1391,12 +1382,12 @@ calc_rating (bool_t quiet)
 			olddev = curdev;
 
 			resol = adjust_rating(delta,kappa*kk);
-			calc_expected();
+			calc_expected(Encounter, N_encounters);
 			curdev = deviation();
 
 			if (curdev >= olddev) {
 				ratings_restore();
-				calc_expected();
+				calc_expected(Encounter, N_encounters);
 				curdev = deviation();	
 				assert (curdev == olddev);
 				break;
@@ -1538,7 +1529,7 @@ set_super_players(bool_t quiet)
 
 	int e, j, w, b;
 
-	calc_encounters(ENCOUNTERS_FULL);
+	calc_encounters(ENCOUNTERS_FULL, Encounter, N_encounters);
 
 	for (j = 0; j < N_players; j++) {
 		obt[j] = 0.0;	
