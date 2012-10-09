@@ -190,8 +190,8 @@ struct DEVIATION_ACC *sim = NULL;
 /*------------------------------------------------------------------------*/
 
 static int		calc_encounters (int selectivity, struct ENC *enc);
-static void		calc_obtained_playedby (struct ENC *enc, int N_enc);
-static void		calc_expected (struct ENC *enc, int N_enc);
+static void		calc_obtained_playedby 	(const struct ENC *enc, int N_enc);
+static void		calc_expected 			(const struct ENC *enc, int N_enc);
 
 static int		shrink_ENC (struct ENC *enc, int N_enc);
 static int		purge_players    (bool_t quiet, struct ENC *enc);
@@ -528,7 +528,6 @@ int main (int argc, char *argv[])
 	N_encounters = purge_players(QUIET_MODE, Encounter);
 	N_encounters = calc_rating(QUIET_MODE, Encounter);
 
-
 	ratings_results();
 
 	if (ADJUST_WHITE_ADVANTAGE) {
@@ -542,7 +541,7 @@ int main (int argc, char *argv[])
 		ratings_results();
 	}
 
-	/* Simulation block */
+	/* Simulation block, begin */
 	{	
 		long i,j;
 		long z = Simulate;
@@ -601,6 +600,7 @@ int main (int argc, char *argv[])
 			}
 		}
 	}
+	/* Simulation block, end */
 
 	all_report (csvf, textf);
 	if (Simulate > 1 && NULL != ematstr)
@@ -955,7 +955,7 @@ calc_encounters (int selectivity, struct ENC *enc)
 }
 
 static void
-calc_obtained_playedby (struct ENC *enc, int N_enc)
+calc_obtained_playedby (const struct ENC *enc, int N_enc)
 {
 	int e, j, w, b;
 
@@ -978,7 +978,7 @@ calc_obtained_playedby (struct ENC *enc, int N_enc)
 }
 
 static void
-calc_expected (struct ENC *enc, int N_enc)
+calc_expected (const struct ENC *enc, int N_enc)
 {
 	int e, j, w, b;
 	double f;
