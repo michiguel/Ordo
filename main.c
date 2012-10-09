@@ -1115,15 +1115,28 @@ adjust_rating (double delta, double kappa)
 	average = accum / (N_players-flagged);
 	excess  = average - General_average;
 
-	if (Anchor_use) {
-		excess  = Ratingof[Anchor] - General_average;	
-	}
+//	if (Anchor_use) {
+//		excess  = Ratingof[Anchor] - General_average;	
+//	}
 
 	for (j = 0; j < N_players; j++) {
 		if (!Flagged[j]) Ratingof[j] -= excess;
 	}	
 	
 	return ymax * delta;
+}
+
+static void
+adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average)
+{
+	double excess;
+	int j;
+	if (anchor_use) {
+		excess  = Ratingof[anchor] - general_average;	
+		for (j = 0; j < N_players; j++) {
+			if (!Flagged[j]) Ratingof[j] -= excess;
+		}	
+	}
 }
 
 void
@@ -1423,6 +1436,9 @@ calc_rating (bool_t quiet, struct ENC *enc)
 	if (!quiet) printf ("Post-Convergence rating estimation\n\n");
 	N_enc = rate_super_players(QUIET_MODE, enc);
 #endif
+
+	adjust_rating_byanchor (Anchor_use, Anchor, General_average);
+
 	return N_enc;
 }
 
