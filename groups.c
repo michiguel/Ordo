@@ -9,18 +9,24 @@ struct BITARRAY {
 
 //---------------------------------------------------------------------
 
-static char 	**Namelist = NULL;
+static char 		**Namelist = NULL;
 
 //---------------------------------------------------------------------
-struct ENC 		SE[MAXENCOUNTERS];
-static int 		N_se = 0;
-struct ENC 		SE2[MAXENCOUNTERS];
-static int 		N_se2 = 0;
-static int 		group_belong[MAXPLAYERS];
-static int		N_groups;
 
-struct BITARRAY BA, BB;
-static int Get_new_id[MAXPLAYERS];
+struct ENC 			SE[MAXENCOUNTERS];
+static int 			N_se = 0;
+struct ENC 			SE2[MAXENCOUNTERS];
+static int 			N_se2 = 0;
+static int 			group_belong[MAXPLAYERS];
+static int			N_groups;
+
+struct BITARRAY 	BA;
+struct BITARRAY		BB;
+static int 			Get_new_id[MAXPLAYERS];
+
+static group_t *	Group_final_list[MAXPLAYERS];
+static long			Group_final_list_n = 0;
+
 //----------------------------------------------------------------------
 
 static void			simplify_all(void);
@@ -540,9 +546,6 @@ simplify (group_t *g)
 
 //======================
 
-static group_t *	group_final_list[MAXPLAYERS];
-static long			group_final_list_n = 0;
-
 static connection_t *group_beathead(group_t *g) {return g->cstart;} 
 static connection_t *beat_next(connection_t *b) {return b->next;} 
 
@@ -616,7 +619,7 @@ finish_it(void)
 
 			if (h == NULL) {
 
-				group_final_list[group_final_list_n++] = group_unlink(g);
+				Group_final_list[Group_final_list_n++] = group_unlink(g);
 
 				ba_done(&BA);
 				startover = TRUE;
@@ -672,14 +675,14 @@ final_list_output(FILE *f)
 	}
 
 	new_id = 0;
-	for (i = 0; i < group_final_list_n; i++) {
-		g = group_final_list[i];
+	for (i = 0; i < Group_final_list_n; i++) {
+		g = Group_final_list[i];
 		new_id++;
 		Get_new_id[g->id] = new_id;
 	}
 
-	for (i = 0; i < group_final_list_n; i++) {
-		g = group_final_list[i];
+	for (i = 0; i < Group_final_list_n; i++) {
+		g = Group_final_list[i];
 		fprintf (f,"\nGroup %d\n",Get_new_id[g->id]);
 		group_output(f,g);
 	}
