@@ -27,6 +27,8 @@ static int 			Get_new_id[MAXPLAYERS];
 static group_t *	Group_final_list[MAXPLAYERS];
 static long			Group_final_list_n = 0;
 
+static node_t		Gnode[MAXPLAYERS];
+
 //----------------------------------------------------------------------
 
 static void			simplify_all(void);

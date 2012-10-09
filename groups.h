@@ -41,8 +41,6 @@ struct PARTICIPANT {
 	int				id;
 };
 
-node_t				Gnode[MAXPLAYERS];
-
 struct GROUP_BUFFER {
 	group_t		list[MAXPLAYERS];
 	group_t		*tail;
