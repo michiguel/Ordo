@@ -912,19 +912,19 @@ group_output(FILE *f, group_t *s)
 	assert(s);
 	own_id = s->id;
 	for (p = s->pstart; p != NULL; p = p->next) {
-		fprintf (f,"   %s\n",p->name);
+		fprintf (f," | %s\n",p->name);
 	}
 	for (c = s->cstart; c != NULL; c = c->next) {
 		group_t *gr = group_pointed(c);
 		if (gr != NULL) {
-			if (gr->id != own_id) fprintf (f,"   --> wins against group:%d\n",Get_new_id[gr->id]);
+			if (gr->id != own_id) fprintf (f," \\---> wins against group:%d\n",Get_new_id[gr->id]);
 		} else
 			fprintf (f,"point to node NULL\n");
 	}
 	for (c = s->lstart; c != NULL; c = c->next) {
 		group_t *gr = group_pointed(c);
 		if (gr != NULL) {
-			if (gr->id != own_id) fprintf (f,"   --> losses against group:%d\n",Get_new_id[gr->id]);
+			if (gr->id != own_id) fprintf (f," \\---> losses against group:%d\n",Get_new_id[gr->id]);
 		} else
 			fprintf (f,"pointed by node NULL\n");
 	}
