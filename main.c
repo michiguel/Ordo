@@ -228,7 +228,7 @@ static double 	overallerror_fwadv (double wadv);
 static double 	adjust_wadv (double start_wadv);
 static void 	table_output(double Rtng_76);
 
-#if 0
+#if 1
 static const char *Result_string[4] = {"1-0","1/2-1/2","0-1","*"};
 
 static void
@@ -567,7 +567,7 @@ int main (int argc, char *argv[])
 					clear_flagged ();
 					simulate_scores();
 
-					//save_simulated((int)z);
+					if ((Simulate-z) == 801) save_simulated((int)(Simulate-z));
 
 					N_encounters = set_super_players(QUIET_MODE, Encounter);
 					N_encounters = purge_players(QUIET_MODE, Encounter);

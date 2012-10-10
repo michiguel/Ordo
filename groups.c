@@ -50,6 +50,25 @@ static void			group_output(FILE *f, group_t *s);
 
 // groupset functions
 
+#ifndef NDEBUG
+static bool_t
+groupset_sanity_check(void)
+{ 
+	group_t *c; 
+
+	c = group_buffer.prehead;
+	if (c != NULL)
+		c = c->next;
+	else
+		return FALSE;
+
+	for (; c != NULL; c = c->next) {
+		if (c->prev == NULL) return FALSE;
+	}
+	return TRUE;
+}
+#endif
+
 static void groupset_init (void) 
 {
 	group_buffer.tail    = &group_buffer.list[0];
@@ -302,8 +321,15 @@ group_gocombine(group_t *g, group_t *h)
 	group_t *pr = h->prev;
 	group_t *ne = h->next;
 
+
+if (h->combined == g) {
+	return;
+}
+
 	h->prev = NULL;
 	h->next = NULL;
+
+//if (pr == NULL) { printf ("g=%d, h=%d\n",g->id,h->id);}
 
 	assert(pr);
 	pr->next = ne;
@@ -404,6 +430,7 @@ static void simplify (group_t *g);
 
 static group_t *group_next(group_t *g)
 {
+	assert(g);
 	return g->next;
 }
 
@@ -413,13 +440,145 @@ simplify_all(void)
 	group_t *g;
 
 	g = groupset_head();
-	do {
+	assert(g);
+	while(g) {
 		simplify(g);
 		g = group_next(g);
-	} while (g);
+	}
+	return;
+}
+
+#if 0
+static void
+beat_lost_output (group_t *g)
+{
+	group_t 		*beat_to, *lost_to;
+	connection_t 	*c;
+
+	printf ("G=%d, beat_to: ",g->id);
+
+		// loop connections, examine id if repeated or self point (delete them)
+		beat_to = NULL;
+		c = g->cstart; 
+		do {
+			if (c && NULL != (beat_to = group_pointed(c))) {
+				printf ("%d, ",beat_to->id);
+				c = c->next;
+			}
+		} while (c && beat_to);
+
+	printf ("\n");
+	printf ("G=%d, lost_to: ",g->id);
+
+		lost_to = NULL;
+		c = g->lstart; 
+		do {
+			if (c && NULL != (lost_to = group_pointed(c))) {
+				printf ("%d, ",lost_to->id);
+				c = c->next;
+			}
+		} while (c && lost_to);
+	printf ("\n");
+}
+#endif
+
+static void
+simplify_shrink (group_t *g)
+{
+	group_t 		*beat_to, *lost_to;
+	connection_t 	*c, *p;
+	int 			id, oid;
+
+	id=-1;
+
+		ba_init(&BA, MAXPLAYERS-1);
+		ba_init(&BB, MAXPLAYERS-2);
+
+		oid = g->id; // own id
+
+		// loop connections, examine id if repeated or self point (delete them)
+		beat_to = NULL;
+		do {
+			c = g->cstart; 
+			if (c && NULL != (beat_to = group_pointed(c))) {
+				id = beat_to->id;
+				if (id == oid) { 
+					// remove connection
+					g->cstart = c->next; //FIXME mem leak? free(c)
+				}
+			}
+		} while (c && beat_to && id == oid);
+
+
+		if (c && beat_to) {
+
+			ba_put(&BA, id);
+			p = c;
+			c = c->next;
+
+			while (c != NULL) {
+				beat_to = group_pointed(c);
+				id = beat_to->id;
+				if (id == oid || ba_ison(&BA, id)) {
+					// remove connection and advance
+					c = c->next; //FIXME mem leak? free(c)
+					p->next = c; 
+				}
+				else {
+					// remember and advance
+					ba_put(&BA, id);
+					p = c;
+					c = c->next;
+				}
+			}
+
+		}
+
+		// loop connections, examine id if repeated or self point (delete them)
+
+		lost_to = NULL;
+
+		do {
+			c = g->lstart; 
+			if (c && NULL != (lost_to = group_pointed(c))) {
+				id = lost_to->id;
+				if (id == oid) { 
+					// remove connection
+					g->lstart = c->next; //FIXME mem leak?
+				}
+			}
+		} while (c && lost_to && id == oid);
+
+
+		if (c && lost_to) {
+
+			ba_put(&BB, id);
+			p = c;
+			c = c->next;
+
+			while (c != NULL) {
+				lost_to = group_pointed(c);
+				id = lost_to->id;
+				if (id == oid || ba_ison(&BB, id)) {
+					// remove connection and advance
+					c = c->next;		
+					p->next = c; //FIXME mem leak?
+				}
+				else {
+					// remember and advance
+					ba_put(&BB, id);
+					p = c;
+					c = c->next;
+				}
+			}
+		}
+
+		ba_done(&BA);
+		ba_done(&BB);
 
 	return;
 }
+
 
 static void
 simplify (group_t *g)
@@ -434,10 +593,22 @@ simplify (group_t *g)
 
 	do {
 
+//printf("-------------\n");
+//printf("before shrink\n");
+//beat_lost_output (g);
+simplify_shrink (g);
+//printf("after  shrink\n");
+//beat_lost_output (g);
+//printf("-------------\n");
+
+assert(groupset_sanity_check());
+
 		ba_init(&BA, MAXPLAYERS-1);
 		ba_init(&BB, MAXPLAYERS-2);
 
 		oid = g->id; // own id
+
+gotta_combine = FALSE;
 
 	// loop connections, examine id if repeated or self point (delete them)
 		beat_to = NULL;
@@ -482,6 +653,8 @@ simplify (group_t *g)
 
 		lost_to = NULL;
 
+assert(groupset_sanity_check());
+
 		do {
 			c = g->lstart; 
 			if (c && NULL != (lost_to = group_pointed(c))) {
@@ -493,11 +666,17 @@ simplify (group_t *g)
 			}
 		} while (c && lost_to && id == oid);
 
+//if (lost_to) printf ("found=%d\n",lost_to->id); else printf("no lost to found\n");
+
+assert(groupset_sanity_check());
 
 		if (c && lost_to) {
 
 			// GOTTACOMBINE?
 			if (ba_ison(&BA, id)) {
+
+assert(groupset_sanity_check());
+
 				gotta_combine = TRUE;
 				combine_with = lost_to;
 			}
@@ -506,6 +685,8 @@ simplify (group_t *g)
 			ba_put(&BB, id);
 			p = c;
 			c = c->next;
+
+assert(groupset_sanity_check());
 
 			while (c != NULL && !gotta_combine) {
 				lost_to = group_pointed(c);
@@ -529,19 +710,36 @@ simplify (group_t *g)
 					else gotta_combine = FALSE;
 				}
 			}
+
+
+assert(groupset_sanity_check());
 		}
 
 		ba_done(&BA);
 		ba_done(&BB);
 
 		if (gotta_combine) {
+//printf("combine g=%d combine_with=%d\n",g->id, combine_with->id);
+assert(groupset_sanity_check());
+
 			group_gocombine(g,combine_with);
+
 			combined = TRUE;
 		} else {
 			combined = FALSE;
 		}
 	
 	} while (combined);
+
+
+//printf("----final----\n");
+//printf("before shrink\n");
+//beat_lost_output (g);
+simplify_shrink (g);
+//printf("after  shrink\n");
+//beat_lost_output (g);
+//printf("-------------\n");
+
 
 	return;
 }
@@ -647,7 +845,7 @@ finish_it(void)
 						
 						for (p = chain; p < chain_end; p++) {
 							group_t *x, *y;
-//							printf("combine x=%d y=%d\n",own_id, *p);
+//printf("combine x=%d y=%d\n",own_id, *p);
 							x = group_pointed_by_node(Gnode + own_id);
 							y = group_pointed_by_node(Gnode + *p);
 							group_gocombine(x,y);
@@ -686,6 +884,19 @@ final_list_output(FILE *f)
 	for (i = 0; i < Group_final_list_n; i++) {
 		g = Group_final_list[i];
 		fprintf (f,"\nGroup %d\n",Get_new_id[g->id]);
+
+
+
+//printf("-post-final--\n");
+//printf("before shrink\n");
+//beat_lost_output (g);
+simplify_shrink (g);
+//printf("after  shrink\n");
+//beat_lost_output (g);
+//printf("-------------\n");
+
+
+
 		group_output(f,g);
 	}
 	fprintf(f,"\n");
@@ -723,7 +934,7 @@ static bool_t encounter_is_SW(const struct ENC *e) {return (e->played - e->wscor
 static bool_t encounter_is_SL(const struct ENC *e) {return              e->wscore  < 0.0001;}
 
 void
-scan_encounters(const struct ENC *Encount, int N_encount, int N_plyrs)
+scan_encounters(const struct ENC *enc, int N_enc, int N_plyrs)
 {
 	int i,e;
 
@@ -735,9 +946,9 @@ scan_encounters(const struct ENC *Encount, int N_encount, int N_plyrs)
 		group_belong[i] = i;
 	}
 
-	for (e = 0; e < N_encount; e++) {
+	for (e = 0; e < N_enc; e++) {
 
-		pe = &Encount[e];
+		pe = &enc[e];
 		if (encounter_is_SL(pe) || encounter_is_SW(pe)) {
 			SE[N_se++] = *pe;
 		} else {
