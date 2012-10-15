@@ -45,6 +45,7 @@ static group_t * 	group_new(void);
 static group_t * 	group_reset(group_t *g);
 static group_t * 	group_combined(group_t *g);
 static group_t * 	group_pointed(connection_t *c);
+static group_t *	group_pointed_by_node(node_t *nd);
 static void			final_list_output(FILE *f);
 static void			group_output(FILE *f, group_t *s);
 
@@ -313,6 +314,40 @@ convert_to_groups(FILE *f, int N_plyrs, char **name)
 	return;
 }
 
+static int
+group_belonging(int plyr)
+{
+	group_t *ggg = group_pointed_by_node(&Gnode[plyr]);
+	if (ggg) 
+		return ggg->id;
+	else
+		return -1;
+}
+
+void
+sieve_encounters(const struct ENC *enc, int N_enc, struct ENC *enca, int *N_enca, struct ENC *encb, int *N_encb)
+{
+	int e,w,b;
+	int na=0,nb=0;
+
+	*N_enca = 0;
+	*N_encb = 0;
+
+	for (e = 0; e < N_enc; e++) {
+		w = enc[e].wh;
+		b = enc[e].bl;
+		if (group_belonging(w) == group_belonging(b)) {
+			enca[na] = enc[e]; na += 1;
+		} else {
+			encb[nb] = enc[e]; nb += 1;
+		}
+	} 
+
+	*N_enca = na;
+	*N_encb = nb;
+
+	return;
+}
 
 static void
 group_gocombine(group_t *g, group_t *h)
@@ -885,8 +920,6 @@ final_list_output(FILE *f)
 		g = Group_final_list[i];
 		fprintf (f,"\nGroup %d\n",Get_new_id[g->id]);
 
-
-
 //printf("-post-final--\n");
 //printf("before shrink\n");
 //beat_lost_output (g);
@@ -894,8 +927,6 @@ simplify_shrink (g);
 //printf("after  shrink\n");
 //beat_lost_output (g);
 //printf("-------------\n");
-
-
 
 		group_output(f,g);
 	}

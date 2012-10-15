@@ -520,8 +520,22 @@ int main (int argc, char *argv[])
 	N_encounters = calc_encounters(ENCOUNTERS_FULL, Encounter);
 	scan_encounters(Encounter, N_encounters, N_players); 
 	if (group_is_output) {
+
+
+static struct ENC 		Encounter2[MAXENCOUNTERS];
+static int 				N_encounters2 = 0;
+static struct ENC 		Encounter3[MAXENCOUNTERS];
+static int 				N_encounters3 = 0;
+
 		convert_to_groups(groupf, N_players, Name);
-		exit(EXIT_SUCCESS);
+
+//@@
+
+sieve_encounters(Encounter, N_encounters, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
+
+printf ("Total=%d, Main=%d, Interface=%d\n",N_encounters, N_encounters2, N_encounters3);
+
+//		exit(EXIT_SUCCESS);
 	}
 
 	N_encounters = set_super_players(QUIET_MODE, Encounter);
