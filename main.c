@@ -204,7 +204,7 @@ static void		clear_flagged (void);
 void			all_report (FILE *csvf, FILE *textf);
 void			init_rating (void);
 double			adjust_rating (double delta, double kappa);
-static int		calc_rating (bool_t quiet, struct ENC *enc);
+static int		calc_rating (bool_t quiet, struct ENC *enc, int N_enc);
 double 			deviation (void);
 void			ratings_restore (void);
 void			ratings_backup  (void);
@@ -540,7 +540,9 @@ printf ("Total=%d, Main=%d, Interface=%d\n",N_encounters, N_encounters2, N_encou
 
 	N_encounters = set_super_players(QUIET_MODE, Encounter);
 	N_encounters = purge_players(QUIET_MODE, Encounter);
-	N_encounters = calc_rating(QUIET_MODE, Encounter);
+
+N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
+	N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
 
 	ratings_results();
 
@@ -551,7 +553,9 @@ printf ("Total=%d, Main=%d, Interface=%d\n",N_encounters, N_encounters2, N_encou
 		White_advantage = new_wadv;
 	
 		N_encounters = purge_players(QUIET_MODE, Encounter);
-		N_encounters = calc_rating(QUIET_MODE, Encounter);
+
+N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
+		N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
 		ratings_results();
 	}
 
@@ -585,7 +589,8 @@ printf ("Total=%d, Main=%d, Interface=%d\n",N_encounters, N_encounters2, N_encou
 
 					N_encounters = set_super_players(QUIET_MODE, Encounter);
 					N_encounters = purge_players(QUIET_MODE, Encounter);
-					N_encounters = calc_rating(QUIET_MODE, Encounter);
+N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
+					N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
 					ratings_for_purged ();
 
 					for (i = 0; i < N_players; i++) {
@@ -1384,11 +1389,11 @@ rate_super_players(bool_t quiet, struct ENC *enc)
 #endif
 
 static int
-calc_rating (bool_t quiet, struct ENC *enc)
+calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 {
 	double 	olddev, curdev, outputdev;
 	int 	i;
-	int 	N_enc;
+//	int 	N_enc;
 
 	int		rounds = 10000;
 	double 	delta = 200.0;
@@ -1398,7 +1403,7 @@ calc_rating (bool_t quiet, struct ENC *enc)
 	int 	n = 20;
 	double resol;
 
-	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, enc);
+//	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, enc);
 	calc_obtained_playedby(enc, N_enc);
 	calc_expected(enc, N_enc);
 	olddev = curdev = deviation();
