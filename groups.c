@@ -948,14 +948,14 @@ group_output(FILE *f, group_t *s)
 	for (c = s->cstart; c != NULL; c = c->next) {
 		group_t *gr = group_pointed(c);
 		if (gr != NULL) {
-			if (gr->id != own_id) fprintf (f," \\---> wins against group:%d\n",Get_new_id[gr->id]);
+			if (gr->id != own_id) fprintf (f," \\---> there are (only) wins against group: %d\n",Get_new_id[gr->id]);
 		} else
 			fprintf (f,"point to node NULL\n");
 	}
 	for (c = s->lstart; c != NULL; c = c->next) {
 		group_t *gr = group_pointed(c);
 		if (gr != NULL) {
-			if (gr->id != own_id) fprintf (f," \\---> losses against group:%d\n",Get_new_id[gr->id]);
+			if (gr->id != own_id) fprintf (f," \\---> there are (only) losses against group: %d\n",Get_new_id[gr->id]);
 		} else
 			fprintf (f,"pointed by node NULL\n");
 	}

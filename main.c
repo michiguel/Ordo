@@ -24,7 +24,7 @@
 #include "myopt.h"
 
 const char *license_str =
-"Copyright (c) 2012 Miguel A. Ballicora\n"
+"Copyright (c) 2013 Miguel A. Ballicora\n"
 "\n"
 "THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,\n"
 "EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES\n"
@@ -46,7 +46,7 @@ static void usage (void);
 	static bool_t ADJUST_WHITE_ADVANTAGE;
 
 	static const char *copyright_str = 
-		"Copyright (c) 2012 Miguel A. Ballicora\n"
+		"Copyright (c) 2013 Miguel A. Ballicora\n"
 		"There is NO WARRANTY of any kind\n"
 		;
 
@@ -78,7 +78,7 @@ static void usage (void);
 		" -p <file>   input file in PGN format\n"
 		" -c <file>   output file (comma separated value format)\n"
 		" -o <file>   output file (text format), goes to the screen if not present\n"
-		" -g <file>   output file with groups connected\n"
+		" -g <file>   output file with group connection info (no rating output on screen)\n"
 		" -s  #       perform # simulations to calculate errors\n"
 		" -e <file>   saves an error matrix, if -s was used\n"
 		" -F <value>  confidence (%) to estimate error margins. Default is 95.0\n"
@@ -515,28 +515,26 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	/*=====================*/
+	/*===== GROUPS ========*/
 
 	N_encounters = calc_encounters(ENCOUNTERS_FULL, Encounter);
 	scan_encounters(Encounter, N_encounters, N_players); 
 	if (group_is_output) {
 
-
-static struct ENC 		Encounter2[MAXENCOUNTERS];
-static int 				N_encounters2 = 0;
-static struct ENC 		Encounter3[MAXENCOUNTERS];
-static int 				N_encounters3 = 0;
+		static struct ENC 		Encounter2[MAXENCOUNTERS];
+		static int 				N_encounters2 = 0;
+		static struct ENC 		Encounter3[MAXENCOUNTERS];
+		static int 				N_encounters3 = 0;
 
 		convert_to_groups(groupf, N_players, Name);
+		sieve_encounters(Encounter, N_encounters, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
+		printf ("Encounters, Total=%d, Main=%d, @ Interface between groups=%d\n",N_encounters, N_encounters2, N_encounters3);
 
-//@@
-
-sieve_encounters(Encounter, N_encounters, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
-
-printf ("Total=%d, Main=%d, Interface=%d\n",N_encounters, N_encounters2, N_encounters3);
-
-//		exit(EXIT_SUCCESS);
+		if (textstr == NULL && csvstr == NULL)	
+			exit(EXIT_SUCCESS);
 	}
+
+	/*=====================*/
 
 	N_encounters = set_super_players(QUIET_MODE, Encounter);
 	N_encounters = purge_players(QUIET_MODE, Encounter);
