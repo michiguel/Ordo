@@ -10,7 +10,7 @@ if ARGV[0] == 'gcc'
 	$ADDPATH=''
 	$CC='gcc'
 	$NAME=$BASENAME
-	$SWITCHES='-DNDEBUG'
+	$SWITCHES='-DNDEBUG -flto'
 
 elsif ARGV[0] == 'debug'
 
@@ -34,7 +34,7 @@ elsif ARGV[0] == 'gcc64'
 	$ADDPATH=''
 	$CC='gcc'
 	$NAME=$BASENAME+'-linux64'
-	$SWITCHES='-DNDEBUG'
+	$SWITCHES='-DNDEBUG -flto'
 
 elsif ARGV[0] == 'gcc32'
 
@@ -42,7 +42,7 @@ elsif ARGV[0] == 'gcc32'
 	$ADDPATH=''
 	$CC='gcc -m32'
 	$NAME=$BASENAME+'-linux32'
-	$SWITCHES='-DNDEBUG'
+	$SWITCHES='-DNDEBUG -flto'
 
 elsif ARGV[0] == 'win32'  
 
@@ -50,7 +50,7 @@ elsif ARGV[0] == 'win32'
 	$ADDPATH='/home/miguel/mingw/w32/bin'
 	$CC='i686-w64-mingw32-gcc'
 	$NAME=$BASENAME+'-win32'
-	$SWITCHES='-DNDEBUG'
+	$SWITCHES='-DNDEBUG -flto'
 
 elsif ARGV[0] == 'win64' 
 
@@ -58,7 +58,7 @@ elsif ARGV[0] == 'win64'
 	$ADDPATH='/home/miguel/mingw/w64/bin'
 	$CC='x86_64-w64-mingw32-gcc' 
 	$NAME=$BASENAME+'-win64'
-	$SWITCHES='-DNDEBUG'
+	$SWITCHES='-DNDEBUG -flto'
 
 else 
 
@@ -66,7 +66,7 @@ else
 	$ADDPATH=''
 	$CC='gcc'
 	$NAME=$BASENAME
-	$SWITCHES='-DNDEBUG'
+	$SWITCHES='-DNDEBUG -flto'
 
 end
 
