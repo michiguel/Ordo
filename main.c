@@ -1225,21 +1225,32 @@ rand_threeway_wscore(double pwin, double pdraw)
 }
 
 
+#define DRAWRATE_AT_EQUAL_STRENGTH 0.33
+#define DRAWFACTOR (1/(2*(DRAWRATE_AT_EQUAL_STRENGTH))-0.5)
+
 static void
 get_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl)
 {
+	// Performance comprises wins and draws.
+	// if f is expected performance from 0 to 1.0, then
+	// f = pwin + pdraw/2
+	// from that, dc is the fraction of points that come from draws, not wins, so
+	// pdraw (probability of draw) = 2 * f * dc
+	// calculation of dc is an empirical formula to fit average data from CCRL:
+	// Draw rate of equal engines is near 0.33, and decays on uneven matches.
+
 	double f, dc, pdra, pwin, plos;
 	bool_t switched;
 	
 	switched = dr < 0;
 
 	if (switched) dr = -dr;
-		
-	f = xpect (dr,0);
-	dc = 0.5 / (0.5 + 1.23 * exp(dr/175.0));
-	pwin = f * (1 - dc);
-	plos = 1 - f;
-	pdra = 1 - pwin - plos;
+
+	f = xpect (0,dr);
+	dc = 0.5 / (0.5 + DRAWFACTOR * exp(dr*BETA));
+	pdra = 2 * f * dc;
+	pwin = f - pdra/2;
+	plos = 1 - pwin - pdra; 
 
 	if (switched) {
 		*pw = plos;
