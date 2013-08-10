@@ -940,6 +940,7 @@ group_output(FILE *f, group_t *s)
 	participant_t *p;
 	connection_t *c;
 	int own_id;
+	int winconnections = 0, lossconnections = 0;
 	assert(s);
 	own_id = s->id;
 	for (p = s->pstart; p != NULL; p = p->next) {
@@ -948,17 +949,28 @@ group_output(FILE *f, group_t *s)
 	for (c = s->cstart; c != NULL; c = c->next) {
 		group_t *gr = group_pointed(c);
 		if (gr != NULL) {
-			if (gr->id != own_id) fprintf (f," \\---> there are (only) wins against group: %d\n",Get_new_id[gr->id]);
+			if (gr->id != own_id) {
+				fprintf (f," \\---> there are (only) wins against group: %d\n",Get_new_id[gr->id]);
+				winconnections++;
+			}
 		} else
 			fprintf (f,"point to node NULL\n");
 	}
 	for (c = s->lstart; c != NULL; c = c->next) {
 		group_t *gr = group_pointed(c);
 		if (gr != NULL) {
-			if (gr->id != own_id) fprintf (f," \\---> there are (only) losses against group: %d\n",Get_new_id[gr->id]);
+			if (gr->id != own_id) {
+				fprintf (f," \\---> there are (only) losses against group: %d\n",Get_new_id[gr->id]);
+				lossconnections++;
+			}
 		} else
 			fprintf (f,"pointed by node NULL\n");
 	}
+
+		if (winconnections == 0 && lossconnections == 0) {
+			fprintf (f," \\---> this group is isolated from the rest\n");
+		} 
+
 }
 
 static bool_t encounter_is_SW(const struct ENC *e) {return (e->played - e->wscore) < 0.0001;}
