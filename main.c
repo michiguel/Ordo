@@ -1109,12 +1109,10 @@ do_pin (const char *pinned_name, double x)
 	int j;
 	bool_t found;
 	for (j = 0, found = FALSE; !found && j < N_players; j++) {
-		Prefed[j] = FALSE;
 		if (!strcmp(Name[j], pinned_name) ) {
 			Prefed[j] = TRUE;
 			Ratingof[j] = x;
 			found = TRUE;
-			printf ("Pinning, %s --> %.1lf\n", pinned_name, x);
 		} 
 	}
 	return found;
@@ -1130,10 +1128,12 @@ init_pins(const char *fpins_name)
 	char *s, *p;
 	bool_t success;
 	double x;
+	bool_t pin_success = TRUE;
+	bool_t file_success = TRUE;
 
 	if (NULL != (fpins = fopen (fpins_name, "r"))) {
 
-		while (NULL != fgets(myline, MAX_MYLINE, fpins)) {
+		while (file_success && NULL != fgets(myline, MAX_MYLINE, fpins)) {
 			success = FALSE;
 			p = myline;
 			s = name_pinned;
@@ -1152,16 +1152,31 @@ init_pins(const char *fpins_name)
 				}
 			}
 			if (success) {
-				do_pin (name_pinned, x);
+
+				if (do_pin (name_pinned, x)) {
+					printf ("Anchoring, %s --> %.1lf\n", name_pinned, x);
+				} else {
+					pin_success = FALSE;
+					printf ("Anchoring, %s --> FAILED, name not found in input file\n", name_pinned);					
+				}	
 			}
 			else {
-				fprintf (stderr, "Errors in file %s\n",fpins_name);
-				exit(EXIT_FAILURE);
+				file_success = FALSE;
 			} 
 		}
 
 		fclose(fpins);
 	}
+
+	if (!file_success) {
+			fprintf (stderr, "Errors in file %s\n",fpins_name);
+			exit(EXIT_FAILURE);
+	}
+	if (!pin_success) {
+			fprintf (stderr, "Errors in file %s (not matching names)\n",fpins_name);
+			exit(EXIT_FAILURE);
+	}
+
 	return;
 }
 
