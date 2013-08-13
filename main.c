@@ -58,9 +58,8 @@ static void usage (void);
 		"-a 2500 -p input.pgn -o output.txt";
 
 	static const char *example_str =
-		"  - Processes input.pgn (PGN file) and calculates ratings.\n"
+		"  - Processes input.pgn (PGN file) to calculate ratings to output.txt.\n"
 		"  - The general pool will have an average of 2500\n"
-		"  - Output is in output.txt (text file)\n"
 		;
 
 	static const char *help_str =
@@ -71,6 +70,7 @@ static void usage (void);
 		" -q          quiet mode (no screen progress updates)\n"
 		" -a <avg>    set rating for the pool average\n"
 		" -A <player> anchor: rating given by '-a' is fixed for <player>, if provided\n"
+		" -m <file>   multiple anchors: file contains rows of \"AnchorName\",AnchorRating\n"
 		" -w <value>  white advantage value (default=0.0)\n"
 		" -W          white advantage, automatically adjusted\n"
 		" -z <value>  scaling: set rating for winning expectancy of 76% (default=202)\n"
@@ -91,7 +91,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWLa:A:o:g:c:s:w:z:e:TF:";
+const char *OPTION_LIST = "vhHp:qWLa:A:m:o:g:c:s:w:z:e:TF:";
 
 /*
 |
@@ -106,11 +106,15 @@ static char		*Labelbuffer_end = Labelbuffer;
 static char 	*Name   [MAXPLAYERS];
 static int 		N_players = 0;
 static bool_t	Flagged [MAXPLAYERS];
+static bool_t	Prefed [MAXPLAYERS];////
 
 enum 			AnchorSZ	{MAX_ANCHORSIZE=256};
 static bool_t	Anchor_use = FALSE;
 static int		Anchor = 0;
 static char		Anchor_name[MAX_ANCHORSIZE] = "";
+
+static bool_t 	Multiple_anchors_present = FALSE;
+static bool_t	General_average_set = FALSE;
 
 enum 			Player_Performance_Type {
 				PERF_NORMAL = 0,
@@ -203,6 +207,7 @@ static void		clear_flagged (void);
 
 void			all_report (FILE *csvf, FILE *textf);
 void			init_rating (void);
+static void		init_pins(const char *fpins_name);
 double			adjust_rating (double delta, double kappa);
 static int		calc_rating (bool_t quiet, struct ENC *enc, int N_enc);
 double 			deviation (void);
@@ -282,7 +287,7 @@ int main (int argc, char *argv[])
 	FILE *groupf;
 
 	int op;
-	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr;
+	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
 	bool_t group_is_output;
 
@@ -299,6 +304,7 @@ int main (int argc, char *argv[])
 	textstr 	 = NULL;
 	csvstr       = NULL;
 	ematstr 	 = NULL;
+	pinsstr		 = NULL;
 	group_is_output = FALSE;
 	groupstr 	 = NULL;
 
@@ -322,9 +328,14 @@ int main (int argc, char *argv[])
 						break;
 			case 'e': 	ematstr = opt_arg;
 						break;
+			case 'm': 	pinsstr = opt_arg;
+						Multiple_anchors_present = TRUE;
+						break;
 			case 'a': 	if (1 != sscanf(opt_arg,"%lf", &General_average)) {
 							fprintf(stderr, "wrong average parameter\n");
 							exit(EXIT_FAILURE);
+						} else {
+							General_average_set = TRUE;
 						}
 						break;
 			case 'F': 	if (1 != sscanf(opt_arg,"%lf", &Confidence) ||
@@ -419,6 +430,11 @@ int main (int argc, char *argv[])
 		inputf = argv[opt_index++];
 	}
 
+	if (Multiple_anchors_present && (General_average_set || Anchor_use)) {
+		fprintf (stderr, "Setting a general average or a single anchor will not work if multiple anchors are provided\n\n");
+		exit(EXIT_FAILURE);
+	}
+
 	/*==== SET INPUT ====*/
 
 	if (!pgn_getresults(inputf, QUIET_MODE)) {
@@ -460,6 +476,10 @@ int main (int argc, char *argv[])
 	// printf("confidence factor = %f\n",Confidence_factor);
 
 	init_rating();
+
+	if (pinsstr != NULL) {
+		init_pins(pinsstr);
+	}
 
 	textf = NULL;
 	textf_opened = FALSE;
@@ -1072,6 +1092,80 @@ init_rating (void)
 	}
 }
 
+
+static bool_t issep(int c) { return c == ',';}
+static bool_t isquote(int c) { return c == '"';}
+static char *skipblanks(char *p) {while (isspace(*p)) p++; return p;}
+static bool_t getnum(char *p, double *px) 
+{ 	float x;
+	bool_t ok = 1 == sscanf( p, "%f", &x );
+	*px = (double) x;
+	return ok;
+}
+
+static bool_t
+do_pin (const char *pinned_name, double x)
+{
+	int j;
+	bool_t found;
+	for (j = 0, found = FALSE; !found && j < N_players; j++) {
+		Prefed[j] = FALSE;
+		if (!strcmp(Name[j], pinned_name) ) {
+			Prefed[j] = TRUE;
+			Ratingof[j] = x;
+			found = TRUE;
+			printf ("Pinning, %s --> %.1lf\n", pinned_name, x);
+		} 
+	}
+	return found;
+}
+
+static void
+init_pins(const char *fpins_name)
+{
+	#define MAX_MYLINE 1024
+	FILE *fpins;
+	char myline[MAX_MYLINE];
+	char name_pinned[MAX_MYLINE];
+	char *s, *p;
+	bool_t success;
+	double x;
+
+	if (NULL != (fpins = fopen (fpins_name, "r"))) {
+
+		while (NULL != fgets(myline, MAX_MYLINE, fpins)) {
+			success = FALSE;
+			p = myline;
+			s = name_pinned;
+			p = skipblanks(p);
+			x = 0;
+			if (*p == '\0') continue;
+
+			if (isquote(*p++)) {
+				while (*p != '\0' && !isquote(*p)) {*s++ = *p++;}
+				*s = '\0';
+				if (isquote(*p++)) {
+					p = skipblanks(p);
+					if (issep(*p++)) {
+						success = getnum(p, &x);				
+					}
+				}
+			}
+			if (success) {
+				do_pin (name_pinned, x);
+			}
+			else {
+				fprintf (stderr, "Errors in file %s\n",fpins_name);
+				exit(EXIT_FAILURE);
+			} 
+		}
+
+		fclose(fpins);
+	}
+	return;
+}
+
+
 static int
 purge_players(bool_t quiet, struct ENC *enc)
 {
@@ -1114,6 +1208,8 @@ adjust_rating (double delta, double kappa)
 	for (j = 0; j < N_players; j++) {
 		if (Flagged[j]) continue;
 
+		if (Prefed[j]) continue; ////
+
 		d = (Expected[j] - Obtained[j])/Playedby[j];
 		d = d < 0? -d: d;
 		y = d / (kappa+d);
@@ -1129,17 +1225,17 @@ adjust_rating (double delta, double kappa)
 		accum += Ratingof[j];
 	}		
 
+if (!Multiple_anchors_present) {
 	average = accum / (N_players-flagged);
 	excess  = average - General_average;
-
-//	if (Anchor_use) {
-//		excess  = Ratingof[Anchor] - General_average;	
-//	}
-
+	if (Anchor_use) {
+		excess  = Ratingof[Anchor] - General_average;
+	}
 	for (j = 0; j < N_players; j++) {
 		if (!Flagged[j]) Ratingof[j] -= excess;
 	}	
-	
+}
+
 	return ymax * delta;
 }
 
@@ -1465,7 +1561,8 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 	N_enc = rate_super_players(QUIET_MODE, enc);
 #endif
 
-	adjust_rating_byanchor (Anchor_use, Anchor, General_average);
+	if (!Multiple_anchors_present)
+		adjust_rating_byanchor (Anchor_use, Anchor, General_average);
 
 	return N_enc;
 }
