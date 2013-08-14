@@ -2,6 +2,7 @@
 
     Program to calculate ratings of individual chess engines (or players)
                 Copyright (c) 2013 Miguel A. Ballicora
+             e-mail contact: mballicora (at gmail dot com)
 -------------------------------------------------------------------------------
 
 FILES
