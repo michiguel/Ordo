@@ -18,6 +18,11 @@
     along with Ordo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+/*
+| 
+|	ORDO
+|
+\-------------------------------------*/
 
 #include <stdio.h>
 #include <stdlib.h>
