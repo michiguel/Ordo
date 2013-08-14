@@ -1131,6 +1131,13 @@ init_pins(const char *fpins_name)
 	bool_t pin_success = TRUE;
 	bool_t file_success = TRUE;
 
+	assert(NULL != fpins_name);
+
+	if (NULL == fpins_name) {
+		fprintf (stderr, "Error, file not provided, absent, or corrupted\n");
+		exit(EXIT_FAILURE);
+	}
+
 	if (NULL != (fpins = fopen (fpins_name, "r"))) {
 
 		while (file_success && NULL != fgets(myline, MAX_MYLINE, fpins)) {
@@ -1167,13 +1174,16 @@ init_pins(const char *fpins_name)
 
 		fclose(fpins);
 	}
+	else {
+		file_success = FALSE;
+	}
 
 	if (!file_success) {
-			fprintf (stderr, "Errors in file %s\n",fpins_name);
+			fprintf (stderr, "Errors in file \"%s\"\n",fpins_name);
 			exit(EXIT_FAILURE);
 	}
 	if (!pin_success) {
-			fprintf (stderr, "Errors in file %s (not matching names)\n",fpins_name);
+			fprintf (stderr, "Errors in file \"%s\" (not matching names)\n",fpins_name);
 			exit(EXIT_FAILURE);
 	}
 
