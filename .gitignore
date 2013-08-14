@@ -13,3 +13,7 @@ diff/*
 data/*
 pgn/*
 temp*.c
+sources.txt
+*.rb
+*.sh
+gplnotice.txt
