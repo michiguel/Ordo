@@ -2,12 +2,14 @@ ordo
 ordo-win*
 ordo-linux*
 ordoprep*
+install.sh
 *~
 *.o
 *.pgn
 *.csv
 release/*
 released/*
-install.sh
-pgn/
+diff/*
+data/*
+pgn/*
 temp*.c
