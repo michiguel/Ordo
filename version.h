@@ -1,2 +1,2 @@
-#define VERSION "v0.7-ma3-gpl4"
+#define VERSION "v0.7-ma3-gpl5"
 
