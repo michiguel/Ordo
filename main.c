@@ -1,3 +1,24 @@
+/*
+	Ordo is program for calculating ratings of engine or chess players
+    Copyright 2013 Miguel A. Ballicora
+
+    This file is part of Ordo.
+
+    Ordo is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Ordo is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Ordo.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -23,17 +44,22 @@
 
 #include "myopt.h"
 
-const char *license_str =
-"Copyright (c) 2013 Miguel A. Ballicora\n"
+const char *license_str = "\n"
+"   Copyright (c) 2013 Miguel A. Ballicora\n"
+"   Ordo is program for calculating ratings of engine or chess players\n"
 "\n"
-"THE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,\n"
-"EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES\n"
-"OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND\n"
-"NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT\n"
-"HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,\n"
-"WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING\n"
-"FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR\n"
-"OTHER DEALINGS IN THE SOFTWARE."
+"   Ordo is free software: you can redistribute it and/or modify\n"
+"   it under the terms of the GNU General Public License as published by\n"
+"   the Free Software Foundation, either version 3 of the License, or\n"
+"   (at your option) any later version.\n"
+"\n"
+"   Ordo is distributed in the hope that it will be useful,\n"
+"   but WITHOUT ANY WARRANTY; without even the implied warranty of\n"
+"   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the\n"
+"   GNU General Public License for more details.\n"
+"\n"
+"   You should have received a copy of the GNU General Public License\n"
+"   along with Ordo.  If not, see <http://www.gnu.org/licenses/>.\n"
 ;
 
 static void parameter_error(void);
