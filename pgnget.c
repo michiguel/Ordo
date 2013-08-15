@@ -45,8 +45,6 @@
 
 #define PGNSTRSIZE 1024
 
-//const char *Result_string[] = {"1-0", "=-=", "0-1"};
-
 struct pgn_result {	
 	int 	wtag_present;
 	int 	btag_present;
@@ -72,17 +70,6 @@ static bool_t 	fpgnscan (FILE *fpgn, bool_t quiet);
 static bool_t 	is_complete (struct pgn_result *p);
 static void 	pgn_result_reset (struct pgn_result *p);
 static bool_t 	pgn_result_collect (struct pgn_result *p);
-
-/*
-static void		skip_string 	(FILE *f, long int *counter);
-static void		read_stringln 	(FILE *f, char s[], int sz);
-static void		skip_comment 	(FILE *f, long int *counter);
-static void		read_tagln 		(FILE *f, char s[], char t[], int sz, long int *counter);
-static void		skip_variation 	(FILE *f, long int *counter);
-static bool_t	isresultcmd 	(const char *s);
-static bool_t 	iswhitecmd (const char *s);
-static bool_t 	isblackcmd (const char *s);
-*/
 
 /*
 |
@@ -164,26 +151,6 @@ static void report_error (long int n)
 {
 	fprintf(stderr, "\nParsing error in line: %ld\n", n+1);
 }
-
-#if 0
-static void
-skip_comment (FILE *f, long int *counter) 
-{
-	int c;
-	while (EOF != (c = fgetc(f))) {
-		
-		if (c == '\n')
-			*counter += 1;
-
-		if (c == '\"') {
-			skip_string (f, counter);
-			continue;
-		}
-		if (c == '}') 
-			break;
-	}	
-}
-#endif
 
 #ifdef TESTHASH
 
@@ -397,7 +364,6 @@ fpgnscan (FILE *fpgn, bool_t quiet)
 	char *x, *y;
 
 	struct pgn_result 	result;
-//	int					c;
 	long int			line_counter = 0;
 	long int			game_counter = 0;
 	int					games_x_dot  = 2000;
@@ -471,149 +437,10 @@ fpgnscan (FILE *fpgn, bool_t quiet)
 
 	} /* while */
 
-//	if (!quiet) printf("|\n\nTotal games = %ld\n", game_counter); fflush(stdout);
 	if (!quiet) printf("|\n\n"); fflush(stdout);
-
 
 	return TRUE;
 }
-
-
-#if 0
-static void  
-read_tagln (FILE *f, char s[], char t[], int sz, long int *counter)
-{
-	int c;
-	char prmstr [PGNSTRSIZE];
-	char cmmd   [PGNSTRSIZE];
-	char buf    [PGNSTRSIZE];
-	char *p = cmmd;	
-	char *limit = cmmd + PGNSTRSIZE - 1;
-
-	while (p < limit && EOF != (c = fgetc(f))) {
-
-		if (c == '\"') {
-			read_stringln (f, prmstr, sizeof(prmstr));
-			continue;
-		}
-
-		if (c == ']')
-			break;
-		
-		if (c == '\n') { 
-			*counter += 1;
-		}
-
-		*p++ = (char) c;
-	}
-	*p = '\0';
-
-	sscanf (cmmd,"%s", buf);
-	mystrncpy (s, buf, sz);
-	mystrncpy (t, prmstr, sz);
-
-}
-
-
-static void
-skip_variation (FILE *f, long int *counter)
-{
-	int level = 0;
-	int c;
-
-	while (EOF != (c = fgetc(f))) {
-		
-		if (c == '\n')
-			*counter += 1;
-
-		if (c == '(')
-			level++;
-
-		if (c == ')') { 
-			if (level == 0)
-				break;
-			else
-				level--;
-		}
-	}
-}
-
-static void
-skip_string (FILE *f, long int *counter)
-{
-	int c;
-	while (EOF != (c = fgetc(f))) {
-		if (c == '\n')
-			*counter += 1;
-		if (c == '\"') 
-			break;
-	}
-}
-
-
-static void
-read_stringln (FILE *f, char s[], int sz)
-/* read the string until " unless there is an EOF of EOL */
-{
-	int		c;
-	char	buffer[PGNSTRSIZE];
-	char	*p     = buffer;
-	char	*limit = buffer + PGNSTRSIZE - 1;
-
-	while (p < limit && EOF != (c = fgetc(f))) {
-		
-		/* end */
-		if (c == '\"') 
-			break;
-		
-		/* end */
-		if (c == '\n') { 
-			ungetc(c, f);
-			break;
-		}
-
-		/* escape sequence */
-		if (c == '\\') {
-			int cc = fgetc(f);
-			if (EOF == cc)
-				break;
-			if ('\"' == cc || '\\' == cc) {
-				*p++ = (char) cc;
-			} else {
-				*p++ = (char) c;
-				if (p < limit)
-					*p++ = (char) cc;				
-			}
-			continue;
-		} 
-		
-		*p++ = (char) c;
-
-	}
-	*p = '\0';
-	mystrncpy (s, buffer, sz);
-}
-#endif
-
-#if 0
-static bool_t
-isresultcmd (const char *s)
-{
-	return !strcmp(s,"Result") || !strcmp(s,"result");
-}
-
-static bool_t
-iswhitecmd (const char *s)
-{
-	return !strcmp(s,"White") || !strcmp(s,"white");
-}
-
-static bool_t
-isblackcmd (const char *s)
-{
-	return !strcmp(s,"Black") || !strcmp(s,"black");
-}
-#endif
 
 static int
 res2int (const char *s)
