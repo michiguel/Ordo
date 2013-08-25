@@ -18,3 +18,8 @@ sources.txt
 *.sh
 gplnotice.txt
 post.sh
+papers/*
+figures/*
+readme.aux
+readme.tex
+switches.txt
