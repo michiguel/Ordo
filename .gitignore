@@ -2,7 +2,6 @@ ordo
 ordo-win*
 ordo-linux*
 ordoprep*
-install.sh
 *~
 *.o
 *.pgn
@@ -23,3 +22,4 @@ figures/*
 readme.aux
 readme.tex
 switches.txt
+*.tar.gz
