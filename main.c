@@ -634,7 +634,7 @@ N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
 					clear_flagged ();
 					simulate_scores();
 
-					if ((Simulate-z) == 801) save_simulated((int)(Simulate-z));
+					if ((Simulate-z) == 801) save_simulated((int)(Simulate-z)); //FIXME
 
 					N_encounters = set_super_players(QUIET_MODE, Encounter);
 					N_encounters = purge_players(QUIET_MODE, Encounter);
@@ -659,20 +659,26 @@ N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
 				}
 
 				for (i = 0; i < N_players; i++) {
-					Sdev[i] = sqrt( Sum2[i]/n - (Sum1[i]/n) * (Sum1[i]/n));
+					double xx = n*Sum2[i] - Sum1[i] * Sum1[i];
+					xx = sqrt(xx*xx); // removes problems with -0.00000000000;
+					Sdev[i] = sqrt( xx ) /n;
 				}
 	
 				for (i = 0; i < est; i++) {
-					sim[i].sdev = sqrt( sim[i].sum2/n - (sim[i].sum1/n) * (sim[i].sum1/n));
+					double xx = n*sim[i].sum2 - sim[i].sum1 * sim[i].sum1;
+					xx = sqrt(xx*xx); // removes problems with -0.00000000000;
+					sim[i].sdev = sqrt( xx ) /n;
 				}
+
 			}
 		}
 	}
 	/* Simulation block, end */
 
 	all_report (csvf, textf);
-	if (Simulate > 1 && NULL != ematstr)
+	if (Simulate > 1 && NULL != ematstr) {
 		errorsout (ematstr);
+	}
 
 	if (textf_opened) 	fclose (textf);
 	if (csvf_opened)  	fclose (csvf); 
@@ -790,7 +796,7 @@ errorsout(const char *out)
 	FILE *f;
 	ptrdiff_t idx;
 	long i,j,y,x;
- 
+
 	if (NULL != (f = fopen (out, "w"))) {
 
 		fprintf(f, "\"N\",\"NAME\"");	
