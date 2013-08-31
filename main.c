@@ -264,7 +264,9 @@ static double 	overallerror_fwadv (double wadv);
 static double 	adjust_wadv (double start_wadv);
 static void 	table_output(double Rtng_76);
 
-#if 1
+#if 0
+// This section is to save simulated results for debugging purposes
+
 static const char *Result_string[4] = {"1-0","1/2-1/2","0-1","*"};
 
 static void
@@ -634,7 +636,7 @@ N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
 					clear_flagged ();
 					simulate_scores();
 
-					if ((Simulate-z) == 801) save_simulated((int)(Simulate-z)); //FIXME
+					// if ((Simulate-z) == 801) save_simulated((int)(Simulate-z)); 
 
 					N_encounters = set_super_players(QUIET_MODE, Encounter);
 					N_encounters = purge_players(QUIET_MODE, Encounter);
