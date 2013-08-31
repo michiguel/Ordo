@@ -23,7 +23,7 @@ install:
 	cp $(EXE) /usr/local/bin/$(EXE)
 
 clean:
-	rm -f *.o *~ myopt/*.o
+	rm -f *.o *~ myopt/*.o ordo-v*.tar.gz
 
 
 
