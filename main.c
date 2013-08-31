@@ -591,8 +591,7 @@ int main (int argc, char *argv[])
 
 	N_encounters = set_super_players(QUIET_MODE, Encounter);
 	N_encounters = purge_players(QUIET_MODE, Encounter);
-
-N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
+	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
 	N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
 
 	ratings_results();
@@ -604,8 +603,7 @@ N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
 		White_advantage = new_wadv;
 	
 		N_encounters = purge_players(QUIET_MODE, Encounter);
-
-N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
+		N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
 		N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
 		ratings_results();
 	}
@@ -640,7 +638,7 @@ N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
 
 					N_encounters = set_super_players(QUIET_MODE, Encounter);
 					N_encounters = purge_players(QUIET_MODE, Encounter);
-N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
+					N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
 					N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
 					ratings_for_purged ();
 
@@ -1462,7 +1460,8 @@ deviation (void)
 }
 
 
-//====
+//==== CALCULATE INDIVIDUAL RATINGS =========================
+
 #if 1
 #define CALCIND_SWSL
 #endif
@@ -1506,7 +1505,6 @@ rate_super_players(bool_t quiet, struct ENC *enc)
 				myenc[myenc_n++] = enc[e];
 			}
 		}
-	
 
 		{
 			double	cume_score = 0; 
@@ -1562,8 +1560,6 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 {
 	double 	olddev, curdev, outputdev;
 	int 	i;
-//	int 	N_enc;
-
 	int		rounds = 10000;
 	double 	delta = 200.0;
 	double 	kappa = 0.05;
@@ -1572,7 +1568,6 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 	int 	n = 20;
 	double resol;
 
-//	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, enc);
 	calc_obtained_playedby(enc, N_enc);
 	calc_expected(enc, N_enc);
 	olddev = curdev = deviation();
