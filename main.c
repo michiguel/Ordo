@@ -1253,29 +1253,43 @@ purge_players(bool_t quiet, struct ENC *enc)
 	return N_enc;
 }
 
-
 double
 adjust_rating (double delta, double kappa)
 {
-	double y = 1.0;
-	double d;
-	double ymax = 0;
-	double accum = 0;
-	double excess, average;
-	int j;
-	int flagged;
+	int 	j, notflagged;
+	double 	d, excess, average;
+	double 	y = 1.0;
+	double 	ymax = 0;
+	double 	accum = 0;
 
-	for (flagged = 0, j = 0; j < N_players; j++) {if (Flagged[j]) flagged++;}
+	/*
+	|	1) delta and 2) kappa control convergence speed:
+	|	Delta is the standard increase/decrease for each player
+	|	But, not every player gets that "delta" since it is modified by
+	|	by multiplier "y". The bigger the difference between the expected 
+	|	performance and the observed, the bigger the "y". However, this
+	|	is controled so y won't be higher than 1.0. It will be asymptotic
+	|	to 1.0, and the parameter that controls how fast this saturation is 
+	|	reached is "kappa". Smaller kappas will allow to reach 1.0 faster.	
+	|
+	|	Uses globals:
+	|	arrays:	Flagged, Prefed, Expected, Obtained, Playedby, Ratingof
+	|	variables: N_players, General_average
+	|	flags:	Multiple_anchors_present, Anchor_use
+	*/
 
 	for (j = 0; j < N_players; j++) {
-		if (Flagged[j]) continue;
+		if (	Flagged[j]	// player previously removed
+			|| 	Prefed[j]	// already set, one of the multiple anchors
+		) continue; 
 
-		if (Prefed[j]) continue; ////
-
-		d = (Expected[j] - Obtained[j])/Playedby[j];
+		// find multiplier "y"
+		d = (Expected[j] - Obtained[j]) / Playedby[j];
 		d = d < 0? -d: d;
-		y = d / (kappa+d);
+		y = d / (kappa + d);
 		if (y > ymax) ymax = y;
+
+		// execute adjustment
 		if (Expected[j] > Obtained [j]) {
 			Ratingof[j] -= delta * y;
 		} else {
@@ -1283,23 +1297,33 @@ adjust_rating (double delta, double kappa)
 		}
 	}
 
-	for (accum = 0, j = 0; j < N_players; j++) {
-		accum += Ratingof[j];
-	}		
+	// Normalization to a common reference (Global --> General_average)
+	// The average could be normalized, or the rating of an anchor.
+	// Skip in case of multiple anchors present
 
-if (!Multiple_anchors_present) {
-	average = accum / (N_players-flagged);
-	excess  = average - General_average;
-	if (Anchor_use) {
-		excess  = Ratingof[Anchor] - General_average;
-	}
-	for (j = 0; j < N_players; j++) {
-		if (!Flagged[j]) Ratingof[j] -= excess;
+	if (!Multiple_anchors_present) {
+		if (Anchor_use) {
+			excess  = Ratingof[Anchor] - General_average;
+		} else {
+			for (notflagged = 0, accum = 0, j = 0; j < N_players; j++) {
+				if (!Flagged[j]) {
+					notflagged++;
+					accum += Ratingof[j];
+				}
+			}
+			average = accum / notflagged;
+			excess  = average - General_average;
+		}
+		for (j = 0; j < N_players; j++) {
+			if (!Flagged[j]) Ratingof[j] -= excess;
+		}	
 	}	
-}
+
+	// Return maximum increase/decrease ==> "resolution"
 
 	return ymax * delta;
 }
+
 
 static void
 adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average)
