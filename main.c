@@ -895,7 +895,7 @@ all_report (FILE *csvf, FILE *textf)
 			fprintf(f, "\n%s %-*s    :%7s %9s %7s %6s\n", 
 				"   #", 			
 				(int)ml,
-				"ENGINE", "RATING", "POINTS", "PLAYED", "(%)");
+				"PLAYER", "RATING", "POINTS", "PLAYED", "(%)");
 	
 			for (i = 0; i < N_players; i++) {
 				j = Sorted[i];
@@ -919,7 +919,7 @@ all_report (FILE *csvf, FILE *textf)
 			fprintf(f, "\n%s %-*s    :%7s %6s %8s %7s %6s\n", 
 				"   #", 
 				(int)ml, 
-				"ENGINE", "RATING", "ERROR", "POINTS", "PLAYED", "(%)");
+				"PLAYER", "RATING", "ERROR", "POINTS", "PLAYED", "(%)");
 	
 			for (i = 0; i < N_players; i++) {
 				j = Sorted[i];
