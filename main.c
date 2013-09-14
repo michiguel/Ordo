@@ -1253,6 +1253,7 @@ purge_players(bool_t quiet, struct ENC *enc)
 	return N_enc;
 }
 
+
 double
 adjust_rating (double delta, double kappa)
 {
@@ -1263,18 +1264,16 @@ adjust_rating (double delta, double kappa)
 	double 	accum = 0;
 
 	/*
-	|	Main objective is to adjust "Ratingof" global array.
-	|
 	|	1) delta and 2) kappa control convergence speed:
 	|	Delta is the standard increase/decrease for each player
 	|	But, not every player gets that "delta" since it is modified by
 	|	by multiplier "y". The bigger the difference between the expected 
 	|	performance and the observed, the bigger the "y". However, this
-	|	is smoothly capped "y" won't be higher than 1.0, but asymptotic
-	|	to 1.0. The parameter that controls how fast this saturation is 
+	|	is controled so y won't be higher than 1.0. It will be asymptotic
+	|	to 1.0, and the parameter that controls how fast this saturation is 
 	|	reached is "kappa". Smaller kappas will allow to reach 1.0 faster.	
 	|
-	|	Globals used:
+	|	Uses globals:
 	|	arrays:	Flagged, Prefed, Expected, Obtained, Playedby, Ratingof
 	|	variables: N_players, General_average
 	|	flags:	Multiple_anchors_present, Anchor_use
