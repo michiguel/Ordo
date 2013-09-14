@@ -1423,18 +1423,27 @@ get_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl)
 	// calculation of dc is an empirical formula to fit average data from CCRL:
 	// Draw rate of equal engines is near 0.33, and decays on uneven matches.
 
-	double f, dc, pdra, pwin, plos;
+	double f;
+	double pdra, pwin, plos;
+// 	double dc; 
 	bool_t switched;
 	
 	switched = dr < 0;
 
 	if (switched) dr = -dr;
 
-	f = xpect (0,dr);
+	f = xpect (dr,0);
+
+#if 0
 	dc = 0.5 / (0.5 + DRAWFACTOR * exp(dr*BETA));
 	pdra = 2 * f * dc;
 	pwin = f - pdra/2;
 	plos = 1 - pwin - pdra; 
+#else
+	pwin = f * f;
+	plos = (1-f) * (1-f);
+	pdra = 1 - pwin - plos;
+#endif
 
 	if (switched) {
 		*pw = plos;
