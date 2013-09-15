@@ -1815,6 +1815,78 @@ outputdev = curdev/N_games;
 }
 
 
+static int
+calc_rating_ori (bool_t quiet, struct ENC *enc, int N_enc)
+{
+	double 	olddev, curdev, outputdev;
+	int 	i;
+	int		rounds = 10000;
+	double 	delta = 200.0;
+	double 	kappa = 0.05;
+	double 	denom = 2;
+	int 	phase = 0;
+	int 	n = 20;
+	double resol;
+
+	calc_obtained_playedby(enc, N_enc);
+	calc_expected(enc, N_enc);
+	olddev = curdev = deviation();
+
+	if (!quiet) printf ("\nConvergence rating calculation\n\n");
+	if (!quiet) printf ("%3s %4s %10s %10s\n", "phase", "iteration", "deviation","resolution");
+
+	while (n-->0) {
+		double kk = 1.0;
+		for (i = 0; i < rounds; i++) {
+
+			ratings_backup();
+			olddev = curdev;
+
+			resol = adjust_rating(delta,kappa*kk);
+			calc_expected(enc, N_enc);
+			curdev = deviation();
+
+			if (curdev >= olddev) {
+				ratings_restore();
+				calc_expected(enc, N_enc);
+				curdev = deviation();	
+				assert (curdev == olddev);
+				break;
+			};	
+
+			outputdev = 1000*sqrt(curdev/N_games);
+			if (outputdev < 0.000001) break;
+			kk *= 0.995;
+		}
+
+		delta /= denom;
+		kappa *= denom;
+		outputdev = 1000*sqrt(curdev/N_games);
+
+		if (!quiet) {
+			printf ("%3d %7d %14.5f", phase, i, outputdev);
+			printf ("%11.5f",resol);
+			printf ("\n");
+		}
+		phase++;
+
+		if (outputdev < 0.000001) break;
+	}
+
+	if (!quiet) printf ("done\n\n");
+
+#ifdef CALCIND_SWSL
+	if (!quiet) printf ("Post-Convergence rating estimation\n\n");
+	N_enc = rate_super_players(QUIET_MODE, enc);
+#endif
+
+	if (!Multiple_anchors_present)
+		adjust_rating_byanchor (Anchor_use, Anchor, General_average);
+
+	return N_enc;
+}
+
+
 static double
 xpect (double a, double b)
 {
