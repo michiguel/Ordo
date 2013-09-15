@@ -77,6 +77,9 @@ struct ENC {
 	int		played;
 	int 	wh;
 	int 	bl;
+	int		W;
+	int		D;
+	int		L;
 };
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/

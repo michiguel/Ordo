@@ -1010,10 +1010,12 @@ calc_encounters (int selectivity, struct ENC *enc)
 				continue;
 		}
 
+		enc[e].W = enc[e].D = enc[e].L = 0;
+
 		switch (Score[i]) {
-			case WHITE_WIN: 	enc[e].wscore = 1.0; break;
-			case RESULT_DRAW:	enc[e].wscore = 0.5; break;
-			case BLACK_WIN:		enc[e].wscore = 0.0; break;
+			case WHITE_WIN: 	enc[e].wscore = 1.0; enc[e].W = 1; break;
+			case RESULT_DRAW:	enc[e].wscore = 0.5; enc[e].D = 1; break;
+			case BLACK_WIN:		enc[e].wscore = 0.0; enc[e].L = 1; break;
 		}
 
 		enc[e].wh = Whiteplayer[i];
@@ -1090,6 +1092,9 @@ encounter_merge (const struct ENC *a, const struct ENC *b)
 		r.bl = a->bl; 
 		r.wscore = a->wscore + b->wscore;
 		r.played = a->played + b->played;
+		r.W = a->W + b->W;
+		r.D = a->D + b->D;
+		r.L = a->L + b->L;
 		return r;
 }
 
@@ -1261,12 +1266,14 @@ purge_players(bool_t quiet, struct ENC *enc)
 static void get_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl);
 
 static double
-calc_bayes_unfitness (int selectivity) //ENCOUNTERS_NOFLAGGED
+calc_bayes_unfitness (int selectivity, struct ENC *enc) //ENCOUNTERS_NOFLAGGED
 {
 	int i;
 	double pw, pd, pl, p, accum;
 
 	accum = 0;
+
+#if 0
 	for (i = 0; i < N_games; i++) {
 
 		if (Score[i] >= DISCARD) continue;
@@ -1275,6 +1282,8 @@ calc_bayes_unfitness (int selectivity) //ENCOUNTERS_NOFLAGGED
 			if (Flagged[Whiteplayer[i]] || Flagged[Blackplayer[i]])
 				continue;
 		}
+
+//FIXME White advantage
 
 		get_pWDL(Ratingof[Whiteplayer[i]] - Ratingof[Blackplayer[i]], &pw, &pd, &pl);
 
@@ -1288,22 +1297,39 @@ calc_bayes_unfitness (int selectivity) //ENCOUNTERS_NOFLAGGED
 		accum += log(p);
 	}
 	return -accum;
+//
+#else
+{ int e,w,b;
+	for (e = 0; e < N_encounters; e++) {
+	
+		w = enc[e].wh;
+		b = enc[e].bl;
+
+		//FIXME White advantage
+
+		get_pWDL(Ratingof[w] - Ratingof[b], &pw, &pd, &pl);
+
+		accum += enc[e].W * log(pw) + enc[e].D * log(pd) + enc[e].L * log(pl);
+
+	}
+}
+	return -accum;
+#endif
 }
 
 
 static double
-derivative_single (int j, double delta)
+derivative_single (int j, double delta, struct ENC *enc, double center)
 {
-	double tmp, center, decrem, increm, change;
+	double tmp, decrem, increm, change;
 
 	tmp = Ratingof[j];
-	center = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED);
 
 	Ratingof[j] = tmp - delta;
-	decrem = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED);
+	decrem = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED, enc);
 
 	Ratingof[j] = tmp + delta;
-	increm = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED);
+	increm = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED, enc);
 
 	Ratingof[j] = tmp;
 
@@ -1316,14 +1342,17 @@ derivative_single (int j, double delta)
 }
 
 static void
-derivative_vector_calc (double delta, double *vector)
+derivative_vector_calc (double delta, double *vector, struct ENC *enc)
 {
 	int j;
+	double center;
+	center = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED, enc);
+
 	for (j = 0; j < N_players; j++) {
 		if (Flagged[j] || Prefed[j]) {
 			vector[j] = 0.0;
 		} else {
-			vector[j] = derivative_single (j, delta);
+			vector[j] = derivative_single (j, delta, enc, center);
 		}
 	}	
 }
@@ -1345,7 +1374,9 @@ adjust_rating_bayes (double delta, double kappa, double *change_vector)
 		// find multiplier "y"
 		d = change_vector[j];
 		d = d < 0? -d: d;
-		y = d / (kappa + d);
+//		y = d / (kappa + d);
+////
+y = 1;
 		if (y > ymax) ymax = y;
 
 		// execute adjustment
@@ -1738,7 +1769,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 	calc_expected(enc, N_enc);
 //	olddev = curdev = deviation();
 ////
-olddev = curdev = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED);
+olddev = curdev = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED, enc);
 
 	if (!quiet) printf ("\nConvergence rating calculation\n\n");
 	if (!quiet) printf ("%3s %4s %10s %10s\n", "phase", "iteration", "deviation","resolution");
@@ -1751,7 +1782,7 @@ olddev = curdev = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED);
 			olddev = curdev;
 
 // Calc "Changing"
-derivative_vector_calc (delta, Changing);
+derivative_vector_calc (delta, Changing, enc);
 
 			resol_prev = resol;
 			resol = adjust_rating_bayes(delta,kappa*kk,Changing);
@@ -1763,14 +1794,14 @@ derivative_vector_calc (delta, Changing);
 			calc_expected(enc, N_enc);
 //			curdev = deviation();
 ////
-curdev = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED);
+curdev = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED, enc);
 
 			if (curdev >= olddev) {
 				ratings_restore();
 				calc_expected(enc, N_enc);
 //				curdev = deviation();	
 ////
-curdev = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED);
+curdev = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED, enc);
 
 
 				assert (curdev == olddev);
