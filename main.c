@@ -1268,39 +1268,10 @@ static void get_pWDL(double dr /*delta rating*/, double *pw, double *pd, double 
 static double
 calc_bayes_unfitness (int selectivity, struct ENC *enc) //ENCOUNTERS_NOFLAGGED
 {
-	int i;
 	double pw, pd, pl, p, accum;
+	int i,e,w,b, ww,dd,ll;
 
-	accum = 0;
-
-#if 0
-	for (i = 0; i < N_games; i++) {
-
-		if (Score[i] >= DISCARD) continue;
-
-		if (selectivity == ENCOUNTERS_NOFLAGGED) {
-			if (Flagged[Whiteplayer[i]] || Flagged[Blackplayer[i]])
-				continue;
-		}
-
-//FIXME White advantage
-
-		get_pWDL(Ratingof[Whiteplayer[i]] - Ratingof[Blackplayer[i]], &pw, &pd, &pl);
-
-		p = 1;
-		switch (Score[i]) {
-			case WHITE_WIN: 	p = pw; break;
-			case RESULT_DRAW:	p = pd; break;
-			case BLACK_WIN:		p = pl; break;
-		}
-
-		accum += log(p);
-	}
-	return -accum;
-//
-#else
-{ int e,w,b;
-	for (e = 0; e < N_encounters; e++) {
+	for (accum = 0, e = 0; e < N_encounters; e++) {
 	
 		w = enc[e].wh;
 		b = enc[e].bl;
@@ -1309,12 +1280,17 @@ calc_bayes_unfitness (int selectivity, struct ENC *enc) //ENCOUNTERS_NOFLAGGED
 
 		get_pWDL(Ratingof[w] - Ratingof[b], &pw, &pd, &pl);
 
-		accum += enc[e].W * log(pw) + enc[e].D * log(pd) + enc[e].L * log(pl);
+		ww = enc[e].W;
+		dd = enc[e].D;
+		ll = enc[e].L;
+
+		accum 	+= 	(ww > 0? ww * log(pw) : 0) 
+				+ 	(dd > 0? dd * log(pd) : 0) 
+				+ 	(ll > 0? ll * log(pl) : 0)
+				;
 
 	}
-}
 	return -accum;
-#endif
 }
 
 
