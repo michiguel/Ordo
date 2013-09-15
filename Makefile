@@ -25,6 +25,9 @@ install:
 clean:
 	rm -f *.o *~ myopt/*.o ordo-v*.tar.gz
 
+profile:
+	$(CC) $(CFLAGS) $(WARN) -pg -O1 -fno-inline -o $(EXE) $(SRC) $(LIBFLAGS)
+
 
 
 

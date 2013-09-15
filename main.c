@@ -186,6 +186,8 @@ static int		Playedby[MAXPLAYERS]; /* N games played by player "i" */
 static double	Ratingof[MAXPLAYERS]; /* rating current */
 static double	Ratingbk[MAXPLAYERS]; /* rating backup  */
 
+static double	Changing[MAXPLAYERS]; /* rating backup  */
+
 static double	Ratingof_results[MAXPLAYERS];
 static double	Obtained_results[MAXPLAYERS];
 static int		Playedby_results[MAXPLAYERS];
@@ -1253,6 +1255,135 @@ purge_players(bool_t quiet, struct ENC *enc)
 	return N_enc;
 }
 
+// ================= Testing Bayes concept 
+#if 1
+
+static void get_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl);
+
+static double
+calc_bayes_unfitness (int selectivity) //ENCOUNTERS_NOFLAGGED
+{
+	int i;
+	double pw, pd, pl, p, accum;
+
+	accum = 0;
+	for (i = 0; i < N_games; i++) {
+
+		if (Score[i] >= DISCARD) continue;
+
+		if (selectivity == ENCOUNTERS_NOFLAGGED) {
+			if (Flagged[Whiteplayer[i]] || Flagged[Blackplayer[i]])
+				continue;
+		}
+
+		get_pWDL(Ratingof[Whiteplayer[i]] - Ratingof[Blackplayer[i]], &pw, &pd, &pl);
+
+		p = 1;
+		switch (Score[i]) {
+			case WHITE_WIN: 	p = pw; break;
+			case RESULT_DRAW:	p = pd; break;
+			case BLACK_WIN:		p = pl; break;
+		}
+
+		accum += log(p);
+	}
+	return -accum;
+}
+
+
+static double
+derivative_single (int j, double delta)
+{
+	double tmp, center, decrem, increm, change;
+
+	tmp = Ratingof[j];
+	center = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED);
+
+	Ratingof[j] = tmp - delta;
+	decrem = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED);
+
+	Ratingof[j] = tmp + delta;
+	increm = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED);
+
+	Ratingof[j] = tmp;
+
+	if (center < decrem && center < increm) 
+		change = 0.0;
+	else		
+		change = (decrem - increm) / delta;
+
+	return change;
+}
+
+static void
+derivative_vector_calc (double delta, double *vector)
+{
+	int j;
+	for (j = 0; j < N_players; j++) {
+		if (Flagged[j] || Prefed[j]) {
+			vector[j] = 0.0;
+		} else {
+			vector[j] = derivative_single (j, delta);
+		}
+	}	
+}
+
+static double
+adjust_rating_bayes (double delta, double kappa, double *change_vector)
+{
+	int 	j, notflagged;
+	double 	d, excess, average;
+	double 	y = 1.0;
+	double 	ymax = 0;
+	double 	accum = 0;
+
+	for (j = 0; j < N_players; j++) {
+		if (	Flagged[j]	// player previously removed
+			|| 	Prefed[j]	// already fixed, one of the multiple anchors
+		) continue; 
+
+		// find multiplier "y"
+		d = change_vector[j];
+		d = d < 0? -d: d;
+		y = d / (kappa + d);
+		if (y > ymax) ymax = y;
+
+		// execute adjustment
+		if (change_vector[j] < 0) {
+			Ratingof[j] -= delta * y;
+		} else {
+			Ratingof[j] += delta * y;
+		}
+	}	
+
+	// Normalization to a common reference (Global --> General_average)
+	// The average could be normalized, or the rating of an anchor.
+	// Skip in case of multiple anchors present
+
+	if (!Multiple_anchors_present) {
+		if (Anchor_use) {
+			excess  = Ratingof[Anchor] - General_average;
+		} else {
+			for (notflagged = 0, accum = 0, j = 0; j < N_players; j++) {
+				if (!Flagged[j]) {
+					notflagged++;
+					accum += Ratingof[j];
+				}
+			}
+			average = accum / notflagged;
+			excess  = average - General_average;
+		}
+		for (j = 0; j < N_players; j++) {
+			if (!Flagged[j]) Ratingof[j] -= excess;
+		}	
+	}	
+
+	// Return maximum increase/decrease ==> "resolution"
+
+	return ymax * delta;
+}
+#endif
+//
 
 double
 adjust_rating (double delta, double kappa)
@@ -1281,7 +1412,7 @@ adjust_rating (double delta, double kappa)
 
 	for (j = 0; j < N_players; j++) {
 		if (	Flagged[j]	// player previously removed
-			|| 	Prefed[j]	// already set, one of the multiple anchors
+			|| 	Prefed[j]	// already fixed, one of the multiple anchors
 		) continue; 
 
 		// find multiplier "y"
@@ -1600,11 +1731,14 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 	double 	denom = 2;
 	int 	phase = 0;
 	int 	n = 20;
-	double resol;
+	double 	resol = delta;
+	double 	resol_prev = delta;
 
 	calc_obtained_playedby(enc, N_enc);
 	calc_expected(enc, N_enc);
-	olddev = curdev = deviation();
+//	olddev = curdev = deviation();
+////
+olddev = curdev = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED);
 
 	if (!quiet) printf ("\nConvergence rating calculation\n\n");
 	if (!quiet) printf ("%3s %4s %10s %10s\n", "phase", "iteration", "deviation","resolution");
@@ -1616,27 +1750,45 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 			ratings_backup();
 			olddev = curdev;
 
-			resol = adjust_rating(delta,kappa*kk);
+// Calc "Changing"
+derivative_vector_calc (delta, Changing);
+
+			resol_prev = resol;
+			resol = adjust_rating_bayes(delta,kappa*kk,Changing);
+			resol = (resol_prev + resol) / 2;
+
+
+//printf ("resol:%lf, delta:%lf, kappa:%lf, kk:%lf\n",resol, delta, kappa, kk);
+
 			calc_expected(enc, N_enc);
-			curdev = deviation();
+//			curdev = deviation();
+////
+curdev = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED);
 
 			if (curdev >= olddev) {
 				ratings_restore();
 				calc_expected(enc, N_enc);
-				curdev = deviation();	
+//				curdev = deviation();	
+////
+curdev = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED);
+
+
 				assert (curdev == olddev);
 				break;
 			};	
 
 			outputdev = 1000*sqrt(curdev/N_games);
-			if (outputdev < 0.000001) break;
+////
+outputdev = curdev/N_games;
+//			if (outputdev < 0.000001) break;
 			kk *= 0.995;
 		}
 
 		delta /= denom;
 		kappa *= denom;
 		outputdev = 1000*sqrt(curdev/N_games);
-
+////
+outputdev = curdev/N_games;
 		if (!quiet) {
 			printf ("%3d %7d %14.5f", phase, i, outputdev);
 			printf ("%11.5f",resol);
@@ -1644,7 +1796,9 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 		}
 		phase++;
 
-		if (outputdev < 0.000001) break;
+//		if (outputdev < 0.000001) break;
+		if (delta < 0.000001) break;
+
 	}
 
 	if (!quiet) printf ("done\n\n");
