@@ -1266,10 +1266,36 @@ purge_players(bool_t quiet, struct ENC *enc)
 static void get_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl);
 
 static double
-calc_bayes_unfitness (int selectivity, struct ENC *enc) //ENCOUNTERS_NOFLAGGED
+wdl_probabilities (int ww, int dd, int ll, double pw, double pd, double pl)
 {
-	double pw, pd, pl, p, accum;
-	int i,e,w,b, ww,dd,ll;
+	return 	 	(ww > 0? ww * log(pw) : 0) 
+			+ 	(dd > 0? dd * log(pd) : 0) 
+			+ 	(ll > 0? ll * log(pl) : 0)
+			;
+}
+
+static double
+calc_bayes_unfitness_partial (struct ENC *enc, int j) 
+{
+	double pw, pd, pl, accum;
+	int e,w,b;
+
+	for (accum = 0, e = 0; e < N_encounters; e++) {
+		w = enc[e].wh;	b = enc[e].bl;
+		if (b == j || w == j) {
+			//FIXME White advantage
+			get_pWDL(Ratingof[w] - Ratingof[b], &pw, &pd, &pl);
+			accum += wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
+		}
+	}
+	return -accum;
+}
+
+static double
+calc_bayes_unfitness (struct ENC *enc) 
+{
+	double pw, pd, pl, accum;
+	int e,w,b, ww,dd,ll;
 
 	for (accum = 0, e = 0; e < N_encounters; e++) {
 	
@@ -1294,25 +1320,25 @@ calc_bayes_unfitness (int selectivity, struct ENC *enc) //ENCOUNTERS_NOFLAGGED
 }
 
 
-static double
+static int
 derivative_single (int j, double delta, struct ENC *enc, double center)
 {
-	double tmp, decrem, increm, change;
-
+	double tmp, decrem, increm;
+	int change;
 	tmp = Ratingof[j];
 
 	Ratingof[j] = tmp - delta;
-	decrem = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED, enc);
+	decrem = calc_bayes_unfitness_partial (enc,j);
 
 	Ratingof[j] = tmp + delta;
-	increm = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED, enc);
+	increm = calc_bayes_unfitness_partial (enc,j);
 
 	Ratingof[j] = tmp;
 
 	if (center < decrem && center < increm) 
-		change = 0.0;
+		change = 0;
 	else		
-		change = (decrem - increm) / delta;
+		change = decrem > increm? 1: -1; 
 
 	return change;
 }
@@ -1322,19 +1348,24 @@ derivative_vector_calc (double delta, double *vector, struct ENC *enc)
 {
 	int j;
 	double center;
-	center = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED, enc);
 
 	for (j = 0; j < N_players; j++) {
+
+
 		if (Flagged[j] || Prefed[j]) {
 			vector[j] = 0.0;
 		} else {
-			vector[j] = derivative_single (j, delta, enc, center);
+
+			center = calc_bayes_unfitness_partial (enc, j);
+
+			vector[j] = derivative_single (j, delta, enc, center);;
+
 		}
 	}	
 }
 
 static double
-adjust_rating_bayes (double delta, double kappa, double *change_vector)
+adjust_rating_bayes (double delta, double *change_vector)
 {
 	int 	j, notflagged;
 	double 	d, excess, average;
@@ -1743,9 +1774,9 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 
 	calc_obtained_playedby(enc, N_enc);
 	calc_expected(enc, N_enc);
-//	olddev = curdev = deviation();
-////
-olddev = curdev = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED, enc);
+
+	// initial deviation
+	olddev = curdev = calc_bayes_unfitness (enc);
 
 	if (!quiet) printf ("\nConvergence rating calculation\n\n");
 	if (!quiet) printf ("%3s %4s %10s %10s\n", "phase", "iteration", "deviation","resolution");
@@ -1757,45 +1788,38 @@ olddev = curdev = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED, enc);
 			ratings_backup();
 			olddev = curdev;
 
-// Calc "Changing"
-derivative_vector_calc (delta, Changing, enc);
+			// Calc "Changing" vector
+			derivative_vector_calc (delta, Changing, enc);
 
 			resol_prev = resol;
-			resol = adjust_rating_bayes(delta,kappa*kk,Changing);
+			resol = adjust_rating_bayes(delta,Changing);
 			resol = (resol_prev + resol) / 2;
 
-
-//printf ("resol:%lf, delta:%lf, kappa:%lf, kk:%lf\n",resol, delta, kappa, kk);
-
 			calc_expected(enc, N_enc);
-//			curdev = deviation();
-////
-curdev = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED, enc);
+
+			//
+			curdev = calc_bayes_unfitness (enc);
 
 			if (curdev >= olddev) {
 				ratings_restore();
 				calc_expected(enc, N_enc);
-//				curdev = deviation();	
-////
-curdev = calc_bayes_unfitness (ENCOUNTERS_NOFLAGGED, enc);
 
+				//
+				curdev = calc_bayes_unfitness (enc);
 
 				assert (curdev == olddev);
 				break;
 			};	
 
-			outputdev = 1000*sqrt(curdev/N_games);
-////
-outputdev = curdev/N_games;
-//			if (outputdev < 0.000001) break;
+			outputdev = curdev/N_games;
+			if (resol < 0.000001) break;
 			kk *= 0.995;
 		}
 
 		delta /= denom;
 		kappa *= denom;
-		outputdev = 1000*sqrt(curdev/N_games);
-////
-outputdev = curdev/N_games;
+		outputdev = curdev/N_games;
+
 		if (!quiet) {
 			printf ("%3d %7d %14.5f", phase, i, outputdev);
 			printf ("%11.5f",resol);
@@ -1803,9 +1827,7 @@ outputdev = curdev/N_games;
 		}
 		phase++;
 
-//		if (outputdev < 0.000001) break;
 		if (delta < 0.000001) break;
-
 	}
 
 	if (!quiet) printf ("done\n\n");
@@ -1821,7 +1843,7 @@ outputdev = curdev/N_games;
 	return N_enc;
 }
 
-
+#if 0
 static int
 calc_rating_ori (bool_t quiet, struct ENC *enc, int N_enc)
 {
@@ -1892,7 +1914,7 @@ calc_rating_ori (bool_t quiet, struct ENC *enc, int N_enc)
 
 	return N_enc;
 }
-
+#endif
 
 static double
 xpect (double a, double b)
