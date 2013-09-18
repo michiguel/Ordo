@@ -18,6 +18,11 @@
     along with Ordo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#if 1
+	#define DOPRIOR
+#endif
+
+
 /*
 | 
 |	ORDO
@@ -224,6 +229,20 @@ struct DEVIATION_ACC {
 
 struct DEVIATION_ACC *sim = NULL;
 
+/*------------------------------------------------------------------------*/
+struct prior {
+	double rating;
+	double sigma;	
+	double set;
+};
+
+static struct prior PP[MAXPLAYERS];
+static bool_t Some_prior_set = FALSE;
+
+static void priors_reset(struct prior *p);
+static bool_t getnum2(char *p, double *px, double *py);
+static bool_t do_prior (const char *prior_name, double x, double sigma);
+static void priors_load(const char *fpriors_name);
 /*------------------------------------------------------------------------*/
 
 static int		calc_encounters (int selectivity, struct ENC *enc);
@@ -515,6 +534,14 @@ int main (int argc, char *argv[])
 	if (pinsstr != NULL) {
 		init_pins(pinsstr);
 	}
+
+	// PRIORS
+	priors_reset(PP);
+
+	priors_load("priors.csv");
+#if !defined(DOPRIOR)
+	Some_prior_set = FALSE;
+#endif
 
 	textf = NULL;
 	textf_opened = FALSE;
@@ -1122,6 +1149,31 @@ shrink_ENC (struct ENC *enc, int N_enc)
 	return g; // New N_encounters
 }
 
+static int
+purge_players(bool_t quiet, struct ENC *enc)
+{
+	bool_t foundproblem;
+	int j;
+	int N_enc;
+
+	do {
+		N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, enc);
+		calc_obtained_playedby(enc, N_enc);
+
+		foundproblem = FALSE;
+		for (j = 0; j < N_players; j++) {
+			if (Flagged[j]) continue;
+			if (Obtained[j] < 0.001 || Playedby[j] - Obtained[j] < 0.001) {
+				Flagged[j]= TRUE;
+				if (!quiet) printf ("purge --> %s\n", Name[j]);
+				foundproblem = TRUE;
+			} 
+		}
+	} while (foundproblem);
+
+	return N_enc;
+}
+
 //=====================================
 
 void
@@ -1234,31 +1286,126 @@ init_pins(const char *fpins_name)
 	return;
 }
 
+//== PRIORS ============================================
 
-static int
-purge_players(bool_t quiet, struct ENC *enc)
+static void
+priors_reset(struct prior *p)
+{	int i;
+	for (i = 0; i < MAXPLAYERS; i++) {
+		p[i].rating = 0;
+		p[i].sigma = 1;
+		p[i].set = FALSE;
+	}
+	Some_prior_set = FALSE;
+}
+
+static bool_t getnum2(char *p, double *px, double *py) 
+{ 	float x,y;
+	bool_t ok = 2 == sscanf( p, "%f,%f", &x, &y);
+	*px = (double) x;
+	*py = (double) y;
+	return ok;
+}
+
+static bool_t
+do_prior (const char *prior_name, double x, double sigma)
 {
-	bool_t foundproblem;
 	int j;
-	int N_enc;
+	bool_t found;
+	for (j = 0, found = FALSE; !found && j < N_players; j++) {
+		if (!strcmp(Name[j], prior_name) ) {
 
-	do {
-		N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, enc);
-		calc_obtained_playedby(enc, N_enc);
+//printf ("Prior set, %s --> %.1lf, %.1lf\n", prior_name, x, sigma);
 
-		foundproblem = FALSE;
-		for (j = 0; j < N_players; j++) {
-			if (Flagged[j]) continue;
-			if (Obtained[j] < 0.001 || Playedby[j] - Obtained[j] < 0.001) {
-				Flagged[j]= TRUE;
-				if (!quiet) printf ("purge --> %s\n", Name[j]);
-				foundproblem = TRUE;
+			PP[j].rating = x;
+			PP[j].sigma = sigma;
+			PP[j].set = TRUE;
+			Some_prior_set = TRUE;
+			found = TRUE;
+		} 
+	}
+
+	return found;
+}
+
+
+static void
+priors_load(const char *fpriors_name)
+{
+	#define MAX_MYLINE 1024
+	FILE *fpriors;
+	char myline[MAX_MYLINE];
+	char name_prior[MAX_MYLINE];
+	char *s, *p;
+	bool_t success;
+	double x, y;
+	bool_t prior_success = TRUE;
+	bool_t file_success = TRUE;
+
+	assert(NULL != fpriors_name);
+
+	if (NULL == fpriors_name) {
+		fprintf (stderr, "Error, file not provided, absent, or corrupted\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (NULL != (fpriors = fopen (fpriors_name, "r"))) {
+
+		while (file_success && NULL != fgets(myline, MAX_MYLINE, fpriors)) {
+			success = FALSE;
+			p = myline;
+			s = name_prior;
+			p = skipblanks(p);
+			x = 0;
+			y = 0;
+			if (*p == '\0') continue;
+
+			if (isquote(*p++)) {
+				while (*p != '\0' && !isquote(*p)) {*s++ = *p++;}
+				*s = '\0';
+				if (isquote(*p++)) {
+					p = skipblanks(p);
+					if (issep(*p++)) {
+						success = getnum2(p, &x, &y);				
+					}
+				}
+			}
+			if (success) {
+
+				if (do_prior (name_prior, x, y)) {
+					printf ("Prior, %s --> %.1lf, %.1lf\n", name_prior, x, y);
+				} else {
+					prior_success = FALSE;
+					printf ("Prior, %s --> FAILED, name not found in input file\n", name_prior);					
+				}	
+			}
+			else {
+				file_success = FALSE;
 			} 
 		}
-	} while (foundproblem);
 
-	return N_enc;
+		fclose(fpriors);
+	}
+	else {
+		file_success = FALSE;
+	}
+
+	if (!file_success) {
+			fprintf (stderr, "Errors in file \"%s\"\n",fpriors_name);
+			exit(EXIT_FAILURE);
+	}
+	if (!prior_success) {
+			fprintf (stderr, "Errors in file \"%s\" (not matching names)\n",fpriors_name);
+			exit(EXIT_FAILURE);
+	}
+
+	return;
 }
+
+
+//== END PRIORS ======================================================
+
+
 
 // ================= Testing Bayes concept 
 #if 1
@@ -1288,7 +1435,32 @@ calc_bayes_unfitness_partial (struct ENC *enc, int j)
 			accum += wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 		}
 	}
+
+#if defined(DOPRIOR)
+	// Prior
+	if (PP[j].set) {
+		double x;
+		x = (Ratingof[j] - PP[j].rating)/PP[j].sigma;
+		accum -= 0.5 * x * x;
+	}
+#endif
+
 	return -accum;
+}
+
+static double
+prior_unfitness(struct prior *p)
+{
+	int j;
+	double x;
+	double accum = 0;
+	for (j = 0; j < N_players; j++) {
+		if (p[j].set) {
+			x = (Ratingof[j] - p[j].rating)/p[j].sigma;
+			accum += 0.5 * x * x;
+		}
+	}
+	return accum;
 }
 
 static double
@@ -1316,6 +1488,29 @@ calc_bayes_unfitness (struct ENC *enc)
 				;
 
 	}
+
+#if defined(DOPRIOR)
+
+// Priors
+#if 0
+{ int j;
+	double paccum = 0;
+	for (j = 0; j < N_players; j++) {
+		if (PP[j].set) {
+			double x;
+			x = (Ratingof[j] - PP[j].rating)/PP[j].sigma;
+			paccum -= 0.5 * x * x;
+		}
+	}
+
+	accum += paccum;
+}
+#else
+accum += -prior_unfitness(PP);
+#endif
+
+#endif
+
 	return -accum;
 }
 
@@ -1343,6 +1538,7 @@ derivative_single (int j, double delta, struct ENC *enc, double center)
 	return change;
 }
 
+
 static void
 derivative_vector_calc (double delta, double *vector, struct ENC *enc)
 {
@@ -1363,6 +1559,9 @@ derivative_vector_calc (double delta, double *vector, struct ENC *enc)
 		}
 	}	
 }
+
+static double fitexcess(void);
+static void ratings_apply_excess_correction(double excess);
 
 static double
 adjust_rating_bayes (double delta, double *change_vector)
@@ -1398,7 +1597,13 @@ y = 1;
 	// The average could be normalized, or the rating of an anchor.
 	// Skip in case of multiple anchors present
 
-	if (!Multiple_anchors_present) {
+{ 
+	double ex = fitexcess();
+//	printf ("Excess = %lf\n",ex);
+	ratings_apply_excess_correction(ex);
+	//exit(0);
+}
+	if (!Multiple_anchors_present && !Some_prior_set) {
 		if (Anchor_use) {
 			excess  = Ratingof[Anchor] - General_average;
 		} else {
@@ -1421,7 +1626,81 @@ y = 1;
 	return ymax * delta;
 }
 #endif
-//
+
+
+static void
+ratings_apply_excess_correction(double excess)
+{
+	int j;
+	for (j = 0; j < N_players; j++) {
+		if (!Flagged[j]) Ratingof[j] -= excess;
+	}
+}
+
+static double
+ufex (double excess)
+{
+	double u;
+	ratings_backup();
+	ratings_apply_excess_correction(excess);
+	u = prior_unfitness(PP);
+	ratings_restore();
+	return u;
+}
+
+
+static double
+fitexcess(void)
+{
+double ub, ut, uc, newb, newt, newc;
+double c = 0;
+double t = c + 100;
+double b = c - 100;
+
+do {
+	ub = ufex(b);
+	uc = ufex(c);
+	ut = ufex(t);
+/*
+printf ("b = %8.2lf, ub = %8.2lf\n", b, ub);
+printf ("c = %8.2lf, uc = %8.2lf\n", c, uc);
+printf ("t = %8.2lf, ut = %8.2lf\n", t, ut);
+printf ("\n");
+*/
+	if (uc < ub && uc < ut) {
+	
+		if (ub < ut) {
+			t = c; c = (b+c)/2; 
+		} else {
+			b = c; c = (t+c)/2; 	
+		}
+
+	} else if (ub < ut) {
+
+		newb = b - (c - b);
+		newc = b;
+		newt = c;
+		c = newc;
+		t = newt;
+		b = newb;
+
+	} else {
+
+		newb = c;
+		newc = t;
+		newt = t + ( t - c);
+		c = newc;
+		t = newt;
+		b = newb;
+	}
+
+} while ((t-b) > 0.0001);
+
+//exit(0);
+return c;
+}
+
+//==============================================================
 
 double
 adjust_rating (double delta, double kappa)
@@ -1471,7 +1750,8 @@ adjust_rating (double delta, double kappa)
 	// The average could be normalized, or the rating of an anchor.
 	// Skip in case of multiple anchors present
 
-	if (!Multiple_anchors_present) {
+	if (!Multiple_anchors_present && !Some_prior_set) {
+
 		if (Anchor_use) {
 			excess  = Ratingof[Anchor] - General_average;
 		} else {
@@ -1772,8 +2052,8 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 	double 	resol = delta;
 	double 	resol_prev = delta;
 
-	calc_obtained_playedby(enc, N_enc);
-	calc_expected(enc, N_enc);
+//	calc_obtained_playedby(enc, N_enc);
+//	calc_expected(enc, N_enc);
 
 	// initial deviation
 	olddev = curdev = calc_bayes_unfitness (enc);
@@ -1795,14 +2075,14 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 			resol = adjust_rating_bayes(delta,Changing);
 			resol = (resol_prev + resol) / 2;
 
-			calc_expected(enc, N_enc);
+//			calc_expected(enc, N_enc);
 
 			//
 			curdev = calc_bayes_unfitness (enc);
 
 			if (curdev >= olddev) {
 				ratings_restore();
-				calc_expected(enc, N_enc);
+//				calc_expected(enc, N_enc);
 
 				//
 				curdev = calc_bayes_unfitness (enc);
@@ -1837,7 +2117,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 	N_enc = rate_super_players(QUIET_MODE, enc);
 #endif
 
-	if (!Multiple_anchors_present)
+	if (!Multiple_anchors_present && !Some_prior_set)
 		adjust_rating_byanchor (Anchor_use, Anchor, General_average);
 
 	return N_enc;
