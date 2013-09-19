@@ -1437,8 +1437,7 @@ calc_bayes_unfitness_partial (struct ENC *enc, int j)
 	for (accum = 0, e = 0; e < N_encounters; e++) {
 		w = enc[e].wh;	b = enc[e].bl;
 		if (b == j || w == j) {
-			//FIXME White advantage
-			get_pWDL(Ratingof[w] - Ratingof[b], &pw, &pd, &pl);
+			get_pWDL(Ratingof[w] + White_advantage - Ratingof[b], &pw, &pd, &pl);
 			accum += wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 		}
 	}
@@ -1481,9 +1480,7 @@ calc_bayes_unfitness (struct ENC *enc)
 		w = enc[e].wh;
 		b = enc[e].bl;
 
-		//FIXME White advantage
-
-		get_pWDL(Ratingof[w] - Ratingof[b], &pw, &pd, &pl);
+		get_pWDL(Ratingof[w] + White_advantage - Ratingof[b], &pw, &pd, &pl);
 
 		ww = enc[e].W;
 		dd = enc[e].D;
