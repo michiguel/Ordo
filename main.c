@@ -107,6 +107,7 @@ static void usage (void);
 		" -a <avg>    set rating for the pool average\n"
 		" -A <player> anchor: rating given by '-a' is fixed for <player>, if provided\n"
 		" -m <file>   multiple anchors: file contains rows of \"AnchorName\",AnchorRating\n"
+		" -y <file>   'seeds' file: file contains rows of \"PlayerName\",PlayerRating,Deviation\n"
 		" -w <value>  white advantage value (default=0.0)\n"
 		" -W          white advantage, automatically adjusted\n"
 		" -z <value>  scaling: set rating for winning expectancy of 76% (default=202)\n"
@@ -127,7 +128,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWLa:A:m:o:g:c:s:w:z:e:TF:";
+const char *OPTION_LIST = "vhHp:qWLa:A:m:y:o:g:c:s:w:z:e:TF:";
 
 /*
 |
@@ -341,7 +342,7 @@ int main (int argc, char *argv[])
 	FILE *groupf;
 
 	int op;
-	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr;
+	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr, *priorsstr;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
 	bool_t group_is_output;
 
@@ -359,6 +360,7 @@ int main (int argc, char *argv[])
 	csvstr       = NULL;
 	ematstr 	 = NULL;
 	pinsstr		 = NULL;
+	priorsstr	 = NULL;
 	group_is_output = FALSE;
 	groupstr 	 = NULL;
 
@@ -384,6 +386,8 @@ int main (int argc, char *argv[])
 						break;
 			case 'm': 	pinsstr = opt_arg;
 						Multiple_anchors_present = TRUE;
+						break;
+			case 'y': 	priorsstr = opt_arg;
 						break;
 			case 'a': 	if (1 != sscanf(opt_arg,"%lf", &General_average)) {
 							fprintf(stderr, "wrong average parameter\n");
@@ -538,10 +542,13 @@ int main (int argc, char *argv[])
 	// PRIORS
 	priors_reset(PP);
 
-	priors_load("priors.csv");
-#if !defined(DOPRIOR)
-	Some_prior_set = FALSE;
-#endif
+
+	if (priorsstr != NULL) {
+		priors_load(priorsstr);
+		#if !defined(DOPRIOR)
+		Some_prior_set = FALSE;
+		#endif
+	}
 
 	textf = NULL;
 	textf_opened = FALSE;
@@ -1597,11 +1604,11 @@ y = 1;
 	// The average could be normalized, or the rating of an anchor.
 	// Skip in case of multiple anchors present
 
+if (Some_prior_set)
 { 
 	double ex = fitexcess();
 //	printf ("Excess = %lf\n",ex);
 	ratings_apply_excess_correction(ex);
-	//exit(0);
 }
 	if (!Multiple_anchors_present && !Some_prior_set) {
 		if (Anchor_use) {
