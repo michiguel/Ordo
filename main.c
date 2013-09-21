@@ -1601,12 +1601,14 @@ y = 1;
 	// The average could be normalized, or the rating of an anchor.
 	// Skip in case of multiple anchors present
 
-if (Some_prior_set)
-{ 
-	double ex = fitexcess();
-//	printf ("Excess = %lf\n",ex);
-	ratings_apply_excess_correction(ex);
-}
+	if (Some_prior_set)
+	{ 
+		double ex;
+		ex = fitexcess();
+		ratings_apply_excess_correction(ex);
+
+	} 
+
 	if (!Multiple_anchors_present && !Some_prior_set) {
 		if (Anchor_use) {
 			excess  = Ratingof[Anchor] - General_average;
@@ -1637,7 +1639,8 @@ ratings_apply_excess_correction(double excess)
 {
 	int j;
 	for (j = 0; j < N_players; j++) {
-		if (!Flagged[j]) Ratingof[j] -= excess;
+		if (!Flagged[j])
+			 Ratingof[j] -= excess;
 	}
 }
 
@@ -1656,52 +1659,34 @@ ufex (double excess)
 static double
 fitexcess(void)
 {
-double ub, ut, uc, newb, newt, newc;
-double c = 0;
-double t = c + 100;
-double b = c - 100;
+	double ub, ut, uc, newb, newt, newc;
+	double c = 0;
+	double t = c + 100;
+	double b = c - 100;
 
-do {
-	ub = ufex(b);
-	uc = ufex(c);
-	ut = ufex(t);
-/*
-printf ("b = %8.2lf, ub = %8.2lf\n", b, ub);
-printf ("c = %8.2lf, uc = %8.2lf\n", c, uc);
-printf ("t = %8.2lf, ut = %8.2lf\n", t, ut);
-printf ("\n");
-*/
-	if (uc < ub && uc < ut) {
-	
-		if (ub < ut) {
-			t = c; c = (b+c)/2; 
+	do {
+		ub = ufex(b);
+		uc = ufex(c);
+		ut = ufex(t);
+		if (uc <= ub && uc <= ut) {
+			newb = (b+c)/4;
+			newt = (t+c)/4; 
+			newc = c;
+		} else if (ub < ut) {
+			newb = b - (c - b);
+			newc = b;
+			newt = c;
 		} else {
-			b = c; c = (t+c)/2; 	
+			newb = c;
+			newc = t;
+			newt = t + ( t - c);
 		}
-
-	} else if (ub < ut) {
-
-		newb = b - (c - b);
-		newc = b;
-		newt = c;
 		c = newc;
 		t = newt;
 		b = newb;
+	} while ((t-b) > 0.0000001);
 
-	} else {
-
-		newb = c;
-		newc = t;
-		newt = t + ( t - c);
-		c = newc;
-		t = newt;
-		b = newb;
-	}
-
-} while ((t-b) > 0.0001);
-
-//exit(0);
-return c;
+	return c;
 }
 
 //==============================================================
@@ -2056,9 +2041,6 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 	double 	resol = delta;
 	double 	resol_prev = delta;
 
-//	calc_obtained_playedby(enc, N_enc);
-//	calc_expected(enc, N_enc);
-
 	// initial deviation
 	olddev = curdev = calc_bayes_unfitness (enc);
 
@@ -2079,16 +2061,11 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 			resol = adjust_rating_bayes(delta,Changing);
 			resol = (resol_prev + resol) / 2;
 
-//			calc_expected(enc, N_enc);
-
-			//
 			curdev = calc_bayes_unfitness (enc);
 
 			if (curdev >= olddev) {
 				ratings_restore();
-//				calc_expected(enc, N_enc);
 
-				//
 				curdev = calc_bayes_unfitness (enc);
 
 				assert (curdev == olddev);
