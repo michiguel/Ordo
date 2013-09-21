@@ -1571,7 +1571,7 @@ static double
 adjust_rating_bayes (double delta, double *change_vector)
 {
 	int 	j, notflagged;
-	double 	d, excess, average;
+	double 	excess, average;
 	double 	y = 1.0;
 	double 	ymax = 0;
 	double 	accum = 0;
@@ -1582,11 +1582,7 @@ adjust_rating_bayes (double delta, double *change_vector)
 		) continue; 
 
 		// find multiplier "y"
-		d = change_vector[j];
-		d = d < 0? -d: d;
-//		y = d / (kappa + d);
-////
-y = 1;
+		y = 1;
 		if (y > ymax) ymax = y;
 
 		// execute adjustment
@@ -1640,7 +1636,7 @@ ratings_apply_excess_correction(double excess)
 	int j;
 	for (j = 0; j < N_players; j++) {
 		if (!Flagged[j])
-			 Ratingof[j] -= excess;
+			Ratingof[j] -= excess;
 	}
 }
 
