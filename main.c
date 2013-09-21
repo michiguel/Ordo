@@ -159,6 +159,7 @@ enum 			Player_Performance_Type {
 				PERF_SUPERLOSER = 2
 };
 
+static bool_t	Performance_type_set = FALSE;
 static int		Performance_type[MAXPLAYERS];
 
 /* games */
@@ -542,7 +543,6 @@ int main (int argc, char *argv[])
 	// PRIORS
 	priors_reset(PP);
 
-
 	if (priorsstr != NULL) {
 		priors_load(priorsstr);
 		#if !defined(DOPRIOR)
@@ -884,8 +884,8 @@ find_maxlen (char *nm[], long int n)
 static bool_t 
 is_super_player(int j)
 {
-	return Obtained_results[j] < 0.01 || 
-			Playedby_results[j] - Obtained_results[j] < 0.01;
+	assert(Performance_type_set);
+	return Performance_type[j] == PERF_SUPERLOSER || Performance_type[j] == PERF_SUPERWINNER;		
 }
 
 static const char *SP_symbolstr[3] = {"<",">"," "};
@@ -893,9 +893,10 @@ static const char *SP_symbolstr[3] = {"<",">"," "};
 static const char *
 get_super_player_symbolstr(int j)
 {
-	if (Obtained_results[j] < 0.01) {
+	assert(Performance_type_set);
+	if (Performance_type[j] == PERF_SUPERLOSER) {
 		return SP_symbolstr[0];
-	} else if (Playedby_results[j] - Obtained_results[j] < 0.01) {
+	} else if (Performance_type[j] == PERF_SUPERWINNER) {
 		return SP_symbolstr[1];
 	} else
 		return SP_symbolstr[2];
@@ -1163,6 +1164,7 @@ purge_players(bool_t quiet, struct ENC *enc)
 	int j;
 	int N_enc;
 
+	assert(Performance_type_set);
 	do {
 		N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, enc);
 		calc_obtained_playedby(enc, N_enc);
@@ -1170,7 +1172,7 @@ purge_players(bool_t quiet, struct ENC *enc)
 		foundproblem = FALSE;
 		for (j = 0; j < N_players; j++) {
 			if (Flagged[j]) continue;
-			if (Obtained[j] < 0.001 || Playedby[j] - Obtained[j] < 0.001) {
+			if (Performance_type[j] != PERF_NORMAL) {
 				Flagged[j]= TRUE;
 				if (!quiet) printf ("purge --> %s\n", Name[j]);
 				foundproblem = TRUE;
@@ -1319,11 +1321,11 @@ do_prior (const char *prior_name, double x, double sigma)
 {
 	int j;
 	bool_t found;
+
+//FIXME needs to deal with sigma == 0
+
 	for (j = 0, found = FALSE; !found && j < N_players; j++) {
 		if (!strcmp(Name[j], prior_name) ) {
-
-//printf ("Prior set, %s --> %.1lf, %.1lf\n", prior_name, x, sigma);
-
 			PP[j].rating = x;
 			PP[j].sigma = sigma;
 			PP[j].set = TRUE;
@@ -1335,6 +1337,7 @@ do_prior (const char *prior_name, double x, double sigma)
 	return found;
 }
 
+static bool_t has_a_prior(int j) {return PP[j].set;}
 
 static void
 priors_load(const char *fpriors_name)
@@ -1950,6 +1953,8 @@ rate_super_players(bool_t quiet, struct ENC *enc)
 	N_enc = calc_encounters(ENCOUNTERS_FULL, enc);
 	calc_obtained_playedby(enc, N_enc);
 
+	assert(Performance_type_set);
+
 	for (j = 0; j < N_players; j++) {
 
 		if (Performance_type[j] != PERF_SUPERWINNER && Performance_type[j] != PERF_SUPERLOSER) 
@@ -2303,12 +2308,12 @@ set_super_players(bool_t quiet, struct ENC *enc)
 	for (j = 0; j < N_players; j++) {
 		Performance_type[j] = PERF_NORMAL;
 		if (obt[j] < 0.001) {
-			Performance_type[j] = PERF_SUPERLOSER;			
-			if (!quiet) printf ("detected (all-losses player) --> %s\n", Name[j]);
+			Performance_type[j] = has_a_prior(j)? PERF_NORMAL: PERF_SUPERLOSER;			
+			if (!quiet) printf ("detected (all-losses player) --> %s: seed rating present = %d\n", Name[j], has_a_prior(j));
 		}	
 		if (pla[j] - obt[j] < 0.001) {
-			Performance_type[j] = PERF_SUPERWINNER;
-			if (!quiet) printf ("detected (all-wins player)   --> %s\n", Name[j]);
+			Performance_type[j] = has_a_prior(j)? PERF_NORMAL: PERF_SUPERWINNER;
+			if (!quiet) printf ("detected (all-wins player)   --> %s: seed rating present = %d\n", Name[j], has_a_prior(j));
 
 		}
 	}
@@ -2317,6 +2322,8 @@ set_super_players(bool_t quiet, struct ENC *enc)
 		obt[j] = 0.0;	
 		pla[j] = 0;
 	}	
+
+	Performance_type_set == TRUE;
 
 	return N_enc;
 }
