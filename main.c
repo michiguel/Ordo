@@ -238,7 +238,7 @@ struct prior {
 	bool_t set;
 };
 
-static struct prior Wadv = {0,0,FALSE};
+static struct prior Wadv = {40.0,20.0,TRUE};
 static struct prior PP[MAXPLAYERS];
 static bool_t Some_prior_set = FALSE;
 
@@ -632,7 +632,8 @@ int main (int argc, char *argv[])
 	N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
 
 	ratings_results();
-
+//FIXME
+#if 0
 	if (ADJUST_WHITE_ADVANTAGE) {
 		double new_wadv = adjust_wadv (White_advantage);
 		if (!QUIET_MODE)
@@ -644,6 +645,7 @@ int main (int argc, char *argv[])
 		N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
 		ratings_results();
 	}
+#endif
 
 	/* Simulation block, begin */
 	{	
@@ -1477,6 +1479,8 @@ prior_unfitness(struct prior *p, double wadv)
 	if (Wadv.set) {
 		x = (wadv - Wadv.rating)/Wadv.sigma;
 		accum += 0.5 * x * x;		
+
+//printf ("wadv = %lf, Wadv.rating = %lf, Wadv.sigma = %lf, x = %lf\n",wadv,Wadv.rating,Wadv.sigma,x);
 	}
 
 	return accum;
@@ -1512,11 +1516,14 @@ calc_bayes_unfitness_full (struct ENC *enc, double wadv)
 
 
 static int
-derivative_single (int j, double delta, struct ENC *enc, double center)
+derivative_single (int j, double delta, struct ENC *enc)
 {
 	double tmp, decrem, increm;
 	int change;
+	double center;
 	tmp = Ratingof[j];
+
+	center = calc_bayes_unfitness_partial (enc, j);
 
 	Ratingof[j] = tmp - delta;
 	decrem = calc_bayes_unfitness_partial (enc,j);
@@ -1542,16 +1549,10 @@ derivative_vector_calc (double delta, double *vector, struct ENC *enc)
 	double center;
 
 	for (j = 0; j < N_players; j++) {
-
-
 		if (Flagged[j] || Prefed[j]) {
 			vector[j] = 0.0;
 		} else {
-
-			center = calc_bayes_unfitness_partial (enc, j);
-
-			vector[j] = derivative_single (j, delta, enc, center);;
-
+			vector[j] = derivative_single (j, delta, enc);;
 		}
 	}	
 }
@@ -2017,6 +2018,8 @@ rate_super_players(bool_t quiet, struct ENC *enc)
 }
 #endif
 
+static double adjust_wadv_bayes (struct ENC *enc, double start_wadv);
+
 static int
 calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 {
@@ -2051,6 +2054,8 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 			resol = adjust_rating_bayes(delta,Changing);
 			resol = (resol_prev + resol) / 2;
 
+
+
 			curdev = calc_bayes_unfitness_full (enc, White_advantage);
 
 			if (curdev >= olddev) {
@@ -2077,6 +2082,9 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 			printf ("\n");
 		}
 		phase++;
+
+White_advantage = adjust_wadv_bayes (enc, White_advantage);
+printf ("White_advantage = %lf\n", White_advantage);
 
 		if (delta < 0.000001) break;
 	}
@@ -2222,6 +2230,34 @@ adjust_wadv (double start_wadv)
 		ei = overallerror_fwadv (wa - delta);
 		ej = overallerror_fwadv (wa);
 		ek = overallerror_fwadv (wa + delta);
+
+		if (ei >= ej && ej <= ek) {
+			delta = delta / 2;
+		} else
+		if (ej >= ei && ei <= ek) {
+			wa -= delta;
+		} else
+		if (ei >= ek && ek <= ej) {
+			wa += delta;
+		}
+
+	} while (delta > 0.01 && -1000 < wa && wa < 1000);
+	
+	return wa;
+}
+
+static double
+adjust_wadv_bayes (struct ENC *enc, double start_wadv)
+{
+	double delta, wa, ei, ej, ek;
+
+	delta = 100.0;
+	wa = start_wadv;
+
+	do {	
+		ei = calc_bayes_unfitness_full (enc, wa - delta);
+		ej = calc_bayes_unfitness_full (enc, wa        );
+		ek = calc_bayes_unfitness_full (enc, wa + delta);
 
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 2;
