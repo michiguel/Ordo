@@ -2125,15 +2125,16 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 		}
 		phase++;
 
-if (ADJUST_WHITE_ADVANTAGE && Wa_prior.set) {
-	White_advantage = adjust_wadv_bayes (enc, White_advantage, resol);
-}
-printf ("White_advantage = %lf\n", White_advantage);
+		if (ADJUST_WHITE_ADVANTAGE && Wa_prior.set) {
+			White_advantage = adjust_wadv_bayes (enc, White_advantage, resol);
+		}
 
 		if (delta < 0.000001) break;
 	}
 
 	if (!quiet) printf ("done\n\n");
+
+	printf ("White_advantage = %lf\n\n", White_advantage);
 
 #ifdef CALCIND_SWSL
 	if (!quiet) printf ("Post-Convergence rating estimation\n\n");
@@ -2378,11 +2379,11 @@ set_super_players(bool_t quiet, struct ENC *enc)
 		Performance_type[j] = PERF_NORMAL;
 		if (obt[j] < 0.001) {
 			Performance_type[j] = has_a_prior(j)? PERF_NORMAL: PERF_SUPERLOSER;			
-			if (!quiet) printf ("detected (all-losses player) --> %s: seed rating present = %d\n", Name[j], has_a_prior(j));
+			if (!quiet) printf ("detected (all-losses player) --> %s: seed rating present = %s\n", Name[j], has_a_prior(j)? "Yes":"No");
 		}	
 		if (pla[j] - obt[j] < 0.001) {
 			Performance_type[j] = has_a_prior(j)? PERF_NORMAL: PERF_SUPERWINNER;
-			if (!quiet) printf ("detected (all-wins player)   --> %s: seed rating present = %d\n", Name[j], has_a_prior(j));
+			if (!quiet) printf ("detected (all-wins player)   --> %s: seed rating present = %s\n", Name[j], has_a_prior(j)? "Yes":"No");
 
 		}
 	}
