@@ -1608,32 +1608,32 @@ adjust_rating_bayes (double delta, double *change_vector)
 	// The average could be normalized, or the rating of an anchor.
 	// Skip in case of multiple anchors present
 
-	if (Some_prior_set)
-	{ 
+	if (Some_prior_set) {
+ 
 		excess = fitexcess();
-		ratings_apply_excess_correction(excess);
 
 	} else if (Multiple_anchors_present) {
-			; // do nothing, was done before
-	} else {
-		// single anchor
-		if (Anchor_use) {
-			excess  = Ratingof[Anchor] - General_average;
-		} else {
-		// general average
-			for (notflagged = 0, accum = 0, j = 0; j < N_players; j++) {
-				if (!Flagged[j]) {
-					notflagged++;
-					accum += Ratingof[j];
-				}
-			}
-			average = accum / notflagged;
-			excess  = average - General_average;
-		}
-		// Correct the excess
-		ratings_apply_excess_correction(excess);
-	}	
 
+		excess = 0; // do nothing, was done before
+
+	} else if (Anchor_use) {
+
+		excess  = Ratingof[Anchor] - General_average;
+
+	} else {
+		// general average
+		for (notflagged = 0, accum = 0, j = 0; j < N_players; j++) {
+			if (!Flagged[j]) {
+				notflagged++;
+				accum += Ratingof[j];
+			}
+		}
+		average = accum / notflagged;
+		excess  = average - General_average;
+	}
+
+	// Correct the excess
+	ratings_apply_excess_correction(excess);
 
 	// Return maximum increase/decrease ==> "resolution"
 
