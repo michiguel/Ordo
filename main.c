@@ -238,7 +238,7 @@ struct prior {
 	bool_t set;
 };
 
-static struct prior Wadv = {40.0,20.0,TRUE};
+static struct prior Wadv = {0.0,2.0,TRUE};
 static struct prior PP[MAXPLAYERS];
 static bool_t Some_prior_set = FALSE;
 
@@ -2018,7 +2018,7 @@ rate_super_players(bool_t quiet, struct ENC *enc)
 }
 #endif
 
-static double adjust_wadv_bayes (struct ENC *enc, double start_wadv);
+static double adjust_wadv_bayes (struct ENC *enc, double start_wadv, double resol);
 
 static int
 calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
@@ -2083,7 +2083,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 		}
 		phase++;
 
-White_advantage = adjust_wadv_bayes (enc, White_advantage);
+White_advantage = adjust_wadv_bayes (enc, White_advantage, resol);
 printf ("White_advantage = %lf\n", White_advantage);
 
 		if (delta < 0.000001) break;
@@ -2247,11 +2247,11 @@ adjust_wadv (double start_wadv)
 }
 
 static double
-adjust_wadv_bayes (struct ENC *enc, double start_wadv)
+adjust_wadv_bayes (struct ENC *enc, double start_wadv, double resol)
 {
 	double delta, wa, ei, ej, ek;
 
-	delta = 100.0;
+	delta = resol;
 	wa = start_wadv;
 
 	do {	
@@ -2269,7 +2269,7 @@ adjust_wadv_bayes (struct ENC *enc, double start_wadv)
 			wa += delta;
 		}
 
-	} while (delta > 0.01 && -1000 < wa && wa < 1000);
+	} while (delta > resol/10 && -1000 < wa && wa < 1000);
 	
 	return wa;
 }
