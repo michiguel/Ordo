@@ -238,6 +238,7 @@ struct prior {
 	bool_t set;
 };
 
+static struct prior Wadv = {0,0,FALSE};
 static struct prior PP[MAXPLAYERS];
 static bool_t Some_prior_set = FALSE;
 
@@ -1459,8 +1460,9 @@ calc_bayes_unfitness_partial (struct ENC *enc, int j)
 	return -accum;
 }
 
+
 static double
-prior_unfitness(struct prior *p)
+prior_unfitness(struct prior *p, double wadv)
 {
 	int j;
 	double x;
@@ -1471,11 +1473,18 @@ prior_unfitness(struct prior *p)
 			accum += 0.5 * x * x;
 		}
 	}
+
+	if (Wadv.set) {
+		x = (wadv - Wadv.rating)/Wadv.sigma;
+		accum += 0.5 * x * x;		
+	}
+
 	return accum;
 }
 
+
 static double
-calc_bayes_unfitness (struct ENC *enc) 
+calc_bayes_unfitness_full (struct ENC *enc, double wadv) 
 {
 	double pw, pd, pl, accum;
 	int e,w,b, ww,dd,ll;
@@ -1485,7 +1494,7 @@ calc_bayes_unfitness (struct ENC *enc)
 		w = enc[e].wh;
 		b = enc[e].bl;
 
-		get_pWDL(Ratingof[w] + White_advantage - Ratingof[b], &pw, &pd, &pl);
+		get_pWDL(Ratingof[w] + wadv - Ratingof[b], &pw, &pd, &pl);
 
 		ww = enc[e].W;
 		dd = enc[e].D;
@@ -1493,32 +1502,10 @@ calc_bayes_unfitness (struct ENC *enc)
 
 		accum 	+= 	(ww > 0? ww * log(pw) : 0) 
 				+ 	(dd > 0? dd * log(pd) : 0) 
-				+ 	(ll > 0? ll * log(pl) : 0)
-				;
-
+				+ 	(ll > 0? ll * log(pl) : 0);
 	}
-
-#if defined(DOPRIOR)
-
-// Priors
-#if 0
-{ int j;
-	double paccum = 0;
-	for (j = 0; j < N_players; j++) {
-		if (PP[j].set) {
-			double x;
-			x = (Ratingof[j] - PP[j].rating)/PP[j].sigma;
-			paccum -= 0.5 * x * x;
-		}
-	}
-
-	accum += paccum;
-}
-#else
-accum += -prior_unfitness(PP);
-#endif
-
-#endif
+	// Priors
+	accum += -prior_unfitness(PP, wadv);
 
 	return -accum;
 }
@@ -1651,7 +1638,7 @@ ufex (double excess)
 	double u;
 	ratings_backup();
 	ratings_apply_excess_correction(excess);
-	u = prior_unfitness(PP);
+	u = prior_unfitness(PP, White_advantage);
 	ratings_restore();
 	return u;
 }
@@ -2045,7 +2032,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 	double 	resol_prev = delta;
 
 	// initial deviation
-	olddev = curdev = calc_bayes_unfitness (enc);
+	olddev = curdev = calc_bayes_unfitness_full (enc, White_advantage);
 
 	if (!quiet) printf ("\nConvergence rating calculation\n\n");
 	if (!quiet) printf ("%3s %4s %10s %10s\n", "phase", "iteration", "deviation","resolution");
@@ -2064,12 +2051,12 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 			resol = adjust_rating_bayes(delta,Changing);
 			resol = (resol_prev + resol) / 2;
 
-			curdev = calc_bayes_unfitness (enc);
+			curdev = calc_bayes_unfitness_full (enc, White_advantage);
 
 			if (curdev >= olddev) {
 				ratings_restore();
 
-				curdev = calc_bayes_unfitness (enc);
+				curdev = calc_bayes_unfitness_full (enc, White_advantage);
 
 				assert (curdev == olddev);
 				break;
