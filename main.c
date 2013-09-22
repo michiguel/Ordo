@@ -238,7 +238,7 @@ struct prior {
 	bool_t set;
 };
 
-static struct prior Wadv = {0.0,2.0,TRUE};
+static struct prior Wa_prior = {40.0,20.0,FALSE};
 static struct prior PP[MAXPLAYERS];
 static bool_t Some_prior_set = FALSE;
 
@@ -347,6 +347,7 @@ int main (int argc, char *argv[])
 	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr, *priorsstr;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
 	bool_t group_is_output;
+	bool_t switch_w=FALSE, switch_W=FALSE;
 
 	/* defaults */
 	version_mode = FALSE;
@@ -421,6 +422,10 @@ int main (int argc, char *argv[])
 			case 'w': 	if (1 != sscanf(opt_arg,"%lf", &White_advantage)) {
 							fprintf(stderr, "wrong white advantage parameter\n");
 							exit(EXIT_FAILURE);
+						} else {
+							ADJUST_WHITE_ADVANTAGE = FALSE;	
+							Wa_prior.set = FALSE;
+							switch_w = TRUE;
 						}
 						break;
 			case 'z': 	if (1 != sscanf(opt_arg,"%lf", &Rtng_76)) {
@@ -430,7 +435,12 @@ int main (int argc, char *argv[])
 						break;
 			case 'T':	table_mode = TRUE;	break;
 			case 'q':	QUIET_MODE = TRUE;	break;
-			case 'W':	ADJUST_WHITE_ADVANTAGE = TRUE;	break;
+			case 'W':	ADJUST_WHITE_ADVANTAGE = TRUE;	
+						Wa_prior.set = TRUE; 
+						Wa_prior.rating = 40.0; 
+						Wa_prior.sigma = 20.0; 
+						switch_W = TRUE;
+						break;
 			case '?': 	parameter_error();
 						exit(EXIT_FAILURE);
 						break;
@@ -491,9 +501,17 @@ int main (int argc, char *argv[])
 	}
 
 	if (Multiple_anchors_present && (General_average_set || Anchor_use)) {
-		fprintf (stderr, "Setting a general average or a single anchor will not work if multiple anchors are provided\n\n");
+		fprintf (stderr, "Setting a general average (-a) or a single anchor (-A) is incompatible with multiple anchors (-m)\n\n");
 		exit(EXIT_FAILURE);
 	}
+	if (switch_w && switch_W) {
+		fprintf (stderr, "Switches -w and -W are incompatible and will not work simultaneously\n\n");
+		exit(EXIT_FAILURE);
+	}
+	if (NULL != priorsstr && General_average_set) {
+		fprintf (stderr, "Setting a general average (-a) is incompatible with having a file with rating seeds (-y)\n\n");
+		exit(EXIT_FAILURE);
+	}				
 
 	/*==== SET INPUT ====*/
 
@@ -1476,11 +1494,11 @@ prior_unfitness(struct prior *p, double wadv)
 		}
 	}
 
-	if (Wadv.set) {
-		x = (wadv - Wadv.rating)/Wadv.sigma;
+	if (Wa_prior.set) {
+		x = (wadv - Wa_prior.rating)/Wa_prior.sigma;
 		accum += 0.5 * x * x;		
 
-//printf ("wadv = %lf, Wadv.rating = %lf, Wadv.sigma = %lf, x = %lf\n",wadv,Wadv.rating,Wadv.sigma,x);
+//printf ("wadv = %lf, Wa_prior.rating = %lf, Wa_prior.sigma = %lf, x = %lf\n",wadv,Wa_prior.rating,Wa_prior.sigma,x);
 	}
 
 	return accum;
@@ -1592,16 +1610,17 @@ adjust_rating_bayes (double delta, double *change_vector)
 
 	if (Some_prior_set)
 	{ 
-		double ex;
-		ex = fitexcess();
-		ratings_apply_excess_correction(ex);
+		excess = fitexcess();
+		ratings_apply_excess_correction(excess);
 
-	} 
-
-	if (!Multiple_anchors_present && !Some_prior_set) {
+	} else if (Multiple_anchors_present) {
+			; // do nothing, was done before
+	} else {
+		// single anchor
 		if (Anchor_use) {
 			excess  = Ratingof[Anchor] - General_average;
 		} else {
+		// general average
 			for (notflagged = 0, accum = 0, j = 0; j < N_players; j++) {
 				if (!Flagged[j]) {
 					notflagged++;
@@ -1611,10 +1630,10 @@ adjust_rating_bayes (double delta, double *change_vector)
 			average = accum / notflagged;
 			excess  = average - General_average;
 		}
-		for (j = 0; j < N_players; j++) {
-			if (!Flagged[j]) Ratingof[j] -= excess;
-		}	
+		// Correct the excess
+		ratings_apply_excess_correction(excess);
 	}	
+
 
 	// Return maximum increase/decrease ==> "resolution"
 
@@ -2083,7 +2102,9 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 		}
 		phase++;
 
-White_advantage = adjust_wadv_bayes (enc, White_advantage, resol);
+if (ADJUST_WHITE_ADVANTAGE && Wa_prior.set) {
+	White_advantage = adjust_wadv_bayes (enc, White_advantage, resol);
+}
 printf ("White_advantage = %lf\n", White_advantage);
 
 		if (delta < 0.000001) break;
