@@ -153,6 +153,8 @@ static char		Anchor_name[MAX_ANCHORSIZE] = "";
 static bool_t 	Multiple_anchors_present = FALSE;
 static bool_t	General_average_set = FALSE;
 
+static int		Anchored_n = 0;
+
 enum 			Player_Performance_Type {
 				PERF_NORMAL = 0,
 				PERF_SUPERWINNER = 1,
@@ -232,6 +234,8 @@ struct DEVIATION_ACC {
 struct DEVIATION_ACC *sim = NULL;
 
 /*------------------------------------------------------------------------*/
+#define PRIOR_SMALLEST_SIGMA 0.0000001
+
 struct prior {
 	double rating;
 	double sigma;	
@@ -241,6 +245,8 @@ struct prior {
 static struct prior Wa_prior = {40.0,20.0,FALSE};
 static struct prior PP[MAXPLAYERS];
 static bool_t Some_prior_set = FALSE;
+
+static int 	Priored_n = 0;
 
 static void priors_reset(struct prior *p);
 static bool_t getnum2(char *p, double *px, double *py);
@@ -262,7 +268,7 @@ static void		clear_flagged (void);
 
 void			all_report (FILE *csvf, FILE *textf);
 void			init_rating (void);
-static void		init_pins(const char *fpins_name);
+static void		init_manchors(const char *fpins_name);
 double			adjust_rating (double delta, double kappa);
 static int		calc_rating (bool_t quiet, struct ENC *enc, int N_enc);
 double 			deviation (void);
@@ -283,9 +289,11 @@ static void 	transform_DB(struct DATA *db, struct GAMESTATS *gs);
 static bool_t	find_anchor_player(int *anchor);
 
 /*------------------------------------------------------------------------*/
-
+#if 0
 static double 	overallerror_fwadv (double wadv);
 static double 	adjust_wadv (double start_wadv);
+#endif
+
 static void 	table_output(double Rtng_76);
 
 #if 0
@@ -388,7 +396,6 @@ int main (int argc, char *argv[])
 			case 'e': 	ematstr = opt_arg;
 						break;
 			case 'm': 	pinsstr = opt_arg;
-						Multiple_anchors_present = TRUE;
 						break;
 			case 'y': 	priorsstr = opt_arg;
 						break;
@@ -500,7 +507,7 @@ int main (int argc, char *argv[])
 		inputf = argv[opt_index++];
 	}
 
-	if (Multiple_anchors_present && (General_average_set || Anchor_use)) {
+	if (NULL != pinsstr && (General_average_set || Anchor_use)) {
 		fprintf (stderr, "Setting a general average (-a) or a single anchor (-A) is incompatible with multiple anchors (-m)\n\n");
 		exit(EXIT_FAILURE);
 	}
@@ -555,10 +562,6 @@ int main (int argc, char *argv[])
 
 	init_rating();
 
-	if (pinsstr != NULL) {
-		init_pins(pinsstr);
-	}
-
 	// PRIORS
 	priors_reset(PP);
 
@@ -567,6 +570,11 @@ int main (int argc, char *argv[])
 		#if !defined(DOPRIOR)
 		Some_prior_set = FALSE;
 		#endif
+	}
+
+	// multiple anchors, do after priors
+	if (pinsstr != NULL) {
+		init_manchors(pinsstr); 
 	}
 
 	textf = NULL;
@@ -1232,22 +1240,24 @@ static bool_t getnum(char *p, double *px)
 }
 
 static bool_t
-do_pin (const char *pinned_name, double x)
+do_anchor (const char *player_name, double x)
 {
 	int j;
 	bool_t found;
 	for (j = 0, found = FALSE; !found && j < N_players; j++) {
-		if (!strcmp(Name[j], pinned_name) ) {
+		found = !strcmp(Name[j], player_name);
+		if (found) {
 			Prefed[j] = TRUE;
 			Ratingof[j] = x;
-			found = TRUE;
+			Multiple_anchors_present = TRUE;
+			Anchored_n++;
 		} 
 	}
 	return found;
 }
 
 static void
-init_pins(const char *fpins_name)
+init_manchors(const char *fpins_name)
 {
 	#define MAX_MYLINE 1024
 	FILE *fpins;
@@ -1288,7 +1298,7 @@ init_pins(const char *fpins_name)
 			}
 			if (success) {
 
-				if (do_pin (name_pinned, x)) {
+				if (do_anchor (name_pinned, x)) {
 					printf ("Anchoring, %s --> %.1lf\n", name_pinned, x);
 				} else {
 					pin_success = FALSE;
@@ -1329,6 +1339,7 @@ priors_reset(struct prior *p)
 		p[i].set = FALSE;
 	}
 	Some_prior_set = FALSE;
+	Priored_n = 0;
 }
 
 static bool_t getnum2(char *p, double *px, double *py) 
@@ -1340,20 +1351,19 @@ static bool_t getnum2(char *p, double *px, double *py)
 }
 
 static bool_t
-do_prior (const char *prior_name, double x, double sigma)
+do_prior (const char *player_name, double x, double sigma)
 {
 	int j;
 	bool_t found;
-
-//FIXME needs to deal with sigma == 0
-
+	assert(sigma > PRIOR_SMALLEST_SIGMA);
 	for (j = 0, found = FALSE; !found && j < N_players; j++) {
-		if (!strcmp(Name[j], prior_name) ) {
+		found = !strcmp(Name[j], player_name);
+		if (found) {
 			PP[j].rating = x;
 			PP[j].sigma = sigma;
 			PP[j].set = TRUE;
 			Some_prior_set = TRUE;
-			found = TRUE;
+			Priored_n++;
 		} 
 	}
 
@@ -1404,13 +1414,27 @@ priors_load(const char *fpriors_name)
 				}
 			}
 			if (success) {
-
-				if (do_prior (name_prior, x, y)) {
-					printf ("Prior, %s --> %.1lf, %.1lf\n", name_prior, x, y);
+				bool_t suc;
+				if (y < 0) {
+					printf ("Prior, %s --> FAILED, error/uncertainty cannot be negative", name_prior);	
+					suc = FALSE;
+				} else 
+				if (y < PRIOR_SMALLEST_SIGMA) {
+					suc = do_anchor (name_prior, x);
+					if (suc) {
+						printf ("Anchoring, %s --> %.1lf\n", name_prior, x);
+					} else {
+						printf ("Prior, %s --> FAILED, name not found in input file\n", name_prior);
+					}
 				} else {
-					prior_success = FALSE;
-					printf ("Prior, %s --> FAILED, name not found in input file\n", name_prior);					
-				}	
+					suc = do_prior (name_prior, x, y);
+					if (suc) {
+						printf ("Prior, %s --> %.1lf, %.1lf\n", name_prior, x, y);
+					} else {
+						printf ("Prior, %s --> FAILED, name not found in input file\n", name_prior);					
+					}	
+				}
+				if (!suc) prior_success = FALSE;
 			}
 			else {
 				file_success = FALSE;
@@ -1564,8 +1588,6 @@ static void
 derivative_vector_calc (double delta, double *vector, struct ENC *enc)
 {
 	int j;
-	double center;
-
 	for (j = 0; j < N_players; j++) {
 		if (Flagged[j] || Prefed[j]) {
 			vector[j] = 0.0;
@@ -1608,19 +1630,20 @@ adjust_rating_bayes (double delta, double *change_vector)
 	// The average could be normalized, or the rating of an anchor.
 	// Skip in case of multiple anchors present
 
-	if (Some_prior_set) {
- 
-		excess = fitexcess();
-
-	} else if (Multiple_anchors_present) {
+	if (Multiple_anchors_present) {
 
 		excess = 0; // do nothing, was done before
+
+	} else if (Some_prior_set) {
+ 
+		excess = fitexcess();
 
 	} else if (Anchor_use) {
 
 		excess  = Ratingof[Anchor] - General_average;
 
 	} else {
+
 		// general average
 		for (notflagged = 0, accum = 0, j = 0; j < N_players; j++) {
 			if (!Flagged[j]) {
@@ -2203,7 +2226,7 @@ xpect (double a, double b)
 }
 
 /*==================================================================*/
-
+#if 0
 static double
 overallerror_fwadv (double wadv)
 {
@@ -2238,7 +2261,6 @@ overallerror_fwadv (double wadv)
 	return e2;
 }
 
-
 static double
 adjust_wadv (double start_wadv)
 {
@@ -2266,6 +2288,7 @@ adjust_wadv (double start_wadv)
 	
 	return wa;
 }
+#endif
 
 static double
 adjust_wadv_bayes (struct ENC *enc, double start_wadv, double resol)
