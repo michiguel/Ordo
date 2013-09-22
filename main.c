@@ -235,7 +235,7 @@ struct DEVIATION_ACC *sim = NULL;
 struct prior {
 	double rating;
 	double sigma;	
-	double set;
+	bool_t set;
 };
 
 static struct prior PP[MAXPLAYERS];
@@ -249,7 +249,7 @@ static void priors_load(const char *fpriors_name);
 
 static int		calc_encounters (int selectivity, struct ENC *enc);
 static void		calc_obtained_playedby 	(const struct ENC *enc, int N_enc);
-static void		calc_expected 			(const struct ENC *enc, int N_enc);
+//static void		calc_expected 			(const struct ENC *enc, int N_enc);
 
 static int		shrink_ENC (struct ENC *enc, int N_enc);
 static int		purge_players    (bool_t quiet, struct ENC *enc);
@@ -1090,6 +1090,7 @@ calc_obtained_playedby (const struct ENC *enc, int N_enc)
 	}
 }
 
+#if 0
 static void
 calc_expected (const struct ENC *enc, int N_enc)
 {
@@ -1116,6 +1117,7 @@ calc_expected (const struct ENC *enc, int N_enc)
 
 	}
 }
+#endif
 
 static struct ENC 
 encounter_merge (const struct ENC *a, const struct ENC *b)
@@ -2323,7 +2325,7 @@ set_super_players(bool_t quiet, struct ENC *enc)
 		pla[j] = 0;
 	}	
 
-	Performance_type_set == TRUE;
+	Performance_type_set = TRUE;
 
 	return N_enc;
 }
