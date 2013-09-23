@@ -1556,7 +1556,7 @@ calc_bayes_unfitness_full (struct ENC *enc, double wadv)
 	return -accum;
 }
 
-
+#if 0
 static int
 derivative_single (int j, double delta, struct ENC *enc)
 {
@@ -1596,6 +1596,109 @@ derivative_vector_calc (double delta, double *vector, struct ENC *enc)
 		}
 	}	
 }
+#else
+//============================================
+
+double probarray [MAXPLAYERS] [4];
+
+static double
+get_extra_unfitness_j (double R, int j, struct prior *p)
+{
+	double x;
+	double u = 0;
+	if (p[j].set) {
+		x = (R - p[j].rating)/p[j].sigma;
+		u = 0.5 * x * x;
+	} 
+	return u;
+}
+
+
+
+static void
+probarray_reset(void)
+{
+	int j, k;
+	for (j = 0; j < N_players; j++) {
+		for (k = 0; k < 4; k++) {
+			probarray[j][k] = 0;
+		}	
+	}
+}
+
+static void
+probarray_build(struct ENC *enc, double inputdelta)
+{
+	double pw, pd, pl, delta;
+	double p;
+	int e,w,b;
+
+	for (e = 0; e < N_encounters; e++) {
+		w = enc[e].wh;	b = enc[e].bl;
+
+		delta = 0;
+		get_pWDL(Ratingof[w] + delta + White_advantage - Ratingof[b], &pw, &pd, &pl);
+		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
+
+		probarray [w] [1] -= p;			
+		probarray [b] [1] -= p;	
+
+		delta = +inputdelta;
+		get_pWDL(Ratingof[w] + delta + White_advantage - Ratingof[b], &pw, &pd, &pl);
+		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
+
+		probarray [w] [2] -= p;			
+		probarray [b] [0] -= p;	
+
+		delta = -inputdelta;
+		get_pWDL(Ratingof[w] + delta + White_advantage - Ratingof[b], &pw, &pd, &pl);
+		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
+
+		probarray [w] [0] -= p;			
+		probarray [b] [2] -= p;	
+
+	}
+}
+
+static int
+derivative_single (int j, double delta, struct ENC *enc);
+
+static void
+derivative_vector_calc (double delta, double *vector, struct ENC *enc)
+{
+	int j;
+
+	probarray_reset();
+	probarray_build(enc, delta);
+
+	for (j = 0; j < N_players; j++) {
+		if (Flagged[j] || Prefed[j]) {
+			vector[j] = 0.0;
+		} else {
+			vector[j] = derivative_single (j, delta, enc);;
+		}
+	}	
+}
+
+
+static int
+derivative_single (int j, double delta, struct ENC *enc)
+{
+	double decrem, increm, center;
+	int change;
+
+	decrem = probarray [j] [0] + get_extra_unfitness_j (Ratingof[j] - delta, j, PP);
+	center = probarray [j] [1] + get_extra_unfitness_j (Ratingof[j]        , j, PP);
+	increm = probarray [j] [2] + get_extra_unfitness_j (Ratingof[j] + delta, j, PP);
+
+	if (center < decrem && center < increm) 
+		change = 0;
+	else		
+		change = decrem > increm? 1: -1; 
+
+	return change;
+}
+#endif
 
 static double fitexcess(void);
 static void ratings_apply_excess_correction(double excess);
@@ -2070,7 +2173,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 	int		rounds = 10000;
 	double 	delta = 200.0;
 	double 	kappa = 0.05;
-	double 	denom = 2;
+	double 	denom = 3;
 	int 	phase = 0;
 	int 	n = 20;
 	double 	resol = delta;
@@ -2096,15 +2199,13 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 			resol = adjust_rating_bayes(delta,Changing);
 			resol = (resol_prev + resol) / 2;
 
-
-
 			curdev = calc_bayes_unfitness_full (enc, White_advantage);
 
 			if (curdev >= olddev) {
 				ratings_restore();
 
-				curdev = calc_bayes_unfitness_full (enc, White_advantage);
-
+//				curdev = calc_bayes_unfitness_full (enc, White_advantage);
+curdev = olddev;
 				assert (curdev == olddev);
 				break;
 			};	
@@ -2114,7 +2215,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 			kk *= 0.995;
 		}
 
-		delta /= denom;
+		delta /=  denom;
 		kappa *= denom;
 		outputdev = curdev/N_games;
 
