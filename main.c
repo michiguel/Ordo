@@ -659,6 +659,7 @@ int main (int argc, char *argv[])
 	N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
 
 	ratings_results();
+
 //FIXME
 #if 0
 	if (ADJUST_WHITE_ADVANTAGE) {
@@ -932,6 +933,19 @@ get_super_player_symbolstr(int j)
 		return SP_symbolstr[2];
 }
 
+static double
+rating_round(double x, int d)
+{
+	const int al[6] = {1,10,100,1000,10000,100000};
+	int i;
+	double y;
+	if (d > 5) d = 5;
+	if (d < 0) d = 0;
+	y = x * al[d] + 0.5; 
+	i = (int) y;
+	return (double)i/al[d];
+}
+
 void
 all_report (FILE *csvf, FILE *textf)
 {
@@ -972,7 +986,8 @@ all_report (FILE *csvf, FILE *textf)
 					(int)ml+1,
 					Name[j],
 					get_super_player_symbolstr(j),
-					Ratingof_results[j], Obtained_results[j], Playedby_results[j]
+					rating_round(Ratingof_results[j], 1), 
+					Obtained_results[j], Playedby_results[j]
 						, Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j], "%");
 				} else {
 				fprintf(f, "%4d %-*s   :%7s %9s %7s %6s%s\n", 
@@ -1002,15 +1017,17 @@ all_report (FILE *csvf, FILE *textf)
 					(int)ml+1, 
 					Name[j],
  					get_super_player_symbolstr(j),
-					Ratingof_results[j], sdev_str, Obtained_results[j], Playedby_results[j]
-						, Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], "%");
+					rating_round(Ratingof_results[j], 1), 
+					sdev_str, Obtained_results[j], Playedby_results[j], 
+					Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], "%");
 				} else if (!is_super_player(j)) {
 				fprintf(f, "%4d %-*s   :%7.1f %s %8.1f %7d %6.1f%s\n", 
 					i+1,
 					(int)ml+1, 
 					Name[j], 
-					Ratingof_results[j], "  ****", Obtained_results[j], Playedby_results[j]
-						, Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], "%");
+					rating_round(Ratingof_results[j], 1), 
+					"  ****", Obtained_results[j], Playedby_results[j], 
+					Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], "%");
 				} else {
 				fprintf(f, "%4d %-*s   :%7s %s %8s %7s %6s%s\n", 
 					i+1,
