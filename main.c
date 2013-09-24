@@ -1660,14 +1660,13 @@ probarray_build(struct ENC *enc, double inputdelta)
 	}
 }
 
-static int
+static double
 derivative_single (int j, double delta, struct ENC *enc);
 
 static void
 derivative_vector_calc (double delta, double *vector, struct ENC *enc)
 {
 	int j;
-
 	probarray_reset();
 	probarray_build(enc, delta);
 
@@ -1681,21 +1680,21 @@ derivative_vector_calc (double delta, double *vector, struct ENC *enc)
 }
 
 
-static int
+static double
 derivative_single (int j, double delta, struct ENC *enc)
 {
 	double decrem, increm, center;
-	int change;
+	double change;
 
 	decrem = probarray [j] [0] + get_extra_unfitness_j (Ratingof[j] - delta, j, PP);
 	center = probarray [j] [1] + get_extra_unfitness_j (Ratingof[j]        , j, PP);
 	increm = probarray [j] [2] + get_extra_unfitness_j (Ratingof[j] + delta, j, PP);
 
-	if (center < decrem && center < increm) 
-		change = 0;
-	else		
+	if (center < decrem && center < increm) {
+		change = decrem > increm? 0.5: -0.5; 
+	} else {
 		change = decrem > increm? 1: -1; 
-
+	}
 	return change;
 }
 #endif
@@ -1722,11 +1721,15 @@ adjust_rating_bayes (double delta, double *change_vector)
 		if (y > ymax) ymax = y;
 
 		// execute adjustment
+#if 0
 		if (change_vector[j] < 0) {
 			Ratingof[j] -= delta * y;
 		} else {
 			Ratingof[j] += delta * y;
 		}
+#else
+			Ratingof[j] += delta * change_vector[j];	
+#endif
 	}	
 
 	// Normalization to a common reference (Global --> General_average)
@@ -2172,10 +2175,9 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 	int 	i;
 	int		rounds = 10000;
 	double 	delta = 200.0;
-	double 	kappa = 0.05;
 	double 	denom = 3;
 	int 	phase = 0;
-	int 	n = 20;
+	int 	n = 40;
 	double 	resol = delta;
 	double 	resol_prev = delta;
 
@@ -2186,9 +2188,9 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 	if (!quiet) printf ("%3s %4s %10s %10s\n", "phase", "iteration", "deviation","resolution");
 
 	while (n-->0) {
-		double kk = 1.0;
-		for (i = 0; i < rounds; i++) {
 
+		for (i = 0; i < rounds; i++) {
+			double kappa = 1.0;
 			ratings_backup();
 			olddev = curdev;
 
@@ -2196,27 +2198,25 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 			derivative_vector_calc (delta, Changing, enc);
 
 			resol_prev = resol;
-			resol = adjust_rating_bayes(delta,Changing);
+			resol = adjust_rating_bayes(delta*kappa,Changing);
 			resol = (resol_prev + resol) / 2;
 
 			curdev = calc_bayes_unfitness_full (enc, White_advantage);
 
 			if (curdev >= olddev) {
 				ratings_restore();
-
-//				curdev = calc_bayes_unfitness_full (enc, White_advantage);
-curdev = olddev;
+				curdev = olddev;
 				assert (curdev == olddev);
 				break;
-			};	
+			} else {
+				ratings_backup();
+				olddev = curdev;
+			}	
 
-			outputdev = curdev/N_games;
 			if (resol < 0.000001) break;
-			kk *= 0.995;
 		}
 
 		delta /=  denom;
-		kappa *= denom;
 		outputdev = curdev/N_games;
 
 		if (!quiet) {
@@ -2230,7 +2230,8 @@ curdev = olddev;
 			White_advantage = adjust_wadv_bayes (enc, White_advantage, resol);
 		}
 
-		if (delta < 0.000001) break;
+		if (resol < 0.000001) break;
+
 	}
 
 	if (!quiet) printf ("done\n\n");
