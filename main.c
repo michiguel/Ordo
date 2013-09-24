@@ -1557,47 +1557,6 @@ calc_bayes_unfitness_full (struct ENC *enc, double wadv)
 	return -accum;
 }
 
-#if 0
-static int
-derivative_single (int j, double delta, struct ENC *enc)
-{
-	double tmp, decrem, increm;
-	int change;
-	double center;
-	tmp = Ratingof[j];
-
-	center = calc_bayes_unfitness_partial (enc, j);
-
-	Ratingof[j] = tmp - delta;
-	decrem = calc_bayes_unfitness_partial (enc,j);
-
-	Ratingof[j] = tmp + delta;
-	increm = calc_bayes_unfitness_partial (enc,j);
-
-	Ratingof[j] = tmp;
-
-	if (center < decrem && center < increm) 
-		change = 0;
-	else		
-		change = decrem > increm? 1: -1; 
-
-	return change;
-}
-
-
-static void
-derivative_vector_calc (double delta, double *vector, struct ENC *enc)
-{
-	int j;
-	for (j = 0; j < N_players; j++) {
-		if (Flagged[j] || Prefed[j]) {
-			vector[j] = 0.0;
-		} else {
-			vector[j] = derivative_single (j, delta, enc);;
-		}
-	}	
-}
-#else
 //============================================
 
 double probarray [MAXPLAYERS] [4];
@@ -1692,8 +1651,6 @@ derivative_vector_calc (double delta, double *vector, struct ENC *enc)
 		}
 	}	
 }
-
-#endif
 
 static double fitexcess(void);
 static void ratings_apply_excess_correction(double excess);
@@ -1810,7 +1767,7 @@ fitexcess(void)
 		c = newc;
 		t = newt;
 		b = newb;
-	} while ((t-b) > 0.0000001);
+	} while ((t-b) > MIN_RESOLUTION);
 
 	return c;
 }
@@ -2155,6 +2112,8 @@ rate_super_players(bool_t quiet, struct ENC *enc)
 }
 #endif
 
+#define MIN_RESOLUTION 0.000001
+
 static double adjust_wadv_bayes (struct ENC *enc, double start_wadv, double resol);
 
 static int
@@ -2202,7 +2161,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 				olddev = curdev;
 			}	
 
-			if (resol < 0.000001) break;
+			if (resol < MIN_RESOLUTION) break;
 		}
 
 		delta /=  denom;
@@ -2219,7 +2178,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 			White_advantage = adjust_wadv_bayes (enc, White_advantage, resol);
 		}
 
-		if (resol < 0.000001) break;
+		if (resol < MIN_RESOLUTION) break;
 
 	}
 
