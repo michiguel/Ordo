@@ -1614,8 +1614,6 @@ get_extra_unfitness_j (double R, int j, struct prior *p)
 	return u;
 }
 
-
-
 static void
 probarray_reset(void)
 {
@@ -1662,7 +1660,22 @@ probarray_build(struct ENC *enc, double inputdelta)
 }
 
 static double
-derivative_single (int j, double delta/*, struct ENC *enc*/);
+derivative_single (int j, double delta /*, struct ENC *enc*/)
+{
+	double decrem, increm, center;
+	double change;
+
+	decrem = probarray [j] [0] + get_extra_unfitness_j (Ratingof[j] - delta, j, PP);
+	center = probarray [j] [1] + get_extra_unfitness_j (Ratingof[j]        , j, PP);
+	increm = probarray [j] [2] + get_extra_unfitness_j (Ratingof[j] + delta, j, PP);
+
+	if (center < decrem && center < increm) {
+		change = decrem > increm? 0.5: -0.5; 
+	} else {
+		change = decrem > increm? 1: -1; 
+	}
+	return change;
+}
 
 static void
 derivative_vector_calc (double delta, double *vector, struct ENC *enc)
@@ -1680,36 +1693,19 @@ derivative_vector_calc (double delta, double *vector, struct ENC *enc)
 	}	
 }
 
-
-static double
-derivative_single (int j, double delta /*, struct ENC *enc*/)
-{
-	double decrem, increm, center;
-	double change;
-
-	decrem = probarray [j] [0] + get_extra_unfitness_j (Ratingof[j] - delta, j, PP);
-	center = probarray [j] [1] + get_extra_unfitness_j (Ratingof[j]        , j, PP);
-	increm = probarray [j] [2] + get_extra_unfitness_j (Ratingof[j] + delta, j, PP);
-
-	if (center < decrem && center < increm) {
-		change = decrem > increm? 0.5: -0.5; 
-	} else {
-		change = decrem > increm? 1: -1; 
-	}
-	return change;
-}
 #endif
 
 static double fitexcess(void);
 static void ratings_apply_excess_correction(double excess);
+
+static double absol(double x) {return x < 0? -x: x;}
 
 static double
 adjust_rating_bayes (double delta, double *change_vector)
 {
 	int 	j, notflagged;
 	double 	excess, average;
-	double 	y = 1.0;
-	double 	ymax = 0;
+	double 	y, ymax = 0;
 	double 	accum = 0;
 
 	for (j = 0; j < N_players; j++) {
@@ -1717,20 +1713,13 @@ adjust_rating_bayes (double delta, double *change_vector)
 			|| 	Prefed[j]	// already fixed, one of the multiple anchors
 		) continue; 
 
-		// find multiplier "y"
-		y = 1;
+		// max
+		y = absol(change_vector[j]);
 		if (y > ymax) ymax = y;
 
 		// execute adjustment
-#if 0
-		if (change_vector[j] < 0) {
-			Ratingof[j] -= delta * y;
-		} else {
-			Ratingof[j] += delta * y;
-		}
-#else
-			Ratingof[j] += delta * change_vector[j];	
-#endif
+		Ratingof[j] += delta * change_vector[j];	
+
 	}	
 
 	// Normalization to a common reference (Global --> General_average)
@@ -1766,7 +1755,6 @@ adjust_rating_bayes (double delta, double *change_vector)
 	ratings_apply_excess_correction(excess);
 
 	// Return maximum increase/decrease ==> "resolution"
-
 	return ymax * delta;
 }
 #endif
