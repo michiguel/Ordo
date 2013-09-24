@@ -2354,7 +2354,7 @@ adjust_wadv_bayes (struct ENC *enc, double start_wadv, double resol)
 		ek = calc_bayes_unfitness_full (enc, wa + delta);
 
 		if (ei >= ej && ej <= ek) {
-			delta = delta / 2;
+			delta = delta / 4;
 		} else
 		if (ej >= ei && ei <= ek) {
 			wa -= delta;
