@@ -1643,6 +1643,7 @@ derivative_vector_calc (double delta, double *vector, struct ENC *enc)
 	int j;
 	probarray_reset();
 	probarray_build(enc, delta);
+	probarray_build(enc, delta);
 
 	for (j = 0; j < N_players; j++) {
 		if (Flagged[j] || Prefed[j]) {
