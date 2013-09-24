@@ -1478,6 +1478,7 @@ wdl_probabilities (int ww, int dd, int ll, double pw, double pd, double pl)
 			;
 }
 
+#if 0
 static double
 calc_bayes_unfitness_partial (struct ENC *enc, int j) 
 {
@@ -1503,7 +1504,7 @@ calc_bayes_unfitness_partial (struct ENC *enc, int j)
 
 	return -accum;
 }
-
+#endif
 
 static double
 prior_unfitness(struct prior *p, double wadv)
@@ -1661,7 +1662,7 @@ probarray_build(struct ENC *enc, double inputdelta)
 }
 
 static double
-derivative_single (int j, double delta, struct ENC *enc);
+derivative_single (int j, double delta/*, struct ENC *enc*/);
 
 static void
 derivative_vector_calc (double delta, double *vector, struct ENC *enc)
@@ -1674,14 +1675,14 @@ derivative_vector_calc (double delta, double *vector, struct ENC *enc)
 		if (Flagged[j] || Prefed[j]) {
 			vector[j] = 0.0;
 		} else {
-			vector[j] = derivative_single (j, delta, enc);;
+			vector[j] = derivative_single (j, delta/*, enc*/);;
 		}
 	}	
 }
 
 
 static double
-derivative_single (int j, double delta, struct ENC *enc)
+derivative_single (int j, double delta /*, struct ENC *enc*/)
 {
 	double decrem, increm, center;
 	double change;
