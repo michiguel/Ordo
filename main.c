@@ -22,6 +22,8 @@
 	#define DOPRIOR
 #endif
 
+#define MIN_RESOLUTION 0.000001
+#define PRIOR_SMALLEST_SIGMA 0.0000001
 
 /*
 | 
@@ -234,7 +236,6 @@ struct DEVIATION_ACC {
 struct DEVIATION_ACC *sim = NULL;
 
 /*------------------------------------------------------------------------*/
-#define PRIOR_SMALLEST_SIGMA 0.0000001
 
 struct prior {
 	double rating;
@@ -2111,8 +2112,6 @@ rate_super_players(bool_t quiet, struct ENC *enc)
 	return N_enc;
 }
 #endif
-
-#define MIN_RESOLUTION 0.000001
 
 static double adjust_wadv_bayes (struct ENC *enc, double start_wadv, double resol);
 
