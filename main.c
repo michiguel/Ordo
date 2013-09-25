@@ -24,6 +24,8 @@
 
 #define MIN_RESOLUTION 0.000001
 #define PRIOR_SMALLEST_SIGMA 0.0000001
+#define WADV_RECALC
+#undef WADV_RECALC
 
 /*
 | 
@@ -292,7 +294,7 @@ static void 	transform_DB(struct DATA *db, struct GAMESTATS *gs);
 static bool_t	find_anchor_player(int *anchor);
 
 /*------------------------------------------------------------------------*/
-#if 0
+#if defined(WADV_RECALC)
 static double 	overallerror_fwadv (double wadv);
 static double 	adjust_wadv (double start_wadv);
 #endif
@@ -453,9 +455,9 @@ int main (int argc, char *argv[])
 			case 'T':	table_mode = TRUE;	break;
 			case 'q':	QUIET_MODE = TRUE;	break;
 			case 'W':	ADJUST_WHITE_ADVANTAGE = TRUE;	
-						Wa_prior.set = TRUE; 
-						Wa_prior.rating = 40.0; 
-						Wa_prior.sigma = 20.0; 
+						Wa_prior.set = FALSE;//TRUE; 
+						Wa_prior.rating = 0; //40.0; 
+						Wa_prior.sigma = 200.0; //20;
 						switch_W = TRUE;
 						break;
 			case '?': 	parameter_error();
@@ -684,8 +686,8 @@ int main (int argc, char *argv[])
 	ratings_results();
 
 //FIXME
-#if 0
-	if (ADJUST_WHITE_ADVANTAGE) {
+#if defined(WADV_RECALC)
+	if (ADJUST_WHITE_ADVANTAGE && switch_W) {
 		double new_wadv = adjust_wadv (White_advantage);
 		if (!QUIET_MODE)
 			printf ("\nAdjusted White Advantage = %f\n\n",new_wadv);
@@ -2213,7 +2215,11 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 		}
 		phase++;
 
-		if (ADJUST_WHITE_ADVANTAGE && Wa_prior.set) {
+		if (ADJUST_WHITE_ADVANTAGE 
+//			&& Wa_prior.set // if !Wa_prior set, it will give no error based on the wa
+							// but it will adjust it based on the results. This is useful
+							// for -W
+			) {
 			White_advantage = adjust_wadv_bayes (enc, White_advantage, resol);
 		}
 
@@ -2316,7 +2322,7 @@ xpect (double a, double b)
 }
 
 /*==================================================================*/
-#if 0
+#if defined(WADV_RECALC)
 static double
 overallerror_fwadv (double wadv)
 {
