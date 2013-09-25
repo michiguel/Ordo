@@ -111,6 +111,7 @@ static void usage (void);
 		" -m <file>   multiple anchors: file contains rows of \"AnchorName\",AnchorRating\n"
 		" -y <file>   'seeds' file: file contains rows of \"PlayerName\",PlayerRating,Deviation\n"
 		" -w <value>  white advantage value (default=0.0)\n"
+		" -u <value>  white advantage uncertainty value (default=0.0)\n"
 		" -W          white advantage, automatically adjusted\n"
 		" -z <value>  scaling: set rating for winning expectancy of 76% (default=202)\n"
 		" -T          display winning expectancy table\n"
@@ -130,7 +131,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWLa:A:m:y:o:g:c:s:w:z:e:TF:";
+const char *OPTION_LIST = "vhHp:qWLa:A:m:y:o:g:c:s:w:u:z:e:TF:";
 
 /*
 |
@@ -212,6 +213,7 @@ static long 	Simulate = 0;
 #define INVBETA 175.25
 
 static double	White_advantage = 0;
+static double	White_advantage_SD = 0;
 static double	Rtng_76 = 202;
 static double	Inv_beta = INVBETA;
 static double	BETA = 1.0/INVBETA;
@@ -356,7 +358,7 @@ int main (int argc, char *argv[])
 	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr, *priorsstr;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
 	bool_t group_is_output;
-	bool_t switch_w=FALSE, switch_W=FALSE;
+	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE;
 
 	/* defaults */
 	version_mode = FALSE;
@@ -436,6 +438,13 @@ int main (int argc, char *argv[])
 							switch_w = TRUE;
 						}
 						break;
+			case 'u': 	if (1 != sscanf(opt_arg,"%lf", &White_advantage_SD)) {
+							fprintf(stderr, "wrong white advantage uncertainty parameter\n");
+							exit(EXIT_FAILURE);
+						} else {
+							switch_u = TRUE;
+						}
+						break;
 			case 'z': 	if (1 != sscanf(opt_arg,"%lf", &Rtng_76)) {
 							fprintf(stderr, "wrong scaling parameter\n");
 							exit(EXIT_FAILURE);
@@ -512,8 +521,8 @@ int main (int argc, char *argv[])
 		fprintf (stderr, "Setting a general average (-a) or a single anchor (-A) is incompatible with multiple anchors (-m)\n\n");
 		exit(EXIT_FAILURE);
 	}
-	if (switch_w && switch_W) {
-		fprintf (stderr, "Switches -w and -W are incompatible and will not work simultaneously\n\n");
+	if ((switch_w || switch_u) && switch_W) {
+		fprintf (stderr, "Switches -w/-u and -W are incompatible and will not work simultaneously\n\n");
 		exit(EXIT_FAILURE);
 	}
 	if (NULL != priorsstr && General_average_set) {
@@ -576,6 +585,20 @@ int main (int argc, char *argv[])
 	// multiple anchors, do after priors
 	if (pinsstr != NULL) {
 		init_manchors(pinsstr); 
+	}
+
+	if (switch_w && switch_u) {
+		if (White_advantage_SD > PRIOR_SMALLEST_SIGMA) {
+			Wa_prior.set = TRUE; 
+			Wa_prior.rating = White_advantage; 
+			Wa_prior.sigma = White_advantage_SD; 
+			ADJUST_WHITE_ADVANTAGE = TRUE;	
+		} else {
+			Wa_prior.set = FALSE; 
+			Wa_prior.rating = White_advantage; 
+			Wa_prior.sigma = White_advantage_SD; 
+			ADJUST_WHITE_ADVANTAGE = FALSE;	
+		}
 	}
 
 	textf = NULL;
