@@ -563,11 +563,16 @@ int main (int argc, char *argv[])
 		printf (" - Black wins       %8ld\n", Game_stats.black_wins);
 		printf (" - Truncated        %8ld\n", Game_stats.noresult);
 		printf ("Unique head to head %8.2f%s\n", 100.0*N_encounters/N_games, "%");
-		printf ("Reference rating    %8.1lf",General_average);
-		if (Anchor_use) 
+		if (Anchor_use) {
+			printf ("Reference rating    %8.1lf",General_average);
 			printf (" (set to \"%s\")\n", Anchor_name);
-		else	
+		} else if (priorsstr != NULL || pinsstr != NULL) { // priors
+			printf ("Reference rating    ");
+			printf (" --> not fixed, determined by anchors\n");
+		} else {	
+			printf ("Reference rating    %8.1lf",General_average);
 			printf (" (average of the pool)\n");	
+		}
 		printf ("\n");	
 	}
 
