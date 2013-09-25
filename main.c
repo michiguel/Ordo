@@ -549,15 +549,19 @@ int main (int argc, char *argv[])
 		} 
 	}
 
+
 	if (!QUIET_MODE) {
+
+		N_encounters = calc_encounters(ENCOUNTERS_FULL, Encounter);
+
 		printf ("Total games         %8ld\n", Game_stats.white_wins
 											 +Game_stats.draws
 											 +Game_stats.black_wins
 											 +Game_stats.noresult);
-		printf ("White wins          %8ld\n", Game_stats.white_wins);
-		printf ("Draws               %8ld\n", Game_stats.draws);
-		printf ("Black wins          %8ld\n", Game_stats.black_wins);
-		printf ("No result           %8ld\n", Game_stats.noresult);
+		printf (" - White wins       %8ld\n", Game_stats.white_wins);
+		printf (" - Draws            %8ld\n", Game_stats.draws);
+		printf (" - Black wins       %8ld\n", Game_stats.black_wins);
+		printf (" - Truncated        %8ld\n", Game_stats.noresult);
 		printf ("Unique head to head %8.2f%s\n", 100.0*N_encounters/N_games, "%");
 		printf ("Reference rating    %8.1lf",General_average);
 		if (Anchor_use) 
