@@ -2164,6 +2164,17 @@ rate_super_players(bool_t quiet, struct ENC *enc)
 }
 #endif
 
+static bool_t
+super_players_present(void)
+{ 
+	bool_t found = FALSE;
+	int j;
+	for (j = 0; j < N_players && !found; j++) {
+		found = Performance_type[j] == PERF_SUPERWINNER || Performance_type[j] == PERF_SUPERLOSER; 
+	}
+	return found;
+}
+
 static double adjust_wadv_bayes (struct ENC *enc, double start_wadv, double resol);
 
 static int
@@ -2182,8 +2193,8 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 	// initial deviation
 	olddev = curdev = calc_bayes_unfitness_full (enc, White_advantage);
 
-	if (!quiet) printf ("\nConvergence rating calculation\n\n");
-	if (!quiet) printf ("%3s %4s %10s %10s\n", "phase", "iteration", "deviation","resolution");
+	if (!quiet) printf ("Converging...\n\n");
+	if (!quiet) printf ("%3s %4s %10s %10s\n", "phase", "iteration", "unfitness","resolution");
 
 	while (n-->0) {
 
@@ -2241,7 +2252,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 	printf ("White_advantage = %lf\n\n", White_advantage);
 
 #ifdef CALCIND_SWSL
-	if (!quiet) printf ("Post-Convergence rating estimation\n\n");
+	if (!quiet && super_players_present()) printf ("Post-Convergence rating estimation for all-wins / all-losses players\n\n");
 	N_enc = rate_super_players(QUIET_MODE, enc);
 #endif
 
