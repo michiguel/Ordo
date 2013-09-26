@@ -111,7 +111,7 @@ static void usage (void);
 		" -a <avg>    set rating for the pool average\n"
 		" -A <player> anchor: rating given by '-a' is fixed for <player>, if provided\n"
 		" -m <file>   multiple anchors: file contains rows of \"AnchorName\",AnchorRating\n"
-		" -y <file>   'seeds' file: file contains rows of \"PlayerName\",PlayerRating,Deviation\n"
+		" -y <file>   loose anchors: file contains rows of \"Player\",Rating,Uncertainty\n"
 		" -w <value>  white advantage value (default=0.0)\n"
 		" -u <value>  white advantage uncertainty value (default=0.0)\n"
 		" -W          white advantage, automatically adjusted\n"
