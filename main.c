@@ -255,7 +255,7 @@ static int 	Priored_n = 0;
 
 static void priors_reset(struct prior *p);
 static bool_t getnum2(char *p, double *px, double *py);
-static bool_t do_prior (const char *prior_name, double x, double sigma);
+static bool_t set_prior (const char *prior_name, double x, double sigma);
 static void priors_load(const char *fpriors_name);
 /*------------------------------------------------------------------------*/
 
@@ -1292,7 +1292,7 @@ static bool_t getnum(char *p, double *px)
 }
 
 static bool_t
-do_anchor (const char *player_name, double x)
+set_anchor (const char *player_name, double x)
 {
 	int j;
 	bool_t found;
@@ -1350,7 +1350,7 @@ init_manchors(const char *fpins_name)
 			}
 			if (success) {
 
-				if (do_anchor (name_pinned, x)) {
+				if (set_anchor (name_pinned, x)) {
 					printf ("Anchoring, %s --> %.1lf\n", name_pinned, x);
 				} else {
 					pin_success = FALSE;
@@ -1403,7 +1403,7 @@ static bool_t getnum2(char *p, double *px, double *py)
 }
 
 static bool_t
-do_prior (const char *player_name, double x, double sigma)
+set_prior (const char *player_name, double x, double sigma)
 {
 	int j;
 	bool_t found;
@@ -1472,14 +1472,14 @@ priors_load(const char *fpriors_name)
 					suc = FALSE;
 				} else 
 				if (y < PRIOR_SMALLEST_SIGMA) {
-					suc = do_anchor (name_prior, x);
+					suc = set_anchor (name_prior, x);
 					if (suc) {
 						printf ("Anchoring, %s --> %.1lf\n", name_prior, x);
 					} else {
 						printf ("Prior, %s --> FAILED, name not found in input file\n", name_prior);
 					}
 				} else {
-					suc = do_prior (name_prior, x, y);
+					suc = set_prior (name_prior, x, y);
 					if (suc) {
 						printf ("Prior, %s --> %.1lf, %.1lf\n", name_prior, x, y);
 					} else {
