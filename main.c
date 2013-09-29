@@ -112,6 +112,7 @@ static void usage (void);
 		" -A <player> anchor: rating given by '-a' is fixed for <player>, if provided\n"
 		" -m <file>   multiple anchors: file contains rows of \"AnchorName\",AnchorRating\n"
 		" -y <file>   loose anchors: file contains rows of \"Player\",Rating,Uncertainty\n"
+		" -r <file>   relative loose anchors: file contains rows of \"PlayerA\",\"PlayerB\",delta_rating,uncertainty\n"
 		" -w <value>  white advantage value (default=0.0)\n"
 		" -u <value>  white advantage uncertainty value (default=0.0)\n"
 		" -W          white advantage, automatically adjusted\n"
@@ -133,7 +134,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWLa:A:m:y:o:g:c:s:w:u:z:e:TF:";
+const char *OPTION_LIST = "vhHp:qWLa:A:m:r:y:o:g:c:s:w:u:z:e:TF:";
 
 /*
 |
@@ -257,6 +258,26 @@ static void priors_reset(struct prior *p);
 static bool_t getnum2(char *p, double *px, double *py);
 static bool_t set_prior (const char *prior_name, double x, double sigma);
 static void priors_load(const char *fpriors_name);
+
+#define MAX_RELPRIORS 10000
+
+struct relprior {
+	int player_a;
+	int player_b;
+	double delta;
+	double sigma;	
+};
+
+struct relprior Ra[MAX_RELPRIORS];
+long int N_relative_anchors = 0;
+
+static char *csv_gettoken(char *p, char *s, size_t max);
+static bool_t set_relprior (const char *player_a, const char *player_b, double x, double sigma);
+static void relpriors_show(void);
+static void relpriors_load(const char *f_name);
+static double relative_anchors_unfitness_full(void);
+static double relative_anchors_unfitness_j(double R, int j);
+
 /*------------------------------------------------------------------------*/
 
 static int		calc_encounters (int selectivity, struct ENC *enc);
@@ -357,7 +378,7 @@ int main (int argc, char *argv[])
 	FILE *groupf;
 
 	int op;
-	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr, *priorsstr;
+	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr, *priorsstr, *relstr;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
 	bool_t group_is_output;
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE;
@@ -377,6 +398,7 @@ int main (int argc, char *argv[])
 	ematstr 	 = NULL;
 	pinsstr		 = NULL;
 	priorsstr	 = NULL;
+	relstr		 = NULL;
 	group_is_output = FALSE;
 	groupstr 	 = NULL;
 
@@ -401,6 +423,8 @@ int main (int argc, char *argv[])
 			case 'e': 	ematstr = opt_arg;
 						break;
 			case 'm': 	pinsstr = opt_arg;
+						break;
+			case 'r': 	relstr = opt_arg;
 						break;
 			case 'y': 	priorsstr = opt_arg;
 						break;
@@ -597,6 +621,14 @@ int main (int argc, char *argv[])
 	if (pinsstr != NULL) {
 		init_manchors(pinsstr); 
 	}
+
+//~~
+	if (relstr != NULL) {
+		relpriors_load(relstr); 
+	}
+	relpriors_show();
+	//FIXME do not allow relpriors to be purged
+//~~
 
 	if (switch_w && switch_u) {
 		if (White_advantage_SD > PRIOR_SMALLEST_SIGMA) {
@@ -1380,6 +1412,223 @@ init_manchors(const char *fpins_name)
 	return;
 }
 
+//== REL PRIORS ========================================
+
+static char *
+csv_gettoken(char *p, char *s, size_t max)
+{
+	char *s_ori;
+	s_ori = s;
+	p = skipblanks(p);
+	if (*p == '\0') return NULL; // no more tokens
+
+	if (issep(*p)) {
+		s[0] = '\0'; //return empty string
+		return ++p;
+	}
+
+	if (isquote(*p++)) {
+		while (*p != '\0' && (s-s_ori) < max && !isquote(*p)) {*s++ = *p++;}
+		*s = '\0';
+		if (isquote(*p++)) {
+			p = skipblanks(p);
+			if (issep(*p)) p++;
+		}
+		return p;
+	}
+
+	while (*p != '\0' && (s-s_ori) < max && !issep(*p)) {*s++ = *p++;}
+	*s = '\0';
+	if (issep(*p)) p++;
+	
+	return p;
+}
+
+static bool_t
+set_relprior (const char *player_a, const char *player_b, double x, double sigma)
+{
+	int j, n, p_a, p_b;
+	bool_t found;
+
+	assert(sigma > PRIOR_SMALLEST_SIGMA);
+
+	for (j = 0, found = FALSE; !found && j < N_players; j++) {
+		found = !strcmp(Name[j], player_a);
+		if (found) {
+			p_a = j;
+		} 
+	}
+	if (!found) return found;
+
+	for (j = 0, found = FALSE; !found && j < N_players; j++) {
+		found = !strcmp(Name[j], player_b);
+		if (found) {
+			p_b = j;
+		} 
+	}
+	if (!found) return found;
+
+
+
+	n = N_relative_anchors++;
+
+//FIXME
+if (n >= MAX_RELPRIORS) {fprintf (stderr, "Maximum memory for relative anchors exceeded\n"); exit(EXIT_FAILURE);}
+
+	Ra[n].player_a = p_a;
+	Ra[n].player_b = p_b;
+	Ra[n].delta    = x;
+	Ra[n].sigma    = sigma;
+
+	return found;
+}
+
+static void
+relpriors_show(void)
+{ 
+	int i;
+	printf ("\nRelative Anchors {\n");
+	for (i = 0; i < N_relative_anchors; i++) {
+		int a = Ra[i].player_a;
+		int b = Ra[i].player_b;
+		printf ("[%s] [%s] = %lf +/= %lf\n",Name[a], Name[b], Ra[i].delta, Ra[i].sigma);
+	}
+	printf ("}\n");
+}
+
+static void
+relpriors_load(const char *f_name)
+{
+	#define MAX_MYLINE 1024
+	#define MAXSIZETOKEN MAX_MYLINE
+
+	FILE *fil;
+	char myline[MAX_MYLINE];
+	char name_a[MAX_MYLINE];
+	char name_b[MAX_MYLINE];
+	char *s, *z, *p;
+	bool_t success;
+	double x, y;
+	bool_t prior_success = TRUE;
+	bool_t file_success = TRUE;
+
+	assert(NULL != f_name);
+
+	if (NULL == f_name) {
+		fprintf (stderr, "Error, file not provided, absent, or corrupted\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (NULL != (fil = fopen (f_name, "r"))) {
+
+		while (file_success && NULL != fgets(myline, MAX_MYLINE, fil)) {
+			success = FALSE;
+			p = myline;
+			s = name_a;
+			z = name_b;
+			p = skipblanks(p);
+			x = 0;
+			y = 0;
+			if (*p == '\0') continue;
+
+			success = (NULL != (p = csv_gettoken(p, s, MAXSIZETOKEN)));
+			if (!success) exit(EXIT_FAILURE);
+
+			success = (NULL != (p = csv_gettoken(p, z, MAXSIZETOKEN)));
+			if (!success) exit(EXIT_FAILURE);
+
+			p = skipblanks(p);
+
+			success = getnum2(p, &x, &y);				
+			if (!success) exit(EXIT_FAILURE);
+
+			file_success = success;
+
+			{
+				bool_t suc;
+				if (y < 0) {
+					printf ("Relative Prior, %s %s --> FAILED, error/uncertainty cannot be negative", s, z);	
+					suc = FALSE;
+				} else 
+				if (y < PRIOR_SMALLEST_SIGMA) {
+
+					fprintf (stderr,"sigma too small\n");
+					exit(EXIT_FAILURE);
+
+				} else {
+					suc = set_relprior (s, z, x, y);
+					if (suc) {
+						printf ("Relative Prior, %s, %s --> %.1lf, %.1lf\n", s, z, x, y);
+					} else {
+						printf ("Relative Prior, %s, %s --> FAILED, name/s not found in input file\n", s, z);					
+					}	
+				}
+				if (!suc) prior_success = FALSE;
+			}
+			
+		}
+
+		fclose(fil);
+	}
+	else {
+		file_success = FALSE;
+	}
+
+	if (!file_success) {
+			fprintf (stderr, "Errors in file \"%s\"\n",f_name);
+			exit(EXIT_FAILURE);
+	}
+	if (!prior_success) {
+			fprintf (stderr, "Errors in file \"%s\" (not matching names)\n",f_name);
+			exit(EXIT_FAILURE);
+	}
+
+	return;
+}
+
+
+static double
+relative_anchors_unfitness_full(void)
+{
+	int a, b, i;
+	double d, x;
+	double accum = 0;
+	for (i = 0; i < N_relative_anchors; i++) {
+		a = Ra[i].player_a;
+		b = Ra[i].player_b;
+		d = Ratingof[a] - Ratingof[b];
+		x = (d - Ra[i].delta)/Ra[i].sigma;
+		accum += 0.5 * x * x;
+	}
+
+	return accum;
+}
+
+static double
+relative_anchors_unfitness_j(double R, int j)
+{
+	int a, b, i;
+	double d, x;
+	double accum = 0;
+double rem;
+rem = Ratingof[j];
+Ratingof[j] = R;
+
+	for (i = 0; i < N_relative_anchors; i++) {
+		a = Ra[i].player_a;
+		b = Ra[i].player_b;
+		if (a == j || b == j) {
+			d = Ratingof[a] - Ratingof[b];
+			x = (d - Ra[i].delta)/Ra[i].sigma;
+			accum += 0.5 * x * x;
+		}
+	}
+Ratingof[j] = rem;
+	return accum;
+}
+
+
+
 //== PRIORS ============================================
 
 static void
@@ -1574,9 +1823,10 @@ prior_unfitness(struct prior *p, double wadv)
 	if (Wa_prior.set) {
 		x = (wadv - Wa_prior.rating)/Wa_prior.sigma;
 		accum += 0.5 * x * x;		
-
-//printf ("wadv = %lf, Wa_prior.rating = %lf, Wa_prior.sigma = %lf, x = %lf\n",wadv,Wa_prior.rating,Wa_prior.sigma,x);
 	}
+
+	//FIXME this could be slow!
+	accum += relative_anchors_unfitness_full(); //~~
 
 	return accum;
 }
@@ -1622,6 +1872,10 @@ get_extra_unfitness_j (double R, int j, struct prior *p)
 		x = (R - p[j].rating)/p[j].sigma;
 		u = 0.5 * x * x;
 	} 
+
+	//FIXME this could be slow!
+	u += relative_anchors_unfitness_j (R, j); //~~
+
 	return u;
 }
 
