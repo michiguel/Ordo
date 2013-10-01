@@ -112,7 +112,8 @@ static void usage (void);
 		" -A <player> anchor: rating given by '-a' is fixed for <player>, if provided\n"
 		" -m <file>   multiple anchors: file contains rows of \"AnchorName\",AnchorRating\n"
 		" -y <file>   loose anchors: file contains rows of \"Player\",Rating,Uncertainty\n"
-		" -r <file>   relative loose anchors: file contains rows of \"PlayerA\",\"PlayerB\",delta_rating,uncertainty\n"
+		" -r <file>   relations: rows of \"PlayerA\",\"PlayerB\",delta_rating,uncertainty\n"
+		" -R          remove older versions (given by switch -d) from the ouput\n"
 		" -w <value>  white advantage value (default=0.0)\n"
 		" -u <value>  white advantage uncertainty value (default=0.0)\n"
 		" -W          white advantage, automatically adjusted\n"
@@ -134,7 +135,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWLa:A:m:r:y:o:g:c:s:w:u:z:e:TF:";
+const char *OPTION_LIST = "vhHp:qWLa:A:m:r:y:o:g:c:s:w:u:z:e:TF:R";
 
 /*
 |
@@ -270,6 +271,7 @@ struct relprior {
 
 struct relprior Ra[MAX_RELPRIORS];
 long int N_relative_anchors = 0;
+static bool_t hide_old_ver = FALSE;
 
 static char *csv_gettoken(char *p, char *s, size_t max);
 static bool_t set_relprior (const char *player_a, const char *player_b, double x, double sigma);
@@ -478,6 +480,7 @@ int main (int argc, char *argv[])
 						break;
 			case 'T':	table_mode = TRUE;	break;
 			case 'q':	QUIET_MODE = TRUE;	break;
+			case 'R':	hide_old_ver=TRUE;	break;
 			case 'W':	ADJUST_WHITE_ADVANTAGE = TRUE;	
 						Wa_prior.set = FALSE;//TRUE; 
 						Wa_prior.rating = 0; //40.0; 
@@ -1012,6 +1015,17 @@ rating_round(double x, int d)
 	return (double)i/al[d];
 }
 
+static bool_t
+is_old_version(int j)
+{
+	int i;
+	bool_t found;
+	for (i = 0, found = FALSE; !found && i < N_relative_anchors; i++) {
+		found = j == Ra[i].player_b;
+	}
+	return found;
+}
+
 void
 all_report (FILE *csvf, FILE *textf)
 {
@@ -1020,6 +1034,9 @@ all_report (FILE *csvf, FILE *textf)
 	size_t ml;
 	char sdev_str_buffer[80];
 	const char *sdev_str;
+
+	int rank = 0;
+	bool_t showrank;
 
 	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, Encounter);
 	calc_obtained_playedby(Encounter, N_encounters);
@@ -1045,16 +1062,30 @@ all_report (FILE *csvf, FILE *textf)
 				"PLAYER", "RATING", "POINTS", "PLAYED", "(%)");
 	
 			for (i = 0; i < N_players; i++) {
+
 				j = Sorted[i];
 				if (!Flagged[j]) {
-				fprintf(f, "%4d %-*s %s :%7.1f %9.1f %7d %6.1f%s\n", 
-					i+1,
-					(int)ml+1,
-					Name[j],
-					get_super_player_symbolstr(j),
-					rating_round(Ratingof_results[j], 1), 
-					Obtained_results[j], Playedby_results[j]
-						, Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j], "%");
+
+					char sbuffer[80];
+					showrank = !is_old_version(j);
+					if (showrank) {
+						rank++;
+						sprintf(sbuffer,"%d",rank);
+					} else {
+						sbuffer[0] = '\0';
+					}
+
+					if (showrank || !hide_old_ver) {
+						fprintf(f, "%4s %-*s %s :%7.0f %9.1f %7d %6.1f%s\n", 
+							sbuffer,
+							(int)ml+1,
+							Name[j],
+							get_super_player_symbolstr(j),
+							rating_round(Ratingof_results[j], 0), 
+							Obtained_results[j], Playedby_results[j]
+							, Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j], "%");
+					}
+	
 				} else {
 				fprintf(f, "%4d %-*s   :%7s %9s %7s %6s%s\n", 
 					i+1,
