@@ -1576,12 +1576,12 @@ relpriors_load(const char *f_name)
 				}
 				csv_line_done(&csvln);		
 			} else {
-				printf ("Failure to input CSV file\n");	
+				printf ("Failure to input -r file\n");	
 				exit(EXIT_FAILURE);
 			}
 			
 			if (!success) {
-				printf ("{Problems with input in CSV file\n");	
+				printf ("Problems with input in -r file\n");	
 				exit(EXIT_FAILURE);
 			}
 
@@ -1747,6 +1747,8 @@ priors_load(const char *fpriors_name)
 
 	if (NULL != (fpriors = fopen (fpriors_name, "r"))) {
 
+		csv_line_t csvln;
+
 		while (file_success && NULL != fgets(myline, MAX_MYLINE, fpriors)) {
 			success = FALSE;
 			p = myline;
@@ -1755,7 +1757,7 @@ priors_load(const char *fpriors_name)
 			x = 0;
 			y = 0;
 			if (*p == '\0') continue;
-
+#if 0
 			if (isquote(*p++)) {
 				while (*p != '\0' && !isquote(*p)) {*s++ = *p++;}
 				*s = '\0';
@@ -1766,6 +1768,18 @@ priors_load(const char *fpriors_name)
 					}
 				}
 			}
+#else
+			if (csv_line_init(&csvln, myline)) {
+				success = csvln.n >= 3 && getnum(csvln.s[1], &x) && getnum(csvln.s[2], &y);
+				if (success) {
+					strcpy(name_prior, csvln.s[0]);
+				}
+				csv_line_done(&csvln);		
+			} else {
+				printf ("Failure to input -r file\n");	
+				exit(EXIT_FAILURE);
+			}
+#endif
 
 			file_success = success;
 			prior_success = assign_prior (name_prior, x, y);
