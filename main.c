@@ -1505,6 +1505,32 @@ relpriors_show(void)
 	printf ("}\n");
 }
 
+static bool_t
+assign_relative_prior (char *s, char *z, double x, double y)
+{
+	bool_t prior_success = TRUE;
+	bool_t suc;
+
+	if (y < 0) {
+		printf ("Relative Prior, %s %s --> FAILED, error/uncertainty cannot be negative", s, z);	
+		suc = FALSE;
+	} else {
+		if (y < PRIOR_SMALLEST_SIGMA) {
+			fprintf (stderr,"sigma too small\n");
+			exit(EXIT_FAILURE);
+		} else {
+			suc = set_relprior (s, z, x, y);
+			if (suc) {
+				printf ("Relative Prior, %s, %s --> %.1lf, %.1lf\n", s, z, x, y);
+			} else {
+				printf ("Relative Prior, %s, %s --> FAILED, name/s not found in input file\n", s, z);					
+			}	
+		}
+	}
+	if (!suc) prior_success = FALSE;
+	return prior_success;
+}
+
 static void
 relpriors_load(const char *f_name)
 {
@@ -1529,7 +1555,7 @@ relpriors_load(const char *f_name)
 
 	if (NULL != (fil = fopen (f_name, "r"))) {
 
-csv_line_t csvln;
+		csv_line_t csvln;
 
 		while (file_success && NULL != fgets(myline, MAX_MYLINE, fil)) {
 			success = FALSE;
@@ -1561,28 +1587,8 @@ csv_line_t csvln;
 
 			file_success = success;
 
-			{
-				bool_t suc;
-				if (y < 0) {
-					printf ("Relative Prior, %s %s --> FAILED, error/uncertainty cannot be negative", s, z);	
-					suc = FALSE;
-				} else 
-				if (y < PRIOR_SMALLEST_SIGMA) {
+			prior_success = assign_relative_prior (s, z, x, y);
 
-					fprintf (stderr,"sigma too small\n");
-					exit(EXIT_FAILURE);
-
-				} else {
-					suc = set_relprior (s, z, x, y);
-					if (suc) {
-						printf ("Relative Prior, %s, %s --> %.1lf, %.1lf\n", s, z, x, y);
-					} else {
-						printf ("Relative Prior, %s, %s --> FAILED, name/s not found in input file\n", s, z);					
-					}	
-				}
-				if (!suc) prior_success = FALSE;
-			}
-			
 		}
 
 		fclose(fil);
@@ -1690,6 +1696,35 @@ set_prior (const char *player_name, double x, double sigma)
 
 static bool_t has_a_prior(int j) {return PP[j].set;}
 
+static bool_t
+assign_prior (char *name_prior, double x, double y)
+{
+	bool_t prior_success = TRUE;
+	bool_t suc;
+	if (y < 0) {
+			printf ("Prior, %s --> FAILED, error/uncertainty cannot be negative", name_prior);	
+			suc = FALSE;
+	} else { 
+		if (y < PRIOR_SMALLEST_SIGMA) {
+			suc = set_anchor (name_prior, x);
+			if (suc) {
+				printf ("Anchoring, %s --> %.1lf\n", name_prior, x);
+			} else {
+				printf ("Prior, %s --> FAILED, name not found in input file\n", name_prior);
+			}
+		} else {
+			suc = set_prior (name_prior, x, y);
+			if (suc) {
+				printf ("Prior, %s --> %.1lf, %.1lf\n", name_prior, x, y);
+			} else {
+				printf ("Prior, %s --> FAILED, name not found in input file\n", name_prior);					
+			}	
+		}
+	}
+	if (!suc) prior_success = FALSE;
+	return prior_success;
+}
+
 static void
 priors_load(const char *fpriors_name)
 {
@@ -1731,32 +1766,9 @@ priors_load(const char *fpriors_name)
 					}
 				}
 			}
-			if (success) {
-				bool_t suc;
-				if (y < 0) {
-					printf ("Prior, %s --> FAILED, error/uncertainty cannot be negative", name_prior);	
-					suc = FALSE;
-				} else 
-				if (y < PRIOR_SMALLEST_SIGMA) {
-					suc = set_anchor (name_prior, x);
-					if (suc) {
-						printf ("Anchoring, %s --> %.1lf\n", name_prior, x);
-					} else {
-						printf ("Prior, %s --> FAILED, name not found in input file\n", name_prior);
-					}
-				} else {
-					suc = set_prior (name_prior, x, y);
-					if (suc) {
-						printf ("Prior, %s --> %.1lf, %.1lf\n", name_prior, x, y);
-					} else {
-						printf ("Prior, %s --> FAILED, name not found in input file\n", name_prior);					
-					}	
-				}
-				if (!suc) prior_success = FALSE;
-			}
-			else {
-				file_success = FALSE;
-			} 
+
+			file_success = success;
+			prior_success = assign_prior (name_prior, x, y);
 		}
 
 		fclose(fpriors);
