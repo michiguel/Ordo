@@ -447,7 +447,7 @@ int main (int argc, char *argv[])
 						}
 						break;
 			case 'A': 	if (strlen(opt_arg) < MAX_ANCHORSIZE-1) {
-							strcpy (Anchor_name, opt_arg);
+							strcpy (Anchor_name, opt_arg); //FIXME
 							Anchor_use = TRUE;
 						} else {
 							fprintf(stderr, "ERROR: anchor name is too long\n");
@@ -1571,8 +1571,8 @@ relpriors_load(const char *f_name)
 			if (csv_line_init(&csvln, myline)) {
 				success = csvln.n == 4 && getnum(csvln.s[2], &x) && getnum(csvln.s[3], &y);
 				if (success) {
-					strcpy(s, csvln.s[0]);
-					strcpy(z, csvln.s[1]);
+					strcpy(s, csvln.s[0]); //FIXME
+					strcpy(z, csvln.s[1]); //FIXME
 				}
 				csv_line_done(&csvln);		
 			} else {
@@ -1772,11 +1772,23 @@ priors_load(const char *fpriors_name)
 			if (csv_line_init(&csvln, myline)) {
 				success = csvln.n >= 3 && getnum(csvln.s[1], &x) && getnum(csvln.s[2], &y);
 				if (success) {
-					strcpy(name_prior, csvln.s[0]);
+					strcpy(name_prior, csvln.s[0]); //FIXME
 				}
+
+if (success && csvln.n > 3) {
+	int i;
+	double acc = y*y;
+	for (i = 3; success && i < csvln.n; i++) {
+		success = getnum(csvln.s[i], &y);
+		if (success) acc += y*y;		
+	}
+	y = sqrt(acc);
+}
+
+
 				csv_line_done(&csvln);		
 			} else {
-				printf ("Failure to input -r file\n");	
+				printf ("Failure to input -r file\n");
 				exit(EXIT_FAILURE);
 			}
 #endif
