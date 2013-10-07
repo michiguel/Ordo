@@ -50,6 +50,8 @@
 #include "groups.h"
 #include "mytypes.h"
 
+#include "csv.h"
+
 /*
 |
 |	GENERAL OPTIONS
@@ -273,7 +275,7 @@ struct relprior Ra[MAX_RELPRIORS];
 long int N_relative_anchors = 0;
 static bool_t hide_old_ver = FALSE;
 
-static char *csv_gettoken(char *p, char *s, size_t max);
+
 static bool_t set_relprior (const char *player_a, const char *player_b, double x, double sigma);
 static void relpriors_show(void);
 static void relpriors_load(const char *f_name);
@@ -1445,40 +1447,14 @@ init_manchors(const char *fpins_name)
 
 //== REL PRIORS ========================================
 
-static char *
-csv_gettoken(char *p, char *s, size_t max)
-{
-	char *s_ori;
-	s_ori = s;
-	p = skipblanks(p);
-	if (*p == '\0') return NULL; // no more tokens
-
-	if (issep(*p)) {
-		s[0] = '\0'; //return empty string
-		return ++p;
-	}
-
-	if (isquote(*p++)) {
-		while (*p != '\0' && (s-s_ori) < max && !isquote(*p)) {*s++ = *p++;}
-		*s = '\0';
-		if (isquote(*p++)) {
-			p = skipblanks(p);
-			if (issep(*p)) p++;
-		}
-		return p;
-	}
-
-	while (*p != '\0' && (s-s_ori) < max && !issep(*p)) {*s++ = *p++;}
-	*s = '\0';
-	if (issep(*p)) p++;
-	
-	return p;
-}
 
 static bool_t
 set_relprior (const char *player_a, const char *player_b, double x, double sigma)
 {
-	int j, n, p_a, p_b;
+	int j;
+	int p_a = -1; 
+	int p_b = -1;
+	long int n;
 	bool_t found;
 
 	assert(sigma > PRIOR_SMALLEST_SIGMA);
@@ -1506,6 +1482,8 @@ set_relprior (const char *player_a, const char *player_b, double x, double sigma
 //FIXME
 if (n >= MAX_RELPRIORS) {fprintf (stderr, "Maximum memory for relative anchors exceeded\n"); exit(EXIT_FAILURE);}
 
+if (p_a == -1 || p_b == -1) return FALSE; // defensive programming, not needed.
+
 	Ra[n].player_a = p_a;
 	Ra[n].player_b = p_b;
 	Ra[n].delta    = x;
@@ -1531,7 +1509,6 @@ static void
 relpriors_load(const char *f_name)
 {
 	#define MAX_MYLINE 1024
-	#define MAXSIZETOKEN MAX_MYLINE
 
 	FILE *fil;
 	char myline[MAX_MYLINE];
@@ -1552,26 +1529,35 @@ relpriors_load(const char *f_name)
 
 	if (NULL != (fil = fopen (f_name, "r"))) {
 
+csv_line_t csvln;
+
 		while (file_success && NULL != fgets(myline, MAX_MYLINE, fil)) {
 			success = FALSE;
 			p = myline;
 			s = name_a;
 			z = name_b;
+
 			p = skipblanks(p);
 			x = 0;
 			y = 0;
 			if (*p == '\0') continue;
 
-			success = (NULL != (p = csv_gettoken(p, s, MAXSIZETOKEN)));
-			if (!success) exit(EXIT_FAILURE);
-
-			success = (NULL != (p = csv_gettoken(p, z, MAXSIZETOKEN)));
-			if (!success) exit(EXIT_FAILURE);
-
-			p = skipblanks(p);
-
-			success = getnum2(p, &x, &y);				
-			if (!success) exit(EXIT_FAILURE);
+			if (csv_line_init(&csvln, myline)) {
+				success = csvln.n == 4 && getnum(csvln.s[2], &x) && getnum(csvln.s[3], &y);
+				if (success) {
+					strcpy(s, csvln.s[0]);
+					strcpy(z, csvln.s[1]);
+				}
+				csv_line_done(&csvln);		
+			} else {
+				printf ("Failure to input CSV file\n");	
+				exit(EXIT_FAILURE);
+			}
+			
+			if (!success) {
+				printf ("{Problems with input in CSV file\n");	
+				exit(EXIT_FAILURE);
+			}
 
 			file_success = success;
 
