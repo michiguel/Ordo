@@ -1373,6 +1373,20 @@ set_anchor (const char *player_name, double x)
 	return found;
 }
 
+static bool_t
+assign_anchor (char *name_pinned, double x)
+{
+	bool_t pin_success;
+	if (set_anchor (name_pinned, x)) {
+		pin_success = TRUE;
+		printf ("Anchoring, %s --> %.1lf\n", name_pinned, x);
+	} else {
+		pin_success = FALSE;
+		printf ("Anchoring, %s --> FAILED, name not found in input file\n", name_pinned);					
+	}
+	return pin_success;
+}
+
 static void
 init_manchors(const char *fpins_name)
 {
@@ -1395,6 +1409,8 @@ init_manchors(const char *fpins_name)
 
 	if (NULL != (fpins = fopen (fpins_name, "r"))) {
 
+		csv_line_t csvln;
+
 		while (file_success && NULL != fgets(myline, MAX_MYLINE, fpins)) {
 			success = FALSE;
 			p = myline;
@@ -1403,6 +1419,7 @@ init_manchors(const char *fpins_name)
 			x = 0;
 			if (*p == '\0') continue;
 
+#if 0
 			if (isquote(*p++)) {
 				while (*p != '\0' && !isquote(*p)) {*s++ = *p++;}
 				*s = '\0';
@@ -1413,6 +1430,25 @@ init_manchors(const char *fpins_name)
 					}
 				}
 			}
+
+#else
+			if (csv_line_init(&csvln, myline)) {
+				success = csvln.n >= 2 && getnum(csvln.s[1], &x);
+				if (success) {
+					strcpy(name_pinned, csvln.s[0]); //FIXME
+				}
+				csv_line_done(&csvln);		
+			} else {
+				printf ("Failure to input -m file\n");
+				exit(EXIT_FAILURE);
+			}
+
+
+			file_success = success;
+			pin_success = assign_anchor (name_pinned, x);
+
+
+#endif
 			if (success) {
 
 				if (set_anchor (name_pinned, x)) {
@@ -1774,18 +1810,15 @@ priors_load(const char *fpriors_name)
 				if (success) {
 					strcpy(name_prior, csvln.s[0]); //FIXME
 				}
-
-if (success && csvln.n > 3) {
-	int i;
-	double acc = y*y;
-	for (i = 3; success && i < csvln.n; i++) {
-		success = getnum(csvln.s[i], &y);
-		if (success) acc += y*y;		
-	}
-	y = sqrt(acc);
-}
-
-
+				if (success && csvln.n > 3) {
+					int i;
+					double acc = y*y;
+					for (i = 3; success && i < csvln.n; i++) {
+						success = getnum(csvln.s[i], &y);
+						if (success) acc += y*y;		
+					}
+					y = sqrt(acc);
+				}
 				csv_line_done(&csvln);		
 			} else {
 				printf ("Failure to input -r file\n");
