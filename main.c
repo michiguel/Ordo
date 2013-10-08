@@ -258,7 +258,6 @@ static bool_t Some_prior_set = FALSE;
 static int 	Priored_n = 0;
 
 static void priors_reset(struct prior *p);
-static bool_t getnum2(char *p, double *px, double *py);
 static bool_t set_prior (const char *prior_name, double x, double sigma);
 static void priors_load(const char *fpriors_name);
 
@@ -1346,8 +1345,6 @@ init_rating (void)
 }
 
 
-static bool_t issep(int c) { return c == ',';}
-static bool_t isquote(int c) { return c == '"';}
 static char *skipblanks(char *p) {while (isspace(*p)) p++; return p;}
 static bool_t getnum(char *p, double *px) 
 { 	float x;
@@ -1394,7 +1391,7 @@ init_manchors(const char *fpins_name)
 	FILE *fpins;
 	char myline[MAX_MYLINE];
 	char name_pinned[MAX_MYLINE];
-	char *s, *p;
+	char *p;
 	bool_t success;
 	double x;
 	bool_t pin_success = TRUE;
@@ -1414,24 +1411,10 @@ init_manchors(const char *fpins_name)
 		while (file_success && NULL != fgets(myline, MAX_MYLINE, fpins)) {
 			success = FALSE;
 			p = myline;
-			s = name_pinned;
 			p = skipblanks(p);
 			x = 0;
 			if (*p == '\0') continue;
 
-#if 0
-			if (isquote(*p++)) {
-				while (*p != '\0' && !isquote(*p)) {*s++ = *p++;}
-				*s = '\0';
-				if (isquote(*p++)) {
-					p = skipblanks(p);
-					if (issep(*p++)) {
-						success = getnum(p, &x);				
-					}
-				}
-			}
-
-#else
 			if (csv_line_init(&csvln, myline)) {
 				success = csvln.n >= 2 && getnum(csvln.s[1], &x);
 				if (success) {
@@ -1442,25 +1425,8 @@ init_manchors(const char *fpins_name)
 				printf ("Failure to input -m file\n");
 				exit(EXIT_FAILURE);
 			}
-
-
 			file_success = success;
 			pin_success = assign_anchor (name_pinned, x);
-
-
-#endif
-			if (success) {
-
-				if (set_anchor (name_pinned, x)) {
-					printf ("Anchoring, %s --> %.1lf\n", name_pinned, x);
-				} else {
-					pin_success = FALSE;
-					printf ("Anchoring, %s --> FAILED, name not found in input file\n", name_pinned);					
-				}	
-			}
-			else {
-				file_success = FALSE;
-			} 
 		}
 
 		fclose(fpins);
@@ -1477,7 +1443,6 @@ init_manchors(const char *fpins_name)
 			fprintf (stderr, "Errors in file \"%s\" (not matching names)\n",fpins_name);
 			exit(EXIT_FAILURE);
 	}
-
 	return;
 }
 
@@ -1702,14 +1667,6 @@ priors_reset(struct prior *p)
 	Priored_n = 0;
 }
 
-static bool_t getnum2(char *p, double *px, double *py) 
-{ 	float x,y;
-	bool_t ok = 2 == sscanf( p, "%f,%f", &x, &y);
-	*px = (double) x;
-	*py = (double) y;
-	return ok;
-}
-
 static bool_t
 set_prior (const char *player_name, double x, double sigma)
 {
@@ -1768,7 +1725,7 @@ priors_load(const char *fpriors_name)
 	FILE *fpriors;
 	char myline[MAX_MYLINE];
 	char name_prior[MAX_MYLINE];
-	char *s, *p;
+	char *p;
 	bool_t success;
 	double x, y;
 	bool_t prior_success = TRUE;
@@ -1788,23 +1745,11 @@ priors_load(const char *fpriors_name)
 		while (file_success && NULL != fgets(myline, MAX_MYLINE, fpriors)) {
 			success = FALSE;
 			p = myline;
-			s = name_prior;
 			p = skipblanks(p);
 			x = 0;
 			y = 0;
 			if (*p == '\0') continue;
-#if 0
-			if (isquote(*p++)) {
-				while (*p != '\0' && !isquote(*p)) {*s++ = *p++;}
-				*s = '\0';
-				if (isquote(*p++)) {
-					p = skipblanks(p);
-					if (issep(*p++)) {
-						success = getnum2(p, &x, &y);				
-					}
-				}
-			}
-#else
+
 			if (csv_line_init(&csvln, myline)) {
 				success = csvln.n >= 3 && getnum(csvln.s[1], &x) && getnum(csvln.s[2], &y);
 				if (success) {
@@ -1824,7 +1769,6 @@ priors_load(const char *fpriors_name)
 				printf ("Failure to input -r file\n");
 				exit(EXIT_FAILURE);
 			}
-#endif
 
 			file_success = success;
 			prior_success = assign_prior (name_prior, x, y);
