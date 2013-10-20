@@ -1766,7 +1766,7 @@ priors_load(const char *fpriors_name)
 				}
 				csv_line_done(&csvln);		
 			} else {
-				printf ("Failure to input -r file\n");
+				printf ("Failure to input -y file\n");
 				exit(EXIT_FAILURE);
 			}
 
@@ -2469,7 +2469,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 	double 	olddev, curdev, outputdev;
 	int 	i;
 	int		rounds = 10000;
-	double 	delta = 200.0;
+	double 	delta = Rtng_76; //should be proportional to the scale
 	double 	denom = 3;
 	int 	phase = 0;
 	int 	n = 40;
