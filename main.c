@@ -128,6 +128,7 @@ static void usage (void);
 		" -s  #       perform # simulations to calculate errors\n"
 		" -e <file>   saves an error matrix, if -s was used\n"
 		" -F <value>  confidence (%) to estimate error margins. Default is 95.0\n"
+		" -D <value>  Output decimals, minimum is 0 (default=1)\n"
 		"\n"
 		;
 
@@ -137,7 +138,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWLa:A:m:r:y:o:g:c:s:w:u:z:e:TF:R";
+const char *OPTION_LIST = "vhHp:qWLa:A:m:r:y:o:g:c:s:w:u:z:e:TF:RD:";
 
 /*
 |
@@ -224,6 +225,8 @@ static double	Rtng_76 = 202;
 static double	Inv_beta = INVBETA;
 static double	BETA = 1.0/INVBETA;
 static double	Confidence_factor = 1.0;
+
+static int		OUTDECIMALS = 1;
 
 struct GAMESTATS {
 	long int
@@ -487,6 +490,11 @@ int main (int argc, char *argv[])
 						Wa_prior.rating = 0; //40.0; 
 						Wa_prior.sigma = 200.0; //20;
 						switch_W = TRUE;
+						break;
+			case 'D': 	if (1 != sscanf(opt_arg,"%d", &OUTDECIMALS) || OUTDECIMALS < 0) {
+							fprintf(stderr, "wrong decimals parameter\n");
+							exit(EXIT_FAILURE);
+						}
 						break;
 			case '?': 	parameter_error();
 						exit(EXIT_FAILURE);
@@ -1077,12 +1085,13 @@ all_report (FILE *csvf, FILE *textf)
 					}
 
 					if (showrank || !hide_old_ver) {
-						fprintf(f, "%4s %-*s %s :%7.0f %9.1f %7d %6.1f%s\n", 
+						fprintf(f, "%4s %-*s %s :%7.*f %9.1f %7d %6.1f%s\n", 
 							sbuffer,
 							(int)ml+1,
 							Name[j],
 							get_super_player_symbolstr(j),
-							rating_round(Ratingof_results[j], 0), 
+							OUTDECIMALS,
+							rating_round(Ratingof_results[j], OUTDECIMALS), 
 							Obtained_results[j], Playedby_results[j]
 							, Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j], "%");
 					}
@@ -1110,20 +1119,22 @@ all_report (FILE *csvf, FILE *textf)
 					sdev_str = "  ----";
 				}
 				if (!Flagged[j]) {
-				fprintf(f, "%4d %-*s %s :%7.1f %s %8.1f %7d %6.1f%s\n", 
+				fprintf(f, "%4d %-*s %s :%7.*f %s %8.1f %7d %6.1f%s\n", 
 					i+1,
 					(int)ml+1, 
 					Name[j],
  					get_super_player_symbolstr(j),
-					rating_round(Ratingof_results[j], 1), 
+					OUTDECIMALS,
+					rating_round(Ratingof_results[j], OUTDECIMALS), 
 					sdev_str, Obtained_results[j], Playedby_results[j], 
 					Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], "%");
 				} else if (!is_super_player(j)) {
-				fprintf(f, "%4d %-*s   :%7.1f %s %8.1f %7d %6.1f%s\n", 
+				fprintf(f, "%4d %-*s   :%7.*f %s %8.1f %7d %6.1f%s\n", 
 					i+1,
 					(int)ml+1, 
 					Name[j], 
-					rating_round(Ratingof_results[j], 1), 
+					OUTDECIMALS,
+					rating_round(Ratingof_results[j], OUTDECIMALS), 
 					"  ****", Obtained_results[j], Playedby_results[j], 
 					Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], "%");
 				} else {
