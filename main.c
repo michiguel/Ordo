@@ -115,7 +115,7 @@ static void usage (void);
 		" -m <file>   multiple anchors: file contains rows of \"AnchorName\",AnchorRating\n"
 		" -y <file>   loose anchors: file contains rows of \"Player\",Rating,Uncertainty\n"
 		" -r <file>   relations: rows of \"PlayerA\",\"PlayerB\",delta_rating,uncertainty\n"
-		" -R          remove older versions (given by switch -d) from the ouput\n"
+		" -R          remove older player versions (given by -r) from the ouput\n"
 		" -w <value>  white advantage value (default=0.0)\n"
 		" -u <value>  white advantage uncertainty value (default=0.0)\n"
 		" -W          white advantage, automatically adjusted\n"
