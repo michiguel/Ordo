@@ -304,8 +304,9 @@ static void		init_manchors(const char *fpins_name);
 double			adjust_rating (double delta, double kappa);
 static int		calc_rating (bool_t quiet, struct ENC *enc, int N_enc);
 double 			deviation (void);
-void			ratings_restore (void);
-void			ratings_backup  (void);
+
+static void		ratings_restore (int n_players, const double *r_bk, double *r_of);
+static void		ratings_backup  (int n_players, const double *r_of, double *r_bk);
 
 static double	xpect (double a, double b);
 
@@ -2126,7 +2127,7 @@ static double
 ufex (double excess)
 {
 	double u;
-	ratings_backup();
+	ratings_backup  (N_players, Ratingof, Ratingbk);
 	ratings_apply_excess_correction(excess);
 	u = prior_unfitness
 
@@ -2139,7 +2140,7 @@ ufex (double excess)
 				, Ratingof
 				);
 
-	ratings_restore();
+	ratings_restore (N_players, Ratingbk, Ratingof);
 	return u;
 }
 
@@ -2265,21 +2266,23 @@ adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average)
 	}
 }
 
-void
-ratings_restore (void)
+// no globals
+static void
+ratings_restore (int n_players, const double *r_bk, double *r_of)
 {
 	int j;
-	for (j = 0; j < N_players; j++) {
-		Ratingof[j] = Ratingbk[j];
+	for (j = 0; j < n_players; j++) {
+		r_of[j] = r_bk[j];
 	}	
 }
 
-void
-ratings_backup (void)
+// no globals
+static void
+ratings_backup (int n_players, const double *r_of, double *r_bk)
 {
 	int j;
-	for (j = 0; j < N_players; j++) {
-		Ratingbk[j] = Ratingof[j];
+	for (j = 0; j < n_players; j++) {
+		r_bk[j] = r_of[j];
 	}	
 }
 
@@ -2576,7 +2579,7 @@ double white_advantage = *pwadv;
 
 		for (i = 0; i < rounds; i++) {
 			double kappa = 1.0;
-			ratings_backup();
+			ratings_backup  (N_players, Ratingof, Ratingbk);
 			olddev = curdev;
 
 			// Calc "Changing" vector
@@ -2611,12 +2614,12 @@ double white_advantage = *pwadv;
 							, Ratingof);
 
 			if (curdev >= olddev) {
-				ratings_restore();
+				ratings_restore (N_players, Ratingbk, Ratingof);
 				curdev = olddev;
 				assert (curdev == olddev);
 				break;
 			} else {
-				ratings_backup();
+				ratings_backup  (N_players, Ratingof, Ratingbk);
 				olddev = curdev;
 			}	
 
@@ -2703,7 +2706,7 @@ calc_rating_ori (bool_t quiet, struct ENC *enc, int N_enc)
 		double kk = 1.0;
 		for (i = 0; i < rounds; i++) {
 
-			ratings_backup();
+			ratings_backup  (N_players, Ratingof, Ratingbk);
 			olddev = curdev;
 
 			resol = adjust_rating(delta,kappa*kk);
@@ -2711,7 +2714,7 @@ calc_rating_ori (bool_t quiet, struct ENC *enc, int N_enc)
 			curdev = deviation();
 
 			if (curdev >= olddev) {
-				ratings_restore();
+				ratings_restore (N_players, Ratingbk, Ratingof);
 				calc_expected(enc, N_enc);
 				curdev = deviation();	
 				assert (curdev == olddev);
