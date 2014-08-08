@@ -1885,19 +1885,29 @@ prior_unfitness	( int n_players
 	return accum;
 }
 
-
+// no globals
 static double
-calc_bayes_unfitness_full (struct ENC *enc, double wadv) 
+calc_bayes_unfitness_full	
+				( int n_enc
+				, const struct ENC *enc
+				, int n_players
+				, const struct prior *p
+				, double wadv
+				, struct prior wa_prior
+				, long int n_relative_anchors
+				, const struct relprior *ra
+				, const double *ratingof
+)
 {
 	double pw, pd, pl, accum;
 	int e,w,b, ww,dd,ll;
 
-	for (accum = 0, e = 0; e < N_encounters; e++) {
+	for (accum = 0, e = 0; e < n_enc; e++) {
 	
 		w = enc[e].wh;
 		b = enc[e].bl;
 
-		get_pWDL(Ratingof[w] + wadv - Ratingof[b], &pw, &pd, &pl);
+		get_pWDL(ratingof[w] + wadv - ratingof[b], &pw, &pd, &pl);
 
 		ww = enc[e].W;
 		dd = enc[e].D;
@@ -1909,13 +1919,13 @@ calc_bayes_unfitness_full (struct ENC *enc, double wadv)
 	}
 	// Priors
 	accum += -prior_unfitness
-				( N_players
-				, PP
+				( n_players
+				, p
 				, wadv
-				, Wa_prior
-				, N_relative_anchors
-				, Ra
-				, Ratingof
+				, wa_prior
+				, n_relative_anchors
+				, ra
+				, ratingof
 				);
 
 	return -accum;
@@ -2536,7 +2546,16 @@ calc_rating_bayes (bool_t quiet, struct ENC *enc, int N_enc, double *pwadv)
 double white_advantage = *pwadv;
 
 	// initial deviation
-	olddev = curdev = calc_bayes_unfitness_full (enc, white_advantage);
+	olddev = curdev = calc_bayes_unfitness_full	
+							( N_enc
+							, enc
+							, N_players
+							, PP
+							, white_advantage
+							, Wa_prior
+							, N_relative_anchors
+							, Ra
+							, Ratingof);
 
 	if (!quiet) printf ("Converging...\n\n");
 	if (!quiet) printf ("%3s %4s %10s %10s\n", "phase", "iteration", "unfitness","resolution");
@@ -2568,7 +2587,16 @@ double white_advantage = *pwadv;
 			resol = adjust_rating_bayes(delta*kappa,Changing);
 			resol = (resol_prev + resol) / 2;
 
-			curdev = calc_bayes_unfitness_full (enc, white_advantage);
+			curdev = calc_bayes_unfitness_full	
+							( N_enc
+							, enc
+							, N_players
+							, PP
+							, white_advantage
+							, Wa_prior
+							, N_relative_anchors
+							, Ra
+							, Ratingof);
 
 			if (curdev >= olddev) {
 				ratings_restore();
@@ -2780,9 +2808,42 @@ adjust_wadv_bayes (struct ENC *enc, double start_wadv, double resol)
 	wa = start_wadv;
 
 	do {	
-		ei = calc_bayes_unfitness_full (enc, wa - delta);
-		ej = calc_bayes_unfitness_full (enc, wa        );
-		ek = calc_bayes_unfitness_full (enc, wa + delta);
+//		ei = calc_bayes_unfitness_full (enc, wa - delta);
+//		ej = calc_bayes_unfitness_full (enc, wa        );
+//		ek = calc_bayes_unfitness_full (enc, wa + delta);
+
+		ei = calc_bayes_unfitness_full	
+							( N_encounters
+							, enc
+							, N_players
+							, PP
+							, wa - delta //
+							, Wa_prior
+							, N_relative_anchors
+							, Ra
+							, Ratingof);
+
+		ej = calc_bayes_unfitness_full	
+							( N_encounters
+							, enc
+							, N_players
+							, PP
+							, wa         //
+							, Wa_prior
+							, N_relative_anchors
+							, Ra
+							, Ratingof);
+
+		ek = calc_bayes_unfitness_full	
+							( N_encounters
+							, enc
+							, N_players
+							, PP
+							, wa + delta //
+							, Wa_prior
+							, N_relative_anchors
+							, Ra
+							, Ratingof);
 
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 4;
