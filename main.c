@@ -2053,7 +2053,7 @@ static void ratings_apply_excess_correction(double excess);
 static double absol(double x) {return x < 0? -x: x;}
 
 static double
-adjust_rating_bayes (double delta, double *change_vector)
+adjust_rating_bayes (double delta, const double *change_vector)
 {
 	int 	j, notflagged;
 	double 	excess, average;
@@ -2848,37 +2848,37 @@ adjust_wadv_bayes
 //		ek = calc_bayes_unfitness_full (enc, wa + delta);
 
 		ei = calc_bayes_unfitness_full	
-							( N_encounters
+							( n_enc
 							, enc
-							, N_players
-							, PP
+							, n_players
+							, p
 							, wa - delta //
-							, Wa_prior
-							, N_relative_anchors
-							, Ra
-							, Ratingof);
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof);
 
 		ej = calc_bayes_unfitness_full	
-							( N_encounters
+							( n_enc
 							, enc
-							, N_players
-							, PP
+							, n_players
+							, p
 							, wa         //
-							, Wa_prior
-							, N_relative_anchors
-							, Ra
-							, Ratingof);
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof);
 
 		ek = calc_bayes_unfitness_full	
-							( N_encounters
+							( n_enc
 							, enc
-							, N_players
-							, PP
+							, n_players
+							, p
 							, wa + delta //
-							, Wa_prior
-							, N_relative_anchors
-							, Ra
-							, Ratingof);
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof);
 
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 4;
