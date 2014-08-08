@@ -2049,7 +2049,7 @@ derivative_vector_calc 	( double delta
 }
 
 static double fitexcess(void);
-static void ratings_apply_excess_correction(double excess);
+static void ratings_apply_excess_correction(double excess, int n_players, bool_t *flagged, double *ratingof);
 
 static double absol(double x) {return x < 0? -x: x;}
 
@@ -2105,7 +2105,7 @@ adjust_rating_bayes (double delta, const double *change_vector)
 	}
 
 	// Correct the excess
-	ratings_apply_excess_correction(excess);
+	ratings_apply_excess_correction(excess, N_players, Flagged, Ratingof);
 
 	// Return maximum increase/decrease ==> "resolution"
 	return ymax * delta;
@@ -2114,12 +2114,12 @@ adjust_rating_bayes (double delta, const double *change_vector)
 
 
 static void
-ratings_apply_excess_correction(double excess)
+ratings_apply_excess_correction(double excess, int n_players, bool_t *flagged, double *ratingof)
 {
 	int j;
-	for (j = 0; j < N_players; j++) {
-		if (!Flagged[j])
-			Ratingof[j] -= excess;
+	for (j = 0; j < n_players; j++) {
+		if (!flagged[j])
+			ratingof[j] -= excess;
 	}
 }
 
@@ -2128,7 +2128,8 @@ ufex (double excess)
 {
 	double u;
 	ratings_backup  (N_players, Ratingof, Ratingbk);
-	ratings_apply_excess_correction(excess);
+	ratings_apply_excess_correction(excess, N_players, Flagged, Ratingof);
+
 	u = prior_unfitness
 
 				( N_players
