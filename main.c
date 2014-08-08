@@ -1904,7 +1904,7 @@ calc_bayes_unfitness_full (struct ENC *enc, double wadv)
 
 //============================================
 
-double probarray [MAXPLAYERS] [4];
+double Probarray [MAXPLAYERS] [4];
 
 static double
 get_extra_unfitness_j (double R, int j, struct prior *p)
@@ -1922,11 +1922,12 @@ get_extra_unfitness_j (double R, int j, struct prior *p)
 	return u;
 }
 
+// no globals
 static void
-probarray_reset(void)
+probarray_reset(int n_players, double probarray[MAXPLAYERS][4])
 {
 	int j, k;
-	for (j = 0; j < N_players; j++) {
+	for (j = 0; j < n_players; j++) {
 		for (k = 0; k < 4; k++) {
 			probarray[j][k] = 0;
 		}	
@@ -1934,7 +1935,7 @@ probarray_reset(void)
 }
 
 static void
-probarray_build(struct ENC *enc, double inputdelta)
+probarray_build(const struct ENC *enc, double inputdelta)
 {
 	double pw, pd, pl, delta;
 	double p;
@@ -1947,22 +1948,22 @@ probarray_build(struct ENC *enc, double inputdelta)
 		get_pWDL(Ratingof[w] + delta + White_advantage - Ratingof[b], &pw, &pd, &pl);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
-		probarray [w] [1] -= p;			
-		probarray [b] [1] -= p;	
+		Probarray [w] [1] -= p;			
+		Probarray [b] [1] -= p;	
 
 		delta = +inputdelta;
 		get_pWDL(Ratingof[w] + delta + White_advantage - Ratingof[b], &pw, &pd, &pl);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
-		probarray [w] [2] -= p;			
-		probarray [b] [0] -= p;	
+		Probarray [w] [2] -= p;			
+		Probarray [b] [0] -= p;	
 
 		delta = -inputdelta;
 		get_pWDL(Ratingof[w] + delta + White_advantage - Ratingof[b], &pw, &pd, &pl);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
-		probarray [w] [0] -= p;			
-		probarray [b] [2] -= p;	
+		Probarray [w] [0] -= p;			
+		Probarray [b] [2] -= p;	
 
 	}
 }
@@ -1973,9 +1974,9 @@ derivative_single (int j, double delta /*, struct ENC *enc*/)
 	double decrem, increm, center;
 	double change;
 
-	decrem = probarray [j] [0] + get_extra_unfitness_j (Ratingof[j] - delta, j, PP);
-	center = probarray [j] [1] + get_extra_unfitness_j (Ratingof[j]        , j, PP);
-	increm = probarray [j] [2] + get_extra_unfitness_j (Ratingof[j] + delta, j, PP);
+	decrem = Probarray [j] [0] + get_extra_unfitness_j (Ratingof[j] - delta, j, PP);
+	center = Probarray [j] [1] + get_extra_unfitness_j (Ratingof[j]        , j, PP);
+	increm = Probarray [j] [2] + get_extra_unfitness_j (Ratingof[j] + delta, j, PP);
 
 	if (center < decrem && center < increm) {
 		change = decrem > increm? 0.5: -0.5; 
@@ -1986,10 +1987,10 @@ derivative_single (int j, double delta /*, struct ENC *enc*/)
 }
 
 static void
-derivative_vector_calc (double delta, double *vector, struct ENC *enc)
+derivative_vector_calc (double delta, double *vector, const struct ENC *enc)
 {
 	int j;
-	probarray_reset();
+	probarray_reset(N_players, Probarray);
 	probarray_build(enc, delta);
 
 	for (j = 0; j < N_players; j++) {
