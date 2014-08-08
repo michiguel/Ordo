@@ -2528,7 +2528,19 @@ super_players_present(void)
 	return found;
 }
 
-static double adjust_wadv_bayes (struct ENC *enc, double start_wadv, double resol);
+static double
+adjust_wadv_bayes 
+				( int n_enc
+				, const struct ENC *enc
+				, int n_players
+				, const struct prior *p
+				, double start_wadv
+				, struct prior wa_prior
+				, long int n_relative_anchors
+				, const struct relprior *ra
+				, const double *ratingof
+				, double resol
+);
 
 static int
 calc_rating_bayes (bool_t quiet, struct ENC *enc, int N_enc, double *pwadv)
@@ -2626,7 +2638,18 @@ double white_advantage = *pwadv;
 							// but it will adjust it based on the results. This is useful
 							// for -W
 			) {
-			white_advantage = adjust_wadv_bayes (enc, white_advantage, resol);
+			white_advantage = adjust_wadv_bayes 
+							( N_enc
+							, enc
+							, N_players
+							, PP
+							, white_advantage
+							, Wa_prior
+							, N_relative_anchors
+							, Ra
+							, Ratingof
+							, resol);
+
 			*pwadv = white_advantage;
 		}
 
@@ -2799,8 +2822,20 @@ adjust_wadv (double start_wadv)
 }
 #endif
 
+// no globals
 static double
-adjust_wadv_bayes (struct ENC *enc, double start_wadv, double resol)
+adjust_wadv_bayes 
+				( int n_enc
+				, const struct ENC *enc
+				, int n_players
+				, const struct prior *p
+				, double start_wadv
+				, struct prior wa_prior
+				, long int n_relative_anchors
+				, const struct relprior *ra
+				, const double *ratingof
+				, double resol
+)
 {
 	double delta, wa, ei, ej, ek;
 
