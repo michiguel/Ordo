@@ -2048,7 +2048,16 @@ derivative_vector_calc 	( double delta
 	}	
 }
 
-static double fitexcess(void);
+static double fitexcess ( int n_players
+						, const struct prior *p
+						, double wadv
+						, struct prior wa_prior
+						, long int n_relative_anchors
+						, const struct relprior *ra
+						, double *ratingof
+						, double *ratingbk
+						, bool_t *flagged);
+
 static void ratings_apply_excess_correction(double excess, int n_players, bool_t *flagged, double *ratingof);
 
 static double absol(double x) {return x < 0? -x: x;}
@@ -2085,7 +2094,16 @@ adjust_rating_bayes (double delta, const double *change_vector)
 
 	} else if (Some_prior_set) {
  
-		excess = fitexcess();
+		excess = fitexcess
+					( N_players
+					, PP
+					, White_advantage
+					, Wa_prior
+					, N_relative_anchors
+					, Ra
+					, Ratingof
+					, Ratingbk
+					, Flagged);
 
 	} else if (Anchor_use) {
 
@@ -2123,6 +2141,7 @@ ratings_apply_excess_correction(double excess, int n_players, bool_t *flagged, d
 	}
 }
 
+// no globals
 static double
 ufex
 				( double excess
@@ -2156,9 +2175,18 @@ ufex
 	return u;
 }
 
-
+// no globals
 static double
-fitexcess(void)
+fitexcess 		( int n_players
+				, const struct prior *p
+				, double wadv
+				, struct prior wa_prior
+				, long int n_relative_anchors
+				, const struct relprior *ra
+				, double *ratingof
+				, double *ratingbk
+				, bool_t *flagged
+)
 {
 	double ub, ut, uc, newb, newt, newc;
 	double c = 0;
@@ -2166,42 +2194,39 @@ fitexcess(void)
 	double b = c - 100;
 
 	do {
-//		ub = ufex(b);
-//		uc = ufex(c);
-//		ut = ufex(t);
 
 		ub = ufex 	( b
-					, N_players
-					, PP
-					, White_advantage
-					, Wa_prior
-					, N_relative_anchors
-					, Ra
-					, Ratingof
-					, Ratingbk
-					, Flagged);
+					, n_players
+					, p
+					, wadv
+					, wa_prior
+					, n_relative_anchors
+					, ra
+					, ratingof
+					, ratingbk
+					, flagged);
 
 		uc = ufex 	( c
-					, N_players
-					, PP
-					, White_advantage
-					, Wa_prior
-					, N_relative_anchors
-					, Ra
-					, Ratingof
-					, Ratingbk
-					, Flagged);
+					, n_players
+					, p
+					, wadv
+					, wa_prior
+					, n_relative_anchors
+					, ra
+					, ratingof
+					, ratingbk
+					, flagged);
 
 		ut = ufex 	( t
-					, N_players
-					, PP
-					, White_advantage
-					, Wa_prior
-					, N_relative_anchors
-					, Ra
-					, Ratingof
-					, Ratingbk
-					, Flagged);
+					, n_players
+					, p
+					, wadv
+					, wa_prior
+					, n_relative_anchors
+					, ra
+					, ratingof
+					, ratingbk
+					, flagged);
 
 
 		if (uc <= ub && uc <= ut) {
