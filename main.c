@@ -2124,24 +2124,35 @@ ratings_apply_excess_correction(double excess, int n_players, bool_t *flagged, d
 }
 
 static double
-ufex (double excess)
+ufex
+				( double excess
+				, int n_players
+				, const struct prior *p
+				, double wadv
+				, struct prior wa_prior
+				, long int n_relative_anchors
+				, const struct relprior *ra
+				, double *ratingof
+				, double *ratingbk
+				, bool_t *flagged
+)
 {
 	double u;
-	ratings_backup  (N_players, Ratingof, Ratingbk);
-	ratings_apply_excess_correction(excess, N_players, Flagged, Ratingof);
+	ratings_backup  (n_players, ratingof, ratingbk);
+	ratings_apply_excess_correction(excess, n_players, flagged, ratingof);
 
 	u = prior_unfitness
 
-				( N_players
-				, PP
-				, White_advantage
-				, Wa_prior
-				, N_relative_anchors
-				, Ra
-				, Ratingof
+				( n_players
+				, p
+				, wadv
+				, wa_prior
+				, n_relative_anchors
+				, ra
+				, ratingof
 				);
 
-	ratings_restore (N_players, Ratingbk, Ratingof);
+	ratings_restore (n_players, ratingbk, ratingof);
 	return u;
 }
 
@@ -2155,9 +2166,44 @@ fitexcess(void)
 	double b = c - 100;
 
 	do {
-		ub = ufex(b);
-		uc = ufex(c);
-		ut = ufex(t);
+//		ub = ufex(b);
+//		uc = ufex(c);
+//		ut = ufex(t);
+
+		ub = ufex 	( b
+					, N_players
+					, PP
+					, White_advantage
+					, Wa_prior
+					, N_relative_anchors
+					, Ra
+					, Ratingof
+					, Ratingbk
+					, Flagged);
+
+		uc = ufex 	( c
+					, N_players
+					, PP
+					, White_advantage
+					, Wa_prior
+					, N_relative_anchors
+					, Ra
+					, Ratingof
+					, Ratingbk
+					, Flagged);
+
+		ut = ufex 	( t
+					, N_players
+					, PP
+					, White_advantage
+					, Wa_prior
+					, N_relative_anchors
+					, Ra
+					, Ratingof
+					, Ratingbk
+					, Flagged);
+
+
 		if (uc <= ub && uc <= ut) {
 			newb = (b+c)/4;
 			newt = (t+c)/4; 
