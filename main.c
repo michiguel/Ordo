@@ -282,7 +282,7 @@ static bool_t set_relprior (const char *player_a, const char *player_b, double x
 static void relpriors_show(void);
 static void relpriors_load(const char *f_name);
 static double relative_anchors_unfitness_full(void);
-static double relative_anchors_unfitness_j(double R, int j);
+static double relative_anchors_unfitness_j(double R, int j, double *ratingof, long int n_relative_anchors, struct relprior *ra);
 
 /*------------------------------------------------------------------------*/
 
@@ -1639,26 +1639,29 @@ relative_anchors_unfitness_full(void)
 	return accum;
 }
 
+// no globals
 static double
-relative_anchors_unfitness_j(double R, int j)
+relative_anchors_unfitness_j(double R, int j, double *ratingof, long int n_relative_anchors, struct relprior *ra)
 {
 	int a, b, i;
 	double d, x;
 	double accum = 0;
-double rem;
-rem = Ratingof[j];
-Ratingof[j] = R;
+	double rem;
 
-	for (i = 0; i < N_relative_anchors; i++) {
-		a = Ra[i].player_a;
-		b = Ra[i].player_b;
+	rem = ratingof[j];
+	ratingof[j] = R;
+
+	for (i = 0; i < n_relative_anchors; i++) {
+		a = ra[i].player_a;
+		b = ra[i].player_b;
 		if (a == j || b == j) {
-			d = Ratingof[a] - Ratingof[b];
-			x = (d - Ra[i].delta)/Ra[i].sigma;
+			d = ratingof[a] - ratingof[b];
+			x = (d - ra[i].delta)/ra[i].sigma;
 			accum += 0.5 * x * x;
 		}
 	}
-Ratingof[j] = rem;
+
+	ratingof[j] = rem;
 	return accum;
 }
 
@@ -1906,8 +1909,9 @@ calc_bayes_unfitness_full (struct ENC *enc, double wadv)
 
 double Probarray [MAXPLAYERS] [4];
 
+// no globals
 static double
-get_extra_unfitness_j (double R, int j, struct prior *p)
+get_extra_unfitness_j (double R, int j, struct prior *p, double *ratingof, long int n_relative_anchors, struct relprior *ra)
 {
 	double x;
 	double u = 0;
@@ -1917,7 +1921,7 @@ get_extra_unfitness_j (double R, int j, struct prior *p)
 	} 
 
 	//FIXME this could be slow!
-	u += relative_anchors_unfitness_j (R, j); //~~
+	u += relative_anchors_unfitness_j(R, j, ratingof, n_relative_anchors, ra); //~~
 
 	return u;
 }
@@ -1934,32 +1938,33 @@ probarray_reset(int n_players, double probarray[MAXPLAYERS][4])
 	}
 }
 
+// no globals
 static void
-probarray_build(const struct ENC *enc, double inputdelta)
+probarray_build(int n_enc, const struct ENC *enc, double inputdelta, double *ratingof, double white_advantage)
 {
 	double pw, pd, pl, delta;
 	double p;
 	int e,w,b;
 
-	for (e = 0; e < N_encounters; e++) {
+	for (e = 0; e < n_enc; e++) {
 		w = enc[e].wh;	b = enc[e].bl;
 
 		delta = 0;
-		get_pWDL(Ratingof[w] + delta + White_advantage - Ratingof[b], &pw, &pd, &pl);
+		get_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
 		Probarray [w] [1] -= p;			
 		Probarray [b] [1] -= p;	
 
 		delta = +inputdelta;
-		get_pWDL(Ratingof[w] + delta + White_advantage - Ratingof[b], &pw, &pd, &pl);
+		get_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
 		Probarray [w] [2] -= p;			
 		Probarray [b] [0] -= p;	
 
 		delta = -inputdelta;
-		get_pWDL(Ratingof[w] + delta + White_advantage - Ratingof[b], &pw, &pd, &pl);
+		get_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
 		Probarray [w] [0] -= p;			
@@ -1968,15 +1973,16 @@ probarray_build(const struct ENC *enc, double inputdelta)
 	}
 }
 
+// no globals
 static double
-derivative_single (int j, double delta /*, struct ENC *enc*/)
+derivative_single (int j, double delta, double *ratingof, long int n_relative_anchors, struct relprior *ra, double probarray[MAXPLAYERS][4])
 {
 	double decrem, increm, center;
 	double change;
 
-	decrem = Probarray [j] [0] + get_extra_unfitness_j (Ratingof[j] - delta, j, PP);
-	center = Probarray [j] [1] + get_extra_unfitness_j (Ratingof[j]        , j, PP);
-	increm = Probarray [j] [2] + get_extra_unfitness_j (Ratingof[j] + delta, j, PP);
+	decrem = probarray [j] [0] + get_extra_unfitness_j (ratingof[j] - delta, j, PP, ratingof, n_relative_anchors, ra);
+	center = probarray [j] [1] + get_extra_unfitness_j (ratingof[j]        , j, PP, ratingof, n_relative_anchors, ra);
+	increm = probarray [j] [2] + get_extra_unfitness_j (ratingof[j] + delta, j, PP, ratingof, n_relative_anchors, ra);
 
 	if (center < decrem && center < increm) {
 		change = decrem > increm? 0.5: -0.5; 
@@ -1986,18 +1992,31 @@ derivative_single (int j, double delta /*, struct ENC *enc*/)
 	return change;
 }
 
+// no globals
 static void
-derivative_vector_calc (double delta, double *vector, const struct ENC *enc)
+derivative_vector_calc 	( double delta
+						, int n_encounters
+						, const struct ENC *enc
+						, int n_players
+						, double *ratingof
+						, bool_t *flagged
+						, bool_t *prefed
+						, double white_advantage
+						, long int n_relative_anchors
+						, struct relprior *ra
+						, double probarray[MAXPLAYERS][4]
+						, double *vector 
+)
 {
 	int j;
-	probarray_reset(N_players, Probarray);
-	probarray_build(enc, delta);
+	probarray_reset(n_players, probarray);
+	probarray_build(n_encounters, enc, delta, ratingof, white_advantage);
 
-	for (j = 0; j < N_players; j++) {
-		if (Flagged[j] || Prefed[j]) {
+	for (j = 0; j < n_players; j++) {
+		if (flagged[j] || prefed[j]) {
 			vector[j] = 0.0;
 		} else {
-			vector[j] = derivative_single (j, delta/*, enc*/);;
+			vector[j] = derivative_single (j, delta, ratingof, n_relative_anchors, ra, probarray);
 		}
 	}	
 }
@@ -2504,7 +2523,20 @@ double white_advantage = *pwadv;
 			olddev = curdev;
 
 			// Calc "Changing" vector
-			derivative_vector_calc (delta, Changing, enc);
+			derivative_vector_calc
+						( delta
+						, N_encounters
+						, enc
+						, N_players
+						, Ratingof
+						, Flagged
+						, Prefed
+						, white_advantage
+						, N_relative_anchors
+						, Ra
+						, Probarray
+						, Changing );
+
 
 			resol_prev = resol;
 			resol = adjust_rating_bayes(delta*kappa,Changing);
