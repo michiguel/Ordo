@@ -2056,23 +2056,41 @@ static double fitexcess ( int n_players
 						, const struct relprior *ra
 						, double *ratingof
 						, double *ratingbk
-						, bool_t *flagged);
+						, const bool_t *flagged);
 
-static void ratings_apply_excess_correction(double excess, int n_players, bool_t *flagged, double *ratingof);
+static void ratings_apply_excess_correction(double excess, int n_players, const bool_t *flagged, double *ratingof /*out*/);
 
 static double absol(double x) {return x < 0? -x: x;}
 
+// no globals
 static double
-adjust_rating_bayes (double delta, const double *change_vector)
+adjust_rating_bayes 
+				( double delta
+				, bool_t multiple_anchors_present
+				, bool_t some_prior_set
+				, bool_t anchor_use
+				, double general_average 
+				, int n_players 
+				, const struct prior *p
+				, double white_advantage
+				, struct prior wa_prior
+				, long int n_relative_anchors
+				, const struct relprior *ra
+				, const double *change_vector
+				, const bool_t *flagged
+				, const bool_t *prefed
+				, double *ratingof // out 
+				, double *ratingbk // out 
+)
 {
 	int 	j, notflagged;
 	double 	excess, average;
 	double 	y, ymax = 0;
 	double 	accum = 0;
 
-	for (j = 0; j < N_players; j++) {
-		if (	Flagged[j]	// player previously removed
-			|| 	Prefed[j]	// already fixed, one of the multiple anchors
+	for (j = 0; j < n_players; j++) {
+		if (	flagged[j]	// player previously removed
+			|| 	prefed[j]	// already fixed, one of the multiple anchors
 		) continue; 
 
 		// max
@@ -2080,7 +2098,7 @@ adjust_rating_bayes (double delta, const double *change_vector)
 		if (y > ymax) ymax = y;
 
 		// execute adjustment
-		Ratingof[j] += delta * change_vector[j];	
+		ratingof[j] += delta * change_vector[j];	
 
 	}	
 
@@ -2088,42 +2106,42 @@ adjust_rating_bayes (double delta, const double *change_vector)
 	// The average could be normalized, or the rating of an anchor.
 	// Skip in case of multiple anchors present
 
-	if (Multiple_anchors_present) {
+	if (multiple_anchors_present) {
 
 		excess = 0; // do nothing, was done before
 
-	} else if (Some_prior_set) {
+	} else if (some_prior_set) {
  
 		excess = fitexcess
-					( N_players
-					, PP
-					, White_advantage
-					, Wa_prior
-					, N_relative_anchors
-					, Ra
-					, Ratingof
-					, Ratingbk
-					, Flagged);
+					( n_players
+					, p
+					, white_advantage
+					, wa_prior
+					, n_relative_anchors
+					, ra
+					, ratingof
+					, ratingbk
+					, flagged);
 
-	} else if (Anchor_use) {
+	} else if (anchor_use) {
 
-		excess  = Ratingof[Anchor] - General_average;
+		excess  = ratingof[Anchor] - general_average;
 
 	} else {
 
 		// general average
-		for (notflagged = 0, accum = 0, j = 0; j < N_players; j++) {
-			if (!Flagged[j]) {
+		for (notflagged = 0, accum = 0, j = 0; j < n_players; j++) {
+			if (!flagged[j]) {
 				notflagged++;
-				accum += Ratingof[j];
+				accum += ratingof[j];
 			}
 		}
 		average = accum / notflagged;
-		excess  = average - General_average;
+		excess  = average - general_average;
 	}
 
 	// Correct the excess
-	ratings_apply_excess_correction(excess, N_players, Flagged, Ratingof);
+	ratings_apply_excess_correction(excess, n_players, flagged, ratingof);
 
 	// Return maximum increase/decrease ==> "resolution"
 	return ymax * delta;
@@ -2132,7 +2150,7 @@ adjust_rating_bayes (double delta, const double *change_vector)
 
 
 static void
-ratings_apply_excess_correction(double excess, int n_players, bool_t *flagged, double *ratingof)
+ratings_apply_excess_correction(double excess, int n_players, const bool_t *flagged, double *ratingof /*out*/)
 {
 	int j;
 	for (j = 0; j < n_players; j++) {
@@ -2153,7 +2171,7 @@ ufex
 				, const struct relprior *ra
 				, double *ratingof
 				, double *ratingbk
-				, bool_t *flagged
+				, const bool_t *flagged
 )
 {
 	double u;
@@ -2185,7 +2203,7 @@ fitexcess 		( int n_players
 				, const struct relprior *ra
 				, double *ratingof
 				, double *ratingbk
-				, bool_t *flagged
+				, const bool_t *flagged
 )
 {
 	double ub, ut, uc, newb, newt, newc;
@@ -2671,7 +2689,29 @@ double white_advantage = *pwadv;
 
 
 			resol_prev = resol;
-			resol = adjust_rating_bayes(delta*kappa,Changing);
+			resol = 
+
+					// adjust_rating_bayes(delta*kappa,Changing);
+					adjust_rating_bayes 
+						( delta*kappa
+						, Multiple_anchors_present
+						, Some_prior_set
+						, Anchor_use
+						, General_average 
+						, N_players 
+						, PP
+						, White_advantage
+						, Wa_prior
+						, N_relative_anchors
+						, Ra
+						, Changing
+						, Flagged
+						, Prefed
+						, Ratingof // out 
+						, Ratingbk // out 
+					);
+
+
 			resol = (resol_prev + resol) / 2;
 
 			curdev = calc_bayes_unfitness_full	
