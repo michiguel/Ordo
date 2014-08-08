@@ -2475,7 +2475,7 @@ super_players_present(void)
 static double adjust_wadv_bayes (struct ENC *enc, double start_wadv, double resol);
 
 static int
-calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
+calc_rating_bayes (bool_t quiet, struct ENC *enc, int N_enc, double *pwadv)
 {
 	double 	olddev, curdev, outputdev;
 	int 	i;
@@ -2487,8 +2487,10 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 	double 	resol = delta;
 	double 	resol_prev = delta;
 
+double white_advantage = *pwadv;
+
 	// initial deviation
-	olddev = curdev = calc_bayes_unfitness_full (enc, White_advantage);
+	olddev = curdev = calc_bayes_unfitness_full (enc, white_advantage);
 
 	if (!quiet) printf ("Converging...\n\n");
 	if (!quiet) printf ("%3s %4s %10s %10s\n", "phase", "iteration", "unfitness","resolution");
@@ -2507,7 +2509,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 			resol = adjust_rating_bayes(delta*kappa,Changing);
 			resol = (resol_prev + resol) / 2;
 
-			curdev = calc_bayes_unfitness_full (enc, White_advantage);
+			curdev = calc_bayes_unfitness_full (enc, white_advantage);
 
 			if (curdev >= olddev) {
 				ratings_restore();
@@ -2537,7 +2539,8 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 							// but it will adjust it based on the results. This is useful
 							// for -W
 			) {
-			White_advantage = adjust_wadv_bayes (enc, White_advantage, resol);
+			white_advantage = adjust_wadv_bayes (enc, white_advantage, resol);
+			*pwadv = white_advantage;
 		}
 
 		if (resol < MIN_RESOLUTION) break;
@@ -2546,7 +2549,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 
 	if (!quiet) printf ("done\n\n");
 
-	printf ("White_advantage = %lf\n\n", White_advantage);
+	printf ("White_advantage = %lf\n\n", white_advantage);
 
 #ifdef CALCIND_SWSL
 	if (!quiet && super_players_present()) printf ("Post-Convergence rating estimation for all-wins / all-losses players\n\n");
@@ -2557,6 +2560,12 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 		adjust_rating_byanchor (Anchor_use, Anchor, General_average);
 
 	return N_enc;
+}
+
+static int
+calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
+{
+	return calc_rating_bayes (quiet, enc, N_enc, &White_advantage);
 }
 
 #if 0
