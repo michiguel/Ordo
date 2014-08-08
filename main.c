@@ -1853,26 +1853,34 @@ calc_bayes_unfitness_partial (struct ENC *enc, int j)
 }
 #endif
 
+// no globals
 static double
-prior_unfitness(struct prior *p, double wadv)
+prior_unfitness	( int n_players
+				, const struct prior *p
+				, double wadv
+				, struct prior wa_prior
+				, long int n_relative_anchors
+				, const struct relprior *ra
+				, const double *ratingof
+)
 {
 	int j;
 	double x;
 	double accum = 0;
-	for (j = 0; j < N_players; j++) {
+	for (j = 0; j < n_players; j++) {
 		if (p[j].set) {
-			x = (Ratingof[j] - p[j].rating)/p[j].sigma;
+			x = (ratingof[j] - p[j].rating)/p[j].sigma;
 			accum += 0.5 * x * x;
 		}
 	}
 
-	if (Wa_prior.set) {
-		x = (wadv - Wa_prior.rating)/Wa_prior.sigma;
+	if (wa_prior.set) {
+		x = (wadv - wa_prior.rating)/wa_prior.sigma;
 		accum += 0.5 * x * x;		
 	}
 
 	//FIXME this could be slow!
-	accum += relative_anchors_unfitness_full(N_relative_anchors, Ra, Ratingof); //~~
+	accum += relative_anchors_unfitness_full(n_relative_anchors, ra, ratingof); //~~
 
 	return accum;
 }
@@ -1900,7 +1908,15 @@ calc_bayes_unfitness_full (struct ENC *enc, double wadv)
 				+ 	(ll > 0? ll * log(pl) : 0);
 	}
 	// Priors
-	accum += -prior_unfitness(PP, wadv);
+	accum += -prior_unfitness
+				( N_players
+				, PP
+				, wadv
+				, Wa_prior
+				, N_relative_anchors
+				, Ra
+				, Ratingof
+				);
 
 	return -accum;
 }
@@ -2102,7 +2118,17 @@ ufex (double excess)
 	double u;
 	ratings_backup();
 	ratings_apply_excess_correction(excess);
-	u = prior_unfitness(PP, White_advantage);
+	u = prior_unfitness
+
+				( N_players
+				, PP
+				, White_advantage
+				, Wa_prior
+				, N_relative_anchors
+				, Ra
+				, Ratingof
+				);
+
 	ratings_restore();
 	return u;
 }
