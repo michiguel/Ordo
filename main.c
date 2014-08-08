@@ -281,7 +281,7 @@ static bool_t hide_old_ver = FALSE;
 static bool_t set_relprior (const char *player_a, const char *player_b, double x, double sigma);
 static void relpriors_show(void);
 static void relpriors_load(const char *f_name);
-static double relative_anchors_unfitness_full(void);
+static double relative_anchors_unfitness_full(long int n_relative_anchors, const struct relprior *ra, const double *ratingof);
 static double relative_anchors_unfitness_j(double R, int j, double *ratingof, long int n_relative_anchors, struct relprior *ra);
 
 /*------------------------------------------------------------------------*/
@@ -1621,18 +1621,18 @@ relpriors_load(const char *f_name)
 	return;
 }
 
-
+// no globals
 static double
-relative_anchors_unfitness_full(void)
+relative_anchors_unfitness_full(long int n_relative_anchors, const struct relprior *ra, const double *ratingof)
 {
 	int a, b, i;
 	double d, x;
 	double accum = 0;
-	for (i = 0; i < N_relative_anchors; i++) {
-		a = Ra[i].player_a;
-		b = Ra[i].player_b;
-		d = Ratingof[a] - Ratingof[b];
-		x = (d - Ra[i].delta)/Ra[i].sigma;
+	for (i = 0; i < n_relative_anchors; i++) {
+		a = ra[i].player_a;
+		b = ra[i].player_b;
+		d = ratingof[a] - ratingof[b];
+		x = (d - ra[i].delta)/ra[i].sigma;
 		accum += 0.5 * x * x;
 	}
 
@@ -1872,7 +1872,7 @@ prior_unfitness(struct prior *p, double wadv)
 	}
 
 	//FIXME this could be slow!
-	accum += relative_anchors_unfitness_full(); //~~
+	accum += relative_anchors_unfitness_full(N_relative_anchors, Ra, Ratingof); //~~
 
 	return accum;
 }
