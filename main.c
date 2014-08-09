@@ -2379,35 +2379,33 @@ static double calc_ind_rating_superplayer (int perf_type, double x_estimated, do
 
 static 
 void
-rate_super_players (bool_t quiet, struct ENC *enc, int N_enc, int *performance_type, int n_players, double *ratingof, double white_advantage, bool_t *flagged,
-char *Name[], double beta)
+rate_super_players (bool_t quiet, struct ENC *enc, int n_enc, int *performance_type, int n_players, double *ratingof, double white_advantage, bool_t *flagged,
+char *name[], double beta)
 {
 	int j, e;
 	int myenc_n = 0;
 	static struct ENC myenc[MAXENCOUNTERS];
 
-	assert(Performance_type_set);
+	for (j = 0; j < n_players; j++) {
 
-	for (j = 0; j < N_players; j++) {
-
-		if (Performance_type[j] != PERF_SUPERWINNER && Performance_type[j] != PERF_SUPERLOSER) 
+		if (performance_type[j] != PERF_SUPERWINNER && performance_type[j] != PERF_SUPERLOSER) 
 			continue;
 
 		myenc_n = 0; // reset
 
-		if (Performance_type[j] == PERF_SUPERWINNER)
-			if (!quiet) printf ("  all wins   --> %s\n", Name[j]);
+		if (performance_type[j] == PERF_SUPERWINNER)
+			if (!quiet) printf ("  all wins   --> %s\n", name[j]);
 
-		if (Performance_type[j] == PERF_SUPERLOSER) 
-			if (!quiet) printf ("  all losses --> %s\n", Name[j]);
+		if (performance_type[j] == PERF_SUPERLOSER) 
+			if (!quiet) printf ("  all losses --> %s\n", name[j]);
 
-		for (e = 0; e < N_enc; e++) {
+		for (e = 0; e < n_enc; e++) {
 			int w = enc[e].wh;
 			int b = enc[e].bl;
-			if (j == w /*&& Performance_type[b] == PERF_NORMAL*/) {
+			if (j == w /*&& performance_type[b] == PERF_NORMAL*/) {
 				myenc[myenc_n++] = enc[e];
 			} else
-			if (j == b /*&& Performance_type[w] == PERF_NORMAL*/) {
+			if (j == b /*&& performance_type[w] == PERF_NORMAL*/) {
 				myenc[myenc_n++] = enc[e];
 			}
 		}
@@ -2424,14 +2422,14 @@ char *Name[], double beta)
 				if (myenc[n].wh == j) {
 					int opp = myenc[n].bl;
 					weig[r	] = myenc[n].played;
-					rtng[r++] = Ratingof[opp] - White_advantage;
+					rtng[r++] = ratingof[opp] - white_advantage;
 					cume_score += myenc[n].wscore;
 					cume_total += myenc[n].played;
 			 	} else 
 				if (myenc[myenc_n].bl == j) {
 					int opp = myenc[n].wh;
 					weig[r	] = myenc[n].played;
-					rtng[r++] = Ratingof[opp] + White_advantage;
+					rtng[r++] = ratingof[opp] + white_advantage;
 					cume_score += myenc[n].played - myenc[n].wscore;
 					cume_total += myenc[n].played;
 				} else {
@@ -2441,15 +2439,15 @@ char *Name[], double beta)
 				} 
 			}
 
-			if (Performance_type[j] == PERF_SUPERWINNER) {
+			if (performance_type[j] == PERF_SUPERWINNER) {
 				double ori_estimation = calc_ind_rating (cume_score-0.25, rtng, weig, r); 
-				Ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERWINNER, ori_estimation, rtng, weig, r);
+				ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERWINNER, ori_estimation, rtng, weig, r);
 			}
-			if (Performance_type[j] == PERF_SUPERLOSER) {
+			if (performance_type[j] == PERF_SUPERLOSER) {
 				double ori_estimation = calc_ind_rating (cume_score+0.25, rtng, weig, r); 
-				Ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERLOSER,  ori_estimation, rtng, weig, r);
+				ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERLOSER,  ori_estimation, rtng, weig, r);
 			}
-			Flagged[j] = FALSE;
+			flagged[j] = FALSE;
 
 		}
 	}
@@ -2629,6 +2627,8 @@ double white_advantage = *pwadv;
 
 	N_enc = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
 	calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
+
+	assert(Performance_type_set);
 
 	rate_super_players(QUIET_MODE, enc, N_enc, Performance_type, N_players, Ratingof, White_advantage, Flagged, Name, BETA);
 
