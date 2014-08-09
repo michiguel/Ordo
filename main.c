@@ -1699,6 +1699,7 @@ calc_bayes_unfitness_full
 				, long int n_relative_anchors
 				, const struct relprior *ra
 				, const double *ratingof
+				, double beta
 )
 {
 	double pw, pd, pl, accum;
@@ -1709,7 +1710,7 @@ calc_bayes_unfitness_full
 		w = enc[e].wh;
 		b = enc[e].bl;
 
-		fget_pWDL(ratingof[w] + wadv - ratingof[b], &pw, &pd, &pl, BETA);
+		fget_pWDL(ratingof[w] + wadv - ratingof[b], &pw, &pd, &pl, beta);
 
 		ww = enc[e].W;
 		dd = enc[e].D;
@@ -2431,7 +2432,8 @@ calc_rating_bayes 	(
 							, wa_prior
 							, n_relative_anchors
 							, ra
-							, ratingof);
+							, ratingof
+							, beta);
 
 	if (!quiet) printf ("Converging...\n\n");
 	if (!quiet) printf ("%3s %4s %10s %10s\n", "phase", "iteration", "unfitness","resolution");
@@ -2496,7 +2498,8 @@ calc_rating_bayes 	(
 							, wa_prior
 							, n_relative_anchors
 							, ra
-							, ratingof);
+							, ratingof
+							, beta);
 
 			if (curdev >= olddev) {
 				ratings_restore (n_players, ratingbk, ratingof);
@@ -2724,7 +2727,8 @@ adjust_wadv_bayes
 							, wa_prior
 							, n_relative_anchors
 							, ra
-							, ratingof);
+							, ratingof
+							, BETA);
 
 		ej = calc_bayes_unfitness_full	
 							( n_enc
@@ -2735,7 +2739,8 @@ adjust_wadv_bayes
 							, wa_prior
 							, n_relative_anchors
 							, ra
-							, ratingof);
+							, ratingof
+							, BETA);
 
 		ek = calc_bayes_unfitness_full	
 							( n_enc
@@ -2746,7 +2751,8 @@ adjust_wadv_bayes
 							, wa_prior
 							, n_relative_anchors
 							, ra
-							, ratingof);
+							, ratingof
+							, BETA);
 
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 4;
