@@ -187,13 +187,6 @@ static int 		N_games = 0;
 struct ENC 		Encounter[MAXENCOUNTERS];
 static int 		N_encounters = 0;
 
-#if 0
-enum SELECTIVITY {
-	ENCOUNTERS_FULL = 0,
-	ENCOUNTERS_NOFLAGGED = 1
-};
-#endif
-
 #if 1
 #define NEW_ENC
 #endif
@@ -293,7 +286,7 @@ static double relative_anchors_unfitness_j(double R, int j, double *ratingof, lo
 //static void		calc_obtained_playedby 	(const struct ENC *enc, int N_enc);
 //static void		calc_expected 			(const struct ENC *enc, int N_enc);
 
-static int		shrink_ENC (struct ENC *enc, int N_enc);
+//static int		shrink_ENC (struct ENC *enc, int N_enc);
 static int		purge_players    (bool_t quiet, struct ENC *enc);
 static int		set_super_players(bool_t quiet, struct ENC *enc);
 
@@ -592,8 +585,7 @@ int main (int argc, char *argv[])
 
 	if (!QUIET_MODE) {
 
-		N_encounters = calc_encounters//(ENCOUNTERS_FULL, Encounter);
-									(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+		N_encounters = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 		printf ("Total games         %8ld\n", Game_stats.white_wins
 											 +Game_stats.draws
 											 +Game_stats.black_wins
@@ -716,8 +708,7 @@ int main (int argc, char *argv[])
 
 	/*===== GROUPS ========*/
 
-	N_encounters = calc_encounters//(ENCOUNTERS_FULL, Encounter);
-									(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+	N_encounters = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 	scan_encounters(Encounter, N_encounters, N_players); 
 	if (group_is_output) {
 
@@ -738,8 +729,7 @@ int main (int argc, char *argv[])
 
 	N_encounters = set_super_players(QUIET_MODE, Encounter);
 	N_encounters = purge_players(QUIET_MODE, Encounter);
-	N_encounters = calc_encounters//(ENCOUNTERS_NOFLAGGED, Encounter);
-									(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 	N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
 
 	ratings_results();
@@ -753,8 +743,7 @@ int main (int argc, char *argv[])
 		White_advantage = new_wadv;
 	
 		N_encounters = purge_players(QUIET_MODE, Encounter);
-		N_encounters = calc_encounters//(ENCOUNTERS_NOFLAGGED, Encounter);
-									(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+		N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 		N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
 		ratings_results();
 	}
@@ -790,8 +779,7 @@ int main (int argc, char *argv[])
 
 					N_encounters = set_super_players(QUIET_MODE, Encounter);
 					N_encounters = purge_players(QUIET_MODE, Encounter);
-					N_encounters = calc_encounters//(ENCOUNTERS_NOFLAGGED, Encounter);
-									(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+					N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 					N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
 					ratings_for_purged ();
 
@@ -1055,8 +1043,7 @@ all_report (FILE *csvf, FILE *textf)
 	int rank = 0;
 	bool_t showrank;
 
-	N_encounters = calc_encounters//(ENCOUNTERS_NOFLAGGED, Encounter);
-									(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 	calc_obtained_playedby(Encounter, N_encounters, N_players, Obtained, Playedby);
 
 	for (j = 0; j < N_players; j++) {
@@ -1182,151 +1169,6 @@ all_report (FILE *csvf, FILE *textf)
 
 /************************************************************************/
 
-static int compare_ENC (const void * a, const void * b)
-{
-	const struct ENC *ap = a;
-	const struct ENC *bp = b;
-	if (ap->wh == bp->wh && ap->bl == bp->bl) return 0;
-	if (ap->wh == bp->wh) {
-		if (ap->bl > bp->bl) return 1; else return -1;
-	} else {	 
-		if (ap->wh > bp->wh) return 1; else return -1;
-	}
-	return 0;	
-}
-
-#if 0
-static int
-calc_encounters (int selectivity, struct ENC *enc)
-{
-	int i, e = 0;
-	int N_enc;
-
-	for (i = 0; i < N_games; i++) {
-
-		if (Score[i] >= DISCARD) continue;
-
-		if (selectivity == ENCOUNTERS_NOFLAGGED) {
-			if (Flagged[Whiteplayer[i]] || Flagged[Blackplayer[i]])
-				continue;
-		}
-
-		enc[e].W = enc[e].D = enc[e].L = 0;
-
-		switch (Score[i]) {
-			case WHITE_WIN: 	enc[e].wscore = 1.0; enc[e].W = 1; break;
-			case RESULT_DRAW:	enc[e].wscore = 0.5; enc[e].D = 1; break;
-			case BLACK_WIN:		enc[e].wscore = 0.0; enc[e].L = 1; break;
-		}
-
-		enc[e].wh = Whiteplayer[i];
-		enc[e].bl = Blackplayer[i];
-		enc[e].played = 1;
-		e++;
-	}
-	N_enc = e;
-
-	N_enc = shrink_ENC (enc, N_enc);
-	qsort (enc, (size_t)N_enc, sizeof(struct ENC), compare_ENC);
-	N_enc = shrink_ENC (enc, N_enc);
-
-	return N_enc;
-}
-
-
-static void
-calc_obtained_playedby (const struct ENC *enc, int N_enc)
-{
-	int e, j, w, b;
-
-	for (j = 0; j < N_players; j++) {
-		Obtained[j] = 0.0;	
-		Playedby[j] = 0;
-	}	
-
-	for (e = 0; e < N_enc; e++) {
-	
-		w = enc[e].wh;
-		b = enc[e].bl;
-
-		Obtained[w] += enc[e].wscore;
-		Obtained[b] += (double)enc[e].played - enc[e].wscore;
-
-		Playedby[w] += enc[e].played;
-		Playedby[b] += enc[e].played;
-	}
-}
-#endif
-
-#if 0
-static void
-calc_expected (const struct ENC *enc, int N_enc)
-{
-	int e, j, w, b;
-	double f;
-	double wperf,bperf;
-
-	for (j = 0; j < N_players; j++) {
-		Expected[j] = 0.0;	
-	}	
-
-	for (e = 0; e < N_enc; e++) {
-	
-		w = enc[e].wh;
-		b = enc[e].bl;
-
-		f = xpect (Ratingof[w] + White_advantage, Ratingof[b]);
-
-		wperf = enc[e].played * f;
-		bperf = enc[e].played - wperf;
-
-		Expected [w] += wperf; 
-		Expected [b] += bperf; 
-
-	}
-}
-#endif
-
-static struct ENC 
-encounter_merge (const struct ENC *a, const struct ENC *b)
-{
-		struct ENC r;	
-		assert(a->wh == b->wh);
-		assert(a->bl == b->bl);
-		r.wh = a->wh;
-		r.bl = a->bl; 
-		r.wscore = a->wscore + b->wscore;
-		r.played = a->played + b->played;
-		r.W = a->W + b->W;
-		r.D = a->D + b->D;
-		r.L = a->L + b->L;
-		return r;
-}
-
-static int
-shrink_ENC (struct ENC *enc, int N_enc)
-{
-	int e, j, g;
-
-	for (j = 0; j < N_players; j++) {Expected[j] = 0.0;}	
-
-	if (N_enc == 0) return 0; 
-
-	g = 0;
-	for (e = 1; e < N_enc; e++) {
-	
-		if (enc[e].wh == enc[g].wh && enc[e].bl == enc[g].bl) {
-			enc[g] = encounter_merge (&enc[g], &enc[e]);
-		}
-		else {
-			g++;
-			enc[g] = enc[e];
-		}
-	}
-	g++;
-	return g; // New N_encounters
-}
-
 static int
 purge_players(bool_t quiet, struct ENC *enc)
 {
@@ -1336,8 +1178,7 @@ purge_players(bool_t quiet, struct ENC *enc)
 
 	assert(Performance_type_set);
 	do {
-		N_enc = calc_encounters//(ENCOUNTERS_NOFLAGGED, enc);
-									(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
+		N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
 		calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
 
 		foundproblem = FALSE;
@@ -2544,8 +2385,7 @@ rate_super_players(bool_t quiet, struct ENC *enc)
 	static struct ENC myenc[MAXENCOUNTERS];
 	int N_enc;
 
-	N_enc = calc_encounters//(ENCOUNTERS_FULL, enc);
-									(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
+	N_enc = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
 	calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
 
 	assert(Performance_type_set);
@@ -2616,8 +2456,7 @@ rate_super_players(bool_t quiet, struct ENC *enc)
 		}
 	}
 
-	N_enc = calc_encounters//(ENCOUNTERS_NOFLAGGED, enc);
-									(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
+	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
 	calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
 
 	return N_enc;
@@ -3061,8 +2900,7 @@ set_super_players(bool_t quiet, struct ENC *enc)
 	int e, j, w, b;
 	int N_enc;
 
-	N_enc = calc_encounters//(ENCOUNTERS_FULL, enc);
-									(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
+	N_enc = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
 	for (j = 0; j < N_players; j++) {
 		obt[j] = 0.0;	
 		pla[j] = 0;
