@@ -2386,7 +2386,7 @@ adjust_wadv_bayes
 
 static int
 calc_rating_bayes 	(  
-				bool_t 		quiet
+			bool_t 		quiet
 			, struct ENC *	enc
 			, int 			N_enc
 
@@ -2401,7 +2401,7 @@ calc_rating_bayes 	(
 			, bool_t *		flagged
 			, bool_t *		prefed
 
-				, double		*pwadv
+			, double		*pwadv
 			, double		general_average
 
 			, bool_t		multiple_anchors_present
@@ -2416,26 +2416,16 @@ calc_rating_bayes 	(
 			, char *		name[]
 			, double		beta
 
+// different from non bayes calc
 
-
-, double *changing
-, long int n_relative_anchors
-, struct prior *pp
-, double probarray [MAXPLAYERS] [4]
-, struct relprior *ra
-, bool_t some_prior_set
-, struct prior wa_prior
-
-
+			, double *changing
+			, long int n_relative_anchors
+			, struct prior *pp
+			, double probarray [MAXPLAYERS] [4]
+			, struct relprior *ra
+			, bool_t some_prior_set
+			, struct prior wa_prior
 )
-
-
-
-
-
-
-
-
 {
 	double 	olddev, curdev, outputdev;
 	int 	i;
@@ -2599,8 +2589,7 @@ calc_rating_bayes 	(
 static int
 calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 {
-//	return calc_rating_bayes (quiet, enc, N_enc, &White_advantage);
-int x = calc_rating_bayes (  
+	int x = calc_rating_bayes (  
 			quiet
 			, enc
 			, N_enc
@@ -2616,7 +2605,7 @@ int x = calc_rating_bayes (
 			, Flagged
 			, Prefed
 
-				, &White_advantage
+			, &White_advantage
 			, General_average
 
 			, Multiple_anchors_present
@@ -2631,22 +2620,16 @@ int x = calc_rating_bayes (
 			, Name
 			, BETA
 
+			, Changing
+			, N_relative_anchors
+			, PP
+			, Probarray 
+			, Ra
+			, Some_prior_set
+			, Wa_prior
+		);
 
-
-, Changing
-, N_relative_anchors
-, PP
-, Probarray 
-, Ra
-, Some_prior_set
-, Wa_prior
-
-
-);
-
-
-return x;
-
+	return x;
 }
 
 static double
