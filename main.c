@@ -2392,7 +2392,7 @@ calc_rating_bayes 	(
 
 			, int			n_players
 			, double *		obtained
-				, double * 		expected
+//				, double * 		expected
 			, int *			playedby
 			, double *		ratingof
 			, double *		ratingbk
@@ -2607,7 +2607,7 @@ int x = calc_rating_bayes (
 
 			, N_players
 			, Obtained
-				, Expected
+//				, Expected
 			, Playedby
 			, Ratingof
 			, Ratingbk
