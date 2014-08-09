@@ -1644,7 +1644,7 @@ priors_load(const char *fpriors_name)
 // ================= Testing Bayes concept 
 #if 1
 
-static void get_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl);
+static void fget_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl, double beta);
 
 static double
 wdl_probabilities (int ww, int dd, int ll, double pw, double pd, double pl)
@@ -1709,7 +1709,7 @@ calc_bayes_unfitness_full
 		w = enc[e].wh;
 		b = enc[e].bl;
 
-		get_pWDL(ratingof[w] + wadv - ratingof[b], &pw, &pd, &pl);
+		fget_pWDL(ratingof[w] + wadv - ratingof[b], &pw, &pd, &pl, BETA);
 
 		ww = enc[e].W;
 		dd = enc[e].D;
@@ -1778,21 +1778,21 @@ probarray_build(int n_enc, const struct ENC *enc, double inputdelta, double *rat
 		w = enc[e].wh;	b = enc[e].bl;
 
 		delta = 0;
-		get_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl);
+		fget_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, BETA);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
 		Probarray [w] [1] -= p;			
 		Probarray [b] [1] -= p;	
 
 		delta = +inputdelta;
-		get_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl);
+		fget_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, BETA);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
 		Probarray [w] [2] -= p;			
 		Probarray [b] [0] -= p;	
 
 		delta = -inputdelta;
-		get_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl);
+		fget_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, BETA);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
 		Probarray [w] [0] -= p;			
@@ -2232,8 +2232,17 @@ rand_threeway_wscore(double pwin, double pdraw)
 #define DRAWRATE_AT_EQUAL_STRENGTH 0.33
 #define DRAWFACTOR (1/(2*(DRAWRATE_AT_EQUAL_STRENGTH))-0.5)
 
+static double
+fxpect (double a, double b, double beta)
+{
+	return 1.0 / (1.0 + exp((b-a)*beta));
+}
+
+#define DRAWRATE_AT_EQUAL_STRENGTH 0.33
+#define DRAWFACTOR (1/(2*(DRAWRATE_AT_EQUAL_STRENGTH))-0.5)
+
 static void
-get_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl)
+fget_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl, double beta)
 {
 	// Performance comprises wins and draws.
 	// if f is expected performance from 0 to 1.0, then
@@ -2252,10 +2261,10 @@ get_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl)
 
 	if (switched) dr = -dr;
 
-	f = xpect (dr,0);
+	f = fxpect (dr,0,beta);
 
 #if 0
-	dc = 0.5 / (0.5 + DRAWFACTOR * exp(dr*BETA));
+	dc = 0.5 / (0.5 + DRAWFACTOR * exp(dr*beta));
 	pdra = 2 * f * dc;
 	pwin = f - pdra/2;
 	plos = 1 - pwin - pdra; 
@@ -2292,7 +2301,7 @@ simulate_scores(void)
 		w = Whiteplayer[i];
 		b = Blackplayer[i];
 
-		get_pWDL(rating[w] + White_advantage - rating[b], &pwin, &pdraw, &plos);
+		fget_pWDL(rating[w] + White_advantage - rating[b], &pwin, &pdraw, &plos, BETA);
 		Score [i] = rand_threeway_wscore(pwin,pdraw);
 	}
 }
