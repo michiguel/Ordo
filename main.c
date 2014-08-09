@@ -54,6 +54,7 @@
 
 #include "encount.h"
 #include "indiv.h"
+#include "ratingb.h"
 
 /*
 |
@@ -2171,15 +2172,16 @@ adjust_rating (double delta, double kappa)
 }
 
 
+// no globals
 static void
-adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average)
+adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, int n_players, double *ratingof, bool_t *flagged)
 {
 	double excess;
 	int j;
 	if (anchor_use) {
-		excess  = Ratingof[anchor] - general_average;	
-		for (j = 0; j < N_players; j++) {
-			if (!Flagged[j]) Ratingof[j] -= excess;
+		excess  = ratingof[anchor] - general_average;	
+		for (j = 0; j < n_players; j++) {
+			if (!flagged[j]) ratingof[j] -= excess;
 		}	
 	}
 }
@@ -2574,7 +2576,7 @@ calc_rating_bayes 	(
 #endif
 
 	if (!multiple_anchors_present && !some_prior_set)
-		adjust_rating_byanchor (anchor_use, anchor, general_average);
+		adjust_rating_byanchor (anchor_use, anchor, general_average, n_players, ratingof, flagged);
 
 	return N_enc;
 }
