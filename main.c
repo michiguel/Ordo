@@ -2325,13 +2325,14 @@ deviation (void)
 
 #if 1
 
+// no globals
 static bool_t
-super_players_present(void)
+super_players_present(int n_players, int *performance_type)
 { 
 	bool_t found = FALSE;
 	int j;
-	for (j = 0; j < N_players && !found; j++) {
-		found = Performance_type[j] == PERF_SUPERWINNER || Performance_type[j] == PERF_SUPERLOSER; 
+	for (j = 0; j < n_players && !found; j++) {
+		found = performance_type[j] == PERF_SUPERWINNER || performance_type[j] == PERF_SUPERLOSER; 
 	}
 	return found;
 }
@@ -2534,7 +2535,7 @@ calc_rating_bayes 	(
 	printf ("White_advantage = %lf\n\n", white_advantage);
 
 #ifdef CALCIND_SWSL
-	if (!quiet && super_players_present()) printf ("Post-Convergence rating estimation for all-wins / all-losses players\n\n");
+	if (!quiet && super_players_present(n_players, performance_type)) printf ("Post-Convergence rating estimation for all-wins / all-losses players\n\n");
 
 	N_enc = calc_encounters(ENCOUNTERS_FULL, n_games, score, flagged, whiteplayer, blackplayer, enc);
 	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby);
