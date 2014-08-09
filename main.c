@@ -2420,6 +2420,7 @@ calc_rating_bayes 	(
 			, struct relprior *ra
 			, bool_t some_prior_set
 			, struct prior wa_prior
+			, bool_t adjust_white_advantage
 )
 {
 	double 	olddev, curdev, outputdev;
@@ -2532,7 +2533,7 @@ calc_rating_bayes 	(
 		}
 		phase++;
 
-		if (ADJUST_WHITE_ADVANTAGE 
+		if (adjust_white_advantage 
 //			&& wa_prior.set // if !wa_prior set, it will give no error based on the wa
 							// but it will adjust it based on the results. This is useful
 							// for -W
@@ -2585,7 +2586,9 @@ calc_rating_bayes 	(
 static int
 calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 {
-	int x = calc_rating_bayes (  
+	int x;
+
+	x = calc_rating_bayes (  
 			quiet
 			, enc
 			, N_enc
@@ -2623,6 +2626,9 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 			, Ra
 			, Some_prior_set
 			, Wa_prior
+
+			, ADJUST_WHITE_ADVANTAGE
+
 		);
 
 	return x;
