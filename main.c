@@ -2385,7 +2385,57 @@ adjust_wadv_bayes
 );
 
 static int
-calc_rating_bayes (bool_t quiet, struct ENC *enc, int N_enc, double *pwadv)
+calc_rating_bayes 	(  
+				bool_t 		quiet
+			, struct ENC *	enc
+			, int 			N_enc
+
+			, int			n_players
+			, double *		obtained
+				, double * 		expected
+			, int *			playedby
+			, double *		ratingof
+			, double *		ratingbk
+			, int *			performance_type
+
+			, bool_t *		flagged
+			, bool_t *		prefed
+
+				, double		*pwadv
+			, double		general_average
+
+			, bool_t		multiple_anchors_present
+			, bool_t		anchor_use
+			, int			anchor
+				
+			, int			n_games
+			, int *			score
+			, int *			whiteplayer
+			, int *			blackplayer
+
+			, char *		name[]
+			, double		beta
+
+
+
+, double *changing
+, long int n_relative_anchors
+, struct prior *pp
+, double probarray [MAXPLAYERS] [4]
+, struct relprior *ra
+, bool_t some_prior_set
+, struct prior wa_prior
+
+
+)
+
+
+
+
+
+
+
+
 {
 	double 	olddev, curdev, outputdev;
 	int 	i;
@@ -2403,13 +2453,13 @@ calc_rating_bayes (bool_t quiet, struct ENC *enc, int N_enc, double *pwadv)
 	olddev = curdev = calc_bayes_unfitness_full	
 							( N_enc
 							, enc
-							, N_players
-							, PP
+							, n_players
+							, pp
 							, white_advantage
-							, Wa_prior
-							, N_relative_anchors
-							, Ra
-							, Ratingof);
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof);
 
 	if (!quiet) printf ("Converging...\n\n");
 	if (!quiet) printf ("%3s %4s %10s %10s\n", "phase", "iteration", "unfitness","resolution");
@@ -2418,46 +2468,46 @@ calc_rating_bayes (bool_t quiet, struct ENC *enc, int N_enc, double *pwadv)
 
 		for (i = 0; i < rounds; i++) {
 			double kappa = 1.0;
-			ratings_backup  (N_players, Ratingof, Ratingbk);
+			ratings_backup  (n_players, ratingof, ratingbk);
 			olddev = curdev;
 
-			// Calc "Changing" vector
+			// Calc "changing" vector
 			derivative_vector_calc
 						( delta
-						, N_encounters
+						, N_enc
 						, enc
-						, N_players
-						, Ratingof
-						, Flagged
-						, Prefed
+						, n_players
+						, ratingof
+						, flagged
+						, prefed
 						, white_advantage
-						, N_relative_anchors
-						, Ra
-						, Probarray
-						, Changing );
+						, n_relative_anchors
+						, ra
+						, probarray
+						, changing );
 
 
 			resol_prev = resol;
 			resol = 
 
-					// adjust_rating_bayes(delta*kappa,Changing);
+					// adjust_rating_bayes(delta*kappa,changing);
 					adjust_rating_bayes 
 						( delta*kappa
-						, Multiple_anchors_present
-						, Some_prior_set
-						, Anchor_use
-						, General_average 
-						, N_players 
-						, PP
+						, multiple_anchors_present
+						, some_prior_set
+						, anchor_use
+						, general_average 
+						, n_players 
+						, pp
 						, White_advantage
-						, Wa_prior
-						, N_relative_anchors
-						, Ra
-						, Changing
-						, Flagged
-						, Prefed
-						, Ratingof // out 
-						, Ratingbk // out 
+						, wa_prior
+						, n_relative_anchors
+						, ra
+						, changing
+						, flagged
+						, prefed
+						, ratingof // out 
+						, ratingbk // out 
 					);
 
 
@@ -2466,21 +2516,21 @@ calc_rating_bayes (bool_t quiet, struct ENC *enc, int N_enc, double *pwadv)
 			curdev = calc_bayes_unfitness_full	
 							( N_enc
 							, enc
-							, N_players
-							, PP
+							, n_players
+							, pp
 							, white_advantage
-							, Wa_prior
-							, N_relative_anchors
-							, Ra
-							, Ratingof);
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof);
 
 			if (curdev >= olddev) {
-				ratings_restore (N_players, Ratingbk, Ratingof);
+				ratings_restore (n_players, ratingbk, ratingof);
 				curdev = olddev;
 				assert (curdev == olddev);
 				break;
 			} else {
-				ratings_backup  (N_players, Ratingof, Ratingbk);
+				ratings_backup  (n_players, ratingof, ratingbk);
 				olddev = curdev;
 			}	
 
@@ -2488,7 +2538,7 @@ calc_rating_bayes (bool_t quiet, struct ENC *enc, int N_enc, double *pwadv)
 		}
 
 		delta /=  denom;
-		outputdev = curdev/N_games;
+		outputdev = curdev/n_games;
 
 		if (!quiet) {
 			printf ("%3d %7d %14.5f", phase, i, outputdev);
@@ -2498,20 +2548,20 @@ calc_rating_bayes (bool_t quiet, struct ENC *enc, int N_enc, double *pwadv)
 		phase++;
 
 		if (ADJUST_WHITE_ADVANTAGE 
-//			&& Wa_prior.set // if !Wa_prior set, it will give no error based on the wa
+//			&& wa_prior.set // if !wa_prior set, it will give no error based on the wa
 							// but it will adjust it based on the results. This is useful
 							// for -W
 			) {
 			white_advantage = adjust_wadv_bayes 
 							( N_enc
 							, enc
-							, N_players
-							, PP
+							, n_players
+							, pp
 							, white_advantage
-							, Wa_prior
-							, N_relative_anchors
-							, Ra
-							, Ratingof
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof
 							, resol);
 
 			*pwadv = white_advantage;
@@ -2528,20 +2578,20 @@ calc_rating_bayes (bool_t quiet, struct ENC *enc, int N_enc, double *pwadv)
 #ifdef CALCIND_SWSL
 	if (!quiet && super_players_present()) printf ("Post-Convergence rating estimation for all-wins / all-losses players\n\n");
 
-	N_enc = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
-	calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
+	N_enc = calc_encounters(ENCOUNTERS_FULL, n_games, score, flagged, whiteplayer, blackplayer, enc);
+	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby);
 
 	assert(Performance_type_set);
 
-	rate_super_players(QUIET_MODE, enc, N_enc, Performance_type, N_players, Ratingof, White_advantage, Flagged, Name, BETA);
+	rate_super_players(QUIET_MODE, enc, N_enc, performance_type, n_players, ratingof, White_advantage, flagged, name, beta);
 
-	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
-	calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
+	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, n_games, score, flagged, whiteplayer, blackplayer, enc);
+	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby);
 
 #endif
 
-	if (!Multiple_anchors_present && !Some_prior_set)
-		adjust_rating_byanchor (Anchor_use, Anchor, General_average);
+	if (!multiple_anchors_present && !some_prior_set)
+		adjust_rating_byanchor (anchor_use, anchor, general_average);
 
 	return N_enc;
 }
@@ -2549,7 +2599,54 @@ calc_rating_bayes (bool_t quiet, struct ENC *enc, int N_enc, double *pwadv)
 static int
 calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 {
-	return calc_rating_bayes (quiet, enc, N_enc, &White_advantage);
+//	return calc_rating_bayes (quiet, enc, N_enc, &White_advantage);
+int x = calc_rating_bayes (  
+			quiet
+			, enc
+			, N_enc
+
+			, N_players
+			, Obtained
+				, Expected
+			, Playedby
+			, Ratingof
+			, Ratingbk
+			, Performance_type
+
+			, Flagged
+			, Prefed
+
+				, &White_advantage
+			, General_average
+
+			, Multiple_anchors_present
+			, Anchor_use
+			, Anchor
+				
+			, N_games
+			, Score
+			, Whiteplayer
+			, Blackplayer
+
+			, Name
+			, BETA
+
+
+
+, Changing
+, N_relative_anchors
+, PP
+, Probarray 
+, Ra
+, Some_prior_set
+, Wa_prior
+
+
+);
+
+
+return x;
+
 }
 
 static double
