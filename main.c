@@ -1870,6 +1870,7 @@ adjust_rating_bayes
 				, bool_t multiple_anchors_present
 				, bool_t some_prior_set
 				, bool_t anchor_use
+				, int anchor
 				, double general_average 
 				, int n_players 
 				, const struct prior *p
@@ -1926,7 +1927,7 @@ adjust_rating_bayes
 
 	} else if (anchor_use) {
 
-		excess  = ratingof[Anchor] - general_average;
+		excess  = ratingof[anchor] - general_average;
 
 	} else {
 
@@ -2464,6 +2465,7 @@ calc_rating_bayes 	(
 						, multiple_anchors_present
 						, some_prior_set
 						, anchor_use
+						, anchor
 						, general_average 
 						, n_players 
 						, pp
