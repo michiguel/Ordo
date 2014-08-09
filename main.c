@@ -2377,16 +2377,14 @@ deviation (void)
 static double calc_ind_rating(double cume_score, double *rtng, double *weig, int r);
 static double calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, double *weig, int r);
 
-static int
-rate_super_players(bool_t quiet, struct ENC *enc)
+static 
+void
+rate_super_players (bool_t quiet, struct ENC *enc, int N_enc, int *performance_type, int n_players, double *ratingof, double white_advantage, bool_t *flagged,
+char *Name[], double beta)
 {
 	int j, e;
 	int myenc_n = 0;
 	static struct ENC myenc[MAXENCOUNTERS];
-	int N_enc;
-
-	N_enc = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
-	calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
 
 	assert(Performance_type_set);
 
@@ -2456,10 +2454,7 @@ rate_super_players(bool_t quiet, struct ENC *enc)
 		}
 	}
 
-	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
-	calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
-
-	return N_enc;
+	return;
 }
 #endif
 
@@ -2631,7 +2626,15 @@ double white_advantage = *pwadv;
 
 #ifdef CALCIND_SWSL
 	if (!quiet && super_players_present()) printf ("Post-Convergence rating estimation for all-wins / all-losses players\n\n");
-	N_enc = rate_super_players(QUIET_MODE, enc);
+
+	N_enc = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
+	calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
+
+	rate_super_players(QUIET_MODE, enc, N_enc, Performance_type, N_players, Ratingof, White_advantage, Flagged, Name, BETA);
+
+	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
+	calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
+
 #endif
 
 	if (!Multiple_anchors_present && !Some_prior_set)
