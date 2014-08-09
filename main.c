@@ -231,11 +231,6 @@ struct DEVIATION_ACC *sim = NULL;
 
 /*------------------------------------------------------------------------*/
 
-struct prior {
-	double rating;
-	double sigma;	
-	bool_t set;
-};
 
 static struct prior Wa_prior = {40.0,20.0,FALSE};
 static struct prior PP[MAXPLAYERS];
@@ -248,13 +243,6 @@ static bool_t set_prior (const char *prior_name, double x, double sigma);
 static void priors_load(const char *fpriors_name);
 
 #define MAX_RELPRIORS 10000
-
-struct relprior {
-	int player_a;
-	int player_b;
-	double delta;
-	double sigma;	
-};
 
 struct relprior Ra[MAX_RELPRIORS];
 long int N_relative_anchors = 0;
@@ -2334,6 +2322,8 @@ simulate_scores(void)
 		Score [i] = rand_threeway_wscore(pwin,pdraw);
 	}
 }
+
+////
 #endif
 
 double 
@@ -2359,6 +2349,8 @@ deviation (void)
 #define CALCIND_SWSL
 #endif
 
+#if 1
+
 static bool_t
 super_players_present(void)
 { 
@@ -2383,6 +2375,7 @@ adjust_wadv_bayes
 				, const double *ratingof
 				, double resol
 );
+
 
 static int
 calc_rating_bayes 	(  
@@ -2585,6 +2578,7 @@ calc_rating_bayes 	(
 
 	return N_enc;
 }
+#endif
 
 static int
 calc_rating (bool_t quiet, struct ENC *enc, int N_enc)

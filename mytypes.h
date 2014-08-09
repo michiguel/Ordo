@@ -72,6 +72,8 @@
 
 //===============================================
 
+#include "boolean.h"
+
 struct ENC {
 	// FIXME covert to long ints or int32_t
 	double 	wscore;
@@ -95,6 +97,19 @@ enum 			Player_Performance_Type {
 				PERF_NORMAL = 0,
 				PERF_SUPERWINNER = 1,
 				PERF_SUPERLOSER = 2
+};
+
+struct prior {
+	double rating;
+	double sigma;	
+	bool_t set;
+};
+
+struct relprior {
+	int player_a;
+	int player_b;
+	double delta;
+	double sigma;	
 };
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
