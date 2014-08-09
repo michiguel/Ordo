@@ -2363,6 +2363,7 @@ adjust_wadv_bayes
 				, const struct relprior *ra
 				, const double *ratingof
 				, double resol
+				, double beta
 );
 
 
@@ -2539,7 +2540,8 @@ calc_rating_bayes 	(
 							, n_relative_anchors
 							, ra
 							, ratingof
-							, resol);
+							, resol
+							, beta);
 
 			*pwadv = white_advantage;
 		}
@@ -2709,6 +2711,7 @@ adjust_wadv_bayes
 				, const struct relprior *ra
 				, const double *ratingof
 				, double resol
+				, double beta
 )
 {
 	double delta, wa, ei, ej, ek;
@@ -2728,7 +2731,7 @@ adjust_wadv_bayes
 							, n_relative_anchors
 							, ra
 							, ratingof
-							, BETA);
+							, beta);
 
 		ej = calc_bayes_unfitness_full	
 							( n_enc
@@ -2740,7 +2743,7 @@ adjust_wadv_bayes
 							, n_relative_anchors
 							, ra
 							, ratingof
-							, BETA);
+							, beta);
 
 		ek = calc_bayes_unfitness_full	
 							( n_enc
@@ -2752,7 +2755,7 @@ adjust_wadv_bayes
 							, n_relative_anchors
 							, ra
 							, ratingof
-							, BETA);
+							, beta);
 
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 4;
