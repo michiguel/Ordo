@@ -1739,7 +1739,7 @@ static double Probarray [MAXPLAYERS] [4];
 
 // no globals
 static double
-get_extra_unfitness_j (double R, int j, struct prior *p, double *ratingof, long int n_relative_anchors, struct relprior *ra)
+get_extra_unfitness_j (double R, int j, const struct prior *p, double *ratingof, long int n_relative_anchors, struct relprior *ra)
 {
 	double x;
 	double u = 0;
