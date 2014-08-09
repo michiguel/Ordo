@@ -73,6 +73,7 @@
 //===============================================
 
 struct ENC {
+	// FIXME covert to long ints or int32_t
 	double 	wscore;
 	int		played;
 	int 	wh;
@@ -80,6 +81,20 @@ struct ENC {
 	int		W;
 	int		D;
 	int		L;
+};
+
+struct GAMESTATS {
+	long int
+		white_wins,
+		draws,
+		black_wins,
+		noresult;
+};
+
+enum 			Player_Performance_Type {
+				PERF_NORMAL = 0,
+				PERF_SUPERWINNER = 1,
+				PERF_SUPERLOSER = 2
 };
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/

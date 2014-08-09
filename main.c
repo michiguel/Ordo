@@ -53,6 +53,7 @@
 #include "csv.h"
 
 #include "encount.h"
+#include "indiv.h"
 
 /*
 |
@@ -167,12 +168,6 @@ static bool_t	General_average_set = FALSE;
 
 static int		Anchored_n = 0;
 
-enum 			Player_Performance_Type {
-				PERF_NORMAL = 0,
-				PERF_SUPERWINNER = 1,
-				PERF_SUPERLOSER = 2
-};
-
 static bool_t	Performance_type_set = FALSE;
 static int		Performance_type[MAXPLAYERS];
 
@@ -223,14 +218,6 @@ static double	BETA = 1.0/INVBETA;
 static double	Confidence_factor = 1.0;
 
 static int		OUTDECIMALS = 1;
-
-struct GAMESTATS {
-	long int
-		white_wins,
-		draws,
-		black_wins,
-		noresult;
-};
 
 static struct GAMESTATS	Game_stats;
 
@@ -2373,9 +2360,10 @@ deviation (void)
 #endif
 
 #ifdef CALCIND_SWSL
-
+#if 0
 static double calc_ind_rating(double cume_score, double *rtng, double *weig, int r);
 static double calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, double *weig, int r);
+
 
 static 
 void
@@ -2454,6 +2442,8 @@ char *name[], double beta)
 
 	return;
 }
+#endif
+
 #endif
 
 static bool_t
@@ -2946,7 +2936,7 @@ set_super_players(bool_t quiet, struct ENC *enc)
 
 //**************************************************************
 
-#if 1
+#if 0
 static double
 ind_expected (double x, double *rtng, double *weig, int n)
 {
@@ -2974,7 +2964,6 @@ adjust_x (double x, double xp, double sc, double delta, double kappa)
 	}
 	return x;	
 }
-
 
 static double
 calc_ind_rating(double cume_score, double *rtng, double *weig, int r)
@@ -3032,7 +3021,9 @@ calc_ind_rating(double cume_score, double *rtng, double *weig, int r)
 
 	return x;
 }
-#endif
+
+
+
 
 //=========================================
 
@@ -3116,4 +3107,5 @@ calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, do
 
 	return x;
 }
+#endif
 
