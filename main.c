@@ -1768,7 +1768,7 @@ probarray_reset(int n_players, double probarray[MAXPLAYERS][4])
 
 // no globals
 static void
-probarray_build(int n_enc, const struct ENC *enc, double inputdelta, double *ratingof, double white_advantage)
+probarray_build(int n_enc, const struct ENC *enc, double inputdelta, double beta, double *ratingof, double white_advantage)
 {
 	double pw, pd, pl, delta;
 	double p;
@@ -1778,21 +1778,21 @@ probarray_build(int n_enc, const struct ENC *enc, double inputdelta, double *rat
 		w = enc[e].wh;	b = enc[e].bl;
 
 		delta = 0;
-		fget_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, BETA);
+		fget_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, beta);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
 		Probarray [w] [1] -= p;			
 		Probarray [b] [1] -= p;	
 
 		delta = +inputdelta;
-		fget_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, BETA);
+		fget_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, beta);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
 		Probarray [w] [2] -= p;			
 		Probarray [b] [0] -= p;	
 
 		delta = -inputdelta;
-		fget_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, BETA);
+		fget_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, beta);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
 		Probarray [w] [0] -= p;			
@@ -1803,14 +1803,15 @@ probarray_build(int n_enc, const struct ENC *enc, double inputdelta, double *rat
 
 // no globals
 static double
-derivative_single (int j, double delta, double *ratingof, long int n_relative_anchors, struct relprior *ra, double probarray[MAXPLAYERS][4])
+derivative_single (int j, double delta, double *ratingof, const struct prior *pp,
+ long int n_relative_anchors, struct relprior *ra, double probarray[MAXPLAYERS][4])
 {
 	double decrem, increm, center;
 	double change;
 
-	decrem = probarray [j] [0] + get_extra_unfitness_j (ratingof[j] - delta, j, PP, ratingof, n_relative_anchors, ra);
-	center = probarray [j] [1] + get_extra_unfitness_j (ratingof[j]        , j, PP, ratingof, n_relative_anchors, ra);
-	increm = probarray [j] [2] + get_extra_unfitness_j (ratingof[j] + delta, j, PP, ratingof, n_relative_anchors, ra);
+	decrem = probarray [j] [0] + get_extra_unfitness_j (ratingof[j] - delta, j, pp, ratingof, n_relative_anchors, ra);
+	center = probarray [j] [1] + get_extra_unfitness_j (ratingof[j]        , j, pp, ratingof, n_relative_anchors, ra);
+	increm = probarray [j] [2] + get_extra_unfitness_j (ratingof[j] + delta, j, pp, ratingof, n_relative_anchors, ra);
 
 	if (center < decrem && center < increm) {
 		change = decrem > increm? 0.5: -0.5; 
@@ -1825,11 +1826,13 @@ static void
 derivative_vector_calc 	( double delta
 						, int n_encounters
 						, const struct ENC *enc
+						, double beta
 						, int n_players
 						, double *ratingof
 						, bool_t *flagged
 						, bool_t *prefed
 						, double white_advantage
+		 				, const struct prior *pp
 						, long int n_relative_anchors
 						, struct relprior *ra
 						, double probarray[MAXPLAYERS][4]
@@ -1838,13 +1841,13 @@ derivative_vector_calc 	( double delta
 {
 	int j;
 	probarray_reset(n_players, probarray);
-	probarray_build(n_encounters, enc, delta, ratingof, white_advantage);
+	probarray_build(n_encounters, enc, delta, beta, ratingof, white_advantage);
 
 	for (j = 0; j < n_players; j++) {
 		if (flagged[j] || prefed[j]) {
 			vector[j] = 0.0;
 		} else {
-			vector[j] = derivative_single (j, delta, ratingof, n_relative_anchors, ra, probarray);
+			vector[j] = derivative_single (j, delta, ratingof, pp, n_relative_anchors, ra, probarray);
 		}
 	}	
 }
@@ -2445,16 +2448,17 @@ calc_rating_bayes 	(
 						( delta
 						, N_enc
 						, enc
+						, beta
 						, n_players
 						, ratingof
 						, flagged
 						, prefed
 						, white_advantage
+						, pp
 						, n_relative_anchors
 						, ra
 						, probarray
 						, changing );
-
 
 			resol_prev = resol;
 			resol = 
