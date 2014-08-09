@@ -1655,34 +1655,6 @@ wdl_probabilities (int ww, int dd, int ll, double pw, double pd, double pl)
 			;
 }
 
-#if 0
-static double
-calc_bayes_unfitness_partial (struct ENC *enc, int j) 
-{
-	double pw, pd, pl, accum;
-	int e,w,b;
-
-	for (accum = 0, e = 0; e < N_encounters; e++) {
-		w = enc[e].wh;	b = enc[e].bl;
-		if (b == j || w == j) {
-			get_pWDL(Ratingof[w] + White_advantage - Ratingof[b], &pw, &pd, &pl);
-			accum += wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
-		}
-	}
-
-#if defined(DOPRIOR)
-	// Prior
-	if (PP[j].set) {
-		double x;
-		x = (Ratingof[j] - PP[j].rating)/PP[j].sigma;
-		accum -= 0.5 * x * x;
-	}
-#endif
-
-	return -accum;
-}
-#endif
-
 // no globals
 static double
 prior_unfitness	( int n_players
@@ -1763,7 +1735,7 @@ calc_bayes_unfitness_full
 
 //============================================
 
-double Probarray [MAXPLAYERS] [4];
+static double Probarray [MAXPLAYERS] [4];
 
 // no globals
 static double
