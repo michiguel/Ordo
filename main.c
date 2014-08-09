@@ -2366,6 +2366,60 @@ adjust_wadv_bayes
 				, double beta
 );
 
+// no globals
+static void
+derivative_vector_calc 	( double delta
+						, int n_encounters
+						, const struct ENC *enc
+						, double beta
+						, int n_players
+						, double *ratingof
+						, bool_t *flagged
+						, bool_t *prefed
+						, double white_advantage
+		 				, const struct prior *pp
+						, long int n_relative_anchors
+						, struct relprior *ra
+						, double probarray[MAXPLAYERS][4]
+						, double *vector 
+);
+
+// no globals
+static double
+calc_bayes_unfitness_full	
+				( int n_enc
+				, const struct ENC *enc
+				, int n_players
+				, const struct prior *p
+				, double wadv
+				, struct prior wa_prior
+				, long int n_relative_anchors
+				, const struct relprior *ra
+				, const double *ratingof
+				, double beta
+);
+
+// no globals
+static double
+adjust_rating_bayes 
+				( double delta
+				, bool_t multiple_anchors_present
+				, bool_t some_prior_set
+				, bool_t anchor_use
+				, int anchor
+				, double general_average 
+				, int n_players 
+				, const struct prior *p
+				, double white_advantage
+				, struct prior wa_prior
+				, long int n_relative_anchors
+				, const struct relprior *ra
+				, const double *change_vector
+				, const bool_t *flagged
+				, const bool_t *prefed
+				, double *ratingof // out 
+				, double *ratingbk // out 
+);
 
 static int
 calc_rating_bayes 	(  
