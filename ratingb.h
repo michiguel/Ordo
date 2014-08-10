@@ -28,7 +28,7 @@
 #include "ordolim.h"
 
 extern int
-_calc_rating_bayes 	(  
+calc_rating_bayes2 	(  
 			bool_t 		quiet
 			, struct ENC *	enc
 			, int 			N_enc

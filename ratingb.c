@@ -209,7 +209,7 @@ adjust_rating_bayes
 
 // no globals
 int
-_calc_rating_bayes 	(  
+calc_rating_bayes2 	(  
 			bool_t 		quiet
 			, struct ENC *	enc
 			, int 			N_enc

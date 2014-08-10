@@ -185,7 +185,7 @@ static int 		N_games = 0;
 
 /* encounters */
 
-struct ENC 		Encounter[MAXENCOUNTERS];
+static struct ENC Encounter[MAXENCOUNTERS];
 static int 		N_encounters = 0;
 
 /**/
@@ -246,8 +246,8 @@ static void priors_load(const char *fpriors_name);
 
 #define MAX_RELPRIORS 10000
 
-struct relprior Ra[MAX_RELPRIORS];
-long int N_relative_anchors = 0;
+static struct relprior Ra[MAX_RELPRIORS];
+static long int N_relative_anchors = 0;
 static bool_t hide_old_ver = FALSE;
 
 
@@ -2599,7 +2599,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 {
 	int x;
 
-	x = calc_rating_bayes (  
+	x = calc_rating_bayes2 (  
 			quiet
 			, enc
 			, N_enc
