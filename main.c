@@ -1754,6 +1754,7 @@ adjust_rating_bayes
 				, double *ratingbk // out 
 );
 
+// no globals
 static int
 calc_rating_bayes 	(  
 			bool_t 		quiet
@@ -2405,9 +2406,7 @@ adjust_rating_bayes
 	return ymax * delta;
 }
 
-//mojon
-
-
+// no globals
 static void
 ratings_apply_excess_correction(double excess, int n_players, const bool_t *flagged, double *ratingof /*out*/)
 {
