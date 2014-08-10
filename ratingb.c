@@ -550,8 +550,6 @@ fget_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl, double
 	return;
 }
 
-static void fget_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl, double beta);
-
 static double
 wdl_probabilities (int ww, int dd, int ll, double pw, double pd, double pl)
 {
