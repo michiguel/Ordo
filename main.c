@@ -2468,7 +2468,10 @@ calc_rating_bayes 	(
 	double 	olddev, curdev, outputdev;
 	int 	i;
 	int		rounds = 10000;
-	double 	delta = Rtng_76; //should be proportional to the scale
+
+double rtng_76 = (-log(1.0/0.76-1.0))/beta;
+
+	double 	delta = rtng_76; //should be proportional to the scale
 	double 	denom = 3;
 	int 	phase = 0;
 	int 	n = 40;
@@ -2517,6 +2520,7 @@ calc_rating_bayes 	(
 						, probarray
 						, changing );
 
+
 			resol_prev = resol;
 			resol = 
 
@@ -2530,7 +2534,7 @@ calc_rating_bayes 	(
 						, general_average 
 						, n_players 
 						, pp
-						, White_advantage
+						, white_advantage
 						, wa_prior
 						, n_relative_anchors
 						, ra
@@ -2614,9 +2618,9 @@ calc_rating_bayes 	(
 	N_enc = calc_encounters(ENCOUNTERS_FULL, n_games, score, flagged, whiteplayer, blackplayer, enc);
 	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby);
 
-	assert(Performance_type_set);
+//	assert(Performance_type_set); //FIXME
 
-	rate_super_players(QUIET_MODE, enc, N_enc, performance_type, n_players, ratingof, White_advantage, flagged, name, beta);
+	rate_super_players(quiet, enc, N_enc, performance_type, n_players, ratingof, white_advantage, flagged, name, beta);
 
 	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, n_games, score, flagged, whiteplayer, blackplayer, enc);
 	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby);
