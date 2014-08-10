@@ -1,2 +1,2 @@
-#define VERSION "v0.8.5-cln54"
+#define VERSION "v0.8.5-cln55"
 

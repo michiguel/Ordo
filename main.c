@@ -2218,7 +2218,7 @@ probarray_reset(int n_players, double probarray[MAXPLAYERS][4])
 
 // no globals
 static void
-probarray_build(int n_enc, const struct ENC *enc, double inputdelta, double beta, double *ratingof, double white_advantage)
+probarray_build(int n_enc, const struct ENC *enc, double inputdelta, double beta, double *ratingof, double white_advantage, double probarray [MAXPLAYERS] [4])
 {
 	double pw, pd, pl, delta;
 	double p;
@@ -2231,22 +2231,22 @@ probarray_build(int n_enc, const struct ENC *enc, double inputdelta, double beta
 		fget_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, beta);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
-		Probarray [w] [1] -= p;			
-		Probarray [b] [1] -= p;	
+		probarray [w] [1] -= p;			
+		probarray [b] [1] -= p;	
 
 		delta = +inputdelta;
 		fget_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, beta);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
-		Probarray [w] [2] -= p;			
-		Probarray [b] [0] -= p;	
+		probarray [w] [2] -= p;			
+		probarray [b] [0] -= p;	
 
 		delta = -inputdelta;
 		fget_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, beta);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
-		Probarray [w] [0] -= p;			
-		Probarray [b] [2] -= p;	
+		probarray [w] [0] -= p;			
+		probarray [b] [2] -= p;	
 
 	}
 }
@@ -2291,7 +2291,7 @@ derivative_vector_calc 	( double delta
 {
 	int j;
 	probarray_reset(n_players, probarray);
-	probarray_build(n_encounters, enc, delta, beta, ratingof, white_advantage);
+	probarray_build(n_encounters, enc, delta, beta, ratingof, white_advantage, probarray);
 
 	for (j = 0; j < n_players; j++) {
 		if (flagged[j] || prefed[j]) {
@@ -2523,6 +2523,7 @@ fitexcess 		( int n_players
 }
 
 //========================== end bayesian concept
+
 
 static void
 ratings_results (void)
