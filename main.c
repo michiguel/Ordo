@@ -262,23 +262,14 @@ static double relative_anchors_unfitness_full(long int n_relative_anchors, const
 static double relative_anchors_unfitness_j(double R, int j, double *ratingof, long int n_relative_anchors, struct relprior *ra);
 
 /*------------------------------------------------------------------------*/
-
-//static int		calc_encounters (int selectivity, struct ENC *enc);
-//static void		calc_obtained_playedby 	(const struct ENC *enc, int N_enc);
-//static void		calc_expected 			(const struct ENC *enc, int N_enc);
-
-//static int		shrink_ENC (struct ENC *enc, int N_enc);
 static int		purge_players    (bool_t quiet, struct ENC *enc);
 static int		set_super_players(bool_t quiet, struct ENC *enc);
 
 static void		clear_flagged (void);
 
-
-
-void			all_report (FILE *csvf, FILE *textf);
-void			init_rating (void);
+static void		all_report (FILE *csvf, FILE *textf);
+static void		init_rating (void);
 static void		init_manchors(const char *fpins_name);
-double			adjust_rating (double delta, double kappa);
 static int		calc_rating (bool_t quiet, struct ENC *enc, int N_enc);
 
 static void		ratings_restore (int n_players, const double *r_bk, double *r_of);
@@ -2537,78 +2528,6 @@ fitexcess 		( int n_players
 }
 
 //========================== end bayesian concept
-
-double
-adjust_rating (double delta, double kappa)
-{
-	int 	j, notflagged;
-	double 	d, excess, average;
-	double 	y = 1.0;
-	double 	ymax = 0;
-	double 	accum = 0;
-
-	/*
-	|	1) delta and 2) kappa control convergence speed:
-	|	Delta is the standard increase/decrease for each player
-	|	But, not every player gets that "delta" since it is modified by
-	|	by multiplier "y". The bigger the difference between the expected 
-	|	performance and the observed, the bigger the "y". However, this
-	|	is controled so y won't be higher than 1.0. It will be asymptotic
-	|	to 1.0, and the parameter that controls how fast this saturation is 
-	|	reached is "kappa". Smaller kappas will allow to reach 1.0 faster.	
-	|
-	|	Uses globals:
-	|	arrays:	Flagged, Prefed, Expected, Obtained, Playedby, Ratingof
-	|	variables: N_players, General_average
-	|	flags:	Multiple_anchors_present, Anchor_use
-	*/
-
-	for (j = 0; j < N_players; j++) {
-		if (	Flagged[j]	// player previously removed
-			|| 	Prefed[j]	// already fixed, one of the multiple anchors
-		) continue; 
-
-		// find multiplier "y"
-		d = (Expected[j] - Obtained[j]) / Playedby[j];
-		d = d < 0? -d: d;
-		y = d / (kappa + d);
-		if (y > ymax) ymax = y;
-
-		// execute adjustment
-		if (Expected[j] > Obtained [j]) {
-			Ratingof[j] -= delta * y;
-		} else {
-			Ratingof[j] += delta * y;
-		}
-	}
-
-	// Normalization to a common reference (Global --> General_average)
-	// The average could be normalized, or the rating of an anchor.
-	// Skip in case of multiple anchors present
-
-	if (!Multiple_anchors_present && !Some_prior_set) {
-
-		if (Anchor_use) {
-			excess  = Ratingof[Anchor] - General_average;
-		} else {
-			for (notflagged = 0, accum = 0, j = 0; j < N_players; j++) {
-				if (!Flagged[j]) {
-					notflagged++;
-					accum += Ratingof[j];
-				}
-			}
-			average = accum / notflagged;
-			excess  = average - General_average;
-		}
-		for (j = 0; j < N_players; j++) {
-			if (!Flagged[j]) Ratingof[j] -= excess;
-		}	
-	}	
-
-	// Return maximum increase/decrease ==> "resolution"
-
-	return ymax * delta;
-}
 
 static void
 ratings_results (void)
