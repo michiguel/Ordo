@@ -1974,6 +1974,81 @@ double rtng_76 = (-log(1.0/0.76-1.0))/beta;
 }
 
 
+// no globals
+static double
+adjust_wadv_bayes 
+				( int n_enc
+				, const struct ENC *enc
+				, int n_players
+				, const struct prior *p
+				, double start_wadv
+				, struct prior wa_prior
+				, long int n_relative_anchors
+				, const struct relprior *ra
+				, const double *ratingof
+				, double resol
+				, double beta
+)
+{
+	double delta, wa, ei, ej, ek;
+
+	delta = resol;
+	wa = start_wadv;
+
+	do {	
+
+		ei = calc_bayes_unfitness_full	
+							( n_enc
+							, enc
+							, n_players
+							, p
+							, wa - delta //
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof
+							, beta);
+
+		ej = calc_bayes_unfitness_full	
+							( n_enc
+							, enc
+							, n_players
+							, p
+							, wa         //
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof
+							, beta);
+
+		ek = calc_bayes_unfitness_full	
+							( n_enc
+							, enc
+							, n_players
+							, p
+							, wa + delta //
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof
+							, beta);
+
+		if (ei >= ej && ej <= ek) {
+			delta = delta / 4;
+		} else
+		if (ej >= ei && ei <= ek) {
+			wa -= delta;
+		} else
+		if (ei >= ek && ek <= ej) {
+			wa += delta;
+		}
+
+	} while (delta > resol/10 && -1000 < wa && wa < 1000);
+	
+	return wa;
+}
+
+
 static void fget_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl, double beta);
 
 static double
@@ -2757,79 +2832,6 @@ adjust_wadv (double start_wadv)
 }
 #endif
 
-// no globals
-static double
-adjust_wadv_bayes 
-				( int n_enc
-				, const struct ENC *enc
-				, int n_players
-				, const struct prior *p
-				, double start_wadv
-				, struct prior wa_prior
-				, long int n_relative_anchors
-				, const struct relprior *ra
-				, const double *ratingof
-				, double resol
-				, double beta
-)
-{
-	double delta, wa, ei, ej, ek;
-
-	delta = resol;
-	wa = start_wadv;
-
-	do {	
-
-		ei = calc_bayes_unfitness_full	
-							( n_enc
-							, enc
-							, n_players
-							, p
-							, wa - delta //
-							, wa_prior
-							, n_relative_anchors
-							, ra
-							, ratingof
-							, beta);
-
-		ej = calc_bayes_unfitness_full	
-							( n_enc
-							, enc
-							, n_players
-							, p
-							, wa         //
-							, wa_prior
-							, n_relative_anchors
-							, ra
-							, ratingof
-							, beta);
-
-		ek = calc_bayes_unfitness_full	
-							( n_enc
-							, enc
-							, n_players
-							, p
-							, wa + delta //
-							, wa_prior
-							, n_relative_anchors
-							, ra
-							, ratingof
-							, beta);
-
-		if (ei >= ej && ej <= ek) {
-			delta = delta / 4;
-		} else
-		if (ej >= ei && ei <= ek) {
-			wa -= delta;
-		} else
-		if (ei >= ek && ek <= ej) {
-			wa += delta;
-		}
-
-	} while (delta > resol/10 && -1000 < wa && wa < 1000);
-	
-	return wa;
-}
 
 static double inv_xpect(double invbeta, double p) {return (-1.0*invbeta) * log(100.0/p-1.0);}
 
