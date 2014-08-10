@@ -231,6 +231,8 @@ struct DEVIATION_ACC {
 
 struct DEVIATION_ACC *sim = NULL;
 
+static double Probarray [MAXPLAYERS] [4];
+
 /*------------------------------------------------------------------------*/
 
 
@@ -2185,8 +2187,6 @@ calc_bayes_unfitness_full
 
 //============================================
 
-static double Probarray [MAXPLAYERS] [4];
-
 // no globals
 static double
 get_extra_unfitness_j (double R, int j, const struct prior *p, double *ratingof, long int n_relative_anchors, struct relprior *ra)
@@ -2599,7 +2599,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 {
 	int x;
 
-	x = calc_rating_bayes (  
+	x = calc_rating_bayes2 (  
 			quiet
 			, enc
 			, N_enc
