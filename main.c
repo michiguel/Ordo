@@ -1451,49 +1451,6 @@ relpriors_load(const char *f_name)
 	return;
 }
 
-// no globals
-static double
-relative_anchors_unfitness_full(long int n_relative_anchors, const struct relprior *ra, const double *ratingof)
-{
-	int a, b, i;
-	double d, x;
-	double accum = 0;
-	for (i = 0; i < n_relative_anchors; i++) {
-		a = ra[i].player_a;
-		b = ra[i].player_b;
-		d = ratingof[a] - ratingof[b];
-		x = (d - ra[i].delta)/ra[i].sigma;
-		accum += 0.5 * x * x;
-	}
-
-	return accum;
-}
-
-// no globals
-static double
-relative_anchors_unfitness_j(double R, int j, double *ratingof, long int n_relative_anchors, struct relprior *ra)
-{
-	int a, b, i;
-	double d, x;
-	double accum = 0;
-	double rem;
-
-	rem = ratingof[j];
-	ratingof[j] = R;
-
-	for (i = 0; i < n_relative_anchors; i++) {
-		a = ra[i].player_a;
-		b = ra[i].player_b;
-		if (a == j || b == j) {
-			d = ratingof[a] - ratingof[b];
-			x = (d - ra[i].delta)/ra[i].sigma;
-			accum += 0.5 * x * x;
-		}
-	}
-
-	ratingof[j] = rem;
-	return accum;
-}
 
 
 
@@ -1639,10 +1596,86 @@ priors_load(const char *fpriors_name)
 
 //== END PRIORS ======================================================
 
-
-
 // ================= Testing Bayes concept 
-#if 1
+
+// no globals
+static double
+relative_anchors_unfitness_full(long int n_relative_anchors, const struct relprior *ra, const double *ratingof)
+{
+	int a, b, i;
+	double d, x;
+	double accum = 0;
+	for (i = 0; i < n_relative_anchors; i++) {
+		a = ra[i].player_a;
+		b = ra[i].player_b;
+		d = ratingof[a] - ratingof[b];
+		x = (d - ra[i].delta)/ra[i].sigma;
+		accum += 0.5 * x * x;
+	}
+
+	return accum;
+}
+
+// no globals
+static double
+relative_anchors_unfitness_j(double R, int j, double *ratingof, long int n_relative_anchors, struct relprior *ra)
+{
+	int a, b, i;
+	double d, x;
+	double accum = 0;
+	double rem;
+
+	rem = ratingof[j];
+	ratingof[j] = R;
+
+	for (i = 0; i < n_relative_anchors; i++) {
+		a = ra[i].player_a;
+		b = ra[i].player_b;
+		if (a == j || b == j) {
+			d = ratingof[a] - ratingof[b];
+			x = (d - ra[i].delta)/ra[i].sigma;
+			accum += 0.5 * x * x;
+		}
+	}
+
+	ratingof[j] = rem;
+	return accum;
+}
+
+
+// no globals
+static void
+adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, int n_players, double *ratingof, bool_t *flagged)
+{
+	double excess;
+	int j;
+	if (anchor_use) {
+		excess  = ratingof[anchor] - general_average;	
+		for (j = 0; j < n_players; j++) {
+			if (!flagged[j]) ratingof[j] -= excess;
+		}	
+	}
+}
+
+// no globals
+static void
+ratings_restore (int n_players, const double *r_bk, double *r_of)
+{
+	int j;
+	for (j = 0; j < n_players; j++) {
+		r_of[j] = r_bk[j];
+	}	
+}
+
+// no globals
+static void
+ratings_backup (int n_players, const double *r_of, double *r_bk)
+{
+	int j;
+	for (j = 0; j < n_players; j++) {
+		r_bk[j] = r_of[j];
+	}	
+}
 
 static void fget_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl, double beta);
 
@@ -1952,7 +1985,7 @@ adjust_rating_bayes
 	// Return maximum increase/decrease ==> "resolution"
 	return ymax * delta;
 }
-#endif
+
 
 
 static void
@@ -2074,7 +2107,7 @@ fitexcess 		( int n_players
 	return c;
 }
 
-//==============================================================
+//========================== end bayesian concept
 
 double
 adjust_rating (double delta, double kappa)
@@ -2148,40 +2181,6 @@ adjust_rating (double delta, double kappa)
 	return ymax * delta;
 }
 
-
-// no globals
-static void
-adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, int n_players, double *ratingof, bool_t *flagged)
-{
-	double excess;
-	int j;
-	if (anchor_use) {
-		excess  = ratingof[anchor] - general_average;	
-		for (j = 0; j < n_players; j++) {
-			if (!flagged[j]) ratingof[j] -= excess;
-		}	
-	}
-}
-
-// no globals
-static void
-ratings_restore (int n_players, const double *r_bk, double *r_of)
-{
-	int j;
-	for (j = 0; j < n_players; j++) {
-		r_of[j] = r_bk[j];
-	}	
-}
-
-// no globals
-static void
-ratings_backup (int n_players, const double *r_of, double *r_bk)
-{
-	int j;
-	for (j = 0; j < n_players; j++) {
-		r_bk[j] = r_of[j];
-	}	
-}
 
 #if 1
 static void
