@@ -42,6 +42,8 @@
 
 //
 
+// ================= Testing Bayes concept 
+
 // no globals
 static double
 relative_anchors_unfitness_full(long int n_relative_anchors, const struct relprior *ra, const double *ratingof)
@@ -85,6 +87,7 @@ relative_anchors_unfitness_j(double R, int j, double *ratingof, long int n_relat
 	ratingof[j] = rem;
 	return accum;
 }
+
 
 // no globals
 static void
@@ -204,6 +207,7 @@ adjust_rating_bayes
 				, double *ratingbk // out 
 );
 
+// no globals
 int
 _calc_rating_bayes 	(  
 			bool_t 		quiet
@@ -492,7 +496,6 @@ adjust_wadv_bayes
 }
 
 
-
 static double
 fxpect (double a, double b, double beta)
 {
@@ -557,7 +560,6 @@ wdl_probabilities (int ww, int dd, int ll, double pw, double pd, double pl)
 			+ 	(ll > 0? ll * log(pl) : 0)
 			;
 }
-
 
 // no globals
 static double
@@ -857,7 +859,7 @@ adjust_rating_bayes
 	return ymax * delta;
 }
 
-
+// no globals
 static void
 ratings_apply_excess_correction(double excess, int n_players, const bool_t *flagged, double *ratingof /*out*/)
 {
@@ -977,5 +979,6 @@ fitexcess 		( int n_players
 	return c;
 }
 
-//==============================================================
+//========================== end bayesian concept
+
 

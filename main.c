@@ -188,10 +188,6 @@ static int 		N_games = 0;
 struct ENC 		Encounter[MAXENCOUNTERS];
 static int 		N_encounters = 0;
 
-#if 1
-#define NEW_ENC
-#endif
-
 /**/
 static double	Confidence = 95;
 static double	General_average = 2300.0;
