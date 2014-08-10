@@ -280,7 +280,6 @@ void			init_rating (void);
 static void		init_manchors(const char *fpins_name);
 double			adjust_rating (double delta, double kappa);
 static int		calc_rating (bool_t quiet, struct ENC *enc, int N_enc);
-double 			deviation (void);
 
 static void		ratings_restore (int n_players, const double *r_bk, double *r_of);
 static void		ratings_backup  (int n_players, const double *r_of, double *r_bk);
@@ -2611,8 +2610,6 @@ adjust_rating (double delta, double kappa)
 	return ymax * delta;
 }
 
-
-#if 1
 static void
 ratings_results (void)
 {
@@ -2662,8 +2659,6 @@ rand_threeway_wscore(double pwin, double pdraw)
 	}
 }
 
-
-
 static void
 simulate_scores(void)
 {
@@ -2682,26 +2677,6 @@ simulate_scores(void)
 		Score [i] = rand_threeway_wscore(pwin,pdraw);
 	}
 }
-
-////
-#endif
-
-double 
-deviation (void)
-{
-	double accum = 0;
-	double diff;
-	int j;
-
-	for (accum = 0, j = 0; j < N_players; j++) {
-		if (!Flagged[j]) {
-			diff = Expected[j] - Obtained [j];
-			accum += diff * diff / Playedby[j];
-		}
-	}		
-	return accum;
-}
-
 
 //==== CALCULATE INDIVIDUAL RATINGS =========================
 
