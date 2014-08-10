@@ -27,6 +27,11 @@
 #define WADV_RECALC
 #undef WADV_RECALC
 
+
+#if 1
+#define CALCIND_SWSL
+#endif
+
 /*
 | 
 |	ORDO
@@ -279,8 +284,6 @@ double 			deviation (void);
 
 static void		ratings_restore (int n_players, const double *r_bk, double *r_of);
 static void		ratings_backup  (int n_players, const double *r_of, double *r_bk);
-
-static double	xpect (double a, double b);
 
 static void 	ratings_results (void);
 static void 	ratings_for_purged (void);
@@ -2702,12 +2705,6 @@ deviation (void)
 
 //==== CALCULATE INDIVIDUAL RATINGS =========================
 
-#if 1
-#define CALCIND_SWSL
-#endif
-
-
-
 static int
 calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 {
@@ -2757,12 +2754,6 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 		);
 
 	return x;
-}
-
-static double
-xpect (double a, double b)
-{
-	return 1.0 / (1.0 + exp((b-a)*BETA));
 }
 
 /*==================================================================*/
