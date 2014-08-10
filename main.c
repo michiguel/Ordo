@@ -2599,7 +2599,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 {
 	int x;
 
-	x = calc_rating_bayes2 (  
+	x = calc_rating_bayes (  
 			quiet
 			, enc
 			, N_enc
