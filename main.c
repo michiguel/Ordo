@@ -25,7 +25,7 @@
 #define MIN_RESOLUTION 0.000001
 #define PRIOR_SMALLEST_SIGMA 0.0000001
 #define WADV_RECALC
-#undef WADV_RECALC
+//#undef WADV_RECALC
 
 
 #if 1
@@ -1731,8 +1731,8 @@ overallerror_fwadv (double wadv)
 		rw = Ratingof[Whiteplayer[i]];
 		rb = Ratingof[Blackplayer[i]];
 
-		f = xpect (rw + wadv, rb);
-
+	//	f = xpect (rw + wadv, rb);
+f = fxpect (rw + wadv, rb, BETA);
 		e   = f - s[Score[i]];
 		e2 += e * e;
 	}
