@@ -112,5 +112,11 @@ struct relprior {
 	double sigma;	
 };
 
+struct DEVIATION_ACC {
+	double sum1;
+	double sum2;
+	double sdev;
+};
+
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

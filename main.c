@@ -63,6 +63,8 @@
 
 #include "xpect.h"
 
+#include "cegt.h"
+
 /*
 |
 |	GENERAL OPTIONS
@@ -135,7 +137,9 @@ static void usage (void);
 		" -p <file>   input file in PGN format\n"
 		" -c <file>   output file (comma separated value format)\n"
 		" -o <file>   output file (text format), goes to the screen if not present\n"
+		" -E          output in Elostat format (rating.dat, programs.dat & general.dat)\n"
 		" -g <file>   output file with group connection info (no rating output on screen)\n"
+		" -j <file>   output file with head to head information\n"
 		" -s  #       perform # simulations to calculate errors\n"
 		" -e <file>   saves an error matrix, if -s was used\n"
 		" -F <value>  confidence (%) to estimate error margins. Default is 95.0\n"
@@ -149,7 +153,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWLa:A:m:r:y:o:g:c:s:w:u:z:e:TF:RD:";
+const char *OPTION_LIST = "vhHp:qWLa:A:m:r:y:o:Eg:j:c:s:w:u:z:e:TF:RD:";
 
 /*
 |
@@ -225,12 +229,6 @@ static int		OUTDECIMALS = 1;
 
 static struct GAMESTATS	Game_stats;
 
-struct DEVIATION_ACC {
-	double sum1;
-	double sum2;
-	double sdev;
-};
-
 struct DEVIATION_ACC *sim = NULL;
 
 static double Probarray [MAXPLAYERS] [4];
@@ -281,6 +279,12 @@ static void 	transform_DB(struct DATA *db, struct GAMESTATS *gs);
 static bool_t	find_anchor_player(int *anchor);
 
 /*------------------------------------------------------------------------*/
+
+static void cegt_output(void);
+static void head2head_output(const char *head2head_str);
+
+/*------------------------------------------------------------------------*/
+
 #if defined(WADV_RECALC)
 static double 	overallerror_fwadv (double wadv);
 static double 	adjust_wadv (double start_wadv);
@@ -344,9 +348,9 @@ int main (int argc, char *argv[])
 	FILE *groupf;
 
 	int op;
-	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr, *priorsstr, *relstr;
+	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr, *priorsstr, *relstr, *head2head_str;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
-	bool_t group_is_output;
+	bool_t group_is_output, Elostat_output;
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE;
 
 	/* defaults */
@@ -367,6 +371,8 @@ int main (int argc, char *argv[])
 	relstr		 = NULL;
 	group_is_output = FALSE;
 	groupstr 	 = NULL;
+	Elostat_output = FALSE;
+	head2head_str = NULL;
 
 	while (END_OF_OPTIONS != (op = options (argc, argv, OPTION_LIST))) {
 		switch (op) {
@@ -385,6 +391,8 @@ int main (int argc, char *argv[])
 						break;
 			case 'g': 	group_is_output = TRUE;
 						groupstr = opt_arg;
+						break;
+			case 'j': 	head2head_str = opt_arg;
 						break;
 			case 'e': 	ematstr = opt_arg;
 						break;
@@ -451,6 +459,7 @@ int main (int argc, char *argv[])
 						Wa_prior.sigma = 200.0; //20;
 						switch_W = TRUE;
 						break;
+			case 'E':	Elostat_output = TRUE;	break;
 			case 'D': 	if (1 != sscanf(opt_arg,"%d", &OUTDECIMALS) || OUTDECIMALS < 0) {
 							fprintf(stderr, "wrong decimals parameter\n");
 							exit(EXIT_FAILURE);
@@ -783,6 +792,14 @@ int main (int argc, char *argv[])
 	if (Simulate > 1 && NULL != ematstr) {
 		errorsout (ematstr);
 	}
+
+	//
+	if (head2head_str != NULL)
+		head2head_output(head2head_str);		
+
+	// CEGT output style
+	if (Elostat_output)
+		cegt_output();
 
 	if (textf_opened) 	fclose (textf);
 	if (csvf_opened)  	fclose (csvf); 
@@ -1850,5 +1867,74 @@ set_super_players(bool_t quiet, struct ENC *enc)
 
 //**************************************************************
 
+//**************************************************************
 
+// Function provided for a special out of CEGT organization. EloStat Format
+
+static void cegt_output(void)
+{
+	struct CEGT cegt;
+	int j;
+
+	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+	calc_obtained_playedby(Encounter, N_encounters, N_players, Obtained, Playedby);
+	for (j = 0; j < N_players; j++) {
+		Sorted[j] = j;
+	}
+	qsort (Sorted, (size_t)N_players, sizeof (Sorted[0]), compareit);
+
+	cegt.n_enc = N_encounters;
+	cegt.enc = Encounter;
+	cegt.simulate = Simulate;
+	cegt.n_players = N_players;
+	cegt.sorted = Sorted;
+	cegt.ratingof_results = Ratingof_results;
+	cegt.obtained_results = Obtained_results;
+	cegt.playedby_results = Playedby_results;
+	cegt.sdev = Sdev; 
+	cegt.flagged = Flagged;
+	cegt.name = Name;
+	cegt.confidence_factor = Confidence_factor;
+
+	cegt.gstat = &Game_stats;
+
+	cegt.sim = sim;
+
+	output_cegt_style ("general.dat", "rating.dat", "programs.dat", &cegt);
+}
+
+
+// Function provided to have all head to head information
+
+static void head2head_output(const char *head2head_str)
+{
+	struct CEGT cegt;
+	int j;
+
+	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+	calc_obtained_playedby(Encounter, N_encounters, N_players, Obtained, Playedby);
+	for (j = 0; j < N_players; j++) {
+		Sorted[j] = j;
+	}
+	qsort (Sorted, (size_t)N_players, sizeof (Sorted[0]), compareit);
+
+	cegt.n_enc = N_encounters;
+	cegt.enc = Encounter;
+	cegt.simulate = Simulate;
+	cegt.n_players = N_players;
+	cegt.sorted = Sorted;
+	cegt.ratingof_results = Ratingof_results;
+	cegt.obtained_results = Obtained_results;
+	cegt.playedby_results = Playedby_results;
+	cegt.sdev = Sdev; 
+	cegt.flagged = Flagged;
+	cegt.name = Name;
+	cegt.confidence_factor = Confidence_factor;
+
+	cegt.gstat = &Game_stats;
+
+	cegt.sim = sim;
+
+	output_report_individual (head2head_str, &cegt);
+}
 
