@@ -1748,8 +1748,7 @@ overallerror_fwadv (double wadv)
 		rw = Ratingof[Whiteplayer[i]];
 		rb = Ratingof[Blackplayer[i]];
 
-	//	f = xpect (rw + wadv, rb);
-f = fxpect (rw + wadv, rb, BETA);
+		f = fxpect (rw + wadv, rb, BETA);
 		e   = f - s[Score[i]];
 		e2 += e * e;
 	}
