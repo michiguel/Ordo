@@ -143,7 +143,7 @@ static void usage (void);
 		" -s  #       perform # simulations to calculate errors\n"
 		" -e <file>   saves an error matrix, if -s was used\n"
 		" -F <value>  confidence (%) to estimate error margins. Default is 95.0\n"
-		" -D <value>  Output decimals, minimum is 0 (default=1)\n"
+		" -N <value>  Output, number of decimals, minimum is 0 (default=1)\n"
 		"\n"
 		;
 
@@ -153,7 +153,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWLa:A:m:r:y:o:Eg:j:c:s:w:u:z:e:TF:RD:";
+const char *OPTION_LIST = "vhHp:qWLa:A:m:r:y:o:Eg:j:c:s:w:u:z:e:TF:RN:";
 
 /*
 |
@@ -460,7 +460,7 @@ int main (int argc, char *argv[])
 						switch_W = TRUE;
 						break;
 			case 'E':	Elostat_output = TRUE;	break;
-			case 'D': 	if (1 != sscanf(opt_arg,"%d", &OUTDECIMALS) || OUTDECIMALS < 0) {
+			case 'N': 	if (1 != sscanf(opt_arg,"%d", &OUTDECIMALS) || OUTDECIMALS < 0) {
 							fprintf(stderr, "wrong decimals parameter\n");
 							exit(EXIT_FAILURE);
 						}

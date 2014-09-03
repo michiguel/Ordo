@@ -244,21 +244,22 @@ calc_rating_bayes2 	(
 
 // different from non bayes calc
 
-			, double *changing
-			, long int n_relative_anchors
-			, struct prior *pp
-			, double probarray [MAXPLAYERS] [4]
-			, struct relprior *ra
-			, bool_t some_prior_set
-			, struct prior wa_prior
-			, bool_t adjust_white_advantage
+			, double 			*changing
+			, long int 			n_relative_anchors
+			, struct prior 		*pp
+			, double 			probarray [MAXPLAYERS] [4]
+			, struct relprior 	*ra
+			, bool_t 			some_prior_set
+			, struct prior 		wa_prior
+			, bool_t 			adjust_white_advantage
+
 )
 {
 	double 	olddev, curdev, outputdev;
 	int 	i;
 	int		rounds = 10000;
 
-double rtng_76 = (-log(1.0/0.76-1.0))/beta;
+	double rtng_76 = (-log(1.0/0.76-1.0))/beta;
 
 	double 	delta = rtng_76; //should be proportional to the scale
 	double 	denom = 3;
