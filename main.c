@@ -1278,6 +1278,7 @@ init_rating (void)
 	}
 }
 
+//=====================================
 
 static char *skipblanks(char *p) {while (isspace(*p)) p++; return p;}
 static bool_t getnum(char *p, double *px) 
@@ -1297,7 +1298,6 @@ set_anchor (const char *player_name, double x)
 		if (found) {
 			Prefed[j] = TRUE;
 			Ratingof[j] = x;
-			Multiple_anchors_present = TRUE;
 			Anchored_n++;
 		} 
 	}
@@ -1307,12 +1307,11 @@ set_anchor (const char *player_name, double x)
 static bool_t
 assign_anchor (char *name_pinned, double x)
 {
-	bool_t pin_success;
-	if (set_anchor (name_pinned, x)) {
-		pin_success = TRUE;
+	bool_t pin_success = set_anchor (name_pinned, x);
+	if (pin_success) {
+		Multiple_anchors_present = TRUE;
 		printf ("Anchoring, %s --> %.1lf\n", name_pinned, x);
 	} else {
-		pin_success = FALSE;
 		printf ("Anchoring, %s --> FAILED, name not found in input file\n", name_pinned);					
 	}
 	return pin_success;
@@ -1342,9 +1341,10 @@ init_manchors(const char *fpins_name)
 
 		csv_line_t csvln;
 
-		while (file_success && NULL != fgets(myline, MAX_MYLINE, fpins)) {
+		while (pin_success && file_success && NULL != fgets(myline, MAX_MYLINE, fpins)) {
 			success = FALSE;
 			p = myline;
+
 			p = skipblanks(p);
 			x = 0;
 			if (*p == '\0') continue;
