@@ -70,7 +70,7 @@ calc_rating_bayes2 	(
 			, struct prior wa_prior
 
 , bool_t adjust_white_advantage
-
+, double deq
 );
 
 

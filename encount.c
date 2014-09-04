@@ -27,6 +27,8 @@
 #include "mytypes.h"
 #include "pgnget.h"
 
+#include "xpect.h"
+
 //Statics
 
 static struct ENC encounter_merge (const struct ENC *a, const struct ENC *b);
@@ -34,14 +36,6 @@ static int shrink_ENC (struct ENC *enc, int N_enc);
 static int compare_ENC (const void * a, const void * b);
 
 //=======================================================================
-
-static double
-xpect (double a, double b, double beta)
-{
-	return 1.0 / (1.0 + exp((b-a)*beta));
-}
-
-//
 
 static int compare_ENC (const void * a, const void * b)
 {

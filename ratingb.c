@@ -151,6 +151,7 @@ adjust_wadv_bayes
 				, const struct relprior *ra
 				, const double *ratingof
 				, double resol
+				, double deq
 				, double beta
 );
 
@@ -159,6 +160,7 @@ static void
 derivative_vector_calc 	( double delta
 						, int n_encounters
 						, const struct ENC *enc
+						, double deq
 						, double beta
 						, int n_players
 						, double *ratingof
@@ -184,6 +186,7 @@ calc_bayes_unfitness_full
 				, long int n_relative_anchors
 				, const struct relprior *ra
 				, const double *ratingof
+				, double deq
 				, double beta
 );
 
@@ -253,6 +256,7 @@ calc_rating_bayes2 	(
 			, struct prior 		wa_prior
 			, bool_t 			adjust_white_advantage
 
+			, double deq
 )
 {
 	double 	olddev, curdev, outputdev;
@@ -281,6 +285,7 @@ calc_rating_bayes2 	(
 							, n_relative_anchors
 							, ra
 							, ratingof
+							, deq
 							, beta);
 
 	if (!quiet) printf ("Converging...\n\n");
@@ -298,6 +303,7 @@ calc_rating_bayes2 	(
 						( delta
 						, N_enc
 						, enc
+						, deq
 						, beta
 						, n_players
 						, ratingof
@@ -348,6 +354,7 @@ calc_rating_bayes2 	(
 							, n_relative_anchors
 							, ra
 							, ratingof
+							, deq
 							, beta);
 
 			if (curdev >= olddev) {
@@ -389,6 +396,7 @@ calc_rating_bayes2 	(
 							, ra
 							, ratingof
 							, resol
+							, deq
 							, beta);
 
 			*pwadv = white_advantage;
@@ -410,7 +418,7 @@ calc_rating_bayes2 	(
 
 //	assert(Performance_type_set); //FIXME
 
-	rate_super_players(quiet, enc, N_enc, performance_type, n_players, ratingof, white_advantage, flagged, name, beta);
+	rate_super_players(quiet, enc, N_enc, performance_type, n_players, ratingof, white_advantage, flagged, name, deq, beta);
 
 	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, n_games, score, flagged, whiteplayer, blackplayer, enc);
 	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby);
@@ -437,6 +445,7 @@ adjust_wadv_bayes
 				, const struct relprior *ra
 				, const double *ratingof
 				, double resol
+				, double deq
 				, double beta
 )
 {
@@ -457,6 +466,7 @@ adjust_wadv_bayes
 							, n_relative_anchors
 							, ra
 							, ratingof
+							, deq
 							, beta);
 
 		ej = calc_bayes_unfitness_full	
@@ -469,6 +479,7 @@ adjust_wadv_bayes
 							, n_relative_anchors
 							, ra
 							, ratingof
+							, deq
 							, beta);
 
 		ek = calc_bayes_unfitness_full	
@@ -481,6 +492,7 @@ adjust_wadv_bayes
 							, n_relative_anchors
 							, ra
 							, ratingof
+							, deq
 							, beta);
 
 		if (ei >= ej && ej <= ek) {
@@ -551,6 +563,7 @@ calc_bayes_unfitness_full
 				, long int n_relative_anchors
 				, const struct relprior *ra
 				, const double *ratingof
+				, double deq
 				, double beta
 )
 {
@@ -562,7 +575,7 @@ calc_bayes_unfitness_full
 		w = enc[e].wh;
 		b = enc[e].bl;
 
-		fget_pWDL(ratingof[w] + wadv - ratingof[b], &pw, &pd, &pl, beta);
+		get_pWDL(ratingof[w] + wadv - ratingof[b], &pw, &pd, &pl, deq, beta);
 
 		ww = enc[e].W;
 		dd = enc[e].D;
@@ -619,7 +632,7 @@ probarray_reset(int n_players, double probarray[MAXPLAYERS][4])
 
 // no globals
 static void
-probarray_build(int n_enc, const struct ENC *enc, double inputdelta, double beta, double *ratingof, double white_advantage, double probarray [MAXPLAYERS] [4])
+probarray_build(int n_enc, const struct ENC *enc, double inputdelta, double deq, double beta, double *ratingof, double white_advantage, double probarray [MAXPLAYERS] [4])
 {
 	double pw, pd, pl, delta;
 	double p;
@@ -629,21 +642,21 @@ probarray_build(int n_enc, const struct ENC *enc, double inputdelta, double beta
 		w = enc[e].wh;	b = enc[e].bl;
 
 		delta = 0;
-		fget_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, beta);
+		get_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, deq, beta);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
 		probarray [w] [1] -= p;			
 		probarray [b] [1] -= p;	
 
 		delta = +inputdelta;
-		fget_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, beta);
+		get_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, deq, beta);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
 		probarray [w] [2] -= p;			
 		probarray [b] [0] -= p;	
 
 		delta = -inputdelta;
-		fget_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, beta);
+		get_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, deq, beta);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
 		probarray [w] [0] -= p;			
@@ -677,6 +690,7 @@ static void
 derivative_vector_calc 	( double delta
 						, int n_encounters
 						, const struct ENC *enc
+						, double deq
 						, double beta
 						, int n_players
 						, double *ratingof
@@ -692,7 +706,7 @@ derivative_vector_calc 	( double delta
 {
 	int j;
 	probarray_reset(n_players, probarray);
-	probarray_build(n_encounters, enc, delta, beta, ratingof, white_advantage, probarray);
+	probarray_build(n_encounters, enc, delta, deq, beta, ratingof, white_advantage, probarray);
 
 	for (j = 0; j < n_players; j++) {
 		if (flagged[j] || prefed[j]) {

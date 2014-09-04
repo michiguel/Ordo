@@ -26,62 +26,8 @@
 #include "indiv.h"
 #include "ordolim.h"
 
+#include "xpect.h"
 
-
-
-static double
-fxpect (double a, double b, double beta)
-{
-	return 1.0 / (1.0 + exp((b-a)*beta));
-}
-
-#define DRAWRATE_AT_EQUAL_STRENGTH 0.33
-#define DRAWFACTOR (1/(2*(DRAWRATE_AT_EQUAL_STRENGTH))-0.5)
-
-static void
-fget_pWDL(double dr /*delta rating*/, double *pw, double *pd, double *pl, double beta)
-{
-	// Performance comprises wins and draws.
-	// if f is expected performance from 0 to 1.0, then
-	// f = pwin + pdraw/2
-	// from that, dc is the fraction of points that come from draws, not wins, so
-	// pdraw (probability of draw) = 2 * f * dc
-	// calculation of dc is an empirical formula to fit average data from CCRL:
-	// Draw rate of equal engines is near 0.33, and decays on uneven matches.
-
-	double f;
-	double pdra, pwin, plos;
-// 	double dc; 
-	bool_t switched;
-	
-	switched = dr < 0;
-
-	if (switched) dr = -dr;
-
-	f = fxpect (dr,0,beta);
-
-#if 0
-	dc = 0.5 / (0.5 + DRAWFACTOR * exp(dr*BETA));
-	pdra = 2 * f * dc;
-	pwin = f - pdra/2;
-	plos = 1 - pwin - pdra; 
-#else
-	pwin = f * f;
-	plos = (1-f) * (1-f);
-	pdra = 1 - pwin - plos;
-#endif
-
-	if (switched) {
-		*pw = plos;
-		*pd = pdra;
-		*pl = pwin;
-	} else {
-		*pw = pwin;
-		*pd = pdra;
-		*pl = plos;
-	}
-	return;
-}
 
 //===============================================================
 
@@ -92,7 +38,7 @@ ind_expected (double x, double *rtng, double *weig, int n, double beta)
 	int i;
 	double cume = 0;
 	for (i = 0; i < n; i++) {
-		cume += weig[i] * fxpect (x, rtng[i], beta);
+		cume += weig[i] * xpect (x, rtng[i], beta);
 	}
 	return cume;
 }
@@ -175,9 +121,8 @@ calc_ind_rating(double cume_score, double *rtng, double *weig, int r, double bet
 
 //=========================================
 
-
 static double
-prob2absolute_result (int perftype, double myrating, double *rtng, double *weig, int n, double beta)
+prob2absolute_result (int perftype, double myrating, double *rtng, double *weig, int n, double deq, double beta)
 {
 	int i;
 	double p, cume;
@@ -188,13 +133,13 @@ prob2absolute_result (int perftype, double myrating, double *rtng, double *weig,
 	cume = 1.0;
 	if (PERF_SUPERWINNER == perftype) {
 		for (i = 0; i < n; i++) {
-			fget_pWDL(myrating - rtng[i], &pwin, &pdraw, &ploss, beta);
+			get_pWDL(myrating - rtng[i], &pwin, &pdraw, &ploss, deq, beta);
 			p = pwin;
 			cume *= exp(weig[i] * log (p)); // p ^ weight
 		}	
 	} else {
 		for (i = 0; i < n; i++) {
-			fget_pWDL(myrating - rtng[i], &pwin, &pdraw, &ploss, beta);
+			get_pWDL(myrating - rtng[i], &pwin, &pdraw, &ploss, deq, beta);
 			p = ploss;
 			cume *= exp(weig[i] * log (p)); // p ^ weight
 		}
@@ -204,7 +149,7 @@ prob2absolute_result (int perftype, double myrating, double *rtng, double *weig,
 
 
 static double
-calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, double *weig, int r, double beta)
+calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, double *weig, int r, double deq, double beta)
 {
 	int 	i;
 	double 	old_unfit, cur_unfit;
@@ -217,9 +162,9 @@ calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, do
 	double x = x_estimated;
 
 	if (perf_type == PERF_SUPERLOSER) 
-		D = - 0.5 + prob2absolute_result(perf_type, x, rtng, weig, r, beta);		
+		D = - 0.5 + prob2absolute_result(perf_type, x, rtng, weig, r, deq, beta);		
 	else
-		D = + 0.5 - prob2absolute_result(perf_type, x, rtng, weig, r, beta);
+		D = + 0.5 - prob2absolute_result(perf_type, x, rtng, weig, r, deq, beta);
 
 	cur_unfit = D * D;
 	old_unfit = cur_unfit;
@@ -234,9 +179,9 @@ calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, do
 		x += fdelta;
 
 		if (perf_type == PERF_SUPERLOSER) 
-			D = - 0.5 + prob2absolute_result(perf_type, x, rtng, weig, r, beta);		
+			D = - 0.5 + prob2absolute_result(perf_type, x, rtng, weig, r, deq, beta);		
 		else
-			D = + 0.5 - prob2absolute_result(perf_type, x, rtng, weig, r, beta);
+			D = + 0.5 - prob2absolute_result(perf_type, x, rtng, weig, r, deq, beta);
 
 		cur_unfit = D * D;
 		fdelta = D < 0? -delta: delta;
@@ -258,11 +203,11 @@ calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, do
 }
 
 static double calc_ind_rating(double cume_score, double *rtng, double *weig, int r, double beta);
-static double calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, double *weig, int r, double beta);
+static double calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, double *weig, int r, double deq, double beta);
 
 void
 rate_super_players(bool_t quiet, struct ENC *enc, int N_enc, int *performance_type, int n_players, double *ratingof, double white_advantage, bool_t *flagged,
-char *Name[], double beta)
+char *Name[], double deq, double beta)
 {
 	int j, e;
 	int myenc_n = 0;
@@ -323,11 +268,11 @@ char *Name[], double beta)
 
 			if (performance_type[j] == PERF_SUPERWINNER) {
 				double ori_estimation = calc_ind_rating (cume_score-0.25, rtng, weig, r, beta); 
-				ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERWINNER, ori_estimation, rtng, weig, r, beta);
+				ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERWINNER, ori_estimation, rtng, weig, r, deq, beta);
 			}
 			if (performance_type[j] == PERF_SUPERLOSER) {
 				double ori_estimation = calc_ind_rating (cume_score+0.25, rtng, weig, r, beta); 
-				ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERLOSER,  ori_estimation, rtng, weig, r, beta);
+				ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERLOSER,  ori_estimation, rtng, weig, r, deq, beta);
 			}
 			flagged[j] = FALSE;
 

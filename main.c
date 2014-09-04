@@ -230,7 +230,6 @@ static struct GAMESTATS	Game_stats;
 
 static struct DEVIATION_ACC *sim = NULL;
 
-#define STANDARD_DRAWRATE 0.5
 static double Drawrate_evenmatch = STANDARD_DRAWRATE; //default
 static double Drawrate_evenmatch_percent = 100*STANDARD_DRAWRATE; //default
 
@@ -273,7 +272,7 @@ static int		calc_rating (bool_t quiet, struct ENC *enc, int N_enc);
 static void 	ratings_results (void);
 static void 	ratings_for_purged (void);
 
-static void		simulate_scores(void);
+static void		simulate_scores(double deq);
 static void		errorsout(const char *out);
 static void		ctsout(const char *out);
 
@@ -767,7 +766,7 @@ int main (int argc, char *argv[])
 				while (z-->0) {
 					if (!QUIET_MODE) printf ("\n==> Simulation:%ld/%ld\n",Simulate-z,Simulate);
 					clear_flagged ();
-					simulate_scores();
+					simulate_scores(Drawrate_evenmatch);
 
 					// if ((Simulate-z) == 801) save_simulated((int)(Simulate-z)); 
 
@@ -1739,7 +1738,7 @@ rand_threeway_wscore(double pwin, double pdraw)
 }
 
 static void
-simulate_scores(void)
+simulate_scores(double deq)
 {
 	long int i, w, b;
 	double	*rating = Ratingof_results;
@@ -1752,7 +1751,7 @@ simulate_scores(void)
 		w = Whiteplayer[i];
 		b = Blackplayer[i];
 
-		fget_pWDL(rating[w] + White_advantage - rating[b], &pwin, &pdraw, &plos, BETA);
+		get_pWDL(rating[w] + White_advantage - rating[b], &pwin, &pdraw, &plos, deq, BETA);
 		Score [i] = rand_threeway_wscore(pwin,pdraw);
 	}
 }
@@ -1805,6 +1804,8 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 
 			, ADJUST_WHITE_ADVANTAGE
 
+, Drawrate_evenmatch
+
 		);
 
 	return x;
@@ -1812,7 +1813,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 
 /*==================================================================*/
 
-static double inv_xpect(double invbeta, double p) {return (-1.0*invbeta) * log(100.0/p-1.0);}
+// static double inv_xpect(double invbeta, double p) {return (-1.0*invbeta) * log(100.0/p-1.0);}
 
 static void
 table_output(double rtng_76)
