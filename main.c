@@ -564,7 +564,7 @@ int main (int argc, char *argv[])
 		fprintf (stderr, "Problems reading results from: %s\n", inputf);
 		return EXIT_FAILURE; 
 	}
-
+	
 
 	if (Ignore_draws) {
 		DB_ignore_draws(&DB);
