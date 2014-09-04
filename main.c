@@ -24,9 +24,6 @@
 
 #define MIN_RESOLUTION 0.000001
 #define PRIOR_SMALLEST_SIGMA 0.0000001
-#define WADV_RECALC
-#undef WADV_RECALC
-
 
 #if 1
 #define CALCIND_SWSL
@@ -292,7 +289,7 @@ static void head2head_output(const char *head2head_str);
 
 /*------------------------------------------------------------------------*/
 
-#if defined(WADV_RECALC)
+#if 0
 static double 	overallerror_fwadv (double wadv);
 static double 	adjust_wadv (double start_wadv);
 #endif
@@ -725,21 +722,6 @@ int main (int argc, char *argv[])
 	N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
 
 	ratings_results();
-
-//FIXME
-#if defined(WADV_RECALC)
-	if (ADJUST_WHITE_ADVANTAGE && switch_W) {
-		double new_wadv = adjust_wadv (White_advantage);
-		if (!QUIET_MODE)
-			printf ("\nAdjusted White Advantage = %f\n\n",new_wadv);
-		White_advantage = new_wadv;
-	
-		N_encounters = purge_players(QUIET_MODE, Encounter);
-		N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
-		N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
-		ratings_results();
-	}
-#endif
 
 	/* Simulation block, begin */
 	{	
@@ -1742,69 +1724,6 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 }
 
 /*==================================================================*/
-#if defined(WADV_RECALC)
-static double
-overallerror_fwadv (double wadv)
-{
-	int i;
-	double e, e2, f, rw, rb;
-	double s[3];
-
-	s[WHITE_WIN] = 1.0;
-	s[BLACK_WIN] = 0.0;
-	s[RESULT_DRAW] = 0.5;
-
-	assert (WHITE_WIN < 3);
-	assert (BLACK_WIN < 3);
-	assert (RESULT_DRAW < 3);
-	assert (DISCARD > 2);
-
-	e2 = 0;
-
-	for (i = 0; i < N_games; i++) {
-
-		if (Score[i] > 2) continue;
-
-		rw = Ratingof[Whiteplayer[i]];
-		rb = Ratingof[Blackplayer[i]];
-
-		f = fxpect (rw + wadv, rb, BETA);
-		e   = f - s[Score[i]];
-		e2 += e * e;
-	}
-
-	return e2;
-}
-
-static double
-adjust_wadv (double start_wadv)
-{
-	double delta, wa, ei, ej, ek;
-
-	delta = 100.0;
-	wa = start_wadv;
-
-	do {	
-		ei = overallerror_fwadv (wa - delta);
-		ej = overallerror_fwadv (wa);
-		ek = overallerror_fwadv (wa + delta);
-
-		if (ei >= ej && ej <= ek) {
-			delta = delta / 2;
-		} else
-		if (ej >= ei && ei <= ek) {
-			wa -= delta;
-		} else
-		if (ei >= ek && ek <= ej) {
-			wa += delta;
-		}
-
-	} while (delta > 0.01 && -1000 < wa && wa < 1000);
-	
-	return wa;
-}
-#endif
-
 
 static double inv_xpect(double invbeta, double p) {return (-1.0*invbeta) * log(100.0/p-1.0);}
 
