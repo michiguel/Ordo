@@ -143,6 +143,7 @@ static void usage (void);
 		" -s  #       perform # simulations to calculate errors\n"
 		" -e <file>   saves an error matrix, if -s was used\n"
 		" -F <value>  confidence (%) to estimate error margins. Default is 95.0\n"
+		" -X          Ignore draws\n"
 		" -N <value>  Output, number of decimals, minimum is 0 (default=1)\n"
 		"\n"
 		;
@@ -153,7 +154,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWDLa:A:m:r:y:o:Eg:j:c:s:w:u:d:z:e:TF:RN:";
+const char *OPTION_LIST = "vhHp:qWDLa:A:m:r:y:o:Eg:j:c:s:w:u:d:z:e:TF:RXN:";
 
 /*
 |
@@ -281,6 +282,7 @@ static void		errorsout(const char *out);
 
 static void 	transform_DB(struct DATA *db, struct GAMESTATS *gs);
 static bool_t	find_anchor_player(int *anchor);
+static void 	DB_ignore_draws (struct DATA *db);
 
 /*------------------------------------------------------------------------*/
 
@@ -354,7 +356,7 @@ int main (int argc, char *argv[])
 	int op;
 	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr, *priorsstr, *relstr, *head2head_str;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
-	bool_t group_is_output, Elostat_output;
+	bool_t group_is_output, Elostat_output, Ignore_draws;
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE;
 
 	/* defaults */
@@ -378,6 +380,7 @@ int main (int argc, char *argv[])
 	groupstr 	 = NULL;
 	Elostat_output = FALSE;
 	head2head_str = NULL;
+	Ignore_draws = FALSE;
 
 	while (END_OF_OPTIONS != (op = options (argc, argv, OPTION_LIST))) {
 		switch (op) {
@@ -477,6 +480,7 @@ int main (int argc, char *argv[])
 						break;
 			case 'D':	ADJUST_DRAW_RATE = TRUE;	break;
 			case 'E':	Elostat_output = TRUE;	break;
+			case 'X':	Ignore_draws = TRUE;	break;
 			case 'N': 	if (1 != sscanf(opt_arg,"%d", &OUTDECIMALS) || OUTDECIMALS < 0) {
 							fprintf(stderr, "wrong decimals parameter\n");
 							exit(EXIT_FAILURE);
@@ -560,7 +564,12 @@ int main (int argc, char *argv[])
 		fprintf (stderr, "Problems reading results from: %s\n", inputf);
 		return EXIT_FAILURE; 
 	}
-	
+
+
+	if (Ignore_draws) {
+		DB_ignore_draws(&DB);
+	}
+
 	transform_DB(&DB, &Game_stats); /* convert DB to global variables */
 
 	if (Anchor_use) {
@@ -884,6 +893,18 @@ transform_DB(struct DATA *db, struct GAMESTATS *gs)
 	gs->black_wins	= gamestat[BLACK_WIN];
 	gs->noresult	= gamestat[DISCARD];
 
+	return;
+}
+
+
+static void 
+DB_ignore_draws (struct DATA *db)
+{
+	long int i;
+	for (i = 0; i < db->n_games; i++) {
+		if (db->score[i] == RESULT_DRAW)
+			db->score[i] = DISCARD;
+	}
 	return;
 }
 
