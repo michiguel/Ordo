@@ -285,17 +285,23 @@ static void 	DB_ignore_draws (struct DATA *db);
 
 /*------------------------------------------------------------------------*/
 
-static void cegt_output(void);
-static void head2head_output(const char *head2head_str);
-
-/*------------------------------------------------------------------------*/
-
 #if 0
 static double 	overallerror_fwadv (double wadv);
 static double 	adjust_wadv (double start_wadv);
 #endif
 
 static void 	table_output(double Rtng_76);
+
+/*------------------------------------------------------------------------*/
+
+static void		cegt_output(void);
+static void 	head2head_output(const char *head2head_str);
+
+/*------------------------------------------------------------------------*/
+
+static ptrdiff_t	head2head_idx_sdev (long x, long y);
+
+/*------------------------------------------------------------------------*/
 
 #if 0
 // This section is to save simulated results for debugging purposes
