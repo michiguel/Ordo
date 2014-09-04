@@ -1,6 +1,6 @@
 /*
 	Ordo is program for calculating ratings of engine or chess players
-    Copyright 2013 Miguel A. Ballicora
+    Copyright 2014 Miguel A. Ballicora
 
     This file is part of Ordo.
 
@@ -55,15 +55,15 @@
 #include "groups.h"
 #include "mytypes.h"
 
-#include "csv.h"
+#include "cegt.h"
 
-#include "encount.h"
 #include "indiv.h"
+#include "encount.h"
 #include "ratingb.h"
 
 #include "xpect.h"
 
-#include "cegt.h"
+#include "csv.h"
 
 /*
 |
@@ -74,7 +74,7 @@
 #include "myopt.h"
 
 const char *license_str = "\n"
-"   Copyright (c) 2013 Miguel A. Ballicora\n"
+"   Copyright (c) 2014 Miguel A. Ballicora\n"
 "   Ordo is program for calculating ratings of engine or chess players\n"
 "\n"
 "   Ordo is free software: you can redistribute it and/or modify\n"
@@ -99,9 +99,10 @@ static void usage (void);
 
 	static bool_t QUIET_MODE;
 	static bool_t ADJUST_WHITE_ADVANTAGE;
+	static bool_t ADJUST_DRAW_RATE;
 
 	static const char *copyright_str = 
-		"Copyright (c) 2013 Miguel A. Ballicora\n"
+		"Copyright (c) 2014 Miguel A. Ballicora\n"
 		"There is NO WARRANTY of any kind\n"
 		;
 
@@ -131,7 +132,9 @@ static void usage (void);
 		" -R          remove older player versions (given by -r) from the ouput\n"
 		" -w <value>  white advantage value (default=0.0)\n"
 		" -u <value>  white advantage uncertainty value (default=0.0)\n"
-		" -W          white advantage, automatically adjusted\n"
+		" -W          white advantage will be automatically adjusted\n"
+		" -d <value>  draw rate value % (default=50.0)\n"
+		" -D          draw rate value will be automatically adjusted\n"
 		" -z <value>  scaling: set rating for winning expectancy of 76% (default=202)\n"
 		" -T          display winning expectancy table\n"
 		" -p <file>   input file in PGN format\n"
@@ -153,7 +156,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWLa:A:m:r:y:o:Eg:j:c:s:w:u:z:e:TF:RN:";
+const char *OPTION_LIST = "vhHp:qWDLa:A:m:r:y:o:Eg:j:c:s:w:u:d:z:e:TF:RN:";
 
 /*
 |
@@ -229,7 +232,11 @@ static int		OUTDECIMALS = 1;
 
 static struct GAMESTATS	Game_stats;
 
-struct DEVIATION_ACC *sim = NULL;
+static struct DEVIATION_ACC *sim = NULL;
+
+#define STANDARD_DRAWRATE 0.5
+static double Drawrate_evenmatch = STANDARD_DRAWRATE; //default
+static double Drawrate_evenmatch_percent = 100*STANDARD_DRAWRATE; //default
 
 static double Probarray [MAXPLAYERS] [4];
 
@@ -362,6 +369,7 @@ int main (int argc, char *argv[])
 	table_mode   = FALSE;
 	QUIET_MODE   = FALSE;
 	ADJUST_WHITE_ADVANTAGE = FALSE;
+	ADJUST_DRAW_RATE = FALSE;
 	inputf       = NULL;
 	textstr 	 = NULL;
 	csvstr       = NULL;
@@ -445,6 +453,17 @@ int main (int argc, char *argv[])
 							switch_u = TRUE;
 						}
 						break;
+			case 'd': 	if (1 != sscanf(opt_arg,"%lf", &Drawrate_evenmatch_percent)) {
+							fprintf(stderr, "wrong white drawrate parameter\n");
+							exit(EXIT_FAILURE);
+						}
+						if (Drawrate_evenmatch_percent >= 0.0 && Drawrate_evenmatch_percent <= 100.0) {
+							Drawrate_evenmatch = Drawrate_evenmatch_percent/100.0;
+						} else {
+							fprintf(stderr, "drawrate parameter is out of range\n");
+							exit(EXIT_FAILURE);
+						}					
+						break;
 			case 'z': 	if (1 != sscanf(opt_arg,"%lf", &Rtng_76)) {
 							fprintf(stderr, "wrong scaling parameter\n");
 							exit(EXIT_FAILURE);
@@ -459,6 +478,7 @@ int main (int argc, char *argv[])
 						Wa_prior.sigma = 200.0; //20;
 						switch_W = TRUE;
 						break;
+			case 'D':	ADJUST_DRAW_RATE = TRUE;	break;
 			case 'E':	Elostat_output = TRUE;	break;
 			case 'N': 	if (1 != sscanf(opt_arg,"%d", &OUTDECIMALS) || OUTDECIMALS < 0) {
 							fprintf(stderr, "wrong decimals parameter\n");
