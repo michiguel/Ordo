@@ -591,10 +591,9 @@ int main (int argc, char *argv[])
 		} 
 	}
 
+	N_encounters = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 
 	if (!QUIET_MODE) {
-
-		N_encounters = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 		printf ("Total games         %8ld\n", Game_stats.white_wins
 											 +Game_stats.draws
 											 +Game_stats.black_wins
