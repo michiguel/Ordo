@@ -978,11 +978,9 @@ errorsout(const char *out)
 			for (j = 0; j < i; j++) {
 				x = Sorted[j];
 
-				if (y < x) 
-					idx = (x*x-x)/2+y;					
-				else
-					idx = (y*y-y)/2+x;
-				fprintf(f,",%.1f",sim[idx].sdev * Confidence_factor);
+				idx = head2head_idx_sdev (x, y);
+
+				fprintf(f,",%.1f", sim[idx].sdev * Confidence_factor);
 			}
 
 			fprintf(f, "\n");
