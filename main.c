@@ -59,7 +59,6 @@
 #include "ratingb.h"
 
 #include "xpect.h"
-
 #include "csv.h"
 
 /*
@@ -192,19 +191,17 @@ static int 		N_games = 0;
 
 /* encounters */
 
-static struct ENC Encounter[MAXENCOUNTERS];
-static int 		N_encounters = 0;
+static struct ENC	Encounter[MAXENCOUNTERS];
+static int 			N_encounters = 0;
 
 /**/
 static double	Confidence = 95;
 static double	General_average = 2300.0;
 static int		Sorted  [MAXPLAYERS]; /* sorted index by rating */
 static double	Obtained[MAXPLAYERS];
-//static double	Expected[MAXPLAYERS];
 static int		Playedby[MAXPLAYERS]; /* N games played by player "i" */
 static double	Ratingof[MAXPLAYERS]; /* rating current */
 static double	Ratingbk[MAXPLAYERS]; /* rating backup  */
-
 static double	Changing[MAXPLAYERS]; /* rating backup  */
 
 static double	Ratingof_results[MAXPLAYERS];
@@ -354,7 +351,9 @@ int main (int argc, char *argv[])
 	FILE *groupf;
 
 	int op;
-	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr, *priorsstr, *relstr, *head2head_str;
+	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr;
+	const char *priorsstr, *relstr;
+	const char *head2head_str;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
 	bool_t group_is_output, Elostat_output, Ignore_draws;
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE;
