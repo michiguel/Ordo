@@ -141,6 +141,7 @@ static void usage (void);
 		" -j <file>   output file with head to head information\n"
 		" -s  #       perform # simulations to calculate errors\n"
 		" -e <file>   saves an error matrix, if -s was used\n"
+		" -C <file>   saves a matrix (.csv) with confidence for superiority (-s was used)\n"
 		" -F <value>  confidence (%) to estimate error margins. Default is 95.0\n"
 		" -X          Ignore draws\n"
 		" -N <value>  Output, number of decimals, minimum is 0 (default=1)\n"
@@ -153,7 +154,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWDLa:A:m:r:y:o:Eg:j:c:s:w:u:d:z:e:TF:RXN:";
+const char *OPTION_LIST = "vhHp:qWDLa:A:m:r:y:o:Eg:j:c:s:w:u:d:z:e:C:TF:RXN:";
 
 /*
 |
@@ -274,6 +275,7 @@ static void 	ratings_for_purged (void);
 
 static void		simulate_scores(void);
 static void		errorsout(const char *out);
+static void		ctsout(const char *out);
 
 /*------------------------------------------------------------------------*/
 
@@ -354,6 +356,7 @@ int main (int argc, char *argv[])
 	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr;
 	const char *priorsstr, *relstr;
 	const char *head2head_str;
+	const char *ctsmatstr;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
 	bool_t group_is_output, Elostat_output, Ignore_draws;
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE;
@@ -372,6 +375,7 @@ int main (int argc, char *argv[])
 	textstr 	 = NULL;
 	csvstr       = NULL;
 	ematstr 	 = NULL;
+	ctsmatstr	 = NULL;
 	pinsstr		 = NULL;
 	priorsstr	 = NULL;
 	relstr		 = NULL;
@@ -402,6 +406,8 @@ int main (int argc, char *argv[])
 			case 'j': 	head2head_str = opt_arg;
 						break;
 			case 'e': 	ematstr = opt_arg;
+						break;
+			case 'C': 	ctsmatstr = opt_arg;
 						break;
 			case 'm': 	pinsstr = opt_arg;
 						break;
@@ -798,9 +804,13 @@ int main (int argc, char *argv[])
 	}
 	/* Simulation block, end */
 
+	// Reports
 	all_report (csvf, textf);
 	if (Simulate > 1 && NULL != ematstr) {
 		errorsout (ematstr);
+	}
+	if (Simulate > 1 && NULL != ctsmatstr) {
+		ctsout (ctsmatstr);
 	}
 
 	//
@@ -811,6 +821,7 @@ int main (int argc, char *argv[])
 	if (Elostat_output)
 		cegt_output();
 
+	// Cleanup
 	if (textf_opened) 	fclose (textf);
 	if (csvf_opened)  	fclose (csvf); 
 	if (groupf_opened) 	fclose(groupf);
@@ -933,6 +944,17 @@ compareit (const void *a, const void *b)
 	return (da < db) - (da > db);
 }
 
+static ptrdiff_t
+head2head_idx_sdev (long x, long y)
+{	
+	ptrdiff_t idx;
+	if (y < x) 
+		idx = (x*x-x)/2+y;					
+	else
+		idx = (y*y-y)/2+x;
+	return idx;
+}
+
 static void
 errorsout(const char *out)
 {
@@ -974,6 +996,48 @@ errorsout(const char *out)
 	}
 	return;
 }
+
+static void
+ctsout(const char *out)
+{
+	FILE *f;
+	ptrdiff_t idx;
+	long i,j,y,x;
+
+	if (NULL != (f = fopen (out, "w"))) {
+
+		fprintf(f, "\"N\",\"NAME\"");	
+		for (i = 0; i < N_players; i++) {
+			fprintf(f, ",%ld",i);		
+		}
+		fprintf(f, "\n");	
+
+		for (i = 0; i < N_players; i++) {
+			y = Sorted[i];
+			fprintf(f, "%ld,\"%21s\"",i,Name[y]);
+
+			for (j = 0; j < N_players; j++) {
+				double ctrs, sd, dr;
+				x = Sorted[j];
+				if (x != y) {
+					dr = Ratingof_results[y] - Ratingof_results[x];
+					idx = head2head_idx_sdev (x, y);
+					sd = sim[idx].sdev;
+					ctrs = 100*gauss_integral(dr/sd);
+					fprintf(f,",%.1f", ctrs);
+				} else {
+					fprintf(f,",");
+				}
+			}
+			fprintf(f, "\n");
+		}
+		fclose(f);
+	} else {
+		fprintf(stderr, "Errors with file: %s\n",out);	
+	}
+	return;
+}
+
 
 static size_t
 find_maxlen (char *nm[], long int n)
