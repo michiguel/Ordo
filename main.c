@@ -784,7 +784,8 @@ int main (int argc, char *argv[])
 	
 					for (i = 0; i < (N_players); i++) {
 						for (j = 0; j < i; j++) {
-							idx = (i*i-i)/2+j;
+							//idx = (i*i-i)/2+j;
+							idx = head2head_idx_sdev (i, j);
 							assert(idx < est || !printf("idx=%ld est=%ld\n",idx,est));
 							diff = Ratingof[i] - Ratingof[j];	
 							sim[idx].sum1 += diff; 
@@ -1239,32 +1240,6 @@ all_report (FILE *csvf, FILE *textf)
 
 /************************************************************************/
 
-static int
-purge_players(bool_t quiet, struct ENC *enc)
-{
-	bool_t foundproblem;
-	int j;
-	int N_enc;
-
-	assert(Performance_type_set);
-	do {
-		N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
-		calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
-
-		foundproblem = FALSE;
-		for (j = 0; j < N_players; j++) {
-			if (Flagged[j]) continue;
-			if (Performance_type[j] != PERF_NORMAL) {
-				Flagged[j]= TRUE;
-				if (!quiet) printf ("purge --> %s\n", Name[j]);
-				foundproblem = TRUE;
-			} 
-		}
-	} while (foundproblem);
-
-	return N_enc;
-}
-
 //=====================================
 
 static void
@@ -1689,6 +1664,32 @@ priors_load(const char *fpriors_name)
 
 
 //== END PRIORS ======================================================
+
+static int
+purge_players(bool_t quiet, struct ENC *enc)
+{
+	bool_t foundproblem;
+	int j;
+	int N_enc;
+
+	assert(Performance_type_set);
+	do {
+		N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
+		calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
+
+		foundproblem = FALSE;
+		for (j = 0; j < N_players; j++) {
+			if (Flagged[j]) continue;
+			if (Performance_type[j] != PERF_NORMAL) {
+				Flagged[j]= TRUE;
+				if (!quiet) printf ("purge --> %s\n", Name[j]);
+				foundproblem = TRUE;
+			} 
+		}
+	} while (foundproblem);
+
+	return N_enc;
+}
 
 static void
 ratings_results (void)
