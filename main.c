@@ -1102,7 +1102,7 @@ is_old_version(int j)
 	return found;
 }
 
-void
+static void
 all_report (FILE *csvf, FILE *textf)
 {
 	FILE *f;
@@ -1237,8 +1237,6 @@ all_report (FILE *csvf, FILE *textf)
 
 	return;
 }
-
-/************************************************************************/
 
 //=====================================
 

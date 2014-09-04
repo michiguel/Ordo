@@ -1,2 +1,2 @@
-#define VERSION "v0.8.5-cln62-mrg1-drw6-C3-sync4"
+#define VERSION "v0.8.5-cln62-mrg1-drw6-C3-sync5"
 
