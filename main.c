@@ -633,10 +633,11 @@ int main (int argc, char *argv[])
 		#endif
 	}
 
-	// multiple anchors, do after priors
+	// multiple anchors here
 	if (pinsstr != NULL) {
 		init_manchors(pinsstr); 
 	}
+	// multiple anchors done
 
 //~~
 	if (relstr != NULL) {
@@ -1266,7 +1267,7 @@ purge_players(bool_t quiet, struct ENC *enc)
 
 //=====================================
 
-void
+static void
 init_rating (void)
 {
 	int i;
@@ -1889,8 +1890,6 @@ set_super_players(bool_t quiet, struct ENC *enc)
 
 	return N_enc;
 }
-
-//**************************************************************
 
 //**************************************************************
 
