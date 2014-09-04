@@ -179,9 +179,9 @@ static bool_t 	Multiple_anchors_present = FALSE;
 static bool_t	General_average_set = FALSE;
 
 static int		Anchored_n = 0;
-
 static bool_t	Performance_type_set = FALSE;
-static int		Performance_type[MAXPLAYERS];
+
+static int		Performance_type[MAXPLAYERS]; //enum Player_Performance_Type 
 
 /* games */
 static int 		Whiteplayer	[MAXGAMES];
