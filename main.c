@@ -270,7 +270,7 @@ static void		clear_flagged (void);
 static void		all_report (FILE *csvf, FILE *textf);
 static void		init_rating (void);
 static void		init_manchors(const char *fpins_name);
-static int		calc_rating (bool_t quiet, struct ENC *enc, int N_enc);
+static int		calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage, bool_t adjust_wadv, double *pDraw_rate);
 
 static void 	ratings_results (void);
 static void 	ratings_for_purged (void);
@@ -743,7 +743,8 @@ int main (int argc, char *argv[])
 	N_encounters = set_super_players(QUIET_MODE, Encounter);
 	N_encounters = purge_players(QUIET_MODE, Encounter);
 	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
-	N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
+
+	N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters, &White_advantage, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch);
 
 	ratings_results();
 
@@ -756,6 +757,7 @@ int main (int argc, char *argv[])
 		ptrdiff_t idx;
 		size_t allocsize = sizeof(struct DEVIATION_ACC) * (size_t)est;
 		double diff;
+		double sim_draw_rate = Drawrate_evenmatch; // temporarily used and modified
 
 		sim = malloc(allocsize);
 
@@ -771,6 +773,7 @@ int main (int argc, char *argv[])
 				while (z-->0) {
 					if (!QUIET_MODE) printf ("\n==> Simulation:%ld/%ld\n",Simulate-z,Simulate);
 					clear_flagged ();
+
 					simulate_scores(Drawrate_evenmatch);
 
 					// if ((Simulate-z) == 801) save_simulated((int)(Simulate-z)); 
@@ -778,7 +781,7 @@ int main (int argc, char *argv[])
 					N_encounters = set_super_players(QUIET_MODE, Encounter);
 					N_encounters = purge_players(QUIET_MODE, Encounter);
 					N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
-					N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters);
+					N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters, &White_advantage, FALSE, &sim_draw_rate);
 					ratings_for_purged ();
 
 					for (i = 0; i < N_players; i++) {
@@ -812,6 +815,8 @@ int main (int argc, char *argv[])
 
 			}
 		}
+
+		transform_DB(&DB, &Game_stats); /* convert DB to global variables, to restore original data */
 	}
 	/* Simulation block, end */
 
@@ -1779,18 +1784,19 @@ simulate_scores(double deq)
 //==== CALCULATE INDIVIDUAL RATINGS =========================
 
 static int
-calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
+calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage, bool_t adjust_wadv, double *pDraw_rate)
 {
-	int x;
+	double dr = *pDraw_rate;
 
-	x = calc_rating_bayes2 (  
+	int ret;
+	ret = calc_rating_bayes2 (  
 			quiet
 			, enc
 			, N_enc
 
 			, N_players
 			, Obtained
-//				, Expected
+
 			, Playedby
 			, Ratingof
 			, Ratingbk
@@ -1799,7 +1805,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 			, Flagged
 			, Prefed
 
-			, &White_advantage
+			, pWhite_advantage
 			, General_average
 
 			, Multiple_anchors_present
@@ -1822,13 +1828,20 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 			, Some_prior_set
 			, Wa_prior
 
-			, ADJUST_WHITE_ADVANTAGE
+			, adjust_wadv
 
-, Drawrate_evenmatch
+			, dr
 
-		);
+	);
 
-	return x;
+	*pDraw_rate = dr;
+
+	if (!quiet) {
+		printf ("White advantage = %.2f\n",*pWhite_advantage);
+		printf ("Draw rate = %.2f %s\n",100*dr, "%");
+	}
+
+	return ret;
 }
 
 /*==================================================================*/
