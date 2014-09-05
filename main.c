@@ -255,6 +255,8 @@ static bool_t 	set_relprior (const char *player_a, const char *player_b, double 
 static void 	relpriors_show(void);
 static void 	relpriors_load(const char *f_name);
 
+static bool_t	Prior_mode;
+
 /*------------------------------------------------------------------------*/
 static int		purge_players    (bool_t quiet, struct ENC *enc);
 static int		set_super_players(bool_t quiet, struct ENC *enc);
@@ -623,6 +625,8 @@ int main (int argc, char *argv[])
 	init_rating();
 
 	// PRIORS
+	Prior_mode = switch_u || NULL != relstr || NULL != priorsstr;
+
 	priors_reset(PP);
 
 	if (priorsstr != NULL) {
