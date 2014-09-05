@@ -1,0 +1,519 @@
+\documentclass[12pt]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[latin1]{inputenc}
+\usepackage{verbatim}
+\usepackage{url}
+\usepackage{textcomp}
+\usepackage{amsmath}
+\usepackage{alltt}
+\usepackage{graphicx}
+
+
+%\newcommand{\cmdln}[1] {\begin{quotation}\texttt{#1}\end{quotation}}
+
+\newcommand{\rgstrd} {\textsuperscript{\textregistered{}}}
+\newcommand{\cpyrht} {\textsuperscript{\textcopyright{}}}
+\newcommand{\person} [1] {\textit{#1}}
+\newcommand{\swtch} [1] {\texttt{\textbf{#1}}}
+\newcommand{\filename} [1] {\texttt{#1}}
+\newcommand{\cmdln}[1]{
+	\par
+	\begingroup
+		\leftskip=2em
+		\addtolength{\rightskip}{0em}
+		\noindent \small{\texttt{#1}}
+		\par
+	\endgroup
+}
+\newcommand{\inctxt}[1]{
+	\begingroup
+    \fontsize{9pt}{11pt}\selectfont
+		\verbatiminput{#1} 
+	\endgroup
+}
+
+% Ra just to silence previous coloring, for some reason "Ra" ends it in gedit
+%===========================================================================================
+
+\title{ORDO \input{version.txt} \\ Ratings for chess and other games} 
+\author{Copyright \cpyrht{} 2014 Miguel A. Ballicora\\e-mail: mballicora (at gmail dot com)}
+\date{August 2014}
+\parindent 0mm 
+\parskip 2mm 
+\begin{document}
+   \maketitle
+
+\begin{abstract}
+Ordo is a program designed to calculate ratings of individual chess engines (or players).
+It has a similar concept than the Elo rating\footnote{\url{http://en.wikipedia.org/wiki/Elo_rating_system}}, but with a different model and algorithm. 
+Ordo keeps consistency among the ratings because it calculates them considering all the results at once.
+That philosophy is similar to BayesElo\footnote{\url{http://remi.coulom.free.fr/Bayesian-Elo/}}.
+Ordo is distributed under the GPL license and binaries are available for GNU/Linux, Windows\rgstrd{}, and OS X.
+In addition, the sources could easily be compiled to be run in other systems. 
+\end{abstract}
+
+\subsubsection*{Files}
+In this distribution, you will find this file and versions for GNU/Linux (32 and 64 bits) or Windows\rgstrd{} (64 and 32 bits). 
+For convenience, you can rename the proper file for your system to \textbf{ordo} (GNU/Linux) or \textbf{ordo.exe} (Windows\rgstrd{}). 
+As an input example, a publicly available file \filename{games.pgn} is included\footnote{Taken from the recently discontinued \person{Ingo Bauer's} IPON rating list}. 
+A batch file (\filename{ordo\_example.bat}) is included in the Windows\rgstrd{} distribution\footnote{Kindly prepared by \person{Adam Hair}}. 
+It is a quick and great start for users of that operating system.
+
+\subsubsection*{Usage}
+The input should be a file that adheres to the PGN standard\footnote{\url{http://en.wikipedia.org/wiki/Portable_Game_Notation}}. 
+Based on the results in that file, Ordo automatically calculates a ranking . 
+The output can be a plain text file and/or a \textit{comma separated value}\footnote{\url{http://en.wikipedia.org/wiki/Comma-separated_values}} (\filename{.csv}) file.
+The \filename{.csv} file is an interesting option because it can be opened/imported by most spreadsheet programs. 
+Once imported, the user can choose to format the output externally.
+The simplest way to use Ordo is typing in the command line:
+
+	\cmdln{ordo -p games.pgn}
+
+which will take the results from \filename{games.pgn} and output the text ranking on the screen. 
+If you want to save the results in a file \filename{ratings.txt}, you can run:
+
+	\cmdln{ordo -p games.pgn -o ratings.txt}
+
+By default, the average rating of all the individuals is 2300. 
+If you want a different overall average, you can use the switch \swtch{-a} to set it. 
+For instance to have and average of 2500, you can do:
+	
+	\cmdln{ordo -a 2500 -p games.pgn -o ratings.txt}
+
+or if you want the results in \filename{.csv} format, use the switch \swtch{-c}.
+
+	\cmdln{ordo -a 2500 -p games.pgn -c rating.csv}
+
+If you want both, you can use:
+
+	\cmdln{ordo -a 2500 -p games.pgn -o ratings.txt -c rating.csv}
+
+In addition, \swtch{-A} will fix the rating of a given player as a reference (\textit{anchor}) for the whole pool of players.
+
+	\cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt}
+
+That will calculate the ratings from \filename{games.pgn}, save it in \filename{ratings.txt}, and \textit{anchor} the engine \textit{Deep Shredder 12} to a rating of 2800.
+Names that contain spaces should be surrounded by quote marks as in this example.
+
+\subsubsection*{White advantage}
+An important switch is \swtch{-w}, which sets the rating advantage for having white pieces in chess. 
+Alternatively, the (highly recommended) switch \swtch{-W} lets Ordo calculate it automatically. 
+With this switch we can complete the above example:
+
+\cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W}
+
+\subsubsection*{Simulation and errors}
+
+The switch \swtch{-s~<n>} instructs Ordo to perform \swtch{<n>} simulations virtually \textit{replaying} the games \swtch{<n>} times.
+The results will be randomly assigned according to the probabilities calculated from the ratings. 
+After running the simulations, and based on all those different results, Ordo calculates standard deviations (\textit{errors}) for the ratings.
+For this purpose, an optional switch is \swtch{-F~value}, where \swtch{value} is the \% \textit{confidence level} (The default is 95.0, which is roughly equivalent to $\pm$ 2 standard deviations).
+The errors displayed are relative to the pool average. 
+However, if one of the players is \textit{anchored}, the rest of the errors will be relative to that \textit{anchor}.
+In this case, the anchor error will be zero since it is the point of reference.
+To get the errors for rating differences between a given pair of players, the switch \swtch{-e~file.csv} should be added.
+It will generate an error matrix saved in \swtch{file.csv}.
+
+To run these simulations, a minimum reasonable number is about \swtch{-s~100}. 
+Take into account that the more simulations, the longer it takes to complete the runs. 
+The errors calculated will be more accurate, but more than 1000 simulations is probably not needed. 
+This is an example to use these switches:
+
+\cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W -s1000 -e errors.csv}
+
+It is important to emphasize that the errors displayed in the output are always against the reference (anchor). 
+For example, if the anchor is Engine X (Deep Shredder 12 in the example above) set at 2800, and Engine Y is 2900 with an error of 20, then the interpretation is that the difference between Y and X is 100 $\pm$ 20. 
+
+As mentioned above, when no engine is set as anchor the \textit{hidden} reference is the average of the pool. 
+For instance, if the average is set to 2500 (default is 2300) and the rating output for Engine X is 2850 $\pm$ 20, the difference between Engine X and the average of the pool is 350 $\pm$ 20. 
+That is how the output should be interpreted. 
+It is incorrect to use this error to estimate relative values against other engines. 
+For that purpose, the switch \swtch{-e} needs to be provided to obtain a matrix with every single error for every engine-engine match ups.
+
+If an anchor (reference) is provided, but the user wants the errors to be relative to the average of the pool, the switch \swtch{-V} should be added in the command line. This is what other rating software has as default.
+
+\cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W -s1000 -e errors.csv -V}
+
+In this case, you will see that the rating of \swtch{Deep Shredder 12} will not have an error of zero.
+
+\subsubsection*{Superiority confidence}
+
+If simulations have been run, using the switch \swtch{-C} will output a matrix with the confidence for superiority (CFS) between each of the players.
+Each of the numbers is an answer to the question \textit{"What is the maximum confidence I can set the test to show that player x is not inferior to player y and still obtain the same positive answer?"}.
+The matrix file is in \textit{comma separated values} format, and it could be opened by any spreadsheet program if it was saved with the *.csv extension.
+
+\subsubsection*{Draw rate}
+By default, Ordo considers that the draw rate for evenly matched players is 50\% and internally calculates what draw rate will correspond for matches in which a player is stronger than the other.
+This parameter does not change the rating results, but it may affect the errors calculated after the simulation.
+Two switches can control this parameter. 
+First, \swtch{-d} sets the draw rate (which is assumed to be constant throughout the database). 
+Alternatively, the (highly recommended) switch \swtch{-D} lets Ordo calculate it automatically. 
+It makes sense if the user wants to calculate more accurate errors, or just for informative purposes.
+For instance:
+
+\cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W -s1000 -e errors.csv -V -D}
+
+Will calculate the draw rate and outputs it on screen.
+
+\subsubsection*{Ignore draws (\swtch{-X} switch)}
+
+This switch internally ignores all draws from the database, like they have not been played.
+This is only present for experimentation, not for a serious rating calculation.
+
+\subsubsection*{Group connections}
+
+Sometimes, a data set contains players or groups/pools of players that did not play enough games against the rest. 
+These \textit{isolated} groups produce meaningless ratings when compared to the general pool. 
+The \swtch{-g} switch saves a report of how many groups are in this situation.
+This information may help to properly link those groups with extra games and stabilize the ranking.
+
+\subsubsection*{Perfect winners and losers}
+
+Players who won all games (\textit{perfect winners}) or lost all of them (\textit{perfect losers}) create problems in the rating calculation.
+It is impossible to estimate those rating accurately because winning all and losing all correspond to a $+\infty$ or $-\infty$ rating, respectively.
+In addition, the calculation slows down considerably because of the impossibility to converge.
+Ordo removes these players automatically during the calculation, and place them back after convergence has been reached.
+The rating assigned to them is a minimum for \textit{perfect winners} and a maximum for \textit{perfect losers}.
+This is indicated by a > or < symbol in the output text.
+These limits are established by calculating the rating they would have if one of the games was a draw.
+For example, if player had a performance of 10/10, a proper rating estimation lays between ($+\infty$) and the one corresponding to a performance of 9.5/10.
+A nice side effect of this technique is that distinguishes players with perfect score that had different type of opposition or played different number of games.
+It is not the same to have been undefeated for three games than twenty.
+ 
+\subsubsection*{Multiple anchors}
+
+When several players are known to have very accurate ratings, it is possible to assigned fixed values to them.
+In that case, they will behave like multiple anchors. An example will be:
+
+\cmdln{ordo -p games.pgn <optional switches> -m anchors.csv}
+
+where \filename{anchors.csv} is a file that contains lines like this
+
+\cmdln{"Gull 1.1", 2350.0\\
+"Glaurung 2.2 JA", 2170\\
+"Crafty 23.1 JA", 2000}
+
+telling Ordo to fix Gull 1.1, Glaurung 2.2 JA, and Crafty 23.1 JA to 2350, 2170, and 2000, respectively.
+The name of the anchors should be present in \filename{games.pgn}.
+
+\subsubsection*{Switches}
+
+The list of the switches provided are:
+\inctxt{tmp-switches.txt}
+
+\subsubsection*{Match up information}
+
+The switch \swtch{-j} will output to a file information about all different matches that have been played.
+It shows the rating difference (Diff) between those particular players and the standard deviation (SD) for that difference.
+These values come from the simulations performed with the switch \swtch{-s}, so everything is taken into account, not only the information about a particular match.
+In addition, there is a column with the \textit{confidence} that would be needed in order to be able to claim superiority based on Diff and SD. 
+The column is CFS, confidence for superiority, which plays the same role as the \textit{likelihood of superiority}\footnote{\url{https://chessprogramming.wikispaces.com/Match+Statistics}}.
+A fragment of the output is:
+
+\inctxt{readme-example-j-switch.txt}
+In this example, we can say that Critter 1.4 SSE42 is superior to Deep Rybka 4.1 SSE42 with a 99\% confidence. We can only say that it is better than Komodo 4 SSE42 with a 71\% confidence. The reason is because the rating difference is 6 and the standard deviation is 11.
+
+\subsubsection*{Memory Limits}
+Currently, the program can handle 3 million games, 50,000 players, and one megabyte of memory for names of the players.
+
+\subsubsection*{Ordoprep}
+A tool is included to shrink the PGN file to contain only the game results. 
+In addition, it could discard players that won all games, or lost all games. 
+Other switches allow the exclusion of players that do not have a minimum performance or played too few games.
+
+Typical usage is:
+
+\cmdln{ordoprep -p raw.pgn -o shrunk.pgn}
+
+Which saves in \filename{shrunk.pgn} a pgn file with only the results. 
+You can add switches like this:
+
+\cmdln{ordoprep -p raw.pgn -o shrunk.pgn -d -m 5 -g 20}
+
+where \swtch{-d} tells Ordoprep to discard players with 100\% or 0\% performance, \swtch{-m~5}
+will exclude players who did not reach a 5\% performance, and \swtch{-g~20} will exclude players with less than 20 games.
+After all this, \filename{shrunk.pgn} could be used as input for Ordo
+
+\subsubsection*{Model for rating calculation}
+
+The model assumes that differences in strength are analogous to differences in levels of energy (Fig. \ref{fig:figlevels1}). 
+A lower (more stable) level of energy would represent a stronger player.
+The analogy is that a valley is better at attracting water than a mountain top. 
+In physics and chemistry, a particle or a molecule that can be in two different states can be predicted to be in one or the other with a certain probability.
+
+	\begin{figure}[htb]
+	\center{\includegraphics [width=0.7\textwidth] {figures/figlevels1.eps} }
+	%  \vspace{3in} //[width=\textwidth]
+	\caption{\label{fig:figlevels1} Energetic levels as strength levels}
+	\end{figure}
+
+The probability to be found at each level is proportional to the 
+\textit{Boltzmann factor}\footnote{\url{https://en.wikipedia.org/wiki/Boltzmann_factor}} $e^{-\beta E_{i}}$.
+If $N_{a}$ is the number of particles in level A, and $N_{b}$ is the number of particles in level B, their ratio will be:
+
+	\begin{equation} \label{eq:erl}
+	\frac{N_{a}}{N_{b}} = \frac{ e^{-\beta E_{a}} }{ e^{-\beta E_{b}} } = e^{-\beta(E_{a}-E_{b})}
+	\end{equation}
+
+$\beta$ is a constant of the system.
+The analogy is that we treat the probabilities of a \textit{win} to land in level A or B as the probability of a particle to be in A or B.
+Therefore, after reordering equation \ref{eq:erl}, the \textit{fraction of wins} ($f_{b,a}$) of player B in a match vs. A will be:
+
+	\begin{equation}
+	f_{b,a}  = \frac{ N_{b} }{ N_{a}+N_{b} }  =     \frac{1}{1 + e^{-\beta(E_{a}-E_{b})}}  
+	\end{equation}
+
+if we define strength rating $R$ as the negative value of \textit{energy}, then, $R_{a} = -E_{a}$.
+For convenience, we flip the scales with the purpose that higher ratings are represented with higher values (Fig. \ref{fig:figlevels2}), and the the \textit{fraction of wins} ($f_{b,a}$) of player B in a match vs. A will be represented by eq. \ref{eq:flipped}.
+
+	\begin{figure}[htb]
+	\center{\includegraphics [width=0.7\textwidth] {figures/figlevels2.eps} }
+	%  \vspace{3in} //[width=\textwidth]
+	\caption{\label{fig:figlevels2} Rating scale}
+	\end{figure}
+
+
+	\begin{equation} \label{eq:flipped}
+	f_{b,a}  = \frac{1}{1 + e^{-\beta(R_{b}-R_{a})}}
+	\end{equation}
+
+This equation has the same form as the logistic function\footnote{\url{http://en.wikipedia.org/wiki/Logistic_function}}.
+With this equation we can calculate the predicted fraction of wins between two players. 
+The predicted performance $P_{x}$, or number of wins of player $x$ among a pool of other players will be the summation of each of the predicted fractions $f$ for each game.
+
+	\begin{equation}
+	P_{x} = f_{x,opp(1)} + f_{x,opp(2)} + ... + f_{x,opp(n)} = \sum\limits_{i=1}^n f_{x,opp(i)}
+	\end{equation}
+
+where $n$ is the total number of games played by $x$ and $opp(i)$ is the opponent it faced in the game $i$. Then:
+
+	\begin{equation}
+	P_{x} = \sum\limits_{i=1}^n \frac{1}{1 + e^{-\beta(R_{x}-R_{opp(i)})}}
+	\end{equation}
+
+The most likely strength rating values ($R$) for each player are ones that satisfy that each \textit{predicted} performance $P_{x}$ equals the respective \textit{observed} performance ($O_{x}$) of player $x$ (actual number of games won by $x$). 
+Therefore, the goal is to find $R$ values so the following unfitness ($U$) score equals zero, where $m$ is the total number of players, and $j$ is each individual player.
+
+	\begin{equation}
+	U = \sum\limits_{j=1}^m (P_{j} - O_{j})^2
+	\end{equation}
+
+Finding an adequate procedure to minimize $U$ until reaches zero is critical for a proper convergence towards the optimal solution. 
+The way Ordo fits it is in discrete steps (similar to \textit{hill climbing}\footnote{\url{http://en.wikipedia.org/wiki/Hill_climbing}}), and making those steps smaller and smaller once the convergence was reached. 
+However, those steps are constrained to certain values to avoid big swings during the calculation.
+After many different tests, this procedure was found to be safe and fast. 
+
+\subsubsection*{Scale}
+
+Chess players are accustomed to the Elo rating. 
+Traditionally, it has been based on a normal (Gaussian) distribution, which is the one that the World Chess Federation (FIDE) still uses\footnote{\url{http://en.wikipedia.org/wiki/Elo_rating_system}}.
+Here, the default value of $\beta$ was chosen to resembles the Elo scale.  
+For that reason, the rating difference when the winning expectancy is 76\% has been set to 202 rating points.
+This parameter could be modified with the switch \swtch{-z}, and the overall scale can be displayed with switch \swtch{-T}.
+
+The model is valid if the strength assigned to the individual players is additive like energy. 
+If we know the strength differences between A$\to$B and B$\to$C, we should be able to calculate A$\to$C as A$\to$B + B$\to$C.
+Then, this should accurately predict the results of a match between A and C. 
+Empirical observations seem to suggests that those estimations are reasonable, at least within a certain range. 
+
+It is important to note that the theoretical model does not take into account the existence of draws. 
+Basically, this means that the performance of two draws equals one win and a loss.
+If the actual draw rate remains similar throughout the rating scale, this assumption should not alter the calculation.
+Empirically, this is a reasonable assumption to make in most cases.
+
+\subsubsection*{White advantage calculation}
+
+The rationale to calculate the white advantage ($W_{adv}$) is that the expected outcome for white should be as close as possible to the actual white performance.
+If we compare those in each game, the optimum $W_{adv}$ will be the one that minimizes $E$ in the following equation
+
+	\begin{equation} \label{eq:white_adv_errors_1}
+	E = \sum\limits_{i=1}^n (Result_{i} - Expectancy(RW_{i} + W_{adv}, RB_{i}))^2
+	\end{equation}
+
+$E$ is the overall error in the estimation.
+Here, $n$ is the total number of games, $RW_{i}$ and $RB_{i}$ are the ratings (in game $i$) of white and black, respectively.
+$Expectancy$ is actually equation \ref{eq:flipped}.
+However, a faster way to calculate $W_{adv}$ is to group games with the same white and black players. 
+Those games will be considered a "match".
+
+	\begin{equation} \label{eq:white_adv_errors_2}
+	E = \sum\limits_{m=1}^M \left(p_{m} - N_{m}\:\: \frac{1}{1 + e^{-\beta(RW_{m} + W_{adv}-RB_{m})}}	\right)^2
+	\end{equation}
+
+In eq. \ref{eq:white_adv_errors_2}, $m$ is the match number, $M$ is the total number of matches, $N_{m}$ is the total number of games in the match $m$.
+Also, $p_{m}$ is the performance, or total number of points obtained by white in that particular match.
+$W_{adv}$ is calculated iteratively, until $E$ is minimized.
+This calculation assumes that $W_{adv}$ is relatively constant throughout the database.
+Once $W_{adv}$ is obtained, the ratings are re-calculated.
+The procedure continues until the numbers stabilize.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+\subsubsection*{Draw rate calculation}
+
+To estimate the probability of a draw in a single game the model from Fig. \ref{fig:figlevels2} needs to be expanded to have an extra "draw state" (Fig. \ref{fig:threestates}).
+
+	\begin{figure}[htb]
+	\center{\includegraphics [width=0.9\textwidth] {figures/threestates.eps} }
+	%  \vspace{3in} //[width=\textwidth]
+	\caption{\label{fig:threestates} Rating scale introducing an extra state for draws}
+	\end{figure}
+
+
+The draw rate does not affect the rating calculation, or the performance for each player in the simulations.
+However, it affects the relative distribution of \textit{wins}, \textit{losses}, and \textit{draws} simulated, which has an influence on the errors calculated. 
+Therefore, to have a more realistic simulation and an accurate estimation of the errors we need to predict the probability for a draw.
+But, the draw rate is not uniform, as it depends on the rating differences between the opponents.
+Thus, draw rate depends on two parameters, $D_{eq}$ (draw rate when the two opponents are of equal strength) and $\Delta R$.
+Ordo assumes that $D_{eq}$ is relatively constant throughout the database.
+If we know $D_{eq}$, the following equation
+
+	\begin{equation} \label{eq:draw_rate_errors}
+	E = \sum\limits_{m=1}^M (D_{m} - N_{m}\: D_{exp}(\Delta R_{m} + W_{adv}, D_{eq}))^2
+	\end{equation}
+
+will give $E$ as the overall error in the estimation of $D_{eq}$. 
+Here, $m$ is the match number, $M$ is the total number of matches, $N_{m}$ is the number of games played in each match $m$, $\Delta R_{m}$ is the rating difference in that particular match, $D_{m}$ is the number of draws observed, and $W_{adv}$ is the \textit{white advantage}.
+$D_{exp}$ is a function that gives the draw rate expected given a certain $\Delta R$ and $D_{eq}$. 
+Note that here a match is considered any series of games between two opponents with the same colors. 
+In other words, they are any set of games with the same opponents and conditions.
+With this equation, $D_{exp}$ is calculated iteratively until $E$ is minimized. 
+To apply this algorithm we need the function $D_{exp}$. 
+In the following section we show how to calculate the draw rate when opponents are of equal strength and later from a given $p$ and $D_{eq}$.
+From $\Delta R$, the performance expected ($p$) can be directly calculated.
+
+%=====
+
+\subsubsection*{Draw rate between opponents of equal strength}
+
+We can model the draw rate by introducing an extra \textit{draw state} (Fig. \ref{fig:threestates}). 
+This is a derivation of the equation that relates draw rate ($D$) and $\delta$.
+
+	\begin{equation} \label{eq:basic_WDL}
+	1 = W + D + L
+	\end{equation}
+
+Here, $W$, $D$, and $L$ are the respective win, draw, and loss rates. Since the opponents are of equal strength, W equals L.
+
+	\begin{equation} \label{eq:erll}
+	1 = 2\: W + D 
+	\end{equation}
+
+Based on the assumptions that the probabilities of the different levels are proportional to the \textit{Boltzmann factor}\footnote{\url{https://en.wikipedia.org/wiki/Boltzmann_factor}} $e^{-\beta E_{i}}$, the following ratio can be established ($R_{i}=-E_{i}$, higher ratings mean lower "energy levels").
+
+	\begin{equation} 
+	\frac{D}{W} = \frac{e^{\beta R_{D}}}{e^{\beta R_{W}}}  = e^{\beta(R_{D}-R_{W})} = e^{\beta\delta}
+	\end{equation}
+
+Replacing into eq. \ref{eq:erll}
+
+	\begin{equation} 
+	1 = e^{\beta\delta} W + 2W
+	\end{equation}
+
+	\begin{equation} \label{eq:wdep}
+	W = \frac{1}{e^{\beta\delta} + 2}
+	\end{equation}
+
+Combining with eq. \ref{eq:erll} we obtained $D_{eq}$, which is the draw rate when both players are equally strong. This value depends on $\delta$.
+
+	\begin{equation} \label{eq:eqlog}
+	D = D_{eq} = 1 - \frac {2}{e^{\beta\delta} + 2} = \frac{e^{\beta\delta}}{e^{\beta\delta}+2}
+	\end{equation}
+
+%=====
+\subsubsection*{Draw rate from $p$ (performance) and $D_{eq}$}
+
+Performance ($p$) is the ratio of the total points obtained by a player in a given number of games. 
+It is defined by this simple relationship.
+
+	\begin{equation} \label{eq:deq_perf}
+	p = W + D/2;\:\:\: W = p - D/2
+	\end{equation}
+
+To define $D_{eq}$, we are going to assume it is constant, regardless of the absolute strength of each individual.
+We then have three possible states, W (win), D (draw), and L (loss), in which the state D is separated by $\delta$ from the average of the levels W and L.
+In this scenario, and reordering eq. \ref{eq:eqlog} we have:
+
+	\begin{equation} \label{eq:deq0}
+	\frac{1-D_{eq}}{2 D_{eq}} = e^{-\beta \delta}
+	\end{equation}
+
+For convenience we will call $e^{-\beta \delta} = \phi$ then
+
+	\begin{equation} \label{eq:deq0b}
+	\frac{1-D_{eq}}{2 D_{eq}} = \phi
+	\end{equation}
+
+$D_{eq}$ is the rate when $R_{W}$ and $R_{L}$ are at the same level. 
+If $R_{W}$ and $R_{L}$ change, and $\delta$ remains at the same distance from the average of $R_{W}$ and $R_{L}$, the equations that relate the probabilities for each state are:
+
+	\begin{equation} \label{eq:deq1}
+	R_{avg} = \frac{R_{W} - R_{L}}{2};\:\: x = R_{W} - R_{avg} =  R_{avg} - R_{L}
+	\end{equation}
+
+	\begin{equation} \label{eq:deq2}
+	W/D = e^{\beta(x-\delta)} =  e^{\beta x} e^{-\beta \delta}
+	\end{equation}
+
+	\begin{equation} \label{eq:deq3}
+	D/L = e^{\beta(x+\delta)} =  e^{\beta x} / e^{-\beta \delta}
+	\end{equation}
+
+
+For convenience, if we call $e^{-\beta \delta} = \phi$ as we did before we get
+
+	\begin{equation} \label{eq:deq4}
+	W/D = e^{\beta x} \phi;\:\:\:
+	D/L = e^{\beta x} / \phi
+	\end{equation}
+
+therefore
+
+	\begin{equation} \label{eq:deq_wldd}
+	\frac{W}{D} \frac{L}{D} = \phi^2; \:\:\: L = \frac{\phi^2 D^2}{W}
+	\end{equation}
+
+combining this equation with eq. \ref{eq:basic_WDL} and reordering: 
+
+	\begin{equation} \label{eq:deq7}
+	0 = W^2 + D W - W + \phi^2 D^2
+	\end{equation}
+
+replacing W with eq. \ref{eq:deq_perf} we obtain
+
+	\begin{equation} \label{eq:deq9}
+	0 = (p - D/2)^2 + D (p - D/2) - (p - D/2) + \phi^2 D^2
+	\end{equation}
+
+expanding, simplifying, and reordering leads to
+
+	\begin{equation} \label{eq:deq10}
+	0 = (4 \phi^2 -1) D^2 + 2 D + 4 (p^2 - p)
+	\end{equation}
+
+replacing with eq. \ref{eq:deq0b}
+
+	\begin{equation} \label{eq:deq11}
+	0 = \left( 
+			\left(\frac {1-D_{eq}} 
+			{D_{eq}}
+			\right) ^2 -1
+		\right) 
+		D^2 + 2 D + 4 (p^2 - p)
+	\end{equation}
+
+Solving this quadratic equation, we obtain the predicted draw rate ($D$) between two given opponents, as long as we know the predicted performance ($p$) and the draw rate between equally matched opponents ($D_{eq}$). This is used to plug it in eq. \ref{eq:draw_rate_errors}.
+
+%~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+\subsubsection*{Acknowledgments}
+\person{Adam Hair} has extensively tested and suggested valuable ideas.
+
+\subsubsection*{License}
+\normalsize{
+\inctxt{tmp-lic.txt}
+}
+\end{document}
+
