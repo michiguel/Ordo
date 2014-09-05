@@ -22,12 +22,7 @@
 	#define DOPRIOR
 #endif
 
-#define MIN_RESOLUTION 0.000001
 #define PRIOR_SMALLEST_SIGMA 0.0000001
-
-#if 1
-#define CALCIND_SWSL
-#endif
 
 /*
 | 
@@ -236,30 +231,29 @@ static struct DEVIATION_ACC *sim = NULL;
 static double Drawrate_evenmatch = STANDARD_DRAWRATE; //default
 static double Drawrate_evenmatch_percent = 100*STANDARD_DRAWRATE; //default
 
-static double Probarray [MAXPLAYERS] [4];
-
 /*------------------------------------------------------------------------*/
 
+static double Probarray [MAXPLAYERS] [4];
 
 static struct prior Wa_prior = {40.0,20.0,FALSE};
 static struct prior PP[MAXPLAYERS];
-static bool_t Some_prior_set = FALSE;
+static bool_t 	Some_prior_set = FALSE;
 
-static int 	Priored_n = 0;
+static int 		Priored_n = 0;
 
-static void priors_reset(struct prior *p);
-static bool_t set_prior (const char *prior_name, double x, double sigma);
-static void priors_load(const char *fpriors_name);
+static void 	priors_reset(struct prior *p);
+static bool_t 	set_prior (const char *prior_name, double x, double sigma);
+static void 	priors_load(const char *fpriors_name);
 
 #define MAX_RELPRIORS 10000
 
 static struct relprior Ra[MAX_RELPRIORS];
 static long int N_relative_anchors = 0;
-static bool_t Hide_old_ver = FALSE;
+static bool_t 	Hide_old_ver = FALSE;
 
-static bool_t set_relprior (const char *player_a, const char *player_b, double x, double sigma);
-static void relpriors_show(void);
-static void relpriors_load(const char *f_name);
+static bool_t 	set_relprior (const char *player_a, const char *player_b, double x, double sigma);
+static void 	relpriors_show(void);
+static void 	relpriors_load(const char *f_name);
 
 /*------------------------------------------------------------------------*/
 static int		purge_players    (bool_t quiet, struct ENC *enc);
