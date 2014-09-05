@@ -26,7 +26,6 @@
 #include "encount.h"
 #include "mytypes.h"
 #include "pgnget.h"
-
 #include "xpect.h"
 
 //Statics
