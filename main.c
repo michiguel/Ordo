@@ -255,7 +255,7 @@ static void priors_load(const char *fpriors_name);
 
 static struct relprior Ra[MAX_RELPRIORS];
 static long int N_relative_anchors = 0;
-static bool_t hide_old_ver = FALSE;
+static bool_t Hide_old_ver = FALSE;
 
 static bool_t set_relprior (const char *player_a, const char *player_b, double x, double sigma);
 static void relpriors_show(void);
@@ -487,7 +487,7 @@ int main (int argc, char *argv[])
 						break;
 			case 'T':	table_mode = TRUE;	break;
 			case 'q':	QUIET_MODE = TRUE;	break;
-			case 'R':	hide_old_ver=TRUE;	break;
+			case 'R':	Hide_old_ver=TRUE;	break;
 			case 'W':	ADJUST_WHITE_ADVANTAGE = TRUE;	
 						Wa_prior.set = FALSE;//TRUE; 
 						Wa_prior.rating = 0; //40.0; 
@@ -1161,7 +1161,7 @@ all_report (FILE *csvf, FILE *textf)
 						sbuffer[0] = '\0';
 					}
 
-					if (showrank || !hide_old_ver) {
+					if (showrank || !Hide_old_ver) {
 						fprintf(f, "%4s %-*s %s :%7.*f %9.1f %7d %6.1f%s\n", 
 							sbuffer,
 							(int)ml+1,
@@ -1169,16 +1169,20 @@ all_report (FILE *csvf, FILE *textf)
 							get_super_player_symbolstr(j),
 							OUTDECIMALS,
 							rating_round(Ratingof_results[j], OUTDECIMALS), 
-							Obtained_results[j], Playedby_results[j]
-							, Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j], "%");
+							Obtained_results[j], 
+							Playedby_results[j], 
+							Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j], 
+							"%"
+						);
 					}
-	
+
 				} else {
-				fprintf(f, "%4d %-*s   :%7s %9s %7s %6s%s\n", 
-					i+1,
-					(int)ml+1,
-					Name[j], 
-					"----", "----", "----", "----","%");
+
+						fprintf(f, "%4d %-*s   :%7s %9s %7s %6s%s\n", 
+							i+1,
+							(int)ml+1,
+							Name[j], 
+							"----", "----", "----", "----","%");
 				}
 			}
 		} else {
@@ -1196,30 +1200,39 @@ all_report (FILE *csvf, FILE *textf)
 					sdev_str = "  ----";
 				}
 				if (!Flagged[j]) {
-				fprintf(f, "%4d %-*s %s :%7.*f %s %8.1f %7d %6.1f%s\n", 
-					i+1,
-					(int)ml+1, 
-					Name[j],
- 					get_super_player_symbolstr(j),
-					OUTDECIMALS,
-					rating_round(Ratingof_results[j], OUTDECIMALS), 
-					sdev_str, Obtained_results[j], Playedby_results[j], 
-					Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], "%");
+					fprintf(f, "%4d %-*s %s :%7.*f %s %8.1f %7d %6.1f%s\n", 
+						i+1,
+						(int)ml+1, 
+						Name[j],
+ 						get_super_player_symbolstr(j),
+						OUTDECIMALS,
+						rating_round(Ratingof_results[j], OUTDECIMALS), 
+						sdev_str, 
+						Obtained_results[j], 
+						Playedby_results[j], 
+						Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], 
+						"%"
+					);
 				} else if (!is_super_player(j)) {
-				fprintf(f, "%4d %-*s   :%7.*f %s %8.1f %7d %6.1f%s\n", 
-					i+1,
-					(int)ml+1, 
-					Name[j], 
-					OUTDECIMALS,
-					rating_round(Ratingof_results[j], OUTDECIMALS), 
-					"  ****", Obtained_results[j], Playedby_results[j], 
-					Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], "%");
+					fprintf(f, "%4d %-*s   :%7.*f %s %8.1f %7d %6.1f%s\n", 
+						i+1,
+						(int)ml+1, 
+						Name[j], 
+						OUTDECIMALS,
+						rating_round(Ratingof_results[j], OUTDECIMALS), 
+						"  ****", 
+						Obtained_results[j], 
+						Playedby_results[j], 
+						Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], 
+						"%"
+					);
 				} else {
-				fprintf(f, "%4d %-*s   :%7s %s %8s %7s %6s%s\n", 
-					i+1,
-					(int)ml+1,
-					Name[j], 
-					"----", "  ----", "----", "----", "----","%");
+					fprintf(f, "%4d %-*s   :%7s %s %8s %7s %6s%s\n", 
+						i+1,
+						(int)ml+1,
+						Name[j], 
+						"----", "  ----", "----", "----", "----","%"
+					);
 				}
 			}
 		}
