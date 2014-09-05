@@ -2034,4 +2034,3 @@ static void head2head_output(const char *head2head_str)
 	output_report_individual (head2head_str, &cegt, (int)Simulate);
 }
 
-
