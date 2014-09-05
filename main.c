@@ -270,6 +270,7 @@ static void		clear_flagged (void);
 static void		all_report (FILE *csvf, FILE *textf);
 static void		init_rating (void);
 static void		init_manchors(const char *fpins_name);
+
 static int		calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage, bool_t adjust_wadv, double *pDraw_rate);
 
 static void 	ratings_results (void);
@@ -1789,48 +1790,48 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage,
 	double dr = *pDraw_rate;
 
 	int ret;
-	ret = calc_rating_bayes2 (  
-			quiet
-			, enc
-			, N_enc
+	ret = calc_rating_bayes2 
+				( quiet
+				, enc
+				, N_enc
 
-			, N_players
-			, Obtained
+				, N_players
+				, Obtained
 
-			, Playedby
-			, Ratingof
-			, Ratingbk
-			, Performance_type
+				, Playedby
+				, Ratingof
+				, Ratingbk
+				, Performance_type
 
-			, Flagged
-			, Prefed
+				, Flagged
+				, Prefed
 
-			, pWhite_advantage
-			, General_average
+				, pWhite_advantage
+				, General_average
 
-			, Multiple_anchors_present
-			, Anchor_use && !Anchor_err_rel2avg
-			, Anchor
+				, Multiple_anchors_present
+				, Anchor_use && !Anchor_err_rel2avg
+				, Anchor
 				
-			, N_games
-			, Score
-			, Whiteplayer
-			, Blackplayer
+				, N_games
+				, Score
+				, Whiteplayer
+				, Blackplayer
 
-			, Name
-			, BETA
+				, Name
+				, BETA
 
-			, Changing
-			, N_relative_anchors
-			, PP
-			, Probarray 
-			, Ra
-			, Some_prior_set
-			, Wa_prior
+				, Changing
+				, N_relative_anchors
+				, PP
+				, Probarray 
+				, Ra
+				, Some_prior_set
+				, Wa_prior
 
-			, adjust_wadv
+				, adjust_wadv
 
-			, dr
+				, dr
 
 	);
 
