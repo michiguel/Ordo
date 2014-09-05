@@ -1836,7 +1836,6 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage,
 
 				, N_players
 				, Obtained
-
 				, Playedby
 				, Ratingof
 				, Ratingbk
@@ -1870,8 +1869,8 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage,
 
 				, adjust_wadv
 
-				, dr
-
+				, ADJUST_DRAW_RATE
+				, &dr
 	);
 
 	*pDraw_rate = dr;

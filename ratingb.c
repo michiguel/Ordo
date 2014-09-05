@@ -256,7 +256,8 @@ calc_rating_bayes2 	(
 			, struct prior 		wa_prior
 			, bool_t 			adjust_white_advantage
 
-			, double deq
+			, bool_t		adjust_draw_rate
+			, double		*pDraw_date
 )
 {
 	double 	olddev, curdev, outputdev;
@@ -271,6 +272,7 @@ calc_rating_bayes2 	(
 	int 	n = 40;
 	double 	resol = delta;
 	double 	resol_prev = delta;
+	double	deq = *pDraw_date;
 
 	double white_advantage = *pwadv;
 

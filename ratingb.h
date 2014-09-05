@@ -61,16 +61,18 @@ calc_rating_bayes2 	(
 
 // different from non bayes calc
 
-			, double *changing
-			, long int n_relative_anchors
-			, struct prior *pp
-			, double probarray [MAXPLAYERS] [4]
-			, struct relprior *ra
-			, bool_t some_prior_set
-			, struct prior wa_prior
+			, double *			changing
+			, long int 			n_relative_anchors
+			, struct prior *	pp
+			, double 			probarray [MAXPLAYERS] [4]
+			, struct relprior *	ra
+			, bool_t 			some_prior_set
+			, struct 			prior wa_prior
 
-, bool_t adjust_white_advantage
-, double deq
+			, bool_t 			adjust_white_advantage
+
+			, bool_t			adjust_draw_rate
+			, double *			pDraw_date
 );
 
 
