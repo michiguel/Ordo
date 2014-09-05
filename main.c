@@ -122,6 +122,7 @@ static void usage (void);
 		" -q          quiet mode (no screen progress updates)\n"
 		" -a <avg>    set rating for the pool average\n"
 		" -A <player> anchor: rating given by '-a' is fixed for <player>, if provided\n"
+		" -V          errors relative to pool average, not to the anchor\n"
 		" -m <file>   multiple anchors: file contains rows of \"AnchorName\",AnchorRating\n"
 		" -y <file>   loose anchors: file contains rows of \"Player\",Rating,Uncertainty\n"
 		" -r <file>   relations: rows of \"PlayerA\",\"PlayerB\",delta_rating,uncertainty\n"
@@ -154,7 +155,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWDLa:A:m:r:y:o:Eg:j:c:s:w:u:d:z:e:C:TF:RXN:";
+const char *OPTION_LIST = "vhHp:qWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:z:e:C:TF:XN:";
 
 /*
 |
@@ -175,6 +176,8 @@ enum 			AnchorSZ	{MAX_ANCHORSIZE=256};
 static bool_t	Anchor_use = FALSE;
 static int		Anchor = 0;
 static char		Anchor_name[MAX_ANCHORSIZE] = "";
+
+static bool_t	Anchor_err_rel2avg = FALSE;
 
 static bool_t 	Multiple_anchors_present = FALSE;
 static bool_t	General_average_set = FALSE;
@@ -441,6 +444,8 @@ int main (int argc, char *argv[])
 							fprintf(stderr, "ERROR: anchor name is too long\n");
 							exit(EXIT_FAILURE);	
 						}
+						break;
+			case 'V':	Anchor_err_rel2avg = TRUE;
 						break;
 			case 's': 	if (1 != sscanf(opt_arg,"%lu", &Simulate) || Simulate < 0) {
 							fprintf(stderr, "wrong simulation parameter\n");
@@ -1691,6 +1696,8 @@ purge_players(bool_t quiet, struct ENC *enc)
 static void
 ratings_results (void)
 {
+	double excess;
+
 	int j;
 	ratings_for_purged();
 	for (j = 0; j < N_players; j++) {
@@ -1698,6 +1705,19 @@ ratings_results (void)
 		Obtained_results[j] = Obtained[j];
 		Playedby_results[j] = Playedby[j];
 	}
+
+	// shifting ratings to fix the anchor.
+	// Only done if the error is relative to the average.
+	// Otherwise, it is taken care in the rating calculation already.
+	// If Anchor_err_rel2avg is set, shifting in the calculation (later) is deactivated.
+	excess = 0.0;
+	if (Anchor_err_rel2avg && Anchor_use) {
+		excess = General_average - Ratingof_results[Anchor];		
+		for (j = 0; j < N_players; j++) {
+			Ratingof_results[j] += excess;
+		}
+	}
+
 }
 
 static void
@@ -1783,7 +1803,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 			, General_average
 
 			, Multiple_anchors_present
-			, Anchor_use
+			, Anchor_use && !Anchor_err_rel2avg
 			, Anchor
 				
 			, N_games
@@ -1812,8 +1832,6 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc)
 }
 
 /*==================================================================*/
-
-// static double inv_xpect(double invbeta, double p) {return (-1.0*invbeta) * log(100.0/p-1.0);}
 
 static void
 table_output(double rtng_76)
@@ -1851,6 +1869,7 @@ set_super_players(bool_t quiet, struct ENC *enc)
 	int N_enc;
 
 	N_enc = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
+
 	for (j = 0; j < N_players; j++) {
 		obt[j] = 0.0;	
 		pla[j] = 0;

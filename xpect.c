@@ -69,15 +69,15 @@ draw_rate_fperf (double p, double d0)
 	double	fi, a, b, c, x, y, dy, newx;
 	double ret=0;
 
-		fi = (1-d0)/(2*d0);
-		c = 4*(p*p-p);
-		b = 2;
-		a = 4*fi*fi-1;
-
 	if (d0 < 0.0001) {
 		ret = 2*d0*sqrt(p-p*p)-d0*d0;
 		return ret;
 	}
+
+		fi = (1-d0)/(2*d0);
+		c = 4*(p*p-p);
+		b = 2;
+		a = 4*fi*fi-1;
 
 	if (d0 < 1-0.0001 && (d0 > 0.5001 || d0 < 0.4999) ) {
 		ret = ( sqrt(b*b-4*a*c) - b) /(2*a);
