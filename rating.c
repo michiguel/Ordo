@@ -319,7 +319,7 @@ calc_rating2 	( bool_t 		quiet
 	double 	resol;
 	bool_t	doneonce = FALSE;
 
-	double wa_resolution = START_DELTA;
+//	double wa_resolution = START_DELTA;
 	int times_ori = 10;
 	int times;
 
@@ -342,7 +342,7 @@ calc_rating2 	( bool_t 		quiet
 		denom = 2;
 		phase = 0;
 		n = 20;
-		wa_resolution = START_DELTA;
+//		wa_resolution = START_DELTA;
 
 		if (times == 9) {
 			min_resol = 10;
@@ -360,7 +360,7 @@ calc_rating2 	( bool_t 		quiet
 		olddev = curdev = deviation(N_players, Flagged, Expected, Obtained, Playedby);
 
 		if (!quiet) printf ("\nConvergence rating calculation (cycle #%d)\n\n", times_ori-times);
-		if (!quiet) printf ("%3s %4s %10s %10s\n", "phase", "iteration", "deviation","resolution");
+		if (!quiet) printf ("%3s %4s %12s%14s\n", "phase", "iteration", "deviation","resolution");
 
 		while (n-->0) {
 			double kk = 1.0;
@@ -408,10 +408,10 @@ calc_rating2 	( bool_t 		quiet
 			outputdev = 1000*sqrt(curdev/N_games);
 
 			if (!quiet) {
-				printf ("%3d %7d %20.9f", phase, i, outputdev);
-				printf ("%11.5f",resol);
-				printf ("%11.5f",delta);
-				printf ("%11.5f",wa_resolution);
+				printf ("%3d %7d %16.9f", phase, i, outputdev);
+				printf ("%14.5f",resol);
+//				printf ("%11.5f",delta);
+//				printf ("%11.5f",wa_resolution);
 				printf ("\n");
 			}
 			phase++;

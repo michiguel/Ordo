@@ -663,7 +663,8 @@ int main (int argc, char *argv[])
 	if (relstr != NULL) {
 		relpriors_load(relstr); 
 	}
-	relpriors_show();
+	if (!QUIET_MODE)
+		relpriors_show();
 	//FIXME do not allow relpriors to be purged
 //~~
 
@@ -1343,14 +1344,15 @@ set_anchor (const char *player_name, double x)
 }
 
 static bool_t
-assign_anchor (char *name_pinned, double x)
+assign_anchor (char *name_pinned, double x, bool_t quiet)
 {
 	bool_t pin_success = set_anchor (name_pinned, x);
 	if (pin_success) {
 		Multiple_anchors_present = TRUE;
+		if (!quiet)
 		printf ("Anchoring, %s --> %.1lf\n", name_pinned, x);
 	} else {
-		printf ("Anchoring, %s --> FAILED, name not found in input file\n", name_pinned);					
+		fprintf (stderr, "Anchoring, %s --> FAILED, name not found in input file\n", name_pinned);					
 	}
 	return pin_success;
 }
@@ -1398,7 +1400,7 @@ init_manchors(const char *fpins_name)
 				exit(EXIT_FAILURE);
 			}
 			file_success = success;
-			pin_success = assign_anchor (name_pinned, x);
+			pin_success = assign_anchor (name_pinned, x, QUIET_MODE);
 		}
 
 		fclose(fpins);
@@ -1466,7 +1468,7 @@ if (p_a == -1 || p_b == -1) return FALSE; // defensive programming, not needed.
 }
 
 static void
-relpriors_show(void)
+relpriors_show (void)
 { 
 	int i;
 	printf ("\nRelative Anchors {\n");
@@ -1479,13 +1481,13 @@ relpriors_show(void)
 }
 
 static bool_t
-assign_relative_prior (char *s, char *z, double x, double y)
+assign_relative_prior (char *s, char *z, double x, double y, bool_t quiet)
 {
 	bool_t prior_success = TRUE;
 	bool_t suc;
 
 	if (y < 0) {
-		printf ("Relative Prior, %s %s --> FAILED, error/uncertainty cannot be negative", s, z);	
+		fprintf (stderr, "Relative Prior, %s %s --> FAILED, error/uncertainty cannot be negative", s, z);	
 		suc = FALSE;
 	} else {
 		if (y < PRIOR_SMALLEST_SIGMA) {
@@ -1494,9 +1496,10 @@ assign_relative_prior (char *s, char *z, double x, double y)
 		} else {
 			suc = set_relprior (s, z, x, y);
 			if (suc) {
+				if (!quiet)
 				printf ("Relative Prior, %s, %s --> %.1lf, %.1lf\n", s, z, x, y);
 			} else {
-				printf ("Relative Prior, %s, %s --> FAILED, name/s not found in input file\n", s, z);					
+				fprintf (stderr, "Relative Prior, %s, %s --> FAILED, name/s not found in input file\n", s, z);					
 			}	
 		}
 	}
@@ -1560,7 +1563,7 @@ relpriors_load(const char *f_name)
 
 			file_success = success;
 
-			prior_success = assign_relative_prior (s, z, x, y);
+			prior_success = assign_relative_prior (s, z, x, y, QUIET_MODE);
 
 		}
 
@@ -1622,27 +1625,29 @@ set_prior (const char *player_name, double x, double sigma)
 static bool_t has_a_prior(int j) {return PP[j].set;}
 
 static bool_t
-assign_prior (char *name_prior, double x, double y)
+assign_prior (char *name_prior, double x, double y, bool_t quiet)
 {
 	bool_t prior_success = TRUE;
 	bool_t suc;
 	if (y < 0) {
-			printf ("Prior, %s --> FAILED, error/uncertainty cannot be negative", name_prior);	
+			fprintf (stderr, "Prior, %s --> FAILED, error/uncertainty cannot be negative", name_prior);	
 			suc = FALSE;
 	} else { 
 		if (y < PRIOR_SMALLEST_SIGMA) {
 			suc = set_anchor (name_prior, x);
 			if (suc) {
+				if (!quiet)
 				printf ("Anchoring, %s --> %.1lf\n", name_prior, x);
 			} else {
-				printf ("Prior, %s --> FAILED, name not found in input file\n", name_prior);
+				fprintf (stderr, "Prior, %s --> FAILED, name not found in input file\n", name_prior);
 			}
 		} else {
 			suc = set_prior (name_prior, x, y);
 			if (suc) {
+				if (!quiet)
 				printf ("Prior, %s --> %.1lf, %.1lf\n", name_prior, x, y);
 			} else {
-				printf ("Prior, %s --> FAILED, name not found in input file\n", name_prior);					
+				fprintf (stderr, "Prior, %s --> FAILED, name not found in input file\n", name_prior);					
 			}	
 		}
 	}
@@ -1698,12 +1703,12 @@ priors_load(const char *fpriors_name)
 				}
 				csv_line_done(&csvln);		
 			} else {
-				printf ("Failure to input -y file\n");
+				fprintf (stderr, "Failure to input -y file\n");
 				exit(EXIT_FAILURE);
 			}
 
 			file_success = success;
-			prior_success = assign_prior (name_prior, x, y);
+			prior_success = assign_prior (name_prior, x, y, QUIET_MODE);
 		}
 
 		fclose(fpriors);
