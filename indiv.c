@@ -28,7 +28,6 @@
 
 #include "xpect.h"
 
-
 //===============================================================
 
 #if 1
@@ -121,6 +120,7 @@ calc_ind_rating(double cume_score, double *rtng, double *weig, int r, double bet
 
 //=========================================
 
+
 static double
 prob2absolute_result (int perftype, double myrating, double *rtng, double *weig, int n, double deq, double beta)
 {
@@ -206,8 +206,18 @@ static double calc_ind_rating(double cume_score, double *rtng, double *weig, int
 static double calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, double *weig, int r, double deq, double beta);
 
 void
-rate_super_players(bool_t quiet, struct ENC *enc, int N_enc, int *performance_type, int n_players, double *ratingof, double white_advantage, bool_t *flagged,
-char *Name[], double deq, double beta)
+rate_super_players 	( bool_t quiet
+					, struct ENC *enc
+					, int N_enc
+					, int *performance_type
+					, int n_players
+					, double *ratingof
+					, double white_advantage
+					, bool_t *flagged
+					, char *Name[]
+					, double deq
+					, double beta
+)
 {
 	int j, e;
 	int myenc_n = 0;

@@ -31,7 +31,7 @@
 //static double calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, double *weig, int r);
 
 extern void
-rate_super_players	(bool_t quiet
+rate_super_players 	( bool_t quiet
 					, struct ENC *enc
 					, int N_enc
 					, int *performance_type
@@ -41,9 +41,8 @@ rate_super_players	(bool_t quiet
 					, bool_t *flagged
 					, char *Name[]
 					, double deq
-					, double beta					
+					, double beta
 );
-
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif
