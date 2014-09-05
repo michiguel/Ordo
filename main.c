@@ -51,6 +51,7 @@
 
 #include "indiv.h"
 #include "encount.h"
+#include "rating.h"
 #include "ratingb.h"
 
 #include "xpect.h"
@@ -198,6 +199,7 @@ static double	Confidence = 95;
 static double	General_average = 2300.0;
 static int		Sorted  [MAXPLAYERS]; /* sorted index by rating */
 static double	Obtained[MAXPLAYERS];
+static double	Expected[MAXPLAYERS];
 static int		Playedby[MAXPLAYERS]; /* N games played by player "i" */
 static double	Ratingof[MAXPLAYERS]; /* rating current */
 static double	Ratingbk[MAXPLAYERS]; /* rating backup  */
@@ -1827,6 +1829,9 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage,
 	double dr = *pDraw_rate;
 
 	int ret;
+
+if (Prior_mode) {
+
 	ret = calc_rating_bayes2 
 				( quiet
 				, enc
@@ -1871,6 +1876,45 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage,
 				, &dr
 	);
 
+} else {
+
+	ret = calc_rating2 	
+				( quiet
+				, enc
+				, N_enc
+
+				, N_players
+				, Obtained
+				, Expected
+				, Playedby
+				, Ratingof
+				, Ratingbk
+				, Performance_type
+
+				, Flagged
+				, Prefed
+
+				, pWhite_advantage
+				, General_average
+
+				, Multiple_anchors_present
+				, Anchor_use && !Anchor_err_rel2avg
+				, Anchor
+				
+				, N_games
+				, Score
+				, Whiteplayer
+				, Blackplayer
+
+				, Name
+				, BETA
+
+				, adjust_wadv
+
+				, ADJUST_DRAW_RATE
+				, &dr
+	);
+}
 	*pDraw_rate = dr;
 
 	if (!quiet) {
