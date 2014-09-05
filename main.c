@@ -572,6 +572,8 @@ int main (int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}				
 
+	Prior_mode = switch_u || NULL != relstr || NULL != priorsstr;
+
 	/*==== SET INPUT ====*/
 
 	if (!pgn_getresults(inputf, QUIET_MODE)) {
@@ -592,6 +594,21 @@ int main (int argc, char *argv[])
 			fprintf (stderr, "Surround the name with \"quotes\" if it contains spaces\n\n");
 			return EXIT_FAILURE; 			
 		} 
+	}
+
+	if (Drawrate_evenmatch < 0.0 || Drawrate_evenmatch > 1.0) {
+			fprintf (stderr, "ERROR: Invalide draw rate set\n");
+			return EXIT_FAILURE; 		
+	}
+
+	if (!(Drawrate_evenmatch > 0.0) && Game_stats.draws > 0 && Prior_mode) {
+			fprintf (stderr, "ERROR: Draws present in the database but -d switch specified an invalid number\n");
+			return EXIT_FAILURE; 
+	}
+
+	if (Drawrate_evenmatch > 0.999) {
+			fprintf (stderr, "ERROR: Draw rate set with -d switch is too high, > 99.9%s\n", "%");
+			return EXIT_FAILURE; 
 	}
 
 	N_encounters = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
@@ -627,8 +644,6 @@ int main (int argc, char *argv[])
 	init_rating();
 
 	// PRIORS
-	Prior_mode = switch_u || NULL != relstr || NULL != priorsstr;
-
 	priors_reset(PP);
 
 	if (priorsstr != NULL) {
