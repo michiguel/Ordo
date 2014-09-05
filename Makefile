@@ -6,9 +6,9 @@ LIBFLAGS = -lm
 
 EXE = ordo
 
-SRC = myopt/myopt.c mystr.c proginfo.c pgnget.c randfast.c gauss.c groups.c csv.c encount.c indiv.c ratingb.c cegt.c xpect.c main.c
-DEPS = boolean.h  datatype.h  gauss.h  groups.h  mystr.h  mytypes.h  ordolim.h  pgnget.h  proginfo.h  progname.h  randfast.h  version.h myopt/myopt.h csv.h encount.h ratingb.h indiv.h xpect.h cegt.h
-OBJ = myopt/myopt.o mystr.o proginfo.o pgnget.o randfast.o gauss.o groups.o csv.o encount.o indiv.o ratingb.o cegt.o xpect.o main.o
+SRC = myopt/myopt.c mystr.c proginfo.c pgnget.c randfast.c gauss.c groups.c cegt.c indiv.c encount.c ratingb.c xpect.c csv.c main.c 
+DEPS = boolean.h  datatype.h  gauss.h  groups.h  mystr.h  mytypes.h  ordolim.h  pgnget.h  proginfo.h  progname.h  randfast.h  version.h myopt/myopt.h cegt.h indiv.h encount.h xpect.h csv.h ratingb.h
+OBJ = myopt/myopt.o mystr.o proginfo.o pgnget.o randfast.o gauss.o groups.o cegt.o indiv.o encount.o ratingb.o xpect.o csv.o main.o
 
 %.o: %.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
@@ -23,10 +23,13 @@ install:
 	cp $(EXE) /usr/local/bin/$(EXE)
 
 clean:
-	rm -f *.o *~ myopt/*.o ordo-v*.tar.gz
+	rm -f *.o *~ myopt/*.o ordo-v*.tar.gz ordo-v*-win.zip *.out
 
-profile:
-	$(CC) $(CFLAGS) $(WARN) -pg -O1 -fno-inline -o $(EXE) $(SRC) $(LIBFLAGS)
+
+
+
+
+
 
 
 
