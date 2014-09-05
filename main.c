@@ -2031,6 +2031,7 @@ static void head2head_output(const char *head2head_str)
 
 	cegt.sim = sim;
 
-	output_report_individual (head2head_str, &cegt);
+	output_report_individual (head2head_str, &cegt, (int)Simulate);
 }
+
 

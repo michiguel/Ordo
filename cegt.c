@@ -27,6 +27,18 @@
 #include "cegt.h"
 #include "mytypes.h"
 
+#include "ordolim.h"
+#include "gauss.h"
+
+struct OPP_LINE {
+	long i;
+	long w;
+	long d;
+	long l;
+	double R;
+};
+
+static struct OPP_LINE oline[MAXPLAYERS];
 
 // STATICS
 static size_t find_maxlen (char *nm[], long int n);
@@ -36,10 +48,10 @@ static void all_report_rat (FILE *textf, struct CEGT *p);
 static void all_report_prg (FILE *textf, struct CEGT *p);
 static void all_report_gen (FILE *textf, struct CEGT *p);
 
-static void	all_report_indiv_stats (FILE *textf, struct CEGT *p);
+static void	all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate);
 
 static bool_t 
-output_report_individual_f (FILE *indf, struct CEGT *p);
+output_report_individual_f (FILE *indf, struct CEGT *p, int simulate);
 
 static bool_t 
 output_cegt_style_f (FILE *genf, FILE *ratf, FILE *prgf, struct CEGT *p);
@@ -101,20 +113,17 @@ output_cegt_style_f (FILE *genf, FILE *ratf, FILE *prgf, struct CEGT *p)
 
 
 extern bool_t 
-output_report_individual (const char *outindiv_name, struct CEGT *p)
+output_report_individual (const char *outindiv_name, struct CEGT *p, int simulate)
 {
 	bool_t success;
 	FILE *indivf;
-
-	printf ("\n");
-	printf ("Output Report individual: %s\n", outindiv_name);
 
 	if (NULL ==	(indivf = fopen (outindiv_name, "w"))) {
 			fprintf(stderr, "Error trying to write on file: %s\n", outindiv_name);		
 			return FALSE;	
 	}
 
-	success = output_report_individual_f (indivf, p);
+	success = output_report_individual_f (indivf, p, simulate);
 
 	fclose(indivf);
 	return success;
@@ -122,10 +131,10 @@ output_report_individual (const char *outindiv_name, struct CEGT *p)
 
 
 static bool_t 
-output_report_individual_f (FILE *indf, struct CEGT *p)
+output_report_individual_f (FILE *indf, struct CEGT *p, int simulate)
 {
 	if (indf)
-		all_report_indiv_stats (indf, p);
+		all_report_indiv_stats (indf, p, simulate);
 
 	return indf != NULL;
 }
@@ -238,39 +247,39 @@ all_report_rat (FILE *textf, struct CEGT *p)
 			for (i = 0; i < N_players; i++) {
 				j = Sorted[i];
 				if (!Flagged[j]) {
-				fprintf(f, "%4d %-*s %s :%5.0f%5.0f%5.0f %5d %7.1f%s %6.0f %6.1f%s\n", 
-					i+1,
-					(int)ml+1,
-					Name[j],
-					get_super_player_symbolstr(j,p),
-
-					Ratingof_results[j],
-					Sdev[j] * confidence,
-					Sdev[j] * confidence,
-					Playedby_results[j],
-					Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j],
-					" %",
-					av_opp(j, p),
-					draw_percentage(j, Enc, N_enc),
-					" %"
-				);
+					fprintf(f, "%4d %-*s %s :%5.0f%5.0f%5.0f %5d %7.1f%s %6.0f %6.1f%s\n", 
+						i+1,
+						(int)ml+1,
+						Name[j],
+						get_super_player_symbolstr(j,p),
+	
+						Ratingof_results[j],
+						Sdev[j] * confidence,
+						Sdev[j] * confidence,
+						Playedby_results[j],
+						Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j],
+						" %",
+						av_opp(j, p),
+						draw_percentage(j, Enc, N_enc),
+						" %"
+					);
 				} else {
-				fprintf(f, "%4d %-*s %s :%5s%5s%5s %5d %7.1f%s %6.0f %6.1f%s\n", 
-					i+1,
-					(int)ml+1,
-					Name[j],
-					" ",
-
-					"----",
-					"--",
-					"--",
-					Playedby_results[j],
-					Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j],
-					" %",
-					av_opp(j, p),
-					draw_percentage(j, Enc, N_enc),
-					" %"
-				);
+					fprintf(f, "%4d %-*s %s :%5s%5s%5s %5d %7.1f%s %6.0f %6.1f%s\n", 
+						i+1,
+						(int)ml+1,
+						Name[j],
+						" ",
+	
+						"----",
+						"--",
+						"--",
+						Playedby_results[j],
+						Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j],
+						" %",
+						av_opp(j, p),
+						draw_percentage(j, Enc, N_enc),
+						" %"
+					);
 				}
 			}
 		}
@@ -351,7 +360,7 @@ all_report_prg (FILE *textf, struct CEGT *p)
 						Temp_enc[t++] = Enc[e];
 					}	
 				}
-	
+
 				qsort (Temp_enc, (size_t)t, sizeof(struct ENC), compare_ENC2);
 	
 				won = 0;
@@ -388,7 +397,13 @@ all_report_prg (FILE *textf, struct CEGT *p)
 					won = Temp_enc[e].wh == target? Temp_enc[e].W: Temp_enc[e].L;
 					dra = Temp_enc[e].D;
 					los = Temp_enc[e].wh == target? Temp_enc[e].L: Temp_enc[e].W;
-					if ((e+1) < t) {
+
+					// There is a next entry, and it is the "rematch" of the current one 
+					// (same, different colors)
+					if ((e+1) < t
+						&& Temp_enc[e].wh == Temp_enc[e+1].bl 
+						&& Temp_enc[e].bl == Temp_enc[e+1].wh
+						) {
 						e++;
 						won += Temp_enc[e].wh == target? Temp_enc[e].W: Temp_enc[e].L;
 						dra += Temp_enc[e].D;
@@ -428,21 +443,7 @@ all_report_prg (FILE *textf, struct CEGT *p)
 	return;
 }
 
-
 //
-
-struct OPP_LINE {
-	long i;
-	long w;
-	long d;
-	long l;
-	double R;
-};
-
-#include "ordolim.h"
-#include "gauss.h"
-
-static struct OPP_LINE oline[MAXPLAYERS];
 
 static int compare_oline (const void * a, const void * b)
 {
@@ -486,7 +487,7 @@ calclen (long int x)
 }
 
 static void
-all_report_indiv_stats (FILE *textf, struct CEGT *p)
+all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate)
 {
 	FILE *f;
 	long i, j;
@@ -592,7 +593,13 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p)
 					won = Temp_enc[e].wh == target? Temp_enc[e].W: Temp_enc[e].L;
 					dra = Temp_enc[e].D;
 					los = Temp_enc[e].wh == target? Temp_enc[e].L: Temp_enc[e].W;
-					if ((e+1) < t) {
+
+					// There is a next entry, and it is the "rematch" of the current one 
+					// (same, different colors)
+					if ((e+1) < t
+						&& Temp_enc[e].wh == Temp_enc[e+1].bl 
+						&& Temp_enc[e].bl == Temp_enc[e+1].wh
+						) {
 						e++;
 						won += Temp_enc[e].wh == target? Temp_enc[e].W: Temp_enc[e].L;
 						dra += Temp_enc[e].D;
@@ -615,12 +622,6 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p)
 
 					e++;
 				}
-	
-//				gl = 1 + calclen(maxgames);
-//				gl = gl < 6? 6: gl; //strlen("games");
-//				gwlen = 1 + calclen(maxwon);
-//				gdlen = 1 + calclen(maxdra);
-//				gllen = 1 + calclen(maxlos);
 
 				fprintf(f, 
 					"%*s"	
@@ -638,7 +639,7 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p)
 					"%s"
 					"%6s"
 					"%2s"
-					" %6s, %3s, %6s"
+					" %6s"
 
 					//
 					, indent+2, ""
@@ -657,9 +658,18 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p)
 					, "),"
 					, "(%)"
 					, ":" 
-					, "Diff", "SD", "CFS (%)"
+					, "Diff"
+				);
+
+				if (simulate > 1 && p->sim != NULL) {
+				fprintf(f, 
+					", %3s, %6s"
+					, "SD"
+					, "CFS (%)"
 
 				);
+				}
+
 				fprintf(f,"\n");
 
 				qsort (oline, (size_t)nl, sizeof(struct OPP_LINE), compare_oline);
@@ -690,7 +700,7 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p)
 
 					fprintf(f, " : %+6.0f", dr);
 
-					if (p->sim != NULL) {
+					if (simulate > 1 && p->sim != NULL) {
 						ptrdiff_t idx;
 						double ctrs;
 						double sd;
@@ -779,8 +789,8 @@ all_report_gen (FILE *textf, struct CEGT *p)
 		"Black Wins   : %ld (%.1f %s)\n"
 		"Draws        : %ld (%.1f %s)\n"
 		"Unfinished   : %ld\n\n"
-		"White Perf.  : %.1f %s\n"
-		"Black Perf.  : %.1f %s\n"
+		"White Score  : %.1f %s\n"
+		"Black Score  : %.1f %s\n"
 		"\n"
 
 		,totalgames

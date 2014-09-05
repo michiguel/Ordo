@@ -52,7 +52,7 @@ bool_t
 output_cegt_style (const char *general_name, const char *rating_name, const char *programs_name, struct CEGT *p); 
 
 bool_t 
-output_report_individual (const char *outindiv_name, struct CEGT *p);
+output_report_individual (const char *outindiv_name, struct CEGT *p, int simulate);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif
