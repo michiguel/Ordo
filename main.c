@@ -1122,7 +1122,7 @@ all_report (FILE *csvf, FILE *textf)
 	const char *sdev_str;
 
 	int rank = 0;
-	bool_t showrank;
+	bool_t showrank = TRUE;
 
 	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 	calc_obtained_playedby(Encounter, N_encounters, N_players, Obtained, Playedby);
@@ -1161,7 +1161,9 @@ all_report (FILE *csvf, FILE *textf)
 						sbuffer[0] = '\0';
 					}
 
-					if (showrank || !Hide_old_ver) {
+					if (showrank
+						|| !Hide_old_ver
+					){
 						fprintf(f, "%4s %-*s %s :%7.*f %9.1f %7d %6.1f%s\n", 
 							sbuffer,
 							(int)ml+1,
