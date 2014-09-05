@@ -1242,15 +1242,39 @@ all_report (FILE *csvf, FILE *textf)
 	/* output in a comma separated value file */
 	f = csvf;
 	if (f != NULL) {
+			fprintf(f, "\"%s\""
+			",%s"
+			",%s"
+			",%s"
+			",%s"
+			",%s"
+			"\n"		
+			,"Player"
+			,"\"Rating\"" 
+			,"\"Error\"" 
+			,"\"Score\""
+			,"\"Games\""
+			,"\"(%)\"" 
+			);
 		for (i = 0; i < N_players; i++) {
 			j = Sorted[i];
-			fprintf(f, "\"%s\", %6.1f,"
+
+				if (Sdev[j] > 0.00000001) {
+					sprintf(sdev_str_buffer, "%.1f", Sdev[j] * Confidence_factor);
+					sdev_str = sdev_str_buffer;
+				} else {
+					sdev_str = "\"-\"";
+				}
+
+			fprintf(f, "\"%s\",%.1f"
+			",%s"
 			",%.2f"
 			",%d"
 			",%.2f"
 			"\n"		
 			,Name[j]
 			,Ratingof_results[j] 
+			,sdev_str
 			,Obtained_results[j]
 			,Playedby_results[j]
 			,Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j] 
