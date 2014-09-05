@@ -39,10 +39,11 @@
 
 #define MIN_RESOLUTION 0.000001
 #define PRIOR_SMALLEST_SIGMA 0.0000001
-#define WADV_RECALC
-#undef WADV_RECALC
 
-//
+
+static double overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv, double dr0);
+static double adjust_drawrate (double start_wadv, double *ratingof, int N_enc, const struct ENC *enc, double beta);
+
 
 // ================= Testing Bayes concept 
 
@@ -408,27 +409,34 @@ calc_rating_bayes2 	(
 
 	}
 
-	if (!quiet) printf ("done\n\n");
+	if (!quiet) 
+		printf ("done\n\n");
 
 	printf ("White_advantage = %lf\n\n", white_advantage);
 
-#ifdef CALCIND_SWSL
-	if (!quiet && super_players_present(n_players, performance_type)) printf ("Post-Convergence rating estimation for all-wins / all-losses players\n\n");
+		if (adjust_draw_rate) {
+				deq = adjust_drawrate (white_advantage, ratingof, N_enc, enc, beta);
+				if (!quiet)
+					printf ("Adjusted Draw Rate = %.1f %s\n\n", 100*deq, "%");
+		}
+
+	#ifdef CALCIND_SWSL
+	if (!quiet && super_players_present(n_players, performance_type)) 
+		printf ("Post-Convergence rating estimation for all-wins / all-losses players\n\n");
 
 	N_enc = calc_encounters(ENCOUNTERS_FULL, n_games, score, flagged, whiteplayer, blackplayer, enc);
 	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby);
-
-//	assert(Performance_type_set); //FIXME
-
 	rate_super_players(quiet, enc, N_enc, performance_type, n_players, ratingof, white_advantage, flagged, name, deq, beta);
-
 	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, n_games, score, flagged, whiteplayer, blackplayer, enc);
 	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby);
 
-#endif
+	#endif
 
 	if (!multiple_anchors_present && !some_prior_set)
 		adjust_rating_byanchor (anchor_use, anchor, general_average, n_players, ratingof, flagged);
+
+	*pDraw_date = deq;
+	*pwadv = white_advantage;
 
 	return N_enc;
 }
@@ -940,5 +948,59 @@ fitexcess 		( int n_players
 }
 
 //========================== end bayesian concept
+
+
+static double
+overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv, double dr0)
+{
+	int e, w, b;
+	double dp, dp2, f, draws_expected;
+
+	dp2 = 0;
+	for (e = 0; e < N_enc; e++) {
+		w = enc[e].wh;
+		b = enc[e].bl;
+		f = xpect (ratingof[w] + wadv, ratingof[b], beta);
+		draws_expected = enc[e].played * draw_rate_fperf (f, dr0);
+		dp = draws_expected - enc[e].D; 
+		dp2 += dp * dp;
+	}
+
+	return dp2;
+}
+
+static double
+adjust_drawrate (double start_wadv, double *ratingof, int N_enc, const struct ENC *enc, double beta)
+{
+	double delta, wa, ei, ej, ek, dr;
+
+	delta = 0.5;
+	wa = start_wadv;
+
+	dr = 0.5;
+
+	do {	
+
+		ei = overallerrorE_fdrawrate (N_enc, enc, ratingof, beta, wa, dr - delta);
+		ej = overallerrorE_fdrawrate (N_enc, enc, ratingof, beta, wa, dr + 0    );     
+		ek = overallerrorE_fdrawrate (N_enc, enc, ratingof, beta, wa, dr + delta);
+
+		if (ei >= ej && ej <= ek) {
+			delta = delta / 2;
+		} else
+		if (ej >= ei && ei <= ek) {
+			dr -= delta;
+		} else
+		if (ei >= ek && ek <= ej) {
+			dr += delta;
+		}
+
+	} while (
+		delta > 0.0001 
+	);
+	
+	return dr;
+}
+
 
 
