@@ -222,7 +222,7 @@ calc_rating_bayes2 	(
 
 			, int			n_players
 			, double *		obtained
-//				, double * 		expected
+
 			, int *			playedby
 			, double *		ratingof
 			, double *		ratingbk
@@ -246,7 +246,7 @@ calc_rating_bayes2 	(
 			, char *		name[]
 			, double		beta
 
-// different from non bayes calc
+			// different from non bayes calc
 
 			, double 			*changing
 			, long int 			n_relative_anchors
@@ -294,10 +294,9 @@ calc_rating_bayes2 	(
 	if (!quiet) printf ("Converging...\n\n");
 	if (!quiet) printf ("%3s %4s %10s %10s\n", "phase", "iteration", "unfitness","resolution");
 
-	while (n-->0) {
+	while (n-->0 && resol >= MIN_RESOLUTION) {
 
-		for (i = 0; i < rounds; i++) {
-			double kappa = 1.0;
+		for (i = 0; i < rounds && resol >= MIN_RESOLUTION; i++) {
 			ratings_backup  (n_players, ratingof, ratingbk);
 			olddev = curdev;
 
@@ -321,11 +320,8 @@ calc_rating_bayes2 	(
 
 
 			resol_prev = resol;
-			resol = 
-
-					// adjust_rating_bayes(delta*kappa,changing);
-					adjust_rating_bayes 
-						( delta*kappa
+			resol = adjust_rating_bayes 
+						( delta
 						, multiple_anchors_present
 						, some_prior_set
 						, anchor_use
@@ -360,17 +356,15 @@ calc_rating_bayes2 	(
 							, deq
 							, beta);
 
-			if (curdev >= olddev) {
-				ratings_restore (n_players, ratingbk, ratingof);
-				curdev = olddev;
-				assert (curdev == olddev);
-				break;
-			} else {
+			if (curdev < olddev) {
 				ratings_backup  (n_players, ratingof, ratingbk);
 				olddev = curdev;
-			}	
+			} else {
+				ratings_restore (n_players, ratingbk, ratingof);
+				curdev = olddev;
+				break;
+			}
 
-			if (resol < MIN_RESOLUTION) break;
 		}
 
 		delta /=  denom;
@@ -404,21 +398,19 @@ calc_rating_bayes2 	(
 
 			*pwadv = white_advantage;
 		}
-
-		if (resol < MIN_RESOLUTION) break;
-
 	}
 
 	if (!quiet) 
 		printf ("done\n\n");
 
-	printf ("White_advantage = %lf\n\n", white_advantage);
+	if (!quiet) 
+		printf ("White_advantage = %lf\n\n", white_advantage);
 
-		if (adjust_draw_rate) {
-				deq = adjust_drawrate (white_advantage, ratingof, N_enc, enc, beta);
-				if (!quiet)
-					printf ("Adjusted Draw Rate = %.1f %s\n\n", 100*deq, "%");
-		}
+	if (adjust_draw_rate) {
+			deq = adjust_drawrate (white_advantage, ratingof, N_enc, enc, beta);
+			if (!quiet)
+				printf ("Adjusted Draw Rate = %.1f %s\n\n", 100*deq, "%");
+	}
 
 	#ifdef CALCIND_SWSL
 	if (!quiet && super_players_present(n_players, performance_type)) 
@@ -429,7 +421,6 @@ calc_rating_bayes2 	(
 	rate_super_players(quiet, enc, N_enc, performance_type, n_players, ratingof, white_advantage, flagged, name, deq, beta);
 	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, n_games, score, flagged, whiteplayer, blackplayer, enc);
 	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby);
-
 	#endif
 
 	if (!multiple_anchors_present && !some_prior_set)
@@ -642,7 +633,14 @@ probarray_reset(int n_players, double probarray[MAXPLAYERS][4])
 
 // no globals
 static void
-probarray_build(int n_enc, const struct ENC *enc, double inputdelta, double deq, double beta, double *ratingof, double white_advantage, double probarray [MAXPLAYERS] [4])
+probarray_build	( int n_enc
+				, const struct ENC *enc
+				, double inputdelta
+				, double deq
+				, double beta
+				, double *ratingof
+				, double white_advantage
+				, double probarray [MAXPLAYERS] [4])
 {
 	double pw, pd, pl, delta;
 	double p;
@@ -677,8 +675,13 @@ probarray_build(int n_enc, const struct ENC *enc, double inputdelta, double deq,
 
 // no globals
 static double
-derivative_single (int j, double delta, double *ratingof, const struct prior *pp,
- long int n_relative_anchors, struct relprior *ra, double probarray[MAXPLAYERS][4])
+derivative_single 	( int j
+					, double delta
+					, double *ratingof
+					, const struct prior *pp
+					, long int n_relative_anchors
+					, struct relprior *ra
+					, double probarray[MAXPLAYERS][4])
 {
 	double decrem, increm, center;
 	double change;
