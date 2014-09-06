@@ -199,7 +199,6 @@ static double	Confidence = 95;
 static double	General_average = 2300.0;
 static int		Sorted  [MAXPLAYERS]; /* sorted index by rating */
 static double	Obtained[MAXPLAYERS];
-static double	Expected[MAXPLAYERS];
 static int		Playedby[MAXPLAYERS]; /* N games played by player "i" */
 static double	Ratingof[MAXPLAYERS]; /* rating current */
 static double	Ratingbk[MAXPLAYERS]; /* rating backup  */
@@ -1905,7 +1904,6 @@ if (Prior_mode) {
 
 				, N_players
 				, Obtained
-				, Expected
 				, Playedby
 				, Ratingof
 				, Ratingbk

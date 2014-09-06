@@ -33,7 +33,7 @@ calc_rating2 	( bool_t 		quiet
 
 				, int			N_players
 				, double *		Obtained
-				, double * 		Expected
+
 				, int *			Playedby
 				, double *		Ratingof
 				, double *		Ratingbk

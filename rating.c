@@ -278,7 +278,7 @@ calc_rating2 	( bool_t 		quiet
 
 				, int			N_players
 				, double *		Obtained
-				, double * 		Expected
+
 				, int *			Playedby
 				, double *		Ratingof
 				, double *		Ratingbk
@@ -319,7 +319,6 @@ calc_rating2 	( bool_t 		quiet
 	double 	resol;
 	bool_t	doneonce = FALSE;
 
-//	double wa_resolution = START_DELTA;
 	int times_ori = 10;
 	int times;
 
@@ -330,6 +329,17 @@ calc_rating2 	( bool_t 		quiet
 	double min_resol = MIN_RESOL;
 
 	double draw_rate = *pDraw_date;
+
+	double *expected = NULL;
+	size_t allocsize;
+
+	allocsize = sizeof(double) * (size_t)(N_players+1);
+	expected = malloc(allocsize);
+	if (expected == NULL) {
+		fprintf(stderr, "Not enough memory to allocate all players\n");
+		exit(EXIT_FAILURE);
+	}
+
 
 	if (!adjust_white_advantage) times_ori = 1;
 	times = times_ori;
@@ -342,7 +352,6 @@ calc_rating2 	( bool_t 		quiet
 		denom = 2;
 		phase = 0;
 		n = 20;
-//		wa_resolution = START_DELTA;
 
 		if (times == 9) {
 			min_resol = 10;
@@ -355,9 +364,9 @@ calc_rating2 	( bool_t 		quiet
 		doneonce = FALSE;
 
 		calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
-		calc_expected(enc, N_enc, white_adv, N_players, Ratingof, Expected, BETA);
+		calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
 
-		olddev = curdev = deviation(N_players, Flagged, Expected, Obtained, Playedby);
+		olddev = curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);
 
 		if (!quiet) printf ("\nConvergence rating calculation (cycle #%d)\n\n", times_ori-times);
 		if (!quiet) printf ("%3s %4s %12s%14s\n", "phase", "iteration", "deviation","resolution");
@@ -375,7 +384,7 @@ calc_rating2 	( bool_t 		quiet
 					, N_players
 					, Flagged
 					, Prefed
-					, Expected 
+					, expected 
 					, Obtained 
 					, Playedby
 					, General_average
@@ -385,13 +394,13 @@ calc_rating2 	( bool_t 		quiet
 					, Ratingof
 				);
 
-				calc_expected(enc, N_enc, white_adv, N_players, Ratingof, Expected, BETA);
-				curdev = deviation(N_players, Flagged, Expected, Obtained, Playedby);
+				calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
+				curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);
 
 				if (curdev >= olddev) {
 					ratings_restore(N_players, Ratingbk, Ratingof);
-					calc_expected(enc, N_enc, white_adv, N_players, Ratingof, Expected, BETA);
-					curdev = deviation(N_players, Flagged, Expected, Obtained, Playedby);	
+					calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
+					curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
 					assert (curdev == olddev);
 					break;
 				};	
@@ -410,8 +419,6 @@ calc_rating2 	( bool_t 		quiet
 			if (!quiet) {
 				printf ("%3d %7d %16.9f", phase, i, outputdev);
 				printf ("%14.5f",resol);
-//				printf ("%11.5f",delta);
-//				printf ("%11.5f",wa_resolution);
 				printf ("\n");
 			}
 			phase++;
@@ -460,6 +467,8 @@ calc_rating2 	( bool_t 		quiet
 	*pWhite_advantage = white_adv;
 	*pDraw_date = draw_rate;
 
+
+	free(expected);
 	return N_enc;
 }
 
