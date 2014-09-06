@@ -214,6 +214,68 @@ A fragment of the output is:
 \inctxt{readme-example-j-switch.txt}
 In this example, we can say that Critter 1.4 SSE42 is superior to Deep Rybka 4.1 SSE42 with a 99\% confidence. We can only say that it is better than Komodo 4 SSE42 with a 71\% confidence. The reason is because the rating difference is 6 and the standard deviation is 11.
 
+
+\subsubsection*{Loose anchors with prior information}
+
+Ordo offers an alternative approach to calculate ratings with previous knowledge from the user (using Bayesian concepts). 
+With the switch \swtch{-y}, the user can provide a file with a list of players whose ratings will float around an estimated value.
+Those players will work as \textit{loose anchors} in the list.
+This strategy is useful when the data is scarce and, as a consequence, wild swings could appear in the ratings.
+This is what happens at the beginning of a new rating list or tournament. 
+Ordo accepts an estimated rating for a player, but takes into account how uncertain that value is.
+In other words, the user also has to provide the standard error for the estimated value. 
+That means that the value will be 68\% of the time between +- the uncertainty value provided.
+It is assumed that the estimated rating will follow Gaussian distribution. 
+In Bayesian terms, that constitute the prior distribution for the rating of that particular player.
+For instance, if one line of the file provided with the switch -y contains
+
+
+\cmdln{"Houdini 3",  3200,  50}
+
+That means Houdini's initial rating is 3200 with an uncertainty of 50. 
+With this approach the user should have the best educated guess possible, otherwise, the ranking will suffer. 
+Using information from a previous well established rating lists can add stability to the new list and, as games are added, the contribution of the "previous information" will fade away.
+
+\subsubsection*{Relative anchors}
+
+Another problem in some engine tournaments is that version upgrades enter with no previous ratings. 
+However, we know in certain situations that the new versions cannot have very different ratings from the previous one. 
+Therefore, the user can make a good educated guess about the rating of the new version. 
+For instance, if you know that the new version is within 20 points of the previous one you can use the \swtch{-r} switch to provide a file with lines like this:
+
+\cmdln{"Bouquet 1.8a",    "Bouquet 1.8",   0, 20}
+
+That means version 1.8a came after 1.8 and it is estimated to have the same rating (0) with an uncertainty of 20. 
+With different versions, you can have different lines. An example with Stockfish may be:
+
+\cmdln{"Stockfish 160913", "Stockfish 4",        0, 20\\
+"Stockfish 4",      "Stockfish 250413",   0, 50\\
+"Stockfish 250413", "Stockfish 120413",   0, 20\\
+"Stockfish 120413", "Stockfish 250313",   0, 20}
+
+This constitute different \textit{relative anchors}.
+When two versions are radically different, you can say nothing and they will be treated as different engines, or for instance
+
+\cmdln{"Komodo 1063",      "Komodo 4534",        0, 1000}
+
+The first is a complete rewrite with a parallel search. Thus, the uncertainty of 1000 reflects this fact and make both versions virtually disconnected. 
+If you want to include more specific info, you could say
+
+\cmdln{"Komodo 1063",      "Komodo 4534",        160, 100}
+
+Here, 160 is the estimation of how much improvement you have by going from 1 core to 16 and 100 represents how uncertain that is. 
+
+
+
+
+
+
+
+
+
+
+
+
 \subsubsection*{Memory Limits}
 Currently, the program can handle 3 million games, 50,000 players, and one megabyte of memory for names of the players.
 
@@ -505,6 +567,21 @@ replacing with eq. \ref{eq:deq0b}
 	\end{equation}
 
 Solving this quadratic equation, we obtain the predicted draw rate ($D$) between two given opponents, as long as we know the predicted performance ($p$) and the draw rate between equally matched opponents ($D_{eq}$). This is used to plug it in eq. \ref{eq:draw_rate_errors}.
+
+\subsubsection*{Draw rate and win rate relationship}
+
+Reordering eq. \ref{eq:deq7} we obtain
+
+	\begin{equation} \label{eq:dratewrate1}
+	D^2 = \phi^{-2}\: W (1 - W - D)  
+	\end{equation}
+
+Replacing $\phi$ with eq. \ref{eq:deq0b}
+
+	\begin{equation} \label{eq:dratewrate1}
+	D^2 = \left(\frac{2 D_{eq}}{1-D_{eq}}\right)^2\: W (1 - W - D)  
+	\end{equation}
+
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
