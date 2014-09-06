@@ -215,7 +215,7 @@ A fragment of the output is:
 In this example, we can say that Critter 1.4 SSE42 is superior to Deep Rybka 4.1 SSE42 with a 99\% confidence. We can only say that it is better than Komodo 4 SSE42 with a 71\% confidence. The reason is because the rating difference is 6 and the standard deviation is 11.
 
 
-\subsubsection*{Loose anchors with prior information}
+\subsubsection*{Loose anchors with prior information (\swtch{-y})}
 
 Ordo offers an alternative approach to calculate ratings with previous knowledge from the user (using Bayesian concepts). 
 With the switch \swtch{-y}, the user can provide a file with a list of players whose ratings will float around an estimated value.
@@ -236,7 +236,7 @@ That means Houdini's initial rating is 3200 with an uncertainty of 50.
 With this approach the user should have the best educated guess possible, otherwise, the ranking will suffer. 
 Using information from a previous well established rating lists can add stability to the new list and, as games are added, the contribution of the "previous information" will fade away.
 
-\subsubsection*{Relative anchors}
+\subsubsection*{Relative anchors (\swtch{-r})}
 
 Another problem in some engine tournaments is that version upgrades enter with no previous ratings. 
 However, we know in certain situations that the new versions cannot have very different ratings from the previous one. 
