@@ -40,10 +40,10 @@
 #define MIN_RESOLUTION 0.000001
 #define PRIOR_SMALLEST_SIGMA 0.0000001
 
-
+#if 0
 static double overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv, double dr0);
 static double adjust_drawrate (double start_wadv, double *ratingof, int N_enc, const struct ENC *enc, double beta);
-
+#endif
 
 // ================= Testing Bayes concept 
 
@@ -156,6 +156,7 @@ adjust_wadv_bayes
 				, double beta
 );
 
+
 static double
 adjust_drawrate_bayes 
 				( int n_enc
@@ -171,6 +172,8 @@ adjust_drawrate_bayes
 				, double deq
 				, double beta
 );
+
+
 // no globals
 static void
 derivative_vector_calc 	( double delta
@@ -1124,7 +1127,7 @@ fitexcess 		( int n_players
 
 //========================== end bayesian concept
 
-
+#if 0
 static double
 overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv, double dr0)
 {
@@ -1143,6 +1146,7 @@ overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, dou
 
 	return dp2;
 }
+
 
 static double
 adjust_drawrate (double start_wadv, double *ratingof, int N_enc, const struct ENC *enc, double beta)
@@ -1190,6 +1194,6 @@ adjust_drawrate (double start_wadv, double *ratingof, int N_enc, const struct EN
 	
 	return dr;
 }
-
+#endif
 
 
