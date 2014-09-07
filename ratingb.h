@@ -67,7 +67,8 @@ calc_rating_bayes2 	(
 			, double 			probarray [MAXPLAYERS] [4]
 			, struct relprior *	ra
 			, bool_t 			some_prior_set
-			, struct 			prior wa_prior
+			, struct prior 		wa_prior
+			, struct prior 		dr_prior
 
 			, bool_t 			adjust_white_advantage
 

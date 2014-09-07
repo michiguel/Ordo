@@ -1926,6 +1926,7 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage,
 				, Ra
 				, Some_prior_set
 				, Wa_prior
+				, Dr_prior
 
 				, adjust_wadv
 

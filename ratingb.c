@@ -153,6 +153,7 @@ adjust_wadv_bayes
 				, const double *ratingof
 				, double resol
 				, double deq
+				, struct prior dr_prior
 				, double beta
 );
 
@@ -170,6 +171,7 @@ adjust_drawrate_bayes
 				, const double *ratingof
 				, double resol
 				, double deq
+				, struct prior dr_prior
 				, double beta
 );
 
@@ -206,6 +208,7 @@ calc_bayes_unfitness_full
 				, const struct relprior *ra
 				, const double *ratingof
 				, double deq
+				, struct prior dr_prior
 				, double beta
 );
 
@@ -222,6 +225,8 @@ adjust_rating_bayes
 				, const struct prior *p
 				, double white_advantage
 				, struct prior wa_prior
+				, double deq
+				, struct prior dr_prior
 				, long int n_relative_anchors
 				, const struct relprior *ra
 				, const double *change_vector
@@ -229,7 +234,8 @@ adjust_rating_bayes
 				, const bool_t *prefed
 				, double *ratingof // out 
 				, double *ratingbk // out 
-);
+)
+;
 
 // no globals
 int
@@ -273,10 +279,12 @@ calc_rating_bayes2 	(
 			, struct relprior 	*ra
 			, bool_t 			some_prior_set
 			, struct prior 		wa_prior
+			, struct prior		dr_prior
+
 			, bool_t 			adjust_white_advantage
 
-			, bool_t		adjust_draw_rate
-			, double		*pDraw_date
+			, bool_t			adjust_draw_rate
+			, double			*pDraw_date
 )
 {
 	double 	olddev, curdev, outputdev;
@@ -308,6 +316,7 @@ calc_rating_bayes2 	(
 							, ra
 							, ratingof
 							, deq
+							, dr_prior
 							, beta);
 
 	if (!quiet) printf ("Converging...\n\n");
@@ -350,6 +359,8 @@ calc_rating_bayes2 	(
 						, pp
 						, white_advantage
 						, wa_prior
+						, deq
+						, dr_prior
 						, n_relative_anchors
 						, ra
 						, changing
@@ -373,6 +384,7 @@ calc_rating_bayes2 	(
 							, ra
 							, ratingof
 							, deq
+							, dr_prior
 							, beta);
 
 			if (curdev < olddev) {
@@ -413,6 +425,7 @@ calc_rating_bayes2 	(
 							, ratingof
 							, resol
 							, deq
+							, dr_prior
 							, beta);
 
 			*pwadv = white_advantage;
@@ -431,6 +444,7 @@ calc_rating_bayes2 	(
 							, ratingof
 							, resol_dr
 							, deq
+							, dr_prior
 							, beta);
 
 //			if (!quiet)
@@ -497,6 +511,7 @@ adjust_wadv_bayes
 				, const double *ratingof
 				, double resol
 				, double deq
+				, struct prior dr_prior
 				, double beta
 )
 {
@@ -518,6 +533,7 @@ adjust_wadv_bayes
 							, ra
 							, ratingof
 							, deq
+							, dr_prior
 							, beta);
 
 		ej = calc_bayes_unfitness_full	
@@ -531,6 +547,7 @@ adjust_wadv_bayes
 							, ra
 							, ratingof
 							, deq
+							, dr_prior
 							, beta);
 
 		ek = calc_bayes_unfitness_full	
@@ -544,6 +561,7 @@ adjust_wadv_bayes
 							, ra
 							, ratingof
 							, deq
+							, dr_prior
 							, beta);
 
 		if (ei >= ej && ej <= ek) {
@@ -575,6 +593,7 @@ adjust_drawrate_bayes
 				, const double *ratingof
 				, double resol
 				, double deq
+				, struct prior dr_prior
 				, double beta
 )
 {
@@ -599,6 +618,7 @@ adjust_drawrate_bayes
 							, ra
 							, ratingof
 							, dr - delta
+							, dr_prior
 							, beta);
 
 		ej = calc_bayes_unfitness_full	
@@ -612,6 +632,7 @@ adjust_drawrate_bayes
 							, ra
 							, ratingof
 							, dr
+							, dr_prior
 							, beta);
 
 		ek = calc_bayes_unfitness_full	
@@ -625,6 +646,7 @@ adjust_drawrate_bayes
 							, ra
 							, ratingof
 							, dr + delta
+							, dr_prior
 							, beta);
 
 		olddr = dr;
@@ -704,6 +726,8 @@ prior_unfitness	( int n_players
 				, long int n_relative_anchors
 				, const struct relprior *ra
 				, const double *ratingof
+				, double deq
+				, struct prior dr_prior
 )
 {
 	int j;
@@ -718,6 +742,11 @@ prior_unfitness	( int n_players
 
 	if (wa_prior.isset) {
 		x = (wadv - wa_prior.value)/wa_prior.sigma;
+		accum += 0.5 * x * x;		
+	}
+
+	if (dr_prior.isset) {
+		x = (deq - dr_prior.value)/dr_prior.sigma;
 		accum += 0.5 * x * x;		
 	}
 
@@ -740,6 +769,7 @@ calc_bayes_unfitness_full
 				, const struct relprior *ra
 				, const double *ratingof
 				, double deq
+				, struct prior dr_prior
 				, double beta
 )
 {
@@ -770,6 +800,8 @@ calc_bayes_unfitness_full
 				, n_relative_anchors
 				, ra
 				, ratingof
+				, deq
+				, dr_prior
 				);
 
 	return -accum;
@@ -913,7 +945,11 @@ static double fitexcess ( int n_players
 						, const struct relprior *ra
 						, double *ratingof
 						, double *ratingbk
-						, const bool_t *flagged);
+						, const bool_t *flagged				
+						, double deq
+						, struct prior dr_prior
+);
+
 
 static void ratings_apply_excess_correction(double excess, int n_players, const bool_t *flagged, double *ratingof /*out*/);
 
@@ -932,6 +968,8 @@ adjust_rating_bayes
 				, const struct prior *p
 				, double white_advantage
 				, struct prior wa_prior
+				, double deq
+				, struct prior dr_prior
 				, long int n_relative_anchors
 				, const struct relprior *ra
 				, const double *change_vector
@@ -979,7 +1017,10 @@ adjust_rating_bayes
 					, ra
 					, ratingof
 					, ratingbk
-					, flagged);
+					, flagged
+					, deq
+					, dr_prior
+				);
 
 	} else if (anchor_use) {
 
@@ -1019,16 +1060,18 @@ ratings_apply_excess_correction(double excess, int n_players, const bool_t *flag
 // no globals
 static double
 ufex
-				( double excess
-				, int n_players
-				, const struct prior *p
-				, double wadv
-				, struct prior wa_prior
-				, long int n_relative_anchors
+				( double 				excess
+				, int 					n_players
+				, const struct prior 	*p
+				, double				wadv
+				, struct prior 			wa_prior
+				, long int 				n_relative_anchors
 				, const struct relprior *ra
-				, double *ratingof
-				, double *ratingbk
-				, const bool_t *flagged
+				, double 				*ratingof
+				, double 				*ratingbk
+				, const bool_t 			*flagged
+				, double				deq
+				, struct prior 			dr_prior
 )
 {
 	double u;
@@ -1044,6 +1087,8 @@ ufex
 				, n_relative_anchors
 				, ra
 				, ratingof
+				, deq
+				, dr_prior
 				);
 
 	ratings_restore (n_players, ratingbk, ratingof);
@@ -1061,6 +1106,8 @@ fitexcess 		( int n_players
 				, double *ratingof
 				, double *ratingbk
 				, const bool_t *flagged
+				, double deq
+				, struct prior dr_prior
 )
 {
 	double ub, ut, uc, newb, newt, newc;
@@ -1079,7 +1126,10 @@ fitexcess 		( int n_players
 					, ra
 					, ratingof
 					, ratingbk
-					, flagged);
+					, flagged
+					, deq
+					, dr_prior
+			);
 
 		uc = ufex 	( c
 					, n_players
@@ -1090,7 +1140,10 @@ fitexcess 		( int n_players
 					, ra
 					, ratingof
 					, ratingbk
-					, flagged);
+					, flagged
+					, deq
+					, dr_prior
+			);
 
 		ut = ufex 	( t
 					, n_players
@@ -1101,8 +1154,10 @@ fitexcess 		( int n_players
 					, ra
 					, ratingof
 					, ratingbk
-					, flagged);
-
+					, flagged
+					, deq
+					, dr_prior
+			);
 
 		if (uc <= ub && uc <= ut) {
 			newb = (b+c)/4;
