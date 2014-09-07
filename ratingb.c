@@ -156,6 +156,21 @@ adjust_wadv_bayes
 				, double beta
 );
 
+static double
+adjust_drawrate_bayes 
+				( int n_enc
+				, const struct ENC *enc
+				, int n_players
+				, const struct prior *p
+				, double start_wadv
+				, struct prior wa_prior
+				, long int n_relative_anchors
+				, const struct relprior *ra
+				, const double *ratingof
+				, double resol
+				, double deq
+				, double beta
+);
 // no globals
 static void
 derivative_vector_calc 	( double delta
@@ -273,6 +288,7 @@ calc_rating_bayes2 	(
 	int 	n = 40;
 	double 	resol = delta;
 	double 	resol_prev = delta;
+	double  resol_dr = 0.1;
 	double	deq = *pDraw_date;
 
 	double white_advantage = *pwadv;
@@ -398,19 +414,50 @@ calc_rating_bayes2 	(
 
 			*pwadv = white_advantage;
 		}
+
+		if (adjust_draw_rate) {
+			double	deqx = adjust_drawrate_bayes 
+							( N_enc
+							, enc
+							, n_players
+							, pp
+							, white_advantage
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof
+							, resol_dr
+							, deq
+							, beta);
+
+//			if (!quiet)
+//				printf ("Adjusted Draw Rate 2 = %.1f %s\n\n", 100*deqx, "%");
+			resol_dr = deqx > deq? deqx - deq: deq - deqx;
+			deq = deqx;
+		}
 	}
 
 	if (!quiet) 
 		printf ("done\n\n");
 
-	if (!quiet) 
-		printf ("White_advantage = %lf\n\n", white_advantage);
+//	if (!quiet) 
+//		printf ("White_advantage = %lf\n\n", white_advantage);
 
-	if (adjust_draw_rate) {
-			deq = adjust_drawrate (white_advantage, ratingof, N_enc, enc, beta);
-			if (!quiet)
-				printf ("Adjusted Draw Rate = %.1f %s\n\n", 100*deq, "%");
-	}
+//	if (adjust_draw_rate) {
+//			deq = adjust_drawrate (white_advantage, ratingof, N_enc, enc, beta);
+//			if (!quiet)
+//				printf ("Adjusted Draw Rate = %.1f %s\n\n", 100*deq, "%");
+//	}
+	 
+
+
+
+
+
+
+
+
+
 
 	#ifdef CALCIND_SWSL
 	if (!quiet && super_players_present(n_players, performance_type)) 
@@ -510,6 +557,131 @@ adjust_wadv_bayes
 	
 	return wa;
 }
+
+// no globals
+static double
+adjust_drawrate_bayes 
+				( int n_enc
+				, const struct ENC *enc
+				, int n_players
+				, const struct prior *p
+				, double start_wadv
+				, struct prior wa_prior
+				, long int n_relative_anchors
+				, const struct relprior *ra
+				, const double *ratingof
+				, double resol
+				, double deq
+				, double beta
+)
+{
+	#define MIN_DRAW_RATE_RESOLUTION 0.00001
+
+	double delta, wa, ei, ej, ek, dr, olddr;
+
+	delta = resol > 0.0001? resol: 0.0001;
+	wa = start_wadv;
+	dr = deq;
+
+	do {	
+
+		ei = calc_bayes_unfitness_full	
+							( n_enc
+							, enc
+							, n_players
+							, p
+							, wa 
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof
+							, dr - delta
+							, beta);
+
+		ej = calc_bayes_unfitness_full	
+							( n_enc
+							, enc
+							, n_players
+							, p
+							, wa        
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof
+							, dr
+							, beta);
+
+		ek = calc_bayes_unfitness_full	
+							( n_enc
+							, enc
+							, n_players
+							, p
+							, wa 
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof
+							, dr + delta
+							, beta);
+
+		olddr = dr;
+
+#if 0
+printf ("i=%f, dr=%f\n",ei,dr-delta);
+printf ("j=%f, dr=%f\n",ej,dr-0);
+printf ("k=%f, dr=%f\n",ek,dr+delta);
+printf ("\n");
+#endif
+
+		if (ei >= ej && ej <= ek) {
+			delta = delta / 4;
+		} else
+		if (ej >= ei && ei <= ek) {
+			dr -= delta;
+		} else
+		if (ei >= ek && ek <= ej) {
+			dr += delta;
+		}
+
+		// do not allow the boundaries to go over 1 or below 0
+		if (dr+delta > 1) {
+			dr = (1 + olddr )/2;
+			delta = dr - olddr;			
+		}
+
+		if (dr-delta < 0) {
+			dr = (0 + olddr )/2;
+			delta = olddr - dr;			
+		}
+
+
+	} while (
+		delta > MIN_DRAW_RATE_RESOLUTION
+	);
+
+	return dr;
+
+	#undef MIN_DRAW_RATE_RESOLUTION
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 static double
 wdl_probabilities (int ww, int dd, int ll, double pw, double pd, double pl)
@@ -975,18 +1147,20 @@ overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, dou
 static double
 adjust_drawrate (double start_wadv, double *ratingof, int N_enc, const struct ENC *enc, double beta)
 {
-	double delta, wa, ei, ej, ek, dr;
+	double delta, wa, ei, ej, ek, dr, olddr;
 
-	delta = 0.5;
+	delta = 0.2;
 	wa = start_wadv;
 
-	dr = 0.5;
+	dr = 0.45;
 
 	do {	
 
 		ei = overallerrorE_fdrawrate (N_enc, enc, ratingof, beta, wa, dr - delta);
 		ej = overallerrorE_fdrawrate (N_enc, enc, ratingof, beta, wa, dr + 0    );     
 		ek = overallerrorE_fdrawrate (N_enc, enc, ratingof, beta, wa, dr + delta);
+
+		olddr = dr;
 
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 2;
@@ -996,6 +1170,18 @@ adjust_drawrate (double start_wadv, double *ratingof, int N_enc, const struct EN
 		} else
 		if (ei >= ek && ek <= ej) {
 			dr += delta;
+		}
+
+
+		// do not allow the boundaries to go over 1 or below 0
+		if (dr+delta > 1) {
+			dr = (1 + olddr )/2;
+			delta = dr - olddr;			
+		}
+
+		if (dr-delta < 0) {
+			dr = (0 + olddr )/2;
+			delta = olddr - dr;			
 		}
 
 	} while (

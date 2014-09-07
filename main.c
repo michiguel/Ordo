@@ -1937,7 +1937,7 @@ if (Prior_mode) {
 
 	if (!quiet) {
 		printf ("White advantage = %.2f\n",*pWhite_advantage);
-		printf ("Draw rate = %.2f %s\n",100*dr, "%");
+		printf ("Draw rate (equal opponents) = %.2f %s\n",100*dr, "%");
 	}
 
 	return ret;
