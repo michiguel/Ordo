@@ -1849,9 +1849,9 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage,
 
 	int ret;
 
-if (Prior_mode) {
+	if (Prior_mode) {
 
-	ret = calc_rating_bayes2 
+		ret = calc_rating_bayes2 
 				( quiet
 				, enc
 				, N_enc
@@ -1893,11 +1893,11 @@ if (Prior_mode) {
 
 				, ADJUST_DRAW_RATE
 				, &dr
-	);
+		);
 
-} else {
+	} else {
 
-	ret = calc_rating2 	
+		ret = calc_rating2 	
 				( quiet
 				, enc
 				, N_enc
@@ -1931,8 +1931,9 @@ if (Prior_mode) {
 
 				, ADJUST_DRAW_RATE
 				, &dr
-	);
-}
+		);
+	}
+	
 	*pDraw_rate = dr;
 
 	if (!quiet) {
