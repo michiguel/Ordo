@@ -45,7 +45,7 @@ static double overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double 
 static double adjust_drawrate (double start_wadv, double *ratingof, int N_enc, const struct ENC *enc, double beta);
 #endif
 
-// ================= Testing Bayes concept 
+// ================= Bayes concept 
 
 // no globals
 static double

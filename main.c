@@ -127,6 +127,7 @@ static void usage (void);
 		" -u <value>  white advantage uncertainty value (default=0.0)\n"
 		" -W          white advantage will be automatically adjusted\n"
 		" -d <value>  draw rate value % (default=50.0)\n"
+		" -k <value>  draw rate uncertainty value % (default=0.0 %)\n"
 		" -D          draw rate value will be automatically adjusted\n"
 		" -z <value>  scaling: set rating for winning expectancy of 76% (default=202)\n"
 		" -T          display winning expectancy table\n"
@@ -151,7 +152,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:z:e:C:TF:XN:";
+const char *OPTION_LIST = "vhHp:qWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:XN:";
 
 /*
 |
@@ -229,14 +230,17 @@ static struct GAMESTATS	Game_stats;
 
 static struct DEVIATION_ACC *sim = NULL;
 
-static double Drawrate_evenmatch = STANDARD_DRAWRATE; //default
-static double Drawrate_evenmatch_percent = 100*STANDARD_DRAWRATE; //default
+static double 	Drawrate_evenmatch = STANDARD_DRAWRATE; //default
+static double 	Drawrate_evenmatch_percent = 100*STANDARD_DRAWRATE; //default
+static double 	Drawrate_evenmatch_percent_SD = 0;
 
 /*------------------------------------------------------------------------*/
 
 static double Probarray [MAXPLAYERS] [4];
 
 static struct prior Wa_prior = {40.0,20.0,FALSE};
+static struct prior Dr_prior = { 0.5, 0.1,FALSE};
+
 static struct prior PP[MAXPLAYERS];
 static bool_t 	Some_prior_set = FALSE;
 
@@ -365,7 +369,7 @@ int main (int argc, char *argv[])
 	const char *ctsmatstr;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
 	bool_t group_is_output, Elostat_output, Ignore_draws;
-	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE;
+	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE, switch_d=FALSE, switch_k=FALSE, switch_D=FALSE;
 
 	/* defaults */
 	version_mode = FALSE;
@@ -469,6 +473,10 @@ int main (int argc, char *argv[])
 			case 'd': 	if (1 != sscanf(opt_arg,"%lf", &Drawrate_evenmatch_percent)) {
 							fprintf(stderr, "wrong white drawrate parameter\n");
 							exit(EXIT_FAILURE);
+						} else {
+							ADJUST_DRAW_RATE = FALSE;	
+							Dr_prior.isset = FALSE;
+							switch_d = TRUE;
 						}
 						if (Drawrate_evenmatch_percent >= 0.0 && Drawrate_evenmatch_percent <= 100.0) {
 							Drawrate_evenmatch = Drawrate_evenmatch_percent/100.0;
@@ -476,6 +484,13 @@ int main (int argc, char *argv[])
 							fprintf(stderr, "drawrate parameter is out of range\n");
 							exit(EXIT_FAILURE);
 						}					
+						break;
+			case 'k': 	if (1 != sscanf(opt_arg,"%lf", &Drawrate_evenmatch_percent_SD)) { //drsd
+							fprintf(stderr, "wrong draw rate uncertainty parameter\n");
+							exit(EXIT_FAILURE);
+						} else {
+							switch_k = TRUE;
+						}
 						break;
 			case 'z': 	if (1 != sscanf(opt_arg,"%lf", &Rtng_76)) {
 							fprintf(stderr, "wrong scaling parameter\n");
@@ -491,7 +506,12 @@ int main (int argc, char *argv[])
 						Wa_prior.sigma = 200.0; 
 						switch_W = TRUE;
 						break;
-			case 'D':	ADJUST_DRAW_RATE = TRUE;	break;
+			case 'D':	ADJUST_DRAW_RATE = TRUE;	
+						Dr_prior.isset = FALSE;	
+						Dr_prior.value = 0.5; 	 
+						Dr_prior.sigma = 0.5; 
+						switch_D = TRUE;
+						break;
 			case 'E':	Elostat_output = TRUE;	break;
 			case 'X':	Ignore_draws = TRUE;	break;
 			case 'N': 	if (1 != sscanf(opt_arg,"%d", &OUTDECIMALS) || OUTDECIMALS < 0) {
@@ -566,12 +586,16 @@ int main (int argc, char *argv[])
 		fprintf (stderr, "Switches -w/-u and -W are incompatible and will not work simultaneously\n\n");
 		exit(EXIT_FAILURE);
 	}
+	if ((switch_d || switch_k) && switch_D) { //drsd
+		fprintf (stderr, "Switches -d/-k and -D are incompatible and will not work simultaneously\n\n");
+		exit(EXIT_FAILURE);
+	}
 	if (NULL != priorsstr && General_average_set) {
 		fprintf (stderr, "Setting a general average (-a) is incompatible with having a file with rating seeds (-y)\n\n");
 		exit(EXIT_FAILURE);
 	}				
 
-	Prior_mode = switch_u || NULL != relstr || NULL != priorsstr;
+	Prior_mode = switch_k || switch_u || NULL != relstr || NULL != priorsstr;
 
 	/*==== SET INPUT ====*/
 
@@ -678,6 +702,20 @@ int main (int argc, char *argv[])
 			Wa_prior.value = White_advantage; 
 			Wa_prior.sigma = White_advantage_SD; 
 			ADJUST_WHITE_ADVANTAGE = FALSE;	
+		}
+	}
+
+	if (switch_d && switch_k) {
+		if (Drawrate_evenmatch_percent_SD > PRIOR_SMALLEST_SIGMA) {
+			Dr_prior.isset = TRUE; 
+			Dr_prior.value = Drawrate_evenmatch_percent/100.0; 
+			Dr_prior.sigma = Drawrate_evenmatch_percent_SD/100.0;  
+			ADJUST_DRAW_RATE = TRUE;	
+		} else {
+			Dr_prior.isset = FALSE; 
+			Dr_prior.value = Drawrate_evenmatch_percent/100.0;  
+			Dr_prior.sigma = Drawrate_evenmatch_percent_SD/100.0;  
+			ADJUST_DRAW_RATE = FALSE;	
 		}
 	}
 
