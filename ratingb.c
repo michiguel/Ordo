@@ -707,19 +707,19 @@ prior_unfitness	( int n_players
 	double x;
 	double accum = 0;
 	for (j = 0; j < n_players; j++) {
-		if (p[j].set) {
-			x = (ratingof[j] - p[j].rating)/p[j].sigma;
+		if (p[j].isset) {
+			x = (ratingof[j] - p[j].value)/p[j].sigma;
 			accum += 0.5 * x * x;
 		}
 	}
 
-	if (wa_prior.set) {
-		x = (wadv - wa_prior.rating)/wa_prior.sigma;
+	if (wa_prior.isset) {
+		x = (wadv - wa_prior.value)/wa_prior.sigma;
 		accum += 0.5 * x * x;		
 	}
 
 	//FIXME this could be slow!
-	accum += relative_anchors_unfitness_full(n_relative_anchors, ra, ratingof); //~~
+	accum += relative_anchors_unfitness_full (n_relative_anchors, ra, ratingof); //~~
 
 	return accum;
 }
@@ -780,8 +780,8 @@ get_extra_unfitness_j (double R, int j, const struct prior *p, double *ratingof,
 {
 	double x;
 	double u = 0;
-	if (p[j].set) {
-		x = (R - p[j].rating)/p[j].sigma;
+	if (p[j].isset) {
+		x = (R - p[j].value)/p[j].sigma;
 		u = 0.5 * x * x;
 	} 
 

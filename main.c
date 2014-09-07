@@ -455,7 +455,7 @@ int main (int argc, char *argv[])
 							exit(EXIT_FAILURE);
 						} else {
 							ADJUST_WHITE_ADVANTAGE = FALSE;	
-							Wa_prior.set = FALSE;
+							Wa_prior.isset = FALSE;
 							switch_w = TRUE;
 						}
 						break;
@@ -486,9 +486,9 @@ int main (int argc, char *argv[])
 			case 'q':	QUIET_MODE = TRUE;	break;
 			case 'R':	Hide_old_ver=TRUE;	break;
 			case 'W':	ADJUST_WHITE_ADVANTAGE = TRUE;	
-						Wa_prior.set = FALSE;//TRUE; 
-						Wa_prior.rating = 0; //40.0; 
-						Wa_prior.sigma = 200.0; //20;
+						Wa_prior.isset = FALSE;	
+						Wa_prior.value = 0; 	 
+						Wa_prior.sigma = 200.0; 
 						switch_W = TRUE;
 						break;
 			case 'D':	ADJUST_DRAW_RATE = TRUE;	break;
@@ -669,13 +669,13 @@ int main (int argc, char *argv[])
 
 	if (switch_w && switch_u) {
 		if (White_advantage_SD > PRIOR_SMALLEST_SIGMA) {
-			Wa_prior.set = TRUE; 
-			Wa_prior.rating = White_advantage; 
+			Wa_prior.isset = TRUE; 
+			Wa_prior.value = White_advantage; 
 			Wa_prior.sigma = White_advantage_SD; 
 			ADJUST_WHITE_ADVANTAGE = TRUE;	
 		} else {
-			Wa_prior.set = FALSE; 
-			Wa_prior.rating = White_advantage; 
+			Wa_prior.isset = FALSE; 
+			Wa_prior.value = White_advantage; 
 			Wa_prior.sigma = White_advantage_SD; 
 			ADJUST_WHITE_ADVANTAGE = FALSE;	
 		}
@@ -1593,9 +1593,9 @@ static void
 priors_reset(struct prior *p)
 {	int i;
 	for (i = 0; i < MAXPLAYERS; i++) {
-		p[i].rating = 0;
+		p[i].value = 0;
 		p[i].sigma = 1;
-		p[i].set = FALSE;
+		p[i].isset = FALSE;
 	}
 	Some_prior_set = FALSE;
 	Priored_n = 0;
@@ -1610,9 +1610,9 @@ set_prior (const char *player_name, double x, double sigma)
 	for (j = 0, found = FALSE; !found && j < N_players; j++) {
 		found = !strcmp(Name[j], player_name);
 		if (found) {
-			PP[j].rating = x;
+			PP[j].value = x;
 			PP[j].sigma = sigma;
-			PP[j].set = TRUE;
+			PP[j].isset = TRUE;
 			Some_prior_set = TRUE;
 			Priored_n++;
 		} 
@@ -1621,7 +1621,7 @@ set_prior (const char *player_name, double x, double sigma)
 	return found;
 }
 
-static bool_t has_a_prior(int j) {return PP[j].set;}
+static bool_t has_a_prior(int j) {return PP[j].isset;}
 
 static bool_t
 assign_prior (char *name_prior, double x, double y, bool_t quiet)

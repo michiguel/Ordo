@@ -100,9 +100,9 @@ enum 			Player_Performance_Type {
 };
 
 struct prior {
-	double rating;
+	double value;
 	double sigma;	
-	bool_t set;
+	bool_t isset;
 };
 
 struct relprior {
