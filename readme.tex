@@ -224,10 +224,10 @@ This strategy is useful when the data is scarce and, as a consequence, wild swin
 This is what happens at the beginning of a new rating list or tournament. 
 Ordo accepts an estimated rating for a player, but takes into account how uncertain that value is.
 In other words, the user also has to provide the standard error for the estimated value. 
-That means that the value will be 68\% of the time between +- the uncertainty value provided.
+That means that the value will be 68\% of the time between $\pm$ the uncertainty value provided.
 It is assumed that the estimated rating will follow Gaussian distribution. 
 In Bayesian terms, that constitute the prior distribution for the rating of that particular player.
-For instance, if one line of the file provided with the switch -y contains
+For instance, if one line of the file provided with the switch \swtch{-y} contains
 
 
 \cmdln{"Houdini 3",  3200,  50}
