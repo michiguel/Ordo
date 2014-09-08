@@ -103,6 +103,11 @@ With this switch we can complete the above example:
 
 \cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W}
 
+If the user knows that the \textit{white advantage} is most likely a certain value that could vary within a certain range, this uncertainty could be given by the switch \swtch{-u}. 
+Therefore, a combination of switches \swtch{-w <value>} and \swtch{-u <deviation>} may provide a prior information to Ordo to calculate the white advantage.
+When a high number of games is played, this prior information will be less and less relevant.
+Ordo assumes a Gaussian distribution centered in \swtch{<value>} with a standard \swtch{<deviation>}.
+
 \subsubsection*{Simulation and errors}
 
 The switch \swtch{-s~<n>} instructs Ordo to perform \swtch{<n>} simulations virtually \textit{replaying} the games \swtch{<n>} times.
@@ -143,7 +148,7 @@ If simulations have been run, using the switch \swtch{-C} will output a matrix w
 Each of the numbers is an answer to the question \textit{"What is the maximum confidence I can set the test to show that player x is not inferior to player y and still obtain the same positive answer?"}.
 The matrix file is in \textit{comma separated values} format, and it could be opened by any spreadsheet program if it was saved with the *.csv extension.
 
-\subsubsection*{Draw rate}
+\subsubsection*{Draw rate (for equal opponents)}
 By default, Ordo considers that the draw rate for evenly matched players is 50\% and internally calculates what draw rate will correspond for matches in which a player is stronger than the other.
 This parameter does not change the rating results, but it may affect the errors calculated after the simulation.
 Two switches can control this parameter. 
@@ -154,7 +159,11 @@ For instance:
 
 \cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W -s1000 -e errors.csv -V -D}
 
-Will calculate the draw rate and outputs it on screen.
+Will calculate the draw rate and outputs it on screen. 
+Similarly to the calculation of the white advantage, the user can provide prior information for the draw rate.
+A combination of switches \swtch{-d <value>} and \swtch{-k <deviation>} may provide a prior information to Ordo to calculate the \textit{draw rate}.
+Again, when as the number of games increases, this information will have less contribution.
+Ordo assumes a Gaussian distribution centered in \swtch{<value>} with a standard \swtch{<deviation>}.
 
 \subsubsection*{Ignore draws (\swtch{-X} switch)}
 
@@ -264,15 +273,6 @@ If you want to include more specific info, you could say
 \cmdln{"Komodo 1063",      "Komodo 4534",        160, 100}
 
 Here, 160 is the estimation of how much improvement you have by going from 1 core to 16 and 100 represents how uncertain that is. 
-
-
-
-
-
-
-
-
-
 
 
 
@@ -582,6 +582,14 @@ Replacing $\phi$ with eq. \ref{eq:deq0b}
 	D^2 = \left(\frac{2 D_{eq}}{1-D_{eq}}\right)^2\: W (1 - W - D)  
 	\end{equation}
 
+\subsubsection*{Rating calculation with prior information}
+
+when user provides Ordo with either \textit{loose anchors}, \textit{relative anchors}, \textit{white advantage} uncertainty, or a \textit{draw rate} uncertainty the calculation is performed by Maximum Likelihood.
+In those cases, for each game the probability for the given outcome (W, D, or L) is calculated and the logarithm of this value is added and accumulated.
+This will constitute an unfitness score that will need to be minimized.
+In addition, to this score, the logarithm of the probabilities for each loose anchor, relative anchor, white advantage, and draw rate are accumulated.
+An overall minimization brings optimum values for the ratings of each player and each of the above mentioned parameters. 
+Note that adding the logarithm of each of the probabilities is analogous to multiplying the probabilities.
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
