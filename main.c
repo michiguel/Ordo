@@ -1165,6 +1165,17 @@ is_old_version(int j)
 	return found;
 }
 
+static char *
+get_sdev_str (double sdev, double confidence_factor, char *str)
+{
+	if (sdev > 0.00000001) {
+		sprintf(str, "%6.1f", sdev * confidence_factor);
+	} else {
+		sprintf(str, "%s", "  ----");
+	}
+	return str;
+}
+
 static void
 all_report (FILE *csvf, FILE *textf)
 {
@@ -1191,7 +1202,6 @@ all_report (FILE *csvf, FILE *textf)
 	if (f != NULL) {
 
 		ml = find_maxlen (Name, N_players);
-		//intf ("max length=%ld\n", ml);
 		if (ml > 50) ml = 50;
 
 		if (Simulate < 2) {
@@ -1205,20 +1215,20 @@ all_report (FILE *csvf, FILE *textf)
 				j = Sorted[i];
 				if (!Flagged[j]) {
 
-					char sbuffer[80];
+					char rankbuf[80];
 					showrank = !is_old_version(j);
 					if (showrank) {
 						rank++;
-						sprintf(sbuffer,"%d",rank);
+						sprintf(rankbuf,"%d",rank);
 					} else {
-						sbuffer[0] = '\0';
+						rankbuf[0] = '\0';
 					}
 
 					if (showrank
 						|| !Hide_old_ver
 					){
 						fprintf(f, "%4s %-*s %s :%7.*f %9.1f %7d %6.1f%s\n", 
-							sbuffer,
+							rankbuf,
 							(int)ml+1,
 							Name[j],
 							get_super_player_symbolstr(j),
@@ -1248,15 +1258,26 @@ all_report (FILE *csvf, FILE *textf)
 	
 			for (i = 0; i < N_players; i++) {
 				j = Sorted[i];
-				if (Sdev[j] > 0.00000001) {
-					sprintf(sdev_str_buffer, "%6.1f", Sdev[j] * Confidence_factor);
-					sdev_str = sdev_str_buffer;
-				} else {
-					sdev_str = "  ----";
-				}
+
+				sdev_str = get_sdev_str (Sdev[j], Confidence_factor, sdev_str_buffer);
+
 				if (!Flagged[j]) {
-					fprintf(f, "%4d %-*s %s :%7.*f %s %8.1f %7d %6.1f%s\n", 
-						i+1,
+
+					char rankbuf[80];
+					showrank = !is_old_version(j);
+					if (showrank) {
+						rank++;
+						sprintf(rankbuf,"%d",rank);
+					} else {
+						rankbuf[0] = '\0';
+					}
+
+					if (showrank
+						|| !Hide_old_ver
+					){
+
+						fprintf(f, "%4s %-*s %s :%7.*f %s %8.1f %7d %6.1f%s\n", 
+						rankbuf,
 						(int)ml+1, 
 						Name[j],
  						get_super_player_symbolstr(j),
@@ -1267,7 +1288,9 @@ all_report (FILE *csvf, FILE *textf)
 						Playedby_results[j], 
 						Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], 
 						"%"
-					);
+						);
+					}
+
 				} else if (!is_super_player(j)) {
 					fprintf(f, "%4d %-*s   :%7.*f %s %8.1f %7d %6.1f%s\n", 
 						i+1,
@@ -1339,6 +1362,8 @@ all_report (FILE *csvf, FILE *textf)
 
 	return;
 }
+
+
 
 //=====================================
 
