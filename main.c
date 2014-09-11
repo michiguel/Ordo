@@ -1150,7 +1150,7 @@ rating_round(double x, int d)
 	if (d > 5) d = 5;
 	if (d < 0) d = 0;
 	y = x * al[d] + 0.5; 
-	i = (int) y;
+	i = (int) floor(y);
 	return (double)i/al[d];
 }
 
@@ -1168,8 +1168,9 @@ is_old_version(int j)
 static char *
 get_sdev_str (double sdev, double confidence_factor, char *str)
 {
+	double x = sdev * confidence_factor;
 	if (sdev > 0.00000001) {
-		sprintf(str, "%6.1f", sdev * confidence_factor);
+		sprintf(str, "%6.*f", OUTDECIMALS, rating_round(x, OUTDECIMALS));
 	} else {
 		sprintf(str, "%s", "  ----");
 	}
@@ -1188,7 +1189,7 @@ all_report (FILE *csvf, FILE *textf)
 	int rank = 0;
 	bool_t showrank = TRUE;
 
-	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+	N_encounters = calc_encounters (ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 	calc_obtained_playedby(Encounter, N_encounters, N_players, Obtained, Playedby);
 
 	for (j = 0; j < N_players; j++) {
@@ -1233,7 +1234,7 @@ all_report (FILE *csvf, FILE *textf)
 							Name[j],
 							get_super_player_symbolstr(j),
 							OUTDECIMALS,
-							rating_round(Ratingof_results[j], OUTDECIMALS), 
+							rating_round (Ratingof_results[j], OUTDECIMALS), 
 							Obtained_results[j], 
 							Playedby_results[j], 
 							Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j], 
