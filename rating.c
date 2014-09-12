@@ -496,7 +496,7 @@ static double
 overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv, double dr0)
 {
 	int e, w, b;
-	double dp, dp2, f, draws_expected;
+	double dp2, f;
 	double dexp;
 
 	dp2 = 0;
