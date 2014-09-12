@@ -472,7 +472,7 @@ calc_rating2 	( bool_t 		quiet
 	return N_enc;
 }
 
-
+#if 0
 static double
 overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv, double dr0)
 {
@@ -491,6 +491,31 @@ overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, dou
 
 	return dp2;
 }
+#else
+static double
+overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv, double dr0)
+{
+	int e, w, b;
+	double dp, dp2, f, draws_expected;
+	double dexp;
+
+	dp2 = 0;
+	for (e = 0; e < N_enc; e++) {
+		w = enc[e].wh;
+		b = enc[e].bl;
+		f = xpect (ratingof[w] + wadv, ratingof[b], beta);
+
+		dexp = draw_rate_fperf (f, dr0);
+
+		dp2 +=
+				enc[e].D                   * (1-dexp) * (1-dexp) +
+				(enc[e].played - enc[e].D) *    dexp  *    dexp  ;
+		;
+	}
+
+	return dp2;
+}
+#endif
 
 static double
 adjust_drawrate (double start_wadv, double *ratingof, int N_enc, const struct ENC *enc, double beta)
