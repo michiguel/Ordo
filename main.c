@@ -858,7 +858,8 @@ int main (int argc, char *argv[])
 						save_simulated((int)(Simulate-z)); 
 					}
 					#endif
-init_rating();
+
+					init_rating(); // may improve convergence in pathological cases
 
 					N_encounters = set_super_players(QUIET_MODE, Encounter);
 					N_encounters = purge_players(QUIET_MODE, Encounter);
@@ -1587,13 +1588,17 @@ static void
 relpriors_show (void)
 { 
 	int i;
-	printf ("\nRelative Anchors {\n");
-	for (i = 0; i < N_relative_anchors; i++) {
-		int a = Ra[i].player_a;
-		int b = Ra[i].player_b;
-		printf ("[%s] [%s] = %lf +/- %lf\n",Name[a], Name[b], Ra[i].delta, Ra[i].sigma);
+	if (N_relative_anchors > 0) {
+		printf ("\nRelative Anchors {\n");
+		for (i = 0; i < N_relative_anchors; i++) {
+			int a = Ra[i].player_a;
+			int b = Ra[i].player_b;
+			printf ("[%s] [%s] = %lf +/- %lf\n",Name[a], Name[b], Ra[i].delta, Ra[i].sigma);
+		}
+		printf ("}\n");
+	} else {
+		printf ("\nRelative Anchors = none\n");
 	}
-	printf ("}\n");
 }
 
 static bool_t
@@ -1747,13 +1752,17 @@ static void
 priors_show (struct prior *p, long int n)
 { 
 	int i;
-	printf ("\nLoose Anchors {\n");
-	for (i = 0; i < n; i++) {
-		if (p[i].isset) {
-			printf ("  [%s] = %lf +/- %lf\n",Name[i], p[i].value, p[i].sigma);
+	if (Priored_n > 0) {
+		printf ("\nLoose Anchors {\n");
+		for (i = 0; i < n; i++) {
+			if (p[i].isset) {
+				printf ("  [%s] = %lf +/- %lf\n",Name[i], p[i].value, p[i].sigma);
+			}
 		}
+		printf ("}\n");
+	} else {
+		printf ("\nLoose Anchors = none\n");
 	}
-	printf ("}\n");
 }
 #endif
 
