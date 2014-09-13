@@ -298,7 +298,7 @@ calc_rating_bayes2 	(
 	int 	phase = 0;
 	int 	n = 40;
 	double 	resol = delta;
-	double 	resol_prev = delta;
+//	double 	resol_prev = delta;
 	double  resol_dr = 0.1;
 	double	deq = *pDraw_date;
 
@@ -327,6 +327,7 @@ calc_rating_bayes2 	(
 		for (i = 0; i < rounds && resol >= MIN_RESOLUTION; i++) {
 			ratings_backup  (n_players, ratingof, ratingbk);
 			olddev = curdev;
+//			resol_prev = resol;
 
 			// Calc "changing" vector
 			derivative_vector_calc
@@ -346,8 +347,6 @@ calc_rating_bayes2 	(
 						, probarray
 						, changing );
 
-
-			resol_prev = resol;
 			resol = adjust_rating_bayes 
 						( delta
 						, multiple_anchors_present
@@ -370,9 +369,6 @@ calc_rating_bayes2 	(
 						, ratingbk // out 
 					);
 
-
-			resol = (resol_prev + resol) / 2;
-
 			curdev = calc_bayes_unfitness_full	
 							( N_enc
 							, enc
@@ -387,12 +383,22 @@ calc_rating_bayes2 	(
 							, dr_prior
 							, beta);
 
-			if (curdev < olddev) {
+//if (i % 100 == 0 && i != 0) {printf ("~~~~~~~~~~~~~~~~~~~~~stopping at %d\n",i);exit(0);}
+
+
+			if (
+				(curdev < olddev) 
+				&& (curdev/olddev < 0.99999) 
+			) {
 				ratings_backup  (n_players, ratingof, ratingbk);
 				olddev = curdev;
 			} else {
-				ratings_restore (n_players, ratingbk, ratingof);
-				curdev = olddev;
+
+				if (!(curdev < olddev)) {
+					ratings_restore (n_players, ratingbk, ratingof);
+					curdev = olddev;
+				}
+
 				break;
 			}
 

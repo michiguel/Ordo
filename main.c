@@ -251,6 +251,7 @@ static int 		Priored_n = 0;
 static void 	priors_reset(struct prior *p);
 static void		priors_copy(const struct prior *p, long int n, struct prior *q);
 static void 	priors_shuffle(struct prior *p, long int n);
+static void		priors_show (struct prior *p, long int n);
 static bool_t 	set_prior (const char *prior_name, double x, double sigma);
 static void 	priors_load(const char *fpriors_name);
 
@@ -316,6 +317,11 @@ static ptrdiff_t	head2head_idx_sdev (long x, long y);
 /*------------------------------------------------------------------------*/
 
 #if 0
+#define SAVE_SIMULATION
+#define SAVE_SIMULATION_N 23
+#endif
+
+#if defined(SAVE_SIMULATION)
 // This section is to save simulated results for debugging purposes
 
 static const char *Result_string[4] = {"1-0","1/2-1/2","0-1","*"};
@@ -694,9 +700,11 @@ int main (int argc, char *argv[])
 	if (relstr != NULL) {
 		relpriors_load(relstr); 
 	}
-	if (!QUIET_MODE)
+	if (!QUIET_MODE) {
+		priors_show(PP, N_players);
 		relpriors_show();
 	//FIXME do not allow relpriors to be purged
+	}
 //~~
 
 	if (switch_w && switch_u) {
@@ -843,7 +851,14 @@ int main (int argc, char *argv[])
 			relpriors_shuffle(Ra, N_relative_anchors);
 			priors_shuffle(PP, N_players);
 
-					// if ((Simulate-z) == 801) save_simulated((int)(Simulate-z)); 
+			//priors_show (PP, N_players);
+
+					#if defined(SAVE_SIMULATION)
+					if ((Simulate-z) == SAVE_SIMULATION_N) {
+						save_simulated((int)(Simulate-z)); 
+					}
+					#endif
+init_rating();
 
 					N_encounters = set_super_players(QUIET_MODE, Encounter);
 					N_encounters = purge_players(QUIET_MODE, Encounter);
@@ -1576,7 +1591,7 @@ relpriors_show (void)
 	for (i = 0; i < N_relative_anchors; i++) {
 		int a = Ra[i].player_a;
 		int b = Ra[i].player_b;
-		printf ("[%s] [%s] = %lf +/= %lf\n",Name[a], Name[b], Ra[i].delta, Ra[i].sigma);
+		printf ("[%s] [%s] = %lf +/- %lf\n",Name[a], Name[b], Ra[i].delta, Ra[i].sigma);
 	}
 	printf ("}\n");
 }
@@ -1724,6 +1739,21 @@ priors_shuffle(struct prior *p, long int n)
 			p[i].value = rand_gauss (value, sigma);
 		}
 	}
+}
+#endif
+
+#if 1
+static void
+priors_show (struct prior *p, long int n)
+{ 
+	int i;
+	printf ("\nLoose Anchors {\n");
+	for (i = 0; i < n; i++) {
+		if (p[i].isset) {
+			printf ("  [%s] = %lf +/- %lf\n",Name[i], p[i].value, p[i].sigma);
+		}
+	}
+	printf ("}\n");
 }
 #endif
 
