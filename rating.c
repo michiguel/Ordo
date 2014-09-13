@@ -208,11 +208,14 @@ overallerror_fwadv (double wadv)
 }
 */
 
+#if 0
 static double
 overallerrorE_fwadv (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv)
 {
 	int e, w, b;
-	double dp, dp2, f, wperf;
+	double dp2, f;
+	double wperf ,dp;
+	double fobs;
 
 	dp2 = 0;
 	for (e = 0; e < N_enc; e++) {
@@ -226,6 +229,29 @@ overallerrorE_fwadv (int N_enc, const struct ENC *enc, double *ratingof, double 
 
 	return dp2;
 }
+#else
+static double
+overallerrorE_fwadv (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv)
+{
+	int e, w, b;
+	double dp2, f;
+
+	dp2 = 0;
+	for (e = 0; e < N_enc; e++) {
+		w = enc[e].wh;
+		b = enc[e].bl;
+		f = xpect (ratingof[w] + wadv, ratingof[b], beta);
+
+dp2 +=	enc[e].W * (1.0 - f) * (1.0 - f)
++		enc[e].D * (0.5 - f) * (0.5 - f)
++		enc[e].L * (0.0 - f) * (0.0 - f)
+;
+
+	}
+
+	return dp2;
+}
+#endif
 
 #define START_DELTA 100
 

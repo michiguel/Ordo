@@ -70,3 +70,48 @@ uint32_t randfast32 (void)
 	return ranval (&Rndseries); 
 }
 
+
+//==========================================
+#include "gauss.h"
+
+static double
+rand_area (void)
+{
+	uint32_t r;
+	double rr;
+	do {
+		r = randfast32();
+	} while (r == 0);
+	r &= 8191;
+	rr = (double) r;
+	rr = rr/8192;
+	return rr;
+}
+
+
+static double
+rand_gauss_normalized(void)
+{
+	double xi, yi, area, slope;
+	double limit = 0.00001;
+	int n;
+
+	area = rand_area();
+	n = 0;
+	xi = 0;
+	do {
+		yi = gauss_integral (xi) - area;
+		slope = gauss_density (xi);
+		xi = xi - yi / slope;
+		n++;
+	} while (n < 100 && (yi > limit || yi < -limit));
+
+	return xi;
+}
+
+double
+rand_gauss(double x, double s)
+{
+	double z = rand_gauss_normalized();
+	return x + z * s;
+}

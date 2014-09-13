@@ -253,9 +253,12 @@ static void 	priors_load(const char *fpriors_name);
 #define MAX_RELPRIORS 10000
 
 static struct relprior Ra[MAX_RELPRIORS];
+static struct relprior Ra_store[MAX_RELPRIORS];
+
 static long int N_relative_anchors = 0;
 static bool_t 	Hide_old_ver = FALSE;
 
+static void		ra_shuffle(void);
 static bool_t 	set_relprior (const char *player_a, const char *player_b, double x, double sigma);
 static void 	relpriors_show(void);
 static void 	relpriors_load(const char *f_name);
@@ -829,6 +832,8 @@ int main (int argc, char *argv[])
 					clear_flagged ();
 
 					simulate_scores(Drawrate_evenmatch);
+			*Ra_store = *Ra;
+			ra_shuffle();
 
 					// if ((Simulate-z) == 801) save_simulated((int)(Simulate-z)); 
 
@@ -837,6 +842,8 @@ int main (int argc, char *argv[])
 					N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 					N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters, &White_advantage, FALSE, &sim_draw_rate);
 					ratings_for_purged ();
+
+			*Ra = *Ra_store;
 
 					for (i = 0; i < N_players; i++) {
 						Sum1[i] += Ratingof[i];
@@ -1529,6 +1536,20 @@ if (p_a == -1 || p_b == -1) return FALSE; // defensive programming, not needed.
 
 	return found;
 }
+
+#if 1
+void
+ra_shuffle(void)
+{
+	int i;
+	double value, sigma;
+	for (i = 0; i < N_relative_anchors; i++) {
+		value = Ra[i].delta;
+		sigma =	Ra[i].sigma;	
+		Ra[i].delta = rand_gauss (value, sigma);
+	}
+}
+#endif
 
 static void
 relpriors_show (void)
