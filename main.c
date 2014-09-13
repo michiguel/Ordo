@@ -242,11 +242,15 @@ static struct prior Wa_prior = {40.0,20.0,FALSE};
 static struct prior Dr_prior = { 0.5, 0.1,FALSE};
 
 static struct prior PP[MAXPLAYERS];
+static struct prior PP_store[MAXPLAYERS];
+
 static bool_t 	Some_prior_set = FALSE;
 
 static int 		Priored_n = 0;
 
 static void 	priors_reset(struct prior *p);
+static void		priors_copy(const struct prior *p, long int n, struct prior *q);
+static void 	priors_shuffle(struct prior *p, long int n);
 static bool_t 	set_prior (const char *prior_name, double x, double sigma);
 static void 	priors_load(const char *fpriors_name);
 
@@ -258,7 +262,8 @@ static struct relprior Ra_store[MAX_RELPRIORS];
 static long int N_relative_anchors = 0;
 static bool_t 	Hide_old_ver = FALSE;
 
-static void		ra_shuffle(void);
+static void		relpriors_shuffle(struct relprior *rp, long int n);
+static void		relpriors_copy(const struct relprior *r, long int n, struct relprior *s);
 static bool_t 	set_relprior (const char *player_a, const char *player_b, double x, double sigma);
 static void 	relpriors_show(void);
 static void 	relpriors_load(const char *f_name);
@@ -832,8 +837,11 @@ int main (int argc, char *argv[])
 					clear_flagged ();
 
 					simulate_scores(Drawrate_evenmatch);
-			*Ra_store = *Ra;
-			ra_shuffle();
+
+			relpriors_copy(Ra, N_relative_anchors, Ra_store);
+			priors_copy(PP, N_players, PP_store);
+			relpriors_shuffle(Ra, N_relative_anchors);
+			priors_shuffle(PP, N_players);
 
 					// if ((Simulate-z) == 801) save_simulated((int)(Simulate-z)); 
 
@@ -843,7 +851,8 @@ int main (int argc, char *argv[])
 					N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters, &White_advantage, FALSE, &sim_draw_rate);
 					ratings_for_purged ();
 
-			*Ra = *Ra_store;
+			relpriors_copy(Ra_store, N_relative_anchors, Ra);
+			priors_copy(PP_store, N_players, PP);
 
 					for (i = 0; i < N_players; i++) {
 						Sum1[i] += Ratingof[i];
@@ -1539,14 +1548,22 @@ if (p_a == -1 || p_b == -1) return FALSE; // defensive programming, not needed.
 
 #if 1
 void
-ra_shuffle(void)
+relpriors_shuffle(struct relprior *rp, long int n)
 {
 	int i;
 	double value, sigma;
-	for (i = 0; i < N_relative_anchors; i++) {
-		value = Ra[i].delta;
-		sigma =	Ra[i].sigma;	
-		Ra[i].delta = rand_gauss (value, sigma);
+	for (i = 0; i < n; i++) {
+		value = rp[i].delta;
+		sigma =	rp[i].sigma;	
+		rp[i].delta = rand_gauss (value, sigma);
+	}
+}
+
+static void
+relpriors_copy(const struct relprior *r, long int n, struct relprior *s)
+{	int i;
+	for (i = 0; i < n; i++) {
+		s[i] = r[i];
 	}
 }
 #endif
@@ -1686,6 +1703,30 @@ priors_reset(struct prior *p)
 	Priored_n = 0;
 }
 
+static void
+priors_copy(const struct prior *p, long int n, struct prior *q)
+{	int i;
+	for (i = 0; i < n; i++) {
+		q[i] = p[i];
+	}
+}
+
+#if 1
+static void
+priors_shuffle(struct prior *p, long int n)
+{
+	int i;
+	double value, sigma;
+	for (i = 0; i < n; i++) {
+		if (p[i].isset) {
+			value = p[i].value;
+			sigma = p[i].sigma;
+			p[i].value = rand_gauss (value, sigma);
+		}
+	}
+}
+#endif
+
 static bool_t
 set_prior (const char *player_name, double x, double sigma)
 {
@@ -1812,6 +1853,7 @@ priors_load(const char *fpriors_name)
 
 	return;
 }
+
 
 
 //== END PRIORS ======================================================
