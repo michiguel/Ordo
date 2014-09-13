@@ -1589,7 +1589,7 @@ relpriors_show (void)
 { 
 	int i;
 	if (N_relative_anchors > 0) {
-		printf ("\nRelative Anchors {\n");
+		printf ("Relative Anchors {\n");
 		for (i = 0; i < N_relative_anchors; i++) {
 			int a = Ra[i].player_a;
 			int b = Ra[i].player_b;
@@ -1597,7 +1597,7 @@ relpriors_show (void)
 		}
 		printf ("}\n");
 	} else {
-		printf ("\nRelative Anchors = none\n");
+		printf ("Relative Anchors = none\n");
 	}
 }
 
@@ -1753,7 +1753,7 @@ priors_show (struct prior *p, long int n)
 { 
 	int i;
 	if (Priored_n > 0) {
-		printf ("\nLoose Anchors {\n");
+		printf ("Loose Anchors {\n");
 		for (i = 0; i < n; i++) {
 			if (p[i].isset) {
 				printf ("  [%s] = %lf +/- %lf\n",Name[i], p[i].value, p[i].sigma);
@@ -1761,7 +1761,7 @@ priors_show (struct prior *p, long int n)
 		}
 		printf ("}\n");
 	} else {
-		printf ("\nLoose Anchors = none\n");
+		printf ("Loose Anchors = none\n");
 	}
 }
 #endif
@@ -1799,20 +1799,22 @@ assign_prior (char *name_prior, double x, double y, bool_t quiet)
 	} else { 
 		if (y < PRIOR_SMALLEST_SIGMA) {
 			suc = set_anchor (name_prior, x);
-			if (suc) {
+			if (!suc) {
+				fprintf (stderr, "Prior, %s --> FAILED, name not found in input file\n", name_prior);
+			} 
+			else {
 				if (!quiet)
 				printf ("Anchoring, %s --> %.1lf\n", name_prior, x);
-			} else {
-				fprintf (stderr, "Prior, %s --> FAILED, name not found in input file\n", name_prior);
-			}
+			} 
 		} else {
 			suc = set_prior (name_prior, x, y);
-			if (suc) {
-				if (!quiet)
-				printf ("Prior, %s --> %.1lf, %.1lf\n", name_prior, x, y);
-			} else {
+			if (!suc) {
 				fprintf (stderr, "Prior, %s --> FAILED, name not found in input file\n", name_prior);					
-			}	
+			} 
+//			else {
+//				if (!quiet)
+//				printf ("Prior, %s --> %.1lf, %.1lf\n", name_prior, x, y);
+//			}
 		}
 	}
 	if (!suc) prior_success = FALSE;
