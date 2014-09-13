@@ -1422,6 +1422,13 @@ static bool_t getnum(char *p, double *px)
 	return ok;
 }
 
+static void
+anchor_j (long int j, double x)
+{
+	Prefed[j] = TRUE;
+	Ratingof[j] = x;
+}
+
 static bool_t
 set_anchor (const char *player_name, double x)
 {
@@ -1430,8 +1437,7 @@ set_anchor (const char *player_name, double x)
 	for (j = 0, found = FALSE; !found && j < N_players; j++) {
 		found = !strcmp(Name[j], player_name);
 		if (found) {
-			Prefed[j] = TRUE;
-			Ratingof[j] = x;
+			anchor_j (j, x);
 			Anchored_n++;
 		} 
 	}
