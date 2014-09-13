@@ -386,6 +386,8 @@ calc_rating_bayes2 	(
 //if (i % 100 == 0 && i != 0) {printf ("~~~~~~~~~~~~~~~~~~~~~stopping at %d\n",i);exit(0);}
 
 
+
+
 			if (
 				(curdev < olddev) 
 				&& (curdev/olddev < 0.99999) 

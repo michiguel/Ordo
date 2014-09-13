@@ -279,6 +279,7 @@ static void		clear_flagged (void);
 
 static void		all_report (FILE *csvf, FILE *textf);
 static void		init_rating (void);
+static void		reset_rating (void);
 static void		init_manchors(const char *fpins_name);
 
 static int		calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage, bool_t adjust_wadv, double *pDraw_rate);
@@ -859,7 +860,7 @@ int main (int argc, char *argv[])
 					}
 					#endif
 
-					init_rating(); // may improve convergence in pathological cases
+					reset_rating(); // may improve convergence in pathological cases
 
 					N_encounters = set_super_players(QUIET_MODE, Encounter);
 					N_encounters = purge_players(QUIET_MODE, Encounter);
@@ -1412,6 +1413,21 @@ init_rating (void)
 	}
 }
 
+static void
+reset_rating (void)
+{
+	int i;
+	for (i = 0; i < N_players; i++) {
+		if (!Prefed[i] && !Flagged[i])
+			Ratingof[i] = General_average;
+	}
+	for (i = 0; i < N_players; i++) {
+		if (!Prefed[i] && !Flagged[i])
+			Ratingbk[i] = General_average;
+	}
+}
+
+
 //=====================================
 
 static char *skipblanks(char *p) {while (isspace(*p)) p++; return p;}
@@ -1425,6 +1441,7 @@ static bool_t getnum(char *p, double *px)
 static void
 anchor_j (long int j, double x)
 {
+	Multiple_anchors_present = TRUE;
 	Prefed[j] = TRUE;
 	Ratingof[j] = x;
 }
@@ -1449,7 +1466,6 @@ assign_anchor (char *name_pinned, double x, bool_t quiet)
 {
 	bool_t pin_success = set_anchor (name_pinned, x);
 	if (pin_success) {
-		Multiple_anchors_present = TRUE;
 		if (!quiet)
 		printf ("Anchoring, %s --> %.1lf\n", name_pinned, x);
 	} else {
