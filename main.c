@@ -255,6 +255,8 @@ static void		priors_show (struct prior *p, long int n);
 static bool_t 	set_prior (const char *prior_name, double x, double sigma);
 static void 	priors_load(const char *fpriors_name);
 
+static void		anchor_j (long int j, double x);
+
 #define MAX_RELPRIORS 10000
 
 static struct relprior Ra[MAX_RELPRIORS];
@@ -280,6 +282,7 @@ static void		clear_flagged (void);
 static void		all_report (FILE *csvf, FILE *textf);
 static void		init_rating (void);
 static void		reset_rating (void);
+static void		ratings_copy (const double *r, long n, double *t);
 static void		init_manchors(const char *fpins_name);
 
 static int		calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage, bool_t adjust_wadv, double *pDraw_rate);
@@ -314,6 +317,10 @@ static void 	head2head_output(const char *head2head_str);
 /*------------------------------------------------------------------------*/
 
 static ptrdiff_t	head2head_idx_sdev (long x, long y);
+
+/*------------------------------------------------------------------------*/
+
+static void 	ratings_center_to_zero (long int n_players, const bool_t *flagged, double *ratingof);
 
 /*------------------------------------------------------------------------*/
 
@@ -627,7 +634,9 @@ int main (int argc, char *argv[])
 	transform_DB(&DB, &Game_stats); /* convert DB to global variables */
 
 	if (Anchor_use) {
-		if (!find_anchor_player(&Anchor)) {
+		if (find_anchor_player(&Anchor)) {
+			anchor_j (Anchor, General_average);
+		} else {
 			fprintf (stderr, "ERROR: No games of anchor player, mispelled, wrong capital letters, or extra spaces = \"%s\"\n", Anchor_name);
 			fprintf (stderr, "Surround the name with \"quotes\" if it contains spaces\n\n");
 			return EXIT_FAILURE; 			
@@ -814,7 +823,6 @@ int main (int argc, char *argv[])
 	N_encounters = set_super_players(QUIET_MODE, Encounter);
 	N_encounters = purge_players(QUIET_MODE, Encounter);
 	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
-
 	N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters, &White_advantage, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch);
 
 	ratings_results();
@@ -871,6 +879,11 @@ int main (int argc, char *argv[])
 			relpriors_copy(Ra_store, N_relative_anchors, Ra);
 			priors_copy(PP_store, N_players, PP);
 
+					if (Anchor_err_rel2avg) {
+						ratings_copy (Ratingof, N_players, Ratingbk);
+						ratings_center_to_zero (N_players, Flagged, Ratingof);
+					}
+
 					for (i = 0; i < N_players; i++) {
 						Sum1[i] += Ratingof[i];
 						Sum2[i] += Ratingof[i]*Ratingof[i];
@@ -885,6 +898,10 @@ int main (int argc, char *argv[])
 							sim[idx].sum1 += diff; 
 							sim[idx].sum2 += diff * diff;
 						}
+					}
+
+					if (Anchor_err_rel2avg) {
+						ratings_copy (Ratingbk, N_players, Ratingof); //restore
 					}
 				}
 
@@ -1427,6 +1444,14 @@ reset_rating (void)
 	}
 }
 
+static void
+ratings_copy (const double *r, long n, double *t)
+{
+	long i;
+	for (i = 0; i < n; i++) {
+		t[i] = r[i];
+	}
+}
 
 //=====================================
 
@@ -2133,6 +2158,38 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage,
 	}
 
 	return ret;
+}
+
+// no globals
+static void
+ratings_apply_excess_correction(double excess, long int n_players, const bool_t *flagged, double *ratingof /*out*/)
+{
+	int j;
+	for (j = 0; j < n_players; j++) {
+		if (!flagged[j])
+			ratingof[j] -= excess;
+	}
+}
+
+static void
+ratings_center_to_zero (long int n_players, const bool_t *flagged, double *ratingof)
+{
+	int 	j, notflagged;
+	double 	excess, average;
+	double 	accum = 0;
+
+	// general average
+	for (notflagged = 0, accum = 0, j = 0; j < n_players; j++) {
+		if (!flagged[j]) {
+			notflagged++;
+			accum += ratingof[j];
+		}
+	}
+	average = accum / notflagged;
+	excess  = average;
+
+	// Correct the excess
+	ratings_apply_excess_correction(excess, n_players, flagged, ratingof);
 }
 
 /*==================================================================*/
