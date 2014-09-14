@@ -1366,6 +1366,15 @@ all_report (FILE *csvf, FILE *textf)
 			}
 		}
 
+
+//		if (!quiet) {
+			fprintf (f,"\n");
+			fprintf (f,"White advantage = %.2f\n",White_advantage);
+			fprintf (f,"Draw rate (equal opponents) = %.2f %s\n",100*Drawrate_evenmatch, "%");
+			fprintf (f,"\n");
+//		}
+
+
 	} /*if*/
 
 	/* output in a comma separated value file */
@@ -2152,10 +2161,10 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage,
 	
 	*pDraw_rate = dr;
 
-	if (!quiet) {
-		printf ("White advantage = %.2f\n",*pWhite_advantage);
-		printf ("Draw rate (equal opponents) = %.2f %s\n",100*dr, "%");
-	}
+//	if (!quiet) {
+//		printf ("White advantage = %.2f\n",*pWhite_advantage);
+//		printf ("Draw rate (equal opponents) = %.2f %s\n",100*dr, "%");
+//	}
 
 	return ret;
 }
