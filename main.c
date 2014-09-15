@@ -90,6 +90,7 @@ static void usage (void);
 /* VARIABLES */
 
 	static bool_t QUIET_MODE;
+	static bool_t SIM_UPDATES;
 	static bool_t ADJUST_WHITE_ADVANTAGE;
 	static bool_t ADJUST_DRAW_RATE;
 
@@ -116,6 +117,7 @@ static void usage (void);
 		" -v          print version number and exit\n"
 		" -L          display the license information\n"
 		" -q          quiet mode (no screen progress updates)\n"
+		" -Q          quiet mode (no screen progress except simulation count)\n"
 		" -a <avg>    set rating for the pool average\n"
 		" -A <player> anchor: rating given by '-a' is fixed for <player>, if provided\n"
 		" -V          errors relative to pool average, not to the anchor\n"
@@ -152,7 +154,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:XN:";
+const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:XN:";
 
 /*
 |
@@ -401,6 +403,7 @@ int main (int argc, char *argv[])
 	input_mode   = FALSE;
 	table_mode   = FALSE;
 	QUIET_MODE   = FALSE;
+	SIM_UPDATES  = FALSE;
 	ADJUST_WHITE_ADVANTAGE = FALSE;
 	ADJUST_DRAW_RATE = FALSE;
 	inputf       = NULL;
@@ -521,6 +524,7 @@ int main (int argc, char *argv[])
 						break;
 			case 'T':	table_mode = TRUE;	break;
 			case 'q':	QUIET_MODE = TRUE;	break;
+			case 'Q':	QUIET_MODE = TRUE;	SIM_UPDATES = TRUE; break;
 			case 'R':	Hide_old_ver=TRUE;	break;
 			case 'W':	ADJUST_WHITE_ADVANTAGE = TRUE;	
 						Wa_prior.isset = FALSE;	
@@ -841,7 +845,15 @@ int main (int argc, char *argv[])
 		sim = malloc(allocsize);
 
 		if (sim != NULL) {
+			double fraction = 0.0;
+			double asterisk = (double)Simulate/50.0;
+			int astcount = 0;
 
+			if (SIM_UPDATES && z > 1) {
+				printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
+				printf ("|----|----|----|----|----|----|----|----|----|----|\n");
+			}
+			
 			for (idx = 0; idx < est; idx++) {
 				sim[idx].sum1 = 0;
 				sim[idx].sum2 = 0;
@@ -850,7 +862,18 @@ int main (int argc, char *argv[])
 	
 			if (z > 1) {
 				while (z-->0) {
-					if (!QUIET_MODE) printf ("\n==> Simulation:%ld/%ld\n",Simulate-z,Simulate);
+					if (!QUIET_MODE) {		
+						printf ("\n==> Simulation:%ld/%ld\n",Simulate-z,Simulate);
+					} 
+
+					if (SIM_UPDATES) {
+						fraction += 1.0;
+						while (fraction > asterisk) {
+							fraction -= asterisk;
+							astcount++;
+							printf ("*"); fflush(stdout);
+						}
+					}
 					clear_flagged ();
 
 					simulate_scores(Drawrate_evenmatch);
@@ -878,6 +901,13 @@ int main (int argc, char *argv[])
 
 			relpriors_copy(Ra_store, N_relative_anchors, Ra);
 			priors_copy(PP_store, N_players, PP);
+
+
+					if (SIM_UPDATES && z == 0) {
+						int x = 51-astcount;
+						while (x-->0) {printf ("*"); fflush(stdout);}
+						printf ("\n");
+					}
 
 					if (Anchor_err_rel2avg) {
 						ratings_copy (Ratingof, N_players, Ratingbk);
