@@ -639,7 +639,7 @@ int main (int argc, char *argv[])
 
 	if (Anchor_use) {
 		if (find_anchor_player(&Anchor)) {
-			anchor_j (Anchor, General_average);
+//			anchor_j (Anchor, General_average);
 		} else {
 			fprintf (stderr, "ERROR: No games of anchor player, mispelled, wrong capital letters, or extra spaces = \"%s\"\n", Anchor_name);
 			fprintf (stderr, "Surround the name with \"quotes\" if it contains spaces\n\n");
@@ -1508,6 +1508,7 @@ anchor_j (long int j, double x)
 	Multiple_anchors_present = TRUE;
 	Prefed[j] = TRUE;
 	Ratingof[j] = x;
+	Anchored_n++;
 }
 
 static bool_t
@@ -1519,7 +1520,6 @@ set_anchor (const char *player_name, double x)
 		found = !strcmp(Name[j], player_name);
 		if (found) {
 			anchor_j (j, x);
-			Anchored_n++;
 		} 
 	}
 	return found;
