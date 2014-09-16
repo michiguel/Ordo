@@ -384,6 +384,7 @@ unfitness_fcenter 	( double excess
 
 static double
 optimum_centerdelta	( double start_delta
+					, double end_delta
 					, const struct ENC *enc
 					, int 			n_enc
 					, int			n_players
@@ -396,15 +397,18 @@ optimum_centerdelta	( double start_delta
 					, double *		obtained
 					, double *		expected
 					, int *			playedby
-					, double 		*ratingtmp)
+					, double 		*ratingtmp
+					, double		*optimum
+					)
 {
 	double excess;
 	double delta, ei, ej, ek;
+	bool_t modified = FALSE;
 
 	delta = start_delta;
 	excess = 0;
 
-	do {	
+
 		ei = unfitness_fcenter 	( excess - delta
 								, enc, n_enc, n_players, ratingof, flagged, prefed
 								, white_adv, beta, obtained, expected, playedby, ratingtmp);
@@ -415,21 +419,50 @@ optimum_centerdelta	( double start_delta
 								, enc, n_enc, n_players, ratingof, flagged, prefed
 								, white_adv, beta, obtained, expected, playedby, ratingtmp);
 
+	do {	
+
 		if (ei >= ej && ej <= ek) {
-			delta = delta / 2;
+			delta = delta / 4;
+
+			ei = unfitness_fcenter 	( excess - delta
+									, enc, n_enc, n_players, ratingof, flagged, prefed
+									, white_adv, beta, obtained, expected, playedby, ratingtmp);
+			ek = unfitness_fcenter 	( excess + delta
+									, enc, n_enc, n_players, ratingof, flagged, prefed
+									, white_adv, beta, obtained, expected, playedby, ratingtmp);
+
 		} else
 		if (ej >= ei && ei <= ek) {
+			modified = TRUE;
 			excess -= delta;
+
+			ei = unfitness_fcenter 	( excess - delta
+									, enc, n_enc, n_players, ratingof, flagged, prefed
+									, white_adv, beta, obtained, expected, playedby, ratingtmp);
+			ej = ei; 
+			ek = ej;
+
+
 		} else
 		if (ei >= ek && ek <= ej) {
+			modified = TRUE;
 			excess += delta;
+
+			ei = ej;
+			ej = ek;
+			ek = unfitness_fcenter 	( excess + delta
+									, enc, n_enc, n_players, ratingof, flagged, prefed
+									, white_adv, beta, obtained, expected, playedby, ratingtmp);
+
 		}
 
 	} while (
-		delta > 0.001 
+		delta > end_delta 
 	);
 	
-	return excess + delta;
+	*optimum = excess;
+
+	return modified;
 }
 
 //============ center adjustment end
@@ -547,7 +580,9 @@ static double ratingtmp[MAXPLAYERS];
 double cd = 400;
 
 			for (i = 0; i < rounds; i++) {
-	
+				bool_t failed = FALSE;
+				bool_t changed;
+
 				ratings_backup(N_players, Ratingof, Ratingbk);
 				olddev = curdev;
 
@@ -575,18 +610,12 @@ double cd = 400;
 					calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
 					curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
 					assert (curdev == olddev);
-					break;
+					failed = TRUE;
 				};	
 
-				outputdev = 1000*sqrt(curdev/N_games);
-				if (outputdev < min_devia || resol < min_resol) {
-					break;
-				}
-				kk *= 0.995;
-
-
-cd = optimum_centerdelta	
-					( cd *10
+changed = optimum_centerdelta	
+					( 100
+					, min_devia //kk*delta/1000
 					, enc
 					, N_enc
 					, N_players
@@ -598,18 +627,25 @@ cd = optimum_centerdelta
 					, Obtained
 					, expected
 					, Playedby
-					, ratingtmp);
-printf ("cd=%lf\n", cd);
-mobile_center_apply_excess (cd, N_players, Flagged, Prefed, Ratingof);
+					, ratingtmp
+					, &cd);
 
+if (changed) mobile_center_apply_excess (cd, N_players, Flagged, Prefed, Ratingof);
 
+				failed = failed && !changed;
 
-//printf ("mobile_center=%lf\n", get_mobile_center(n_players, flagged, prefed, ratingof));
+				if (failed) break;
+
+				outputdev = 1000*sqrt(curdev/N_games);
+				if (outputdev < min_devia || (resol+cd) < min_resol) {
+					failed = TRUE;
+				}
+
+				if (failed) break;
+
+				kk *= 0.995;
 
 			}
-
-//printf ("mobile_center=%lf\n", get_mobile_center(N_players, Flagged, Prefed, Ratingof));
-
 
 			delta /= denom;
 			kappa *= denom;
