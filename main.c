@@ -639,7 +639,7 @@ int main (int argc, char *argv[])
 
 	if (Anchor_use) {
 		if (find_anchor_player(&Anchor)) {
-//			anchor_j (Anchor, General_average);
+			anchor_j (Anchor, General_average);
 		} else {
 			fprintf (stderr, "ERROR: No games of anchor player, mispelled, wrong capital letters, or extra spaces = \"%s\"\n", Anchor_name);
 			fprintf (stderr, "Surround the name with \"quotes\" if it contains spaces\n\n");

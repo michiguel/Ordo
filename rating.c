@@ -28,6 +28,8 @@
 #include "indiv.h"
 #include "xpect.h"
 
+#include "datatype.h"
+
 #if 1
 #define CALCIND_SWSL
 #endif
@@ -147,7 +149,7 @@ adjust_rating 	( double delta
 			excess  = average - general_average;
 		}
 		for (j = 0; j < n_players; j++) {
-			if (!flagged[j]) ratingof[j] -= excess;
+			if (!flagged[j] && !prefed[j]) ratingof[j] -= excess;
 		}	
 	}	
 
@@ -158,14 +160,15 @@ adjust_rating 	( double delta
 
 // no globals
 static void
-adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, int n_players, const bool_t *flagged, double *ratingof)
+adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, int n_players
+						, const bool_t *flagged, const bool_t *prefed, double *ratingof)
 {
 	double excess;
 	int j;
 	if (anchor_use) {
 		excess  = ratingof[anchor] - general_average;	
 		for (j = 0; j < n_players; j++) {
-			if (!flagged[j]) ratingof[j] -= excess;
+			if (!flagged[j] && !prefed[j]) ratingof[j] -= excess;
 		}	
 	}
 }
@@ -293,6 +296,144 @@ adjust_wadv (double start_wadv, double *ratingof, int N_enc, const struct ENC *e
 }
 
 
+//============ center adjustment begin
+
+static void ratings_copy (const double *r, long n, double *t) {long i;	for (i = 0; i < n; i++) {t[i] = r[i];}}
+
+static double 
+unfitness		( const struct ENC *enc
+				, int 			n_enc
+				, int			n_players
+				, const double *ratingof
+				, const bool_t *flagged
+				, const bool_t *prefed
+				, double		white_adv
+				, double		beta
+
+				, double *		obtained
+				, double *		expected
+				, int *			playedby
+)
+{
+		double dev;
+		calc_expected (enc, n_enc, white_adv, n_players, ratingof, expected, beta);
+		dev = deviation (n_players, flagged, expected, obtained, playedby);
+		return dev;
+}
+
+static double
+mobile_center_get (long n_players, const bool_t *flagged, const bool_t *prefed, const double *ratingof)
+{
+	double accum = 0;
+	long j, n = 0;
+	for (j = 0; j < n_players; j++) {
+		if (!flagged[j] && !prefed[j]) {
+			accum += ratingof[j];
+			n++;
+		}
+	}	
+	return accum/n;
+}
+
+static void
+mobile_center_apply_excess (double excess, long n_players, const bool_t *flagged, const bool_t *prefed, double *ratingof)
+{
+	double accum = 0;
+	long j, n = 0;
+
+	for (j = 0; j < n_players; j++) {
+		if (!flagged[j] && !prefed[j]) {
+			ratingof[j] += excess;
+		}
+	}	
+	return;
+}
+
+static double
+unfitness_fcenter 	( double excess
+					, const struct ENC *enc
+					, int 			n_enc
+					, int			n_players
+					, const double *ratingof
+					, const bool_t *flagged
+					, const bool_t *prefed
+					, double		white_adv
+					, double		beta
+
+					, double *		obtained
+					, double *		expected
+					, int *			playedby
+					, double 	   *ratingtmp)
+{
+	double u;
+	ratings_copy (ratingof, n_players, ratingtmp);
+	mobile_center_apply_excess (excess, n_players, flagged, prefed, ratingtmp);
+	u = unfitness	( enc
+					, n_enc
+					, n_players
+					, ratingtmp
+					, flagged
+					, prefed
+					, white_adv
+					, beta
+					, obtained
+					, expected
+					, playedby);
+	return u;
+}
+
+static double
+optimum_centerdelta	( double start_delta
+					, const struct ENC *enc
+					, int 			n_enc
+					, int			n_players
+					, const double *ratingof
+					, const bool_t *flagged
+					, const bool_t *prefed
+					, double		white_adv
+					, double		beta
+
+					, double *		obtained
+					, double *		expected
+					, int *			playedby
+					, double 		*ratingtmp)
+{
+	double excess;
+	double delta, ei, ej, ek;
+
+	delta = start_delta;
+	excess = 0;
+
+	do {	
+		ei = unfitness_fcenter 	( excess - delta
+								, enc, n_enc, n_players, ratingof, flagged, prefed
+								, white_adv, beta, obtained, expected, playedby, ratingtmp);
+		ej = unfitness_fcenter 	( excess 
+								, enc, n_enc, n_players, ratingof, flagged, prefed
+								, white_adv, beta, obtained, expected, playedby, ratingtmp);
+		ek = unfitness_fcenter 	( excess + delta
+								, enc, n_enc, n_players, ratingof, flagged, prefed
+								, white_adv, beta, obtained, expected, playedby, ratingtmp);
+
+		if (ei >= ej && ej <= ek) {
+			delta = delta / 2;
+		} else
+		if (ej >= ei && ei <= ek) {
+			excess -= delta;
+		} else
+		if (ei >= ek && ek <= ej) {
+			excess += delta;
+		}
+
+	} while (
+		delta > 0.001 
+	);
+	
+	return excess + delta;
+}
+
+//============ center adjustment end
+
 
 #define MIN_DEVIA 0.000000001
 #define MIN_RESOL 0.000001
@@ -334,6 +475,9 @@ calc_rating2 	( bool_t 		quiet
 				, double		*pDraw_date
 )
 {
+
+static double ratingtmp[MAXPLAYERS];
+
 	double 	olddev, curdev, outputdev;
 	int 	i;
 	int		rounds = 10000;
@@ -399,6 +543,9 @@ calc_rating2 	( bool_t 		quiet
 
 		while (n-->0) {
 			double kk = 1.0;
+
+double cd = 400;
+
 			for (i = 0; i < rounds; i++) {
 	
 				ratings_backup(N_players, Ratingof, Ratingbk);
@@ -436,7 +583,33 @@ calc_rating2 	( bool_t 		quiet
 					break;
 				}
 				kk *= 0.995;
+
+
+cd = optimum_centerdelta	
+					( cd *10
+					, enc
+					, N_enc
+					, N_players
+					, Ratingof
+					, Flagged
+					, Prefed
+					, white_adv
+					, BETA
+					, Obtained
+					, expected
+					, Playedby
+					, ratingtmp);
+printf ("cd=%lf\n", cd);
+mobile_center_apply_excess (cd, N_players, Flagged, Prefed, Ratingof);
+
+
+
+//printf ("mobile_center=%lf\n", get_mobile_center(n_players, flagged, prefed, ratingof));
+
 			}
+
+//printf ("mobile_center=%lf\n", get_mobile_center(N_players, Flagged, Prefed, Ratingof));
+
 
 			delta /= denom;
 			kappa *= denom;
@@ -486,7 +659,7 @@ calc_rating2 	( bool_t 		quiet
 		#endif
 
 		if (!Multiple_anchors_present)
-			adjust_rating_byanchor (Anchor_use, Anchor, General_average, N_players, Flagged, Ratingof);
+			adjust_rating_byanchor (Anchor_use, Anchor, General_average, N_players, Flagged, Prefed, Ratingof);
 
 	} //end while 
 
