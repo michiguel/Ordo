@@ -306,7 +306,6 @@ unfitness		( const struct ENC *enc
 				, int			n_players
 				, const double *ratingof
 				, const bool_t *flagged
-				, const bool_t *prefed
 				, double		white_adv
 				, double		beta
 
@@ -321,6 +320,7 @@ unfitness		( const struct ENC *enc
 		return dev;
 }
 
+#if 0
 static double
 mobile_center_get (long n_players, const bool_t *flagged, const bool_t *prefed, const double *ratingof)
 {
@@ -332,15 +332,14 @@ mobile_center_get (long n_players, const bool_t *flagged, const bool_t *prefed, 
 			n++;
 		}
 	}	
-	return accum/n;
+	return accum/(double)n;
 }
+#endif
 
 static void
 mobile_center_apply_excess (double excess, long n_players, const bool_t *flagged, const bool_t *prefed, double *ratingof)
 {
-	double accum = 0;
-	long j, n = 0;
-
+	long j;
 	for (j = 0; j < n_players; j++) {
 		if (!flagged[j] && !prefed[j]) {
 			ratingof[j] += excess;
@@ -373,7 +372,6 @@ unfitness_fcenter 	( double excess
 					, n_players
 					, ratingtmp
 					, flagged
-					, prefed
 					, white_adv
 					, beta
 					, obtained
@@ -382,7 +380,86 @@ unfitness_fcenter 	( double excess
 	return u;
 }
 
+static double absol(double x) {return x >= 0? x: -x;}
+
 static double
+quadfit (
+					double x1, double x2, double x3
+					, const struct ENC *enc
+					, int 			n_enc
+					, int			n_players
+					, const double *ratingof
+					, const bool_t *flagged
+					, const bool_t *prefed
+					, double		white_adv
+					, double		beta
+
+					, double *		obtained
+					, double *		expected
+					, int *			playedby
+					, double 		*ratingtmp
+)
+{
+	int i;
+	double x[4];
+	double y[4];
+	double y12, x12, y13, x13, s12, s13;
+
+	x[1] = x1;
+	x[2] = x2;
+	x[3] = x3;
+
+	printf ("x= %lf, %lf, %lf\n", x[1], x[2], x[3]);
+
+	for (i = 1; i < 4; i++) {
+		y[i] = unfitness_fcenter( x[i]
+								, enc, n_enc, n_players, ratingof, flagged, prefed
+								, white_adv, beta, obtained, expected, playedby, ratingtmp);
+	}
+
+	printf ("y= %lf, %lf, %lf\n", y[1], y[2], y[3]);
+
+	do {
+		y12 = y[1] - y[2];
+		x12 = x[1] - x[2];
+		y13 = y[1] - y[3];
+		x13 = x[1] - x[3];
+		s12 = x[1]*x[1] - x[2]*x[2];
+		s13 = x[1]*x[1] - x[3]*x[3];
+
+		x[0] = (y13*s12 - y12*s13) / (y13*x12 - y12*x13);
+		x[0] = x[0]/2;
+
+		y[0] = unfitness_fcenter( x[0]
+								, enc, n_enc, n_players, ratingof, flagged, prefed
+								, white_adv, beta, obtained, expected, playedby, ratingtmp);
+
+		if (x[0] < x[2] && y[0] < y[2]) {
+			x[3] = x[2];
+			y[3] = y[2];	
+			x[2] = x[0];
+			y[2] = y[0];
+		} else
+		if (x[0] > x[2] && y[0] > y[2]) {
+			x[3] = x[0];
+			y[3] = y[0];
+		} else
+		if (x[0] < x[2] && y[0] > y[2]) {
+			x[1] = x[0];
+			y[1] = y[0];
+		} else {
+			x[1] = x[2];
+			y[1] = y[2];
+			x[2] = x[0];
+			y[2] = y[0];
+		}
+
+	} while (absol(x[3]-x[1]) > 0.000001);	
+
+	return x[2];
+}
+
+static bool_t
 optimum_centerdelta	( double start_delta
 					, double end_delta
 					, const struct ENC *enc
@@ -614,7 +691,7 @@ double cd = 400;
 				};	
 
 changed = optimum_centerdelta	
-					( 100
+					( 100.0
 					, min_devia //kk*delta/1000
 					, enc
 					, N_enc
