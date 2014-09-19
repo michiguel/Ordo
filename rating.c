@@ -396,7 +396,7 @@ unfitf (double x, const void *p)
 						, q->white_adv, q->beta, q->obtained, q->expected, q->playedby, q->ratingtmp);
 }
 
-static bool_t
+static double
 optimum_centerdelta	( double 			start_delta
 					, double 			end_delta
 					, const struct ENC *enc
@@ -411,10 +411,8 @@ optimum_centerdelta	( double 			start_delta
 					, double *			expected
 					, int *				playedby
 					, double *			ratingtmp
-					, double *			optimum
 					)
 {
-	double z;
 	struct UNFITPAR p;
 	p.enc 		= enc;
 	p.n_enc	= n_enc;
@@ -429,10 +427,7 @@ optimum_centerdelta	( double 			start_delta
 	p.playedby	= playedby;
 	p.ratingtmp= ratingtmp;
 
-	z = quadfit1d (end_delta, -start_delta, start_delta, unfitf, &p);
-
-	*optimum = z;
-	return TRUE;
+	return quadfit1d (end_delta, -start_delta, start_delta, unfitf, &p);
 }
 //============ center adjustment end
 
@@ -583,7 +578,7 @@ double cd = 400;
 
 {int zz = 1;
 while (zz-->0)
-changed = optimum_centerdelta	
+cd = optimum_centerdelta	
 					( 100.0
 					, min_resol //kk*delta/1000
 					, enc
@@ -598,10 +593,10 @@ changed = optimum_centerdelta
 					, expected
 					, Playedby
 					, ratingtmp
-					, &cd);
+					);
 }
 
-changed = changed && absol(cd) > MIN_RESOL;
+changed = absol(cd) > MIN_RESOL;
 
 if (changed) {
 	mobile_center_apply_excess (cd, N_players, Flagged, Prefed, Ratingof);
