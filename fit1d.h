@@ -27,9 +27,6 @@ double
 quadfit1d  (double limit, double a, double b, double (*unfitnessf)(double, const void *), const void *p);
 
 double
-quadfit1d_2_ (double limit, double a, double b, double (*unfitnessf)(double, const void *), const void *p);
-
-double
 quadfit1d_2(double limit, double a, double b, double (*unfitnessf)(double, const void *), const void *p);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/

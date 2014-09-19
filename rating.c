@@ -34,7 +34,7 @@
 #define CALCIND_SWSL
 #endif
 
-static double adjust_drawrate (double start_wadv, double *ratingof, int N_enc, const struct ENC *enc, double beta);
+static double adjust_drawrate (double start_wadv, const double *ratingof, int N_enc, const struct ENC *enc, double beta);
 
 // no globals
 static void
@@ -563,11 +563,7 @@ if (changed) {
 		if (!quiet) printf ("done\n");
 
 		if (adjust_white_advantage) {
-
-{int z = 20;
-while (z-->0) {
 				white_adv = adjust_wadv (white_adv, Ratingof, N_enc, enc, BETA, doneonce? resol: START_DELTA);
-}{			
 				doneonce = TRUE;
 				wa_progress = wa_previous > white_adv? wa_previous - white_adv: white_adv - wa_previous;
 				wa_previous = white_adv;
@@ -608,28 +604,9 @@ while (z-->0) {
 	return N_enc;
 }
 
-#if 0
-static double
-overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv, double dr0)
-{
-	int e, w, b;
-	double dp, dp2, f, draws_expected;
 
-	dp2 = 0;
-	for (e = 0; e < N_enc; e++) {
-		w = enc[e].wh;
-		b = enc[e].bl;
-		f = xpect (ratingof[w] + wadv, ratingof[b], beta);
-		draws_expected = enc[e].played * draw_rate_fperf (f, dr0);
-		dp = draws_expected - enc[e].D; 
-		dp2 += dp * dp;
-	}
-
-	return dp2;
-}
-#else
 static double
-overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv, double dr0)
+overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv, double dr0)
 {
 	int e, w, b;
 	double dp2, f;
@@ -651,10 +628,10 @@ overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, dou
 
 	return dp2;
 }
-#endif
+
 
 static double
-adjust_drawrate (double start_wadv, double *ratingof, int N_enc, const struct ENC *enc, double beta)
+adjust_drawrate (double start_wadv, const double *ratingof, int N_enc, const struct ENC *enc, double beta)
 {
 	double delta, wa, ei, ej, ek, dr;
 
