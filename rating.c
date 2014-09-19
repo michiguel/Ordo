@@ -173,93 +173,27 @@ adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, i
 	}
 }
 
-
-
-/*
 static double
-overallerror_fwadv (double wadv)
-{
-	int i;
-	double e, e2, f, rw, rb;
-	double s[3];
-
-	s[WHITE_WIN] = 1.0;
-	s[BLACK_WIN] = 0.0;
-	s[RESULT_DRAW] = 0.5;
-
-	assert (WHITE_WIN < 3);
-	assert (BLACK_WIN < 3);
-	assert (RESULT_DRAW < 3);
-	assert (DISCARD > 2);
-
-	e2 = 0;
-
-	for (i = 0; i < N_games; i++) {
-
-		if (Score[i] > 2) continue;
-
-		rw = Ratingof[Whiteplayer[i]];
-		rb = Ratingof[Blackplayer[i]];
-
-		f = xpect (rw + wadv, rb);
-
-		e   = f - s[Score[i]];
-		e2 += e * e;
-	}
-
-	return e2;
-}
-*/
-
-#if 0
-static double
-overallerrorE_fwadv (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv)
+overallerrorE_fwadv (int N_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv)
 {
 	int e, w, b;
 	double dp2, f;
-	double wperf ,dp;
-	double fobs;
-
-	dp2 = 0;
-	for (e = 0; e < N_enc; e++) {
+	for (dp2 = 0, e = 0; e < N_enc; e++) {
 		w = enc[e].wh;
 		b = enc[e].bl;
 		f = xpect (ratingof[w] + wadv, ratingof[b], beta);
-		wperf = enc[e].played * f;
-		dp = wperf - enc[e].wscore; 
-		dp2 += dp * dp;
+		dp2 +=	enc[e].W * (1.0 - f) * (1.0 - f)
+		+		enc[e].D * (0.5 - f) * (0.5 - f)
+		+		enc[e].L * (0.0 - f) * (0.0 - f)
+		;
 	}
-
 	return dp2;
 }
-#else
-static double
-overallerrorE_fwadv (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv)
-{
-	int e, w, b;
-	double dp2, f;
-
-	dp2 = 0;
-	for (e = 0; e < N_enc; e++) {
-		w = enc[e].wh;
-		b = enc[e].bl;
-		f = xpect (ratingof[w] + wadv, ratingof[b], beta);
-
-dp2 +=	enc[e].W * (1.0 - f) * (1.0 - f)
-+		enc[e].D * (0.5 - f) * (0.5 - f)
-+		enc[e].L * (0.0 - f) * (0.0 - f)
-;
-
-	}
-
-	return dp2;
-}
-#endif
 
 #define START_DELTA 100
 
 static double
-adjust_wadv (double start_wadv, double *ratingof, int N_enc, const struct ENC *enc, double beta, double start_delta)
+adjust_wadv (double start_wadv, const double *ratingof, int N_enc, const struct ENC *enc, double beta, double start_delta)
 {
 	double delta, wa, ei, ej, ek;
 
@@ -268,15 +202,10 @@ adjust_wadv (double start_wadv, double *ratingof, int N_enc, const struct ENC *e
 
 	do {	
 
-#if 0
-		ei = overallerror_fwadv (wa - delta);
-		ej = overallerror_fwadv (wa);
-		ek = overallerror_fwadv (wa + delta);
-#else
 		ei = overallerrorE_fwadv (N_enc, enc, ratingof, beta, wa - delta);
 		ej = overallerrorE_fwadv (N_enc, enc, ratingof, beta, wa + 0    );     
 		ek = overallerrorE_fwadv (N_enc, enc, ratingof, beta, wa + delta);
-#endif
+
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 2;
 		} else
@@ -294,7 +223,6 @@ adjust_wadv (double start_wadv, double *ratingof, int N_enc, const struct ENC *e
 	
 	return wa;
 }
-
 
 //============ center adjustment begin
 
