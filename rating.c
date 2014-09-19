@@ -563,7 +563,11 @@ if (changed) {
 		if (!quiet) printf ("done\n");
 
 		if (adjust_white_advantage) {
+
+{int z = 20;
+while (z-->0) {
 				white_adv = adjust_wadv (white_adv, Ratingof, N_enc, enc, BETA, doneonce? resol: START_DELTA);
+}{			
 				doneonce = TRUE;
 				wa_progress = wa_previous > white_adv? wa_previous - white_adv: white_adv - wa_previous;
 				wa_previous = white_adv;
