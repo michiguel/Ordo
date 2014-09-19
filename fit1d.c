@@ -95,33 +95,52 @@ quadfit1d_2 (double limit, double a, double b, double (*unfitnessf)(double, cons
 
 		if (equality) {
 			// do nothing
+			y[0] = unfitnessf( x[0], p);
 		} else if (rightchop < 2 && leftchop < 2) {
 
 			x[0] = parabolic_center_x (x, y);
 			if (x[0] <= x[1] || x[0] >= x[3]) {
 				x[0] = (x[1] + x[3]) / 2; 
 			}
+			y[0] = unfitnessf( x[0], p);
 
 		} else {
-			x[0] = (x[2] + (leftchop==0?x[1]:x[3]) ) / 2;
-		}
+			double half = (x[3]-x[1])/2;
+			x[0] = x[2];
 
-		y[0] = unfitnessf( x[0], p);
+			if (x[3]-x[2] > 2*(x[2]-x[1]) ) { // lower third
+
+				do {
+					x[0] = x[0] + (x[0] - x[1]);
+					y[0] = unfitnessf( x[0], p);
+				} while (x[0] < half && y[0] <= y[2]);
+
+			} else 
+			if (x[3]-x[2] < (x[2]-x[1])/2 ) { // upper third
+
+				do {
+					x[0] = x[0] - (x[3] - x[0]);
+					y[0] = unfitnessf( x[0], p);
+				} while (x[0] > half && y[0] <= y[2]);
+
+			} else {
+				x[0] = (x[2] + (leftchop==0?x[1]:x[3]) ) / 2;
+				y[0] = unfitnessf( x[0], p);
+			}
+		}
 
 	} while (absol(x[3]-x[1]) > limit);	
 
 	return x[2];
 }
 
-
-
 //=======
 
-
 double
-quadfit1d_  (double limit, double a, double b, double (*unfitnessf)(double, const void *), const void *p)
+quadfit1d_2_ (double limit, double a, double b, double (*unfitnessf)(double, const void *), const void *p)
 {	
-	bool_t rightchop_old = FALSE, rightchop_cur = FALSE, equality = FALSE;
+	long int rightchop=0, leftchop=0;
+	bool_t equality = FALSE;
 	int i;
 	double x[4];
 	double y[4];
@@ -144,23 +163,22 @@ quadfit1d_  (double limit, double a, double b, double (*unfitnessf)(double, cons
 		assert (!(x[1] > x[2] || x[2] > x[3] || x[1] > x[3]));
 
 		equality = FALSE;
-		rightchop_old = rightchop_cur;
 
-		if (x[0] < x[2] && y[0] <= y[2]) { rightchop_cur = TRUE;
+		if (x[0] < x[2] && y[0] <= y[2]) { rightchop++; leftchop=0;
 			x[3] = x[2];
 			y[3] = y[2];	
 			x[2] = x[0];
 			y[2] = y[0];
 		} else
-		if (x[0] > x[2] && y[0] > y[2]) { rightchop_cur = TRUE;
+		if (x[0] > x[2] && y[0] >  y[2]) { rightchop++; leftchop=0;
 			x[3] = x[0];
 			y[3] = y[0];
 		} else
-		if (x[0] < x[2] && y[0] > y[2]) { rightchop_cur = FALSE;
+		if (x[0] < x[2] && y[0] >  y[2]) { rightchop=0; leftchop++;
 			x[1] = x[0];
 			y[1] = y[0];
 		} else
-		if (x[0] > x[2] && y[0] <= y[2]) { rightchop_cur = FALSE;
+		if (x[0] > x[2] && y[0] <= y[2]) { rightchop=0; leftchop++;
 			x[1] = x[2];
 			y[1] = y[2];
 			x[2] = x[0];
@@ -171,7 +189,7 @@ quadfit1d_  (double limit, double a, double b, double (*unfitnessf)(double, cons
 
 		if (equality) {
 			// do nothing
-		} else if (rightchop_old != rightchop_cur) {
+		} else if (rightchop < 2 && leftchop < 2) {
 
 			x[0] = parabolic_center_x (x, y);
 			if (x[0] <= x[1] || x[0] >= x[3]) {
@@ -179,7 +197,7 @@ quadfit1d_  (double limit, double a, double b, double (*unfitnessf)(double, cons
 			}
 
 		} else {
-			x[0] = (x[2] + (rightchop_cur?x[1]:x[3]) ) / 2;
+			x[0] = (x[2] + (leftchop==0?x[1]:x[3]) ) / 2;
 		}
 
 		y[0] = unfitnessf( x[0], p);
@@ -188,7 +206,6 @@ quadfit1d_  (double limit, double a, double b, double (*unfitnessf)(double, cons
 
 	return x[2];
 }
-
 //============ center adjustment begin
 
 double
