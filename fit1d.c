@@ -45,7 +45,8 @@ parabolic_center_x (double *x, double *y)
 double
 quadfit1d_2 (double limit, double a, double b, double (*unfitnessf)(double, const void *), const void *p)
 {	
-	bool_t rightchop_old = FALSE, rightchop_cur = FALSE, equality = FALSE;
+	long int rightchop=0, leftchop=0;
+	bool_t equality = FALSE;
 	int i;
 	double x[4];
 	double y[4];
@@ -68,23 +69,22 @@ quadfit1d_2 (double limit, double a, double b, double (*unfitnessf)(double, cons
 		assert (!(x[1] > x[2] || x[2] > x[3] || x[1] > x[3]));
 
 		equality = FALSE;
-		rightchop_old = rightchop_cur;
 
-		if (x[0] < x[2] && y[0] <= y[2]) { rightchop_cur = TRUE;
+		if (x[0] < x[2] && y[0] <= y[2]) { rightchop++; leftchop=0;
 			x[3] = x[2];
 			y[3] = y[2];	
 			x[2] = x[0];
 			y[2] = y[0];
 		} else
-		if (x[0] > x[2] && y[0] > y[2]) { rightchop_cur = TRUE;
+		if (x[0] > x[2] && y[0] >  y[2]) { rightchop++; leftchop=0;
 			x[3] = x[0];
 			y[3] = y[0];
 		} else
-		if (x[0] < x[2] && y[0] > y[2]) { rightchop_cur = FALSE;
+		if (x[0] < x[2] && y[0] >  y[2]) { rightchop=0; leftchop++;
 			x[1] = x[0];
 			y[1] = y[0];
 		} else
-		if (x[0] > x[2] && y[0] <= y[2]) { rightchop_cur = FALSE;
+		if (x[0] > x[2] && y[0] <= y[2]) { rightchop=0; leftchop++;
 			x[1] = x[2];
 			y[1] = y[2];
 			x[2] = x[0];
@@ -95,7 +95,7 @@ quadfit1d_2 (double limit, double a, double b, double (*unfitnessf)(double, cons
 
 		if (equality) {
 			// do nothing
-		} else if (rightchop_old != rightchop_cur) {
+		} else if (rightchop < 2 && leftchop < 2) {
 
 			x[0] = parabolic_center_x (x, y);
 			if (x[0] <= x[1] || x[0] >= x[3]) {
@@ -103,7 +103,7 @@ quadfit1d_2 (double limit, double a, double b, double (*unfitnessf)(double, cons
 			}
 
 		} else {
-			x[0] = (x[2] + (rightchop_cur?x[1]:x[3]) ) / 2;
+			x[0] = (x[2] + (leftchop==0?x[1]:x[3]) ) / 2;
 		}
 
 		y[0] = unfitnessf( x[0], p);
@@ -208,9 +208,11 @@ quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const 
 
 		if (ei >= ej && ej <= ek) {
 
-			delta = delta / 4;
-			ei = unfitnessf	( cente - delta, p);
-			ek = unfitnessf	( cente + delta, p);
+			return quadfit1d_2 (limit, cente - delta, cente + delta, unfitnessf, p);
+
+//			delta = delta / 4;
+//			ei = unfitnessf	( cente - delta, p);
+//			ek = unfitnessf	( cente + delta, p);
 
 		} else
 		if (ej >= ei && ei <= ek) {

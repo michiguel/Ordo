@@ -477,7 +477,7 @@ calc_rating2 	( bool_t 		quiet
 )
 {
 
-static double ratingtmp[MAXPLAYERS];
+static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 
 	double 	olddev, curdev, outputdev;
 	int 	i;
@@ -604,11 +604,6 @@ changed = optimum_centerdelta
 changed = changed && absol(cd) > MIN_RESOL;
 
 if (changed) {
-	
-#if defined(SHOWPROGj)
-	printf("cd=%.8lf\n",cd);
-//	if (i == 3) exit(0);
-#endif
 	mobile_center_apply_excess (cd, N_players, Flagged, Prefed, Ratingof);
 }
 				failed = failed && !changed;
