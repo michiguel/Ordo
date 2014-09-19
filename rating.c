@@ -576,7 +576,7 @@ double cd = 400;
 					failed = TRUE;
 				};	
 
-{int zz = 20;
+{int zz = 1;
 while (zz-->0)
 cd = optimum_centerdelta	
 					( 100.0
