@@ -467,7 +467,9 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 
 		while (n-->0) {
 			double kk = 1.0;
-			double cd;
+			double cd, last_cd;
+	
+			last_cd = 100;
 
 			for (i = 0; i < rounds; i++) {
 				bool_t failed = FALSE;
@@ -505,7 +507,7 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 				{int zz = 1;
 				while (zz-->0)
 				cd = optimum_centerdelta	
-					( 100.0
+					( last_cd
 					, min_resol //kk*delta/1000
 					, enc
 					, N_enc
@@ -521,6 +523,8 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 					, ratingtmp
 					);
 				}
+
+				last_cd = cd;
 
 				if (absol(cd) > MIN_RESOL) {
 					mobile_center_apply_excess (cd, N_players, Flagged, Prefed, Ratingof);
