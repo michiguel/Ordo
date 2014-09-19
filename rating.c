@@ -320,22 +320,6 @@ unfitness		( const struct ENC *enc
 		return dev;
 }
 
-#if 0
-static double
-mobile_center_get (long n_players, const bool_t *flagged, const bool_t *prefed, const double *ratingof)
-{
-	double accum = 0;
-	long j, n = 0;
-	for (j = 0; j < n_players; j++) {
-		if (!flagged[j] && !prefed[j]) {
-			accum += ratingof[j];
-			n++;
-		}
-	}	
-	return accum/(double)n;
-}
-#endif
-
 static void
 mobile_center_apply_excess (double excess, long n_players, const bool_t *flagged, const bool_t *prefed, double *ratingof)
 {
@@ -385,289 +369,71 @@ unfitness_fcenter 	( double excess
 
 static double absol(double x) {return x >= 0? x: -x;}
 
-//#define SHOWPROG
-//#define SHOWPROGi
-//#define SHOWPROGj
+#include "fit1d.h"
+
+struct UNFITPAR {
+	const struct ENC *	enc;
+	int 				n_enc;
+	int					n_players;
+	const double *		ratingof;
+	const bool_t *		flagged;
+	const bool_t *		prefed;
+	double				white_adv;
+	double				beta;
+	double *			obtained;
+	double *			expected;
+	int *				playedby;
+	double *			ratingtmp;
+};
 
 static double
-quadfit (
-					double x1, double x2, double x3
-					, const struct ENC *enc
-					, int 			n_enc
-					, int			n_players
-					, const double *ratingof
-					, const bool_t *flagged
-					, const bool_t *prefed
-					, double		white_adv
-					, double		beta
-
-					, double *		obtained
-					, double *		expected
-					, int *			playedby
-					, double 		*ratingtmp
-)
-{	
-	bool_t rightchop_old = FALSE, rightchop_cur = FALSE, equality = FALSE;
-	int i;
-	double x[4];
-	double y[4];
-	double y12, x12, y13, x13, s12, s13;
-int ii;
-
-	x[1] = x1;
-	x[2] = x2;
-	x[3] = x3;
-
-
-	for (i = 1; i < 4; i++) {
-		y[i] = unfitness_fcenter( x[i]
-								, enc, n_enc, n_players, ratingof, flagged, prefed
-								, white_adv, beta, obtained, expected, playedby, ratingtmp);
-	}
-
-#if defined(SHOWPROGi)
-	printf ("\nquadfit\n");
-	printf ("x= %lf, %lf, %lf\n", x[1], x[2], x[3]);
-	printf ("y= %lf, %lf, %lf\n", y[1], y[2], y[3]);
-#endif
-
-		y12 = y[1] - y[2];
-		x12 = x[1] - x[2];
-		y13 = y[1] - y[3];
-		x13 = x[1] - x[3];
-		s12 = x[1]*x[1] - x[2]*x[2];
-		s13 = x[1]*x[1] - x[3]*x[3];
-
-		x[0] = ((y13*s12 - y12*s13) / (y13*x12 - y12*x13))/2;
-		y[0] = unfitness_fcenter( x[0]
-								, enc, n_enc, n_players, ratingof, flagged, prefed
-								, white_adv, beta, obtained, expected, playedby, ratingtmp);
-
-if (x[0] < x[1] || x[0] > x[3]) {
-		x[0] = (x[1] + x[3]) / 2; 
-		y[0] = unfitness_fcenter( x[0]
-								, enc, n_enc, n_players, ratingof, flagged, prefed
-								, white_adv, beta, obtained, expected, playedby, ratingtmp);
-}
-
-
-ii=0;
-	do {
-ii++;
-
-#if defined(SHOWPROGi)
-	printf ("\n           0= %lf\n", x[0]);
-	printf ("working... x= %lf, %lf, %lf\n", x[1], x[2], x[3]);
-#endif
-
-if (x[1] > x[2] || x[2] > x[3] || x[1] > x[3]) {
-	printf ("wrror\n");
-	exit(0);
-}
-
-
-
-equality = FALSE;
-		rightchop_old = rightchop_cur;
-
-		if (x[0] < x[2] && y[0] <= y[2]) { rightchop_cur = TRUE;
-			x[3] = x[2];
-			y[3] = y[2];	
-			x[2] = x[0];
-			y[2] = y[0];
-		} else
-		if (x[0] > x[2] && y[0] > y[2]) { rightchop_cur = TRUE;
-			x[3] = x[0];
-			y[3] = y[0];
-		} else
-		if (x[0] < x[2] && y[0] > y[2]) { rightchop_cur = FALSE;
-			x[1] = x[0];
-			y[1] = y[0];
-		} else
-		if (x[0] > x[2] && y[0] <= y[2]) { rightchop_cur = FALSE;
-			x[1] = x[2];
-			y[1] = y[2];
-			x[2] = x[0];
-			y[2] = y[0];
-		} else {						  equality = TRUE;;
-
-//FIXME should not be here
-
-		x[0] = (x[1] + x[3])/2;
-
-		}
-
-
-#if defined(SHOWPROGi)
-	printf ("direction   = %s\n", rightchop_cur? "right": "left");
-#endif
-
-
-
-if (equality) {
-
-
-} else 
-
-if (rightchop_old != rightchop_cur) {
-
-		y12 = y[1] - y[2];
-		x12 = x[1] - x[2];
-		y13 = y[1] - y[3];
-		x13 = x[1] - x[3];
-		s12 = x[1]*x[1] - x[2]*x[2];
-		s13 = x[1]*x[1] - x[3]*x[3];
-
-		x[0] = ((y13*s12 - y12*s13) / (y13*x12 - y12*x13))/2;
-
-		if (x[0] <= x[1] || x[0] >= x[3]) {
-			x[0] = (x[1] + x[3]) / 2; 
-			//printf ("*******************************\n");
-			//exit(0);
-		}
-
-} else {
-
-	if (rightchop_cur) {
-
-		x[0] = (x[2] + x[1]) / 2;
-
-	} else {
-
-		x[0] = (x[2] + x[3]) / 2;
-
-	}
-
-}
-
-
-		y[0] = unfitness_fcenter( x[0]
-								, enc, n_enc, n_players, ratingof, flagged, prefed
-								, white_adv, beta, obtained, expected, playedby, ratingtmp);
-
-
-	} while (absol(x[3]-x[1]) > MIN_RESOL);	
-
-#if defined(SHOWPROGi)
-	printf ("end x= %lf, %lf, %lf\n", x[1], x[2], x[3]);
-	printf ("end y= %lf, %lf, %lf\n", y[1], y[2], y[3]);
-#endif
-
-	return x[2];
+unfitf (double x, const void *p)
+{
+	const struct UNFITPAR *q = p;
+	return
+	unfitness_fcenter 	(x
+						, q->enc, q->n_enc, q->n_players, q->ratingof, q->flagged, q->prefed
+						, q->white_adv, q->beta, q->obtained, q->expected, q->playedby, q->ratingtmp);
 }
 
 static bool_t
-optimum_centerdelta	( double start_delta
-					, double end_delta
+optimum_centerdelta	( double 			start_delta
+					, double 			end_delta
 					, const struct ENC *enc
-					, int 			n_enc
-					, int			n_players
-					, const double *ratingof
-					, const bool_t *flagged
-					, const bool_t *prefed
-					, double		white_adv
-					, double		beta
-
-					, double *		obtained
-					, double *		expected
-					, int *			playedby
-					, double 		*ratingtmp
-					, double		*optimum
+					, int 				n_enc
+					, int				n_players
+					, const double *	ratingof
+					, const bool_t *	flagged
+					, const bool_t *	prefed
+					, double			white_adv
+					, double			beta
+					, double *			obtained
+					, double *			expected
+					, int *				playedby
+					, double *			ratingtmp
+					, double *			optimum
 					)
 {
-	double excess;
-	double delta, ei, ej, ek;
-	bool_t modified = FALSE;
+	double z;
+	struct UNFITPAR p;
+	p.enc 		= enc;
+	p.n_enc	= n_enc;
+	p.n_players= n_players;
+	p.ratingof	= ratingof;
+	p.flagged	= flagged;
+	p.prefed	= prefed;
+	p.white_adv= white_adv;
+	p.beta		= beta;
+	p.obtained	= obtained;
+	p.expected	= expected;
+	p.playedby	= playedby;
+	p.ratingtmp= ratingtmp;
 
-	delta = start_delta;
-	excess = 0;
+	z = quadfit1d (end_delta, -start_delta, start_delta, unfitf, &p);
 
-
-		ei = unfitness_fcenter 	( excess - delta
-								, enc, n_enc, n_players, ratingof, flagged, prefed
-								, white_adv, beta, obtained, expected, playedby, ratingtmp);
-		ej = unfitness_fcenter 	( excess 
-								, enc, n_enc, n_players, ratingof, flagged, prefed
-								, white_adv, beta, obtained, expected, playedby, ratingtmp);
-		ek = unfitness_fcenter 	( excess + delta
-								, enc, n_enc, n_players, ratingof, flagged, prefed
-								, white_adv, beta, obtained, expected, playedby, ratingtmp);
-#if defined(SHOWPROG)
-printf ("ei=%lf ej=%lf ek=%lf\n",ei,ej,ek);
-printf ("excess=%lf delta=%lf\n\n",excess,delta);
-#endif
-
-	do {	
-
-		if (ei >= ej && ej <= ek) {
-#if 0
-			delta = delta / 4;
-
-			ei = unfitness_fcenter 	( excess - delta
-									, enc, n_enc, n_players, ratingof, flagged, prefed
-									, white_adv, beta, obtained, expected, playedby, ratingtmp);
-			ek = unfitness_fcenter 	( excess + delta
-									, enc, n_enc, n_players, ratingof, flagged, prefed
-									, white_adv, beta, obtained, expected, playedby, ratingtmp);
-#else
-
-#if defined(SHOWPROG)
-//printf ("\n--->\nei=%lf ej=%lf ek=%lf\n",ei,ej,ek);
-//printf ("excess=%lf delta=%lf\n\n",excess,delta);
-#endif
-
-*optimum =
-quadfit (
-					excess - delta, excess, excess + delta
-					, enc
-					, n_enc
-					, n_players
-					, ratingof
-					, flagged
-					, prefed
-					, white_adv
-					, beta
-					, obtained
-					, expected
-					, playedby
-					, ratingtmp
-);
-
-
-return TRUE;
-
-#endif
-		} else
-		if (ej >= ei && ei <= ek) {
-			modified = TRUE;
-			excess -= delta;
-
-			ek = ej;
-			ej = ei; 
-			ei = unfitness_fcenter 	( excess - delta
-									, enc, n_enc, n_players, ratingof, flagged, prefed
-									, white_adv, beta, obtained, expected, playedby, ratingtmp);
-		} else
-		if (ei >= ek && ek <= ej) {
-			modified = TRUE;
-			excess += delta;
-
-			ei = ej;
-			ej = ek;
-			ek = unfitness_fcenter 	( excess + delta
-									, enc, n_enc, n_players, ratingof, flagged, prefed
-									, white_adv, beta, obtained, expected, playedby, ratingtmp);
-		}
-
-	} while (
-		delta > end_delta 
-	);
-	
-	*optimum = excess;
-
-	return modified;
+	*optimum = z;
+	return TRUE;
 }
-
 //============ center adjustment end
 
 
