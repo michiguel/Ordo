@@ -380,7 +380,14 @@ unfitness_fcenter 	( double excess
 	return u;
 }
 
+#define MIN_DEVIA 0.000000001
+#define MIN_RESOL 0.000001
+
 static double absol(double x) {return x >= 0? x: -x;}
+
+//#define SHOWPROG
+//#define SHOWPROGi
+//#define SHOWPROGj
 
 static double
 quadfit (
@@ -399,17 +406,18 @@ quadfit (
 					, int *			playedby
 					, double 		*ratingtmp
 )
-{
+{	
+	bool_t rightchop_old = FALSE, rightchop_cur = FALSE, equality = FALSE;
 	int i;
 	double x[4];
 	double y[4];
 	double y12, x12, y13, x13, s12, s13;
+int ii;
 
 	x[1] = x1;
 	x[2] = x2;
 	x[3] = x3;
 
-	printf ("x= %lf, %lf, %lf\n", x[1], x[2], x[3]);
 
 	for (i = 1; i < 4; i++) {
 		y[i] = unfitness_fcenter( x[i]
@@ -417,9 +425,12 @@ quadfit (
 								, white_adv, beta, obtained, expected, playedby, ratingtmp);
 	}
 
+#if defined(SHOWPROGi)
+	printf ("\nquadfit\n");
+	printf ("x= %lf, %lf, %lf\n", x[1], x[2], x[3]);
 	printf ("y= %lf, %lf, %lf\n", y[1], y[2], y[3]);
+#endif
 
-	do {
 		y12 = y[1] - y[2];
 		x12 = x[1] - x[2];
 		y13 = y[1] - y[3];
@@ -427,34 +438,120 @@ quadfit (
 		s12 = x[1]*x[1] - x[2]*x[2];
 		s13 = x[1]*x[1] - x[3]*x[3];
 
-		x[0] = (y13*s12 - y12*s13) / (y13*x12 - y12*x13);
-		x[0] = x[0]/2;
-
+		x[0] = ((y13*s12 - y12*s13) / (y13*x12 - y12*x13))/2;
 		y[0] = unfitness_fcenter( x[0]
 								, enc, n_enc, n_players, ratingof, flagged, prefed
 								, white_adv, beta, obtained, expected, playedby, ratingtmp);
 
-		if (x[0] < x[2] && y[0] < y[2]) {
+if (x[0] < x[1] || x[0] > x[3]) {
+		x[0] = (x[1] + x[3]) / 2; 
+		y[0] = unfitness_fcenter( x[0]
+								, enc, n_enc, n_players, ratingof, flagged, prefed
+								, white_adv, beta, obtained, expected, playedby, ratingtmp);
+}
+
+
+ii=0;
+	do {
+ii++;
+
+#if defined(SHOWPROGi)
+	printf ("\n           0= %lf\n", x[0]);
+	printf ("working... x= %lf, %lf, %lf\n", x[1], x[2], x[3]);
+#endif
+
+if (x[1] > x[2] || x[2] > x[3] || x[1] > x[3]) {
+	printf ("wrror\n");
+	exit(0);
+}
+
+
+
+equality = FALSE;
+		rightchop_old = rightchop_cur;
+
+		if (x[0] < x[2] && y[0] <= y[2]) { rightchop_cur = TRUE;
 			x[3] = x[2];
 			y[3] = y[2];	
 			x[2] = x[0];
 			y[2] = y[0];
 		} else
-		if (x[0] > x[2] && y[0] > y[2]) {
+		if (x[0] > x[2] && y[0] > y[2]) { rightchop_cur = TRUE;
 			x[3] = x[0];
 			y[3] = y[0];
 		} else
-		if (x[0] < x[2] && y[0] > y[2]) {
+		if (x[0] < x[2] && y[0] > y[2]) { rightchop_cur = FALSE;
 			x[1] = x[0];
 			y[1] = y[0];
-		} else {
+		} else
+		if (x[0] > x[2] && y[0] <= y[2]) { rightchop_cur = FALSE;
 			x[1] = x[2];
 			y[1] = y[2];
 			x[2] = x[0];
 			y[2] = y[0];
+		} else {						  equality = TRUE;;
+
+//FIXME should not be here
+
+		x[0] = (x[1] + x[3])/2;
+
 		}
 
-	} while (absol(x[3]-x[1]) > 0.000001);	
+
+#if defined(SHOWPROGi)
+	printf ("direction   = %s\n", rightchop_cur? "right": "left");
+#endif
+
+
+
+if (equality) {
+
+
+} else 
+
+if (rightchop_old != rightchop_cur) {
+
+		y12 = y[1] - y[2];
+		x12 = x[1] - x[2];
+		y13 = y[1] - y[3];
+		x13 = x[1] - x[3];
+		s12 = x[1]*x[1] - x[2]*x[2];
+		s13 = x[1]*x[1] - x[3]*x[3];
+
+		x[0] = ((y13*s12 - y12*s13) / (y13*x12 - y12*x13))/2;
+
+		if (x[0] <= x[1] || x[0] >= x[3]) {
+			x[0] = (x[1] + x[3]) / 2; 
+			//printf ("*******************************\n");
+			//exit(0);
+		}
+
+} else {
+
+	if (rightchop_cur) {
+
+		x[0] = (x[2] + x[1]) / 2;
+
+	} else {
+
+		x[0] = (x[2] + x[3]) / 2;
+
+	}
+
+}
+
+
+		y[0] = unfitness_fcenter( x[0]
+								, enc, n_enc, n_players, ratingof, flagged, prefed
+								, white_adv, beta, obtained, expected, playedby, ratingtmp);
+
+
+	} while (absol(x[3]-x[1]) > MIN_RESOL);	
+
+#if defined(SHOWPROGi)
+	printf ("end x= %lf, %lf, %lf\n", x[1], x[2], x[3]);
+	printf ("end y= %lf, %lf, %lf\n", y[1], y[2], y[3]);
+#endif
 
 	return x[2];
 }
@@ -495,10 +592,15 @@ optimum_centerdelta	( double start_delta
 		ek = unfitness_fcenter 	( excess + delta
 								, enc, n_enc, n_players, ratingof, flagged, prefed
 								, white_adv, beta, obtained, expected, playedby, ratingtmp);
+#if defined(SHOWPROG)
+printf ("ei=%lf ej=%lf ek=%lf\n",ei,ej,ek);
+printf ("excess=%lf delta=%lf\n\n",excess,delta);
+#endif
 
 	do {	
 
 		if (ei >= ej && ej <= ek) {
+#if 0
 			delta = delta / 4;
 
 			ei = unfitness_fcenter 	( excess - delta
@@ -507,19 +609,44 @@ optimum_centerdelta	( double start_delta
 			ek = unfitness_fcenter 	( excess + delta
 									, enc, n_enc, n_players, ratingof, flagged, prefed
 									, white_adv, beta, obtained, expected, playedby, ratingtmp);
+#else
 
+#if defined(SHOWPROG)
+//printf ("\n--->\nei=%lf ej=%lf ek=%lf\n",ei,ej,ek);
+//printf ("excess=%lf delta=%lf\n\n",excess,delta);
+#endif
+
+*optimum =
+quadfit (
+					excess - delta, excess, excess + delta
+					, enc
+					, n_enc
+					, n_players
+					, ratingof
+					, flagged
+					, prefed
+					, white_adv
+					, beta
+					, obtained
+					, expected
+					, playedby
+					, ratingtmp
+);
+
+
+return TRUE;
+
+#endif
 		} else
 		if (ej >= ei && ei <= ek) {
 			modified = TRUE;
 			excess -= delta;
 
+			ek = ej;
+			ej = ei; 
 			ei = unfitness_fcenter 	( excess - delta
 									, enc, n_enc, n_players, ratingof, flagged, prefed
 									, white_adv, beta, obtained, expected, playedby, ratingtmp);
-			ej = ei; 
-			ek = ej;
-
-
 		} else
 		if (ei >= ek && ek <= ej) {
 			modified = TRUE;
@@ -530,7 +657,6 @@ optimum_centerdelta	( double start_delta
 			ek = unfitness_fcenter 	( excess + delta
 									, enc, n_enc, n_players, ratingof, flagged, prefed
 									, white_adv, beta, obtained, expected, playedby, ratingtmp);
-
 		}
 
 	} while (
@@ -545,8 +671,7 @@ optimum_centerdelta	( double start_delta
 //============ center adjustment end
 
 
-#define MIN_DEVIA 0.000000001
-#define MIN_RESOL 0.000001
+
 
 int
 calc_rating2 	( bool_t 		quiet
@@ -690,9 +815,11 @@ double cd = 400;
 					failed = TRUE;
 				};	
 
+{int zz = 1;
+while (zz-->0)
 changed = optimum_centerdelta	
 					( 100.0
-					, min_devia //kk*delta/1000
+					, min_resol //kk*delta/1000
 					, enc
 					, N_enc
 					, N_players
@@ -706,9 +833,18 @@ changed = optimum_centerdelta
 					, Playedby
 					, ratingtmp
 					, &cd);
+}
 
-if (changed) mobile_center_apply_excess (cd, N_players, Flagged, Prefed, Ratingof);
+changed = changed && absol(cd) > MIN_RESOL;
 
+if (changed) {
+	
+#if defined(SHOWPROGj)
+	printf("cd=%.8lf\n",cd);
+//	if (i == 3) exit(0);
+#endif
+	mobile_center_apply_excess (cd, N_players, Flagged, Prefed, Ratingof);
+}
 				failed = failed && !changed;
 
 				if (failed) break;
