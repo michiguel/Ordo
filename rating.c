@@ -467,12 +467,10 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 
 		while (n-->0) {
 			double kk = 1.0;
-
-double cd = 400;
+			double cd;
 
 			for (i = 0; i < rounds; i++) {
 				bool_t failed = FALSE;
-				bool_t changed;
 
 				ratings_backup(N_players, Ratingof, Ratingbk);
 				olddev = curdev;
@@ -504,9 +502,9 @@ double cd = 400;
 					failed = TRUE;
 				};	
 
-{int zz = 1;
-while (zz-->0)
-cd = optimum_centerdelta	
+				{int zz = 1;
+				while (zz-->0)
+				cd = optimum_centerdelta	
 					( 100.0
 					, min_resol //kk*delta/1000
 					, enc
@@ -522,14 +520,12 @@ cd = optimum_centerdelta
 					, Playedby
 					, ratingtmp
 					);
-}
+				}
 
-changed = absol(cd) > MIN_RESOL;
-
-if (changed) {
-	mobile_center_apply_excess (cd, N_players, Flagged, Prefed, Ratingof);
-}
-				failed = failed && !changed;
+				if (absol(cd) > MIN_RESOL) {
+					mobile_center_apply_excess (cd, N_players, Flagged, Prefed, Ratingof);
+					failed = FALSE;
+				}
 
 				if (failed) break;
 

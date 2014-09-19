@@ -135,46 +135,43 @@ double
 quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const void *), const void *p)
 {
 	double cente = (a+b)/2;
-	double delta = (b>a?b-a:a-b)/2;
+	double delta_neg, delta_pos;
 	double ei, ej, ek;
+	
+	delta_pos = delta_neg = (b>a?b-a:a-b)/2;
 
-	cente = 0;
+	ei = unfitnessf	(cente - delta_neg, p);
+	ej = unfitnessf	(cente            , p);
+	ek = unfitnessf	(cente + delta_pos, p);
 
-	ei = unfitnessf	(cente - delta, p);
-	ej = unfitnessf	(cente        , p);
-	ek = unfitnessf	(cente + delta, p);
-
-	do {	
+	for (;;) {	
 
 		if (ei >= ej && ej <= ek) {
 
-			return quadfit1d_2 (limit, cente - delta, cente + delta, unfitnessf, p);
+			return quadfit1d_2 (limit, cente - delta_neg, cente + delta_pos, unfitnessf, p);
 
 		} else
 		if (ej >= ei && ei <= ek) {
 
-			cente -= delta;
+			delta_neg *= 2;
 
 			ek = ej;
 			ej = ei; 
-			ei = unfitnessf	( cente - delta, p);
+			ei = unfitnessf	( cente - delta_neg, p);
 
 		} else
 		if (ei >= ek && ek <= ej) {
 
-			cente += delta;
+			delta_pos *= 2;
 
 			ei = ej;
 			ej = ek;
-			ek = unfitnessf	( cente + delta, p);
+			ek = unfitnessf	( cente + delta_pos, p);
 
 		}
 
-	} while (
-		delta > limit 
-	);
+	} 
 
-	return cente;
 }
 
 //============ center adjustment end
