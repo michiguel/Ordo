@@ -30,6 +30,10 @@
 
 #include "datatype.h"
 
+#if !defined(NDEBUG)
+static bool_t is_nan (double x) {if (x != x) return TRUE; else return FALSE;}
+#endif
+
 #if 1
 #define CALCIND_SWSL
 #endif
@@ -245,6 +249,7 @@ unfitness		( const struct ENC *enc
 		double dev;
 		calc_expected (enc, n_enc, white_adv, n_players, ratingof, expected, beta);
 		dev = deviation (n_players, flagged, expected, obtained, playedby);
+		assert(!is_nan(dev));
 		return dev;
 }
 
@@ -252,6 +257,7 @@ static void
 mobile_center_apply_excess (double excess, long n_players, const bool_t *flagged, const bool_t *prefed, double *ratingof)
 {
 	long j;
+	assert(!is_nan(excess));
 	for (j = 0; j < n_players; j++) {
 		if (!flagged[j] && !prefed[j]) {
 			ratingof[j] += excess;
@@ -277,6 +283,7 @@ unfitness_fcenter 	( double excess
 					, double 	   *ratingtmp)
 {
 	double u;
+	assert(!is_nan(excess));
 	ratings_copy (ratingof, n_players, ratingtmp);
 	mobile_center_apply_excess (excess, n_players, flagged, prefed, ratingtmp);
 	u = unfitness	( enc
@@ -289,6 +296,7 @@ unfitness_fcenter 	( double excess
 					, obtained
 					, expected
 					, playedby);
+	assert(!is_nan(u));
 	return u;
 }
 
@@ -314,19 +322,25 @@ struct UNFITPAR {
 	double *			ratingtmp;
 };
 
+
 static double
 unfitf (double x, const void *p)
 {
+	double r;
 	const struct UNFITPAR *q = p;
-	return
-	unfitness_fcenter 	(x
+
+	assert(!is_nan(x));
+	r =	unfitness_fcenter 	(x
 						, q->enc, q->n_enc, q->n_players, q->ratingof, q->flagged, q->prefed
 						, q->white_adv, q->beta, q->obtained, q->expected, q->playedby, q->ratingtmp);
+	assert(!is_nan(r));
+
+	return r;
 }
 
 static double
 optimum_centerdelta	( double 			start_delta
-					, double 			end_delta
+					, double 			resolution
 					, const struct ENC *enc
 					, int 				n_enc
 					, int				n_players
@@ -341,21 +355,26 @@ optimum_centerdelta	( double 			start_delta
 					, double *			ratingtmp
 					)
 {
+	double d;
 	struct UNFITPAR p;
 	p.enc 		= enc;
-	p.n_enc	= n_enc;
-	p.n_players= n_players;
+	p.n_enc		= n_enc;
+	p.n_players	= n_players;
 	p.ratingof	= ratingof;
 	p.flagged	= flagged;
 	p.prefed	= prefed;
-	p.white_adv= white_adv;
+	p.white_adv	= white_adv;
 	p.beta		= beta;
 	p.obtained	= obtained;
 	p.expected	= expected;
 	p.playedby	= playedby;
 	p.ratingtmp= ratingtmp;
 
-	return quadfit1d (end_delta, -start_delta, start_delta, unfitf, &p);
+	d = absol (start_delta);
+
+	assert(!is_nan(resolution));
+	assert(!is_nan(d));
+	return quadfit1d (resolution, -d, d, unfitf, &p);
 }
 //============ center adjustment end
 
@@ -500,7 +519,7 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 					ratings_restore(N_players, Ratingbk, Ratingof);
 					calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
 					curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
-					assert (curdev == olddev);
+//					assert (curdev == olddev || !fprintf(stderr, "curdev=%8lf, olddev=%lf\n", curdev, olddev));
 					failed = TRUE;
 				};	
 
