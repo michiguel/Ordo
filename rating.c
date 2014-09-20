@@ -459,6 +459,8 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 
 	while (times-->0 && wa_progress > 0.01) {
 
+		bool_t done = FALSE;
+
 		rounds = 10000;
 		delta = 200.0;
 		kappa = 0.05;
@@ -519,7 +521,7 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 					ratings_restore(N_players, Ratingbk, Ratingof);
 					calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
 					curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
-//					assert (curdev == olddev || !fprintf(stderr, "curdev=%8lf, olddev=%lf\n", curdev, olddev));
+					assert (absol(curdev-olddev) < 1E-32 || !fprintf(stderr, "curdev=%8lf, olddev=%lf\n", curdev, olddev));
 					failed = TRUE;
 				};	
 
@@ -552,12 +554,13 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 
 				if (failed) break;
 
-				outputdev = 1000*sqrt(curdev/N_games);
-				if (outputdev < min_devia || (resol+cd) < min_resol) {
-					failed = TRUE;
-				}
+				calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
+				curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
 
-				if (failed) break;
+				outputdev = 1000*sqrt(curdev/N_games);
+				done = outputdev < min_devia || (resol+cd) < min_resol;
+
+				if (done || failed) break;
 
 				kk *= 0.995;
 
@@ -574,7 +577,7 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 			}
 			phase++;
 
-			if (outputdev < min_devia || resol < min_resol) {
+			if (done) {
 				break;
 			}
 		}
