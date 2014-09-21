@@ -897,12 +897,11 @@ int main (int argc, char *argv[])
 									, Score // out
 					);
 
-			relpriors_copy(Ra, N_relative_anchors, Ra_store);
-			priors_copy(PP, N_players, PP_store);
-			relpriors_shuffle(Ra, N_relative_anchors);
-			priors_shuffle(PP, N_players);
-
-			//priors_show (PP, N_players);
+					relpriors_copy(Ra, N_relative_anchors, Ra_store);
+					priors_copy(PP, N_players, PP_store);
+					relpriors_shuffle(Ra, N_relative_anchors);
+					priors_shuffle(PP, N_players);
+					//priors_show (PP, N_players);
 
 					#if defined(SAVE_SIMULATION)
 					if ((Simulate-z) == SAVE_SIMULATION_N) {
@@ -918,9 +917,8 @@ int main (int argc, char *argv[])
 					N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters, &White_advantage, FALSE, &sim_draw_rate);
 					ratings_for_purged ();
 
-			relpriors_copy(Ra_store, N_relative_anchors, Ra);
-			priors_copy(PP_store, N_players, PP);
-
+					relpriors_copy(Ra_store, N_relative_anchors, Ra);
+					priors_copy(PP_store, N_players, PP);
 
 					if (SIM_UPDATES && z == 0) {
 						int x = 51-astcount;
