@@ -99,14 +99,15 @@ find_parabolic_min_x (const double *x, const double *y, double *result)
 		return FALSE;
 
 	res = ((y13*s12 - y12*s13) / den)/2;
+	res += reference;
 	assert(!is_nan(res));
 
-	*result = res + reference;
+	*result = res;
 	return TRUE;
 }
 #endif
 
-#define Epsilon 0.0000001
+#define Epsilon 1E-7
 
 static double
 optimum_center (double *x, double *y)
@@ -122,8 +123,10 @@ optimum_center (double *x, double *y)
 		find_parabolic_min_x (x, y, &result)
 		) {
 		assert (result > x[1] 
-				|| !fprintf(stderr, "%.12le %.12le %.12le result=%.12le\n",x[1],x[2],x[3],result)
-				|| !fprintf(stderr, "%.12le %.12le %.12le \n",x[3]-x[2],x[2]-x[1],x[1]-result)
+				|| !fprintf(stderr, "\n\nx1=%.12le x2=%.12le x3=%.12le result=%.12le\n",x[1],x[2],x[3],result)
+				|| !fprintf(stderr, "y1=%.12le y2=%.12le y3=%.12le \n",y[1],y[2],y[3])
+				|| !fprintf(stderr, "dy1=%.12le dy2=%.12le dy3=%.12le \n",y[1]-y[1],y[2]-y[1],y[3]-y[1])
+				|| !fprintf(stderr, "x3-x1=%.12le x2-x1=%.12le result-x1=%.12le \n\n",x[3]-x[2],x[2]-x[1],result-x[1])
 		);
 		assert (result < x[3]);
 		return result;
@@ -200,26 +203,34 @@ quadfit1d_2 (double limit, double a, double b, double (*unfitnessf)(double, cons
 			y[0] = unfitnessf( x[0], p);
 
 		} else {
-			double half = (x[3]+x[1])/2;
+			double thirdlo = (1*x[3]+2*x[1])/3;
+			double thirdhi = (2*x[3]+1*x[1])/3;
+
 			x[0] = x[2];
 
+//printf ("TL=%lf\n", (thirdlo-x[1])/(x[3]-x[1]));
+//printf ("TH=%lf\n", (thirdhi-x[1])/(x[3]-x[1])); 
+
 			if (x[3]-x[2] > 2*(x[2]-x[1]) ) { // lower third
-printf ("lt\n");
+//printf ("lt %.12le %.12le %.12le [%lf]: ", x[1], x[2], x[3], (x[2]-x[1])/(x[3]-x[1])  );
 				do {
 					x[0] = x[0] + (x[0] - x[1]);
 					y[0] = unfitnessf( x[0], p);
-				} while (x[0] < half && y[0] <= y[2]);
+
+//printf ("%lf, ", (x[0]-x[1])/(x[3]-x[1]));
+				} while (x[0] < thirdlo && y[0] <= y[2]);
+//printf (" end=%lf\n", (x[0]-x[1])/(x[3]-x[1]));
 
 			} else 
 			if (x[3]-x[2] < (x[2]-x[1])/2 ) { // upper third
-printf ("ut\n");
+//printf ("ut\n");
 				do {
 					x[0] = x[0] - (x[3] - x[0]);
 					y[0] = unfitnessf( x[0], p);
-				} while (x[0] > half && y[0] <= y[2]);
+				} while (x[0] > thirdhi && y[0] <= y[2]);
 
 			} else {
-printf ("ct\n");
+//printf ("ct\n");
 				x[0] = (x[2] + (leftchop==0?x[1]:x[3]) ) / 2;
 				y[0] = unfitnessf( x[0], p);
 			}
@@ -241,6 +252,7 @@ quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const 
 	double cente = (a+b)/2;
 	double delta_neg, delta_pos;
 	double ei, ej, ek;
+	double xi, xj, xk;
 
 	assert(!is_nan(limit));
 	assert(!is_nan(a));
@@ -252,9 +264,14 @@ quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const 
 	assert(!is_nan(delta_neg));
 	assert(!is_nan(delta_pos));
 
-	ei = unfitnessf	(cente - delta_neg, p);
-	ej = unfitnessf	(cente            , p);
-	ek = unfitnessf	(cente + delta_pos, p);
+	xi = cente - delta_neg;
+	xj = cente;
+	xk = cente + delta_neg;
+
+	ei = unfitnessf	(xi, p);
+	ej = unfitnessf	(xj, p);
+	ek = unfitnessf	(xk, p);
+
 
 
 	for (;;) {	
@@ -266,9 +283,9 @@ quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const 
 		if (ei >= ej && ej <= ek) {
 
 			double r;
-			assert(!is_nan(cente - delta_neg));
-			assert(!is_nan(cente + delta_pos));
-			r = quadfit1d_2 (limit, cente - delta_neg, cente + delta_pos, unfitnessf, p);
+			assert(!is_nan(xi));
+			assert(!is_nan(xj));
+			r = quadfit1d_2 (limit, xi, xk, unfitnessf, p);
 			assert(!is_nan(r));
 			return r;
 
@@ -279,8 +296,13 @@ quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const 
 
 			ek = ej;
 			ej = ei; 
-			assert(!is_nan(cente - delta_neg));
-			ei = unfitnessf	( cente - delta_neg, p);
+
+xk = xj;
+xj = xi;
+xi = cente - delta_neg;
+
+			assert (!is_nan(xi));
+			ei = unfitnessf	(xi, p);
 
 		} else
 		if (ei >= ek && ek <= ej) {
@@ -289,8 +311,13 @@ quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const 
 
 			ei = ej;
 			ej = ek;
-			assert(!is_nan(cente + delta_pos));
-			ek = unfitnessf	( cente + delta_pos, p);
+
+xi = xj;
+xj = xk;
+xk = cente + delta_pos;
+
+			assert(!is_nan(xk));
+			ek = unfitnessf	(xk, p);
 
 		} else {
 			assert(0);
