@@ -558,7 +558,7 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 				curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
 
 				outputdev = 1000*sqrt(curdev/N_games);
-				done = outputdev < min_devia || (resol+cd) < min_resol;
+				done = outputdev < min_devia || (absol(resol)+absol(cd)) < min_resol;
 
 				if (done || failed) break;
 

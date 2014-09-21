@@ -23,13 +23,17 @@
 #include "boolean.h"
 
 #if !defined(NDEBUG)
+#include <stdio.h>
 static bool_t is_nan (double x) {if (x != x) return TRUE; else return FALSE;}
 #endif
 
 static double absol(double x) {return x >= 0? x: -x;}
 
+
+#if 0
+
 static bool_t
-find_parabolic_min_x (double *x, double *y, double *result)
+find_parabolic_min_x (const double *x, const double *y, double *result)
 {
 	double y12, x12, y13, x13, s12, s13, d1, d2, den, res;
 
@@ -60,14 +64,56 @@ find_parabolic_min_x (double *x, double *y, double *result)
 	return TRUE;
 }
 
+#else
+static bool_t
+find_parabolic_min_x (const double *x, const double *y, double *result)
+{
+	double y12, x12, y13, x13, s12, s13, d1, d2, den, res;
+	double x1, x2, x3;
+	double reference;
+
+	assert (x[3] > x[2]);
+ 	assert (x[2] > x[1]);
+
+	reference = (x[1]+x[3])/2;
+	x1 = x[1] - reference;
+	x2 = x[2] - reference;
+	x3 = x[3] - reference;
+
+
+	y12 = y[1] - y[2];
+	x12 = x1 - x2;
+	y13 = y[1] - y[3];
+	x13 = x1 - x3;
+	s12 = x1*x1 - x2*x2;
+	s13 = x1*x1 - x3*x3;
+
+	if (x12*y13 <= y12*x13) // not a minimum
+		return FALSE;
+
+	d1 = y13*x12;
+	d2 = y12*x13;
+	den = d1 - d2;
+
+	if (den < 1E-64)
+		return FALSE;
+
+	res = ((y13*s12 - y12*s13) / den)/2;
+	assert(!is_nan(res));
+
+	*result = res + reference;
+	return TRUE;
+}
+#endif
+
 #define Epsilon 0.0000001
 
 static double
 optimum_center (double *x, double *y)
 {
 	double result;
-	assert (x[3] >= x[2]);
- 	assert (x[2] >= x[1]);
+	assert (x[3] > x[2]);
+ 	assert (x[2] > x[1]);
 
 	if (
 		(x[3]-x[1]) > Epsilon &&
@@ -75,6 +121,11 @@ optimum_center (double *x, double *y)
 		(x[3]-x[2]) > Epsilon &&
 		find_parabolic_min_x (x, y, &result)
 		) {
+		assert (result > x[1] 
+				|| !fprintf(stderr, "%.12le %.12le %.12le result=%.12le\n",x[1],x[2],x[3],result)
+				|| !fprintf(stderr, "%.12le %.12le %.12le \n",x[3]-x[2],x[2]-x[1],x[1]-result)
+		);
+		assert (result < x[3]);
 		return result;
 	}
 	return (x[3]+x[1])/2;
@@ -131,7 +182,12 @@ quadfit1d_2 (double limit, double a, double b, double (*unfitnessf)(double, cons
 			x[2] = x[0];
 			y[2] = y[0];
 		} else {						  equality = TRUE;;
-			x[0] = (x[1] + x[3])/2;
+
+			if (x[3]-x[2] > x[2]-x[1]) {
+				x[0] = x[2] + 0.01 * (x[3]-x[2]);
+			} else {
+				x[0] = x[2] - 0.01 * (x[2]-x[1]);
+			}
 		}
 
 		if (equality) {
@@ -167,6 +223,9 @@ quadfit1d_2 (double limit, double a, double b, double (*unfitnessf)(double, cons
 				x[0] = (x[2] + (leftchop==0?x[1]:x[3]) ) / 2;
 				y[0] = unfitnessf( x[0], p);
 			}
+
+			assert (x[0] > x[1]);
+			assert (x[0] < x[3]);
 		}
 
 	} while (absol(x[3]-x[1]) > limit);	
