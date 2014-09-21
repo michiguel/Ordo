@@ -279,7 +279,7 @@ static bool_t	Prior_mode;
 static int		purge_players    (bool_t quiet, struct ENC *enc);
 static int		set_super_players(bool_t quiet, struct ENC *enc);
 
-static void		clear_flagged (void);
+static void		clear_flagged (long n_players, bool_t *flagged);
 
 static void		all_report (FILE *csvf, FILE *textf);
 static void		init_rating (void);
@@ -885,7 +885,7 @@ int main (int argc, char *argv[])
 							printf ("*"); fflush(stdout);
 						}
 					}
-					clear_flagged ();
+					clear_flagged (N_players, Flagged);
 
 					simulate_scores ( Drawrate_evenmatch
 									, White_advantage
@@ -2055,11 +2055,11 @@ ratings_results (void)
 }
 
 static void
-clear_flagged (void)
+clear_flagged (long n_players, bool_t *flagged)
 {
 	int j;
-	for (j = 0; j < N_players; j++) {
-		Flagged[j] = FALSE;
+	for (j = 0; j < n_players; j++) {
+		flagged[j] = FALSE;
 	}	
 }
 

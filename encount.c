@@ -57,34 +57,34 @@ calc_encounters ( int selectivity
 				, const bool_t *flagged
 				, const int *whiteplayer
 				, const int *blackplayer
-				, struct ENC *enc
+				, struct ENC *enc // out
 )
 {
 	int i, e = 0;
 	int ne;
+	bool_t skip;
 
 	for (i = 0; i < n_games; i++) {
 
-		if (score[i] >= DISCARD) continue;
+		skip = score[i] >= DISCARD
+			|| (selectivity == ENCOUNTERS_NOFLAGGED 
+				&& (flagged[whiteplayer[i]] || flagged[blackplayer[i]])
+				);
 
-		if (selectivity == ENCOUNTERS_NOFLAGGED) {
-			if (flagged[whiteplayer[i]] || flagged[blackplayer[i]])
-				continue;
+		if (!skip)	{
+			enc[e].wh = whiteplayer[i];
+			enc[e].bl = blackplayer[i];
+			enc[e].played = 1;
+			enc[e].W = 0;
+			enc[e].D = 0;
+			enc[e].L = 0;
+			switch (score[i]) {
+				case WHITE_WIN: 	enc[e].wscore = 1.0; enc[e].W = 1; break;
+				case RESULT_DRAW:	enc[e].wscore = 0.5; enc[e].D = 1; break;
+				case BLACK_WIN:		enc[e].wscore = 0.0; enc[e].L = 1; break;
+			}
+			e++;
 		}
-
-		enc[e].W = 0;
-		enc[e].D = 0;
-		enc[e].L = 0;
-		switch (score[i]) {
-			case WHITE_WIN: 	enc[e].wscore = 1.0; enc[e].W = 1; break;
-			case RESULT_DRAW:	enc[e].wscore = 0.5; enc[e].D = 1; break;
-			case BLACK_WIN:		enc[e].wscore = 0.0; enc[e].L = 1; break;
-		}
-
-		enc[e].wh = whiteplayer[i];
-		enc[e].bl = blackplayer[i];
-		enc[e].played = 1;
-		e++;
 	}
 	ne = e;
 
