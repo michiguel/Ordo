@@ -136,26 +136,27 @@ optimum_center (double *x, double *y)
 
 
 double
-quadfit1d_2 (double limit, double a, double b, double (*unfitnessf)(double, const void *), const void *p)
+quadfit1d_2 (double limit, 
+			double x1, double x2, double x3,
+			double ya, double yb, double yc, 
+			double (*unfitnessf)(double, const void *), const void *p)
 {	
 	long int rightchop=0, leftchop=0;
 	bool_t equality = FALSE;
-	int i;
 	double x[4];
 	double y[4];
 
 	assert(!is_nan(limit));
-	assert(!is_nan(a));
-	assert(!is_nan(b));
+	assert(!is_nan(x1) && !is_nan(x2) && !is_nan(x3) && !is_nan(ya) && !is_nan(yb) && !is_nan(yc));
+	assert (yc >= yb && ya >= yb);
+	assert (x3 > x2 && x2 > x1);
 
-	x[1] = a > b? b: a;
-	x[2] = (a+b)/2;
-	x[3] = b > a? b: a;
-
-	for (i = 1; i < 4; i++) {
-		assert(!is_nan(x[i]));
-		y[i] = unfitnessf (x[i], p);
-	}
+	x[1] = x1;
+	x[2] = x2;
+	x[3] = x3;
+	y[1] = ya;
+	y[2] = yb;
+	y[3] = yc;
 
 	x[0] = optimum_center (x, y); 
 	y[0] = unfitnessf( x[0], p);
@@ -285,7 +286,7 @@ quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const 
 			double r;
 			assert(!is_nan(xi));
 			assert(!is_nan(xj));
-			r = quadfit1d_2 (limit, xi, xk, unfitnessf, p);
+			r = quadfit1d_2 (limit, xi, xj, xk, ei, ej, ek, unfitnessf, p);
 			assert(!is_nan(r));
 			return r;
 
