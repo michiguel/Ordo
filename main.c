@@ -283,7 +283,7 @@ static void		clear_flagged (void);
 
 static void		all_report (FILE *csvf, FILE *textf);
 static void		init_rating (void);
-static void		reset_rating (void);
+static void		reset_rating (double general_average, long n_players, const bool_t *prefed, const bool_t *flagged, double *rating);
 static void		ratings_copy (const double *r, long n, double *t);
 static void		init_manchors(const char *fpins_name);
 
@@ -909,7 +909,9 @@ int main (int argc, char *argv[])
 					}
 					#endif
 
-					reset_rating(); // may improve convergence in pathological cases
+					// may improve convergence in pathological cases
+					reset_rating (General_average, N_players, Prefed, Flagged, Ratingof);
+					reset_rating (General_average, N_players, Prefed, Flagged, Ratingbk);
 
 					N_encounters = set_super_players(QUIET_MODE, Encounter);
 					N_encounters = purge_players(QUIET_MODE, Encounter);
@@ -1486,17 +1488,14 @@ init_rating (void)
 	}
 }
 
+// no globals
 static void
-reset_rating (void)
+reset_rating (double general_average, long n_players, const bool_t *prefed, const bool_t *flagged, double *rating)
 {
 	int i;
-	for (i = 0; i < N_players; i++) {
-		if (!Prefed[i] && !Flagged[i])
-			Ratingof[i] = General_average;
-	}
-	for (i = 0; i < N_players; i++) {
-		if (!Prefed[i] && !Flagged[i])
-			Ratingbk[i] = General_average;
+	for (i = 0; i < n_players; i++) {
+		if (!prefed[i] && !flagged[i])
+			rating[i] = general_average;
 	}
 }
 
