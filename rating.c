@@ -432,8 +432,8 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 	double 	resol;
 	bool_t	doneonce = FALSE;
 
-	int times_ori = 10;
-	int times;
+	int max_cycle;
+	int cycle;
 
 	double white_adv = *pWhite_advantage;
 	double wa_previous = *pWhite_advantage;
@@ -453,11 +453,9 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 		exit(EXIT_FAILURE);
 	}
 
+	max_cycle = adjust_white_advantage? 10: 1;
 
-	if (!adjust_white_advantage) times_ori = 1;
-	times = times_ori;
-
-	while (times-->0 && wa_progress > 0.01) {
+	for (cycle = 0; cycle < max_cycle && wa_progress > 0.01; cycle++) {
 
 		bool_t done = FALSE;
 
@@ -468,13 +466,7 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 		phase = 0;
 		n = 20;
 
-		if (times_ori-times == 1) {
-			min_resol = 10;
-		} else if (times_ori-times == 2) {
-			min_resol = 0.1;
-		} else {
-			min_resol = MIN_RESOL;
-		}
+		min_resol = cycle == 0? 10: (cycle == 1? 0.1: MIN_RESOL);
 
 		doneonce = FALSE;
 
@@ -483,7 +475,7 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 
 		olddev = curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);
 
-		if (!quiet) printf ("\nConvergence rating calculation (cycle #%d)\n\n", times_ori-times);
+		if (!quiet) printf ("\nConvergence rating calculation (cycle #%d)\n\n", cycle+1);
 		if (!quiet) printf ("%3s %4s %12s%14s\n", "phase", "iteration", "deviation","resolution");
 
 		while (!done && n-->0) {
