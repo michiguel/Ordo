@@ -204,7 +204,7 @@ quadfit1d_2 (double limit, double a, double b, double (*unfitnessf)(double, cons
 			x[0] = x[2];
 
 			if (x[3]-x[2] > 2*(x[2]-x[1]) ) { // lower third
-
+printf ("lt\n");
 				do {
 					x[0] = x[0] + (x[0] - x[1]);
 					y[0] = unfitnessf( x[0], p);
@@ -212,14 +212,14 @@ quadfit1d_2 (double limit, double a, double b, double (*unfitnessf)(double, cons
 
 			} else 
 			if (x[3]-x[2] < (x[2]-x[1])/2 ) { // upper third
-
+printf ("ut\n");
 				do {
 					x[0] = x[0] - (x[3] - x[0]);
 					y[0] = unfitnessf( x[0], p);
 				} while (x[0] > half && y[0] <= y[2]);
 
 			} else {
-
+printf ("ct\n");
 				x[0] = (x[2] + (leftchop==0?x[1]:x[3]) ) / 2;
 				y[0] = unfitnessf( x[0], p);
 			}
