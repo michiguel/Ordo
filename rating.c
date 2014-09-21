@@ -468,9 +468,9 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 		phase = 0;
 		n = 20;
 
-		if (times == 9) {
+		if (times_ori-times == 1) {
 			min_resol = 10;
-		} else if (times == 8) {
+		} else if (times_ori-times == 2) {
 			min_resol = 0.1;
 		} else {
 			min_resol = MIN_RESOL;
@@ -527,7 +527,7 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 
 				cd = optimum_centerdelta	
 					( last_cd
-					, min_resol //kk*delta/1000
+					, min_resol 
 					, enc
 					, N_enc
 					, N_players
