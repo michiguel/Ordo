@@ -61,6 +61,7 @@ calc_rating2 	( bool_t 		quiet
 
 				, bool_t		adjust_draw_rate
 				, double		*pDraw_date
+				, double 		*ratingtmp_buffer
 );
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/

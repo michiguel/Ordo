@@ -2153,49 +2153,55 @@ calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage,
 
 	} else {
 
-		ret = calc_rating2 	
-				( quiet
-				, enc
-				, N_enc
+		double *ratingtmp_memory;
 
-				, N_players
-				, Obtained
-				, Playedby
-				, Ratingof
-				, Ratingbk
-				, Performance_type
+		if (NULL != (ratingtmp_memory = malloc (sizeof(double) * MAXPLAYERS))) {
 
-				, Flagged
-				, Prefed
-
-				, pWhite_advantage
-				, General_average
-
-				, Multiple_anchors_present
-				, Anchor_use && !Anchor_err_rel2avg
-				, Anchor
-				
-				, N_games
-				, Score
-				, Whiteplayer
-				, Blackplayer
-
-				, Name
-				, BETA
-
-				, adjust_wadv
-
-				, ADJUST_DRAW_RATE
-				, &dr
-		);
-	}
+			ret = calc_rating2 	
+					( quiet
+					, enc
+					, N_enc
 	
-	*pDraw_rate = dr;
+					, N_players
+					, Obtained
+					, Playedby
+					, Ratingof
+					, Ratingbk
+					, Performance_type
 
-//	if (!quiet) {
-//		printf ("White advantage = %.2f\n",*pWhite_advantage);
-//		printf ("Draw rate (equal opponents) = %.2f %s\n",100*dr, "%");
-//	}
+					, Flagged
+					, Prefed
+
+					, pWhite_advantage
+					, General_average
+	
+					, Multiple_anchors_present
+					, Anchor_use && !Anchor_err_rel2avg
+					, Anchor
+					
+					, N_games
+					, Score
+					, Whiteplayer
+					, Blackplayer
+	
+					, Name
+					, BETA
+
+					, adjust_wadv
+
+					, ADJUST_DRAW_RATE
+					, &dr
+					, ratingtmp_memory
+			);
+			free(ratingtmp_memory);
+
+		} else {
+			fprintf(stderr, "Not enough memory available\n");
+			exit(EXIT_FAILURE);
+		}	
+	}
+
+	*pDraw_rate = dr;
 
 	return ret;
 }
