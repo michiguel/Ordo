@@ -525,8 +525,6 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 					failed = TRUE;
 				};	
 
-				{int zz = 1;
-				while (zz-->0)
 				cd = optimum_centerdelta	
 					( last_cd
 					, min_resol //kk*delta/1000
@@ -543,7 +541,6 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 					, Playedby
 					, ratingtmp
 					);
-				}
 
 				last_cd = cd;
 

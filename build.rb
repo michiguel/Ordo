@@ -98,5 +98,6 @@ if ($ADDPATH != '')
 	ENV['PATH'] += ':' + $ADDPATH
 end
 
-system line
+puts line
+#system line
 
