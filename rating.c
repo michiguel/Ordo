@@ -486,14 +486,14 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 		if (!quiet) printf ("\nConvergence rating calculation (cycle #%d)\n\n", times_ori-times);
 		if (!quiet) printf ("%3s %4s %12s%14s\n", "phase", "iteration", "deviation","resolution");
 
-		while (n-->0) {
+		while (!done && n-->0) {
+			bool_t failed = FALSE;
 			double kk = 1.0;
 			double cd, last_cd;
 	
 			last_cd = 100;
 
-			for (i = 0; i < rounds; i++) {
-				bool_t failed = FALSE;
+			for (i = 0; i < rounds && !done && !failed; i++) {
 
 				ratings_backup(N_players, Ratingof, Ratingbk);
 				olddev = curdev;
@@ -549,18 +549,14 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 					failed = FALSE;
 				}
 
-				if (failed) break;
-
-				calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
-				curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
-
-				outputdev = 1000*sqrt(curdev/N_games);
-				done = outputdev < min_devia || (absol(resol)+absol(cd)) < min_resol;
-
-				if (done || failed) break;
-
-				kk *= 0.995;
-
+				if (!failed) { 
+					calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
+					curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
+	
+					outputdev = 1000*sqrt(curdev/N_games);
+					done = outputdev < min_devia || (absol(resol)+absol(cd)) < min_resol;
+					kk *= 0.995;
+				}
 			}
 
 			delta /= denom;
@@ -573,10 +569,6 @@ static double ratingtmp[MAXPLAYERS]; //FIXME bad for SMP
 				printf ("\n");
 			}
 			phase++;
-
-			if (done) {
-				break;
-			}
 		}
 
 		if (!quiet) printf ("done\n");
