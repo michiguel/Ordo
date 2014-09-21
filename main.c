@@ -292,7 +292,17 @@ static int		calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhit
 static void 	ratings_results (void);
 static void 	ratings_for_purged (void);
 
-static void		simulate_scores(double deq);
+static void
+simulate_scores ( double 		deq
+				, double 		wadv
+				, double 		beta
+				, long 			n_games
+				, const double 	*ratingof_results
+				, const int		*whiteplayer
+				, const int		*blackplayer
+				, int			*score // out
+);
+
 static void		errorsout(const char *out);
 static void		ctsout(const char *out);
 
@@ -877,7 +887,15 @@ int main (int argc, char *argv[])
 					}
 					clear_flagged ();
 
-					simulate_scores(Drawrate_evenmatch);
+					simulate_scores ( Drawrate_evenmatch
+									, White_advantage
+									, BETA
+									, N_games
+									, Ratingof_results
+									, Whiteplayer
+									, Blackplayer
+									, Score // out
+					);
 
 			relpriors_copy(Ra, N_relative_anchors, Ra_store);
 			priors_copy(PP, N_players, PP_store);
@@ -2076,22 +2094,30 @@ rand_threeway_wscore(double pwin, double pdraw)
 	}
 }
 
+
+// no globals
 static void
-simulate_scores(double deq)
+simulate_scores ( double 		deq
+				, double 		wadv
+				, double 		beta
+				, long 			n_games
+				, const double 	*ratingof_results
+				, const int		*whiteplayer
+				, const int		*blackplayer
+				, int			*score // out
+)
 {
 	long int i, w, b;
-	double	*rating = Ratingof_results;
+	const double *rating = ratingof_results;
 	double pwin, pdraw, plos;
 
-	for (i = 0; i < N_games; i++) {
-
-		if (Score[i] == DISCARD) continue;
-
-		w = Whiteplayer[i];
-		b = Blackplayer[i];
-
-		get_pWDL(rating[w] + White_advantage - rating[b], &pwin, &pdraw, &plos, deq, BETA);
-		Score [i] = rand_threeway_wscore(pwin,pdraw);
+	for (i = 0; i < n_games; i++) {
+		if (score[i] != DISCARD) {
+			w = whiteplayer[i];
+			b = blackplayer[i];
+			get_pWDL(rating[w] + wadv - rating[b], &pwin, &pdraw, &plos, deq, beta);
+			score [i] = rand_threeway_wscore(pwin,pdraw);
+		}
 	}
 }
 
