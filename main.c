@@ -2292,7 +2292,7 @@ table_output(double rtng_76)
 	printf("\n");
 }
 
-
+// no globals
 static long int		
 set_super_players(bool_t quiet, long N_enc, struct ENC *enc, long n_players, int *perftype, char **name, bool_t *perftype_set)
 {

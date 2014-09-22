@@ -123,27 +123,17 @@ calc_obtained_playedby (const struct ENC *enc, long N_enc, int n_players, double
 void
 calc_expected (const struct ENC *enc, long N_enc, double white_advantage, int n_players, const double *ratingof, double *expected, double beta)
 {
-	int e, j, w, b;
-	double f;
-	double wperf,bperf;
-
-	for (j = 0; j < n_players; j++) {
-		expected[j] = 0.0;	
+	long e, w, b;
+	double wperf;
+	for (e = 0; e < n_players; e++) {
+		expected[e] = 0.0;	
 	}	
-
 	for (e = 0; e < N_enc; e++) {
-	
 		w = enc[e].wh;
 		b = enc[e].bl;
-
-		f = xpect (ratingof[w] + white_advantage, ratingof[b], beta);
-
-		wperf = enc[e].played * f;
-		bperf = enc[e].played - wperf;
-
+		wperf = enc[e].played * xpect (ratingof[w] + white_advantage, ratingof[b], beta);
+		expected [b] += enc[e].played - wperf; 
 		expected [w] += wperf; 
-		expected [b] += bperf; 
-
 	}
 }
 
