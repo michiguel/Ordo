@@ -142,7 +142,7 @@ super_players_present(int n_players, int *performance_type)
 
 static double
 adjust_wadv_bayes 
-				( int n_enc
+				( long n_enc
 				, const struct ENC *enc
 				, int n_players
 				, const struct prior *p
@@ -160,7 +160,7 @@ adjust_wadv_bayes
 
 static double
 adjust_drawrate_bayes 
-				( int n_enc
+				( long n_enc
 				, const struct ENC *enc
 				, int n_players
 				, const struct prior *p
@@ -179,7 +179,7 @@ adjust_drawrate_bayes
 // no globals
 static void
 derivative_vector_calc 	( double delta
-						, int n_encounters
+						, long n_encounters
 						, const struct ENC *enc
 						, double deq
 						, double beta
@@ -198,7 +198,7 @@ derivative_vector_calc 	( double delta
 // no globals
 static double
 calc_bayes_unfitness_full	
-				( int n_enc
+				( long n_enc
 				, const struct ENC *enc
 				, int n_players
 				, const struct prior *p
@@ -238,11 +238,11 @@ adjust_rating_bayes
 ;
 
 // no globals
-int
-calc_rating_bayes2 	(  
-			bool_t 		quiet
+long
+calc_rating_bayes2 	
+			( bool_t 		quiet
 			, struct ENC *	enc
-			, int 			N_enc
+			, long			N_enc
 
 			, int			n_players
 			, double *		obtained
@@ -508,7 +508,7 @@ calc_rating_bayes2 	(
 // no globals
 static double
 adjust_wadv_bayes 
-				( int n_enc
+				( long n_enc
 				, const struct ENC *enc
 				, int n_players
 				, const struct prior *p
@@ -590,7 +590,7 @@ adjust_wadv_bayes
 // no globals
 static double
 adjust_drawrate_bayes 
-				( int n_enc
+				( long n_enc
 				, const struct ENC *enc
 				, int n_players
 				, const struct prior *p
@@ -767,7 +767,7 @@ prior_unfitness	( int n_players
 // no globals
 static double
 calc_bayes_unfitness_full	
-				( int n_enc
+				( long n_enc
 				, const struct ENC *enc
 				, int n_players
 				, const struct prior *p
@@ -848,7 +848,7 @@ probarray_reset(int n_players, double probarray[MAXPLAYERS][4])
 
 // no globals
 static void
-probarray_build	( int n_enc
+probarray_build	( long n_enc
 				, const struct ENC *enc
 				, double inputdelta
 				, double deq
@@ -916,7 +916,7 @@ derivative_single 	( int j
 // no globals
 static void
 derivative_vector_calc 	( double delta
-						, int n_encounters
+						, long n_encounters
 						, const struct ENC *enc
 						, double deq
 						, double beta

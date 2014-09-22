@@ -38,7 +38,7 @@ static bool_t is_nan (double x) {if (x != x) return TRUE; else return FALSE;}
 #define CALCIND_SWSL
 #endif
 
-static double adjust_drawrate (double start_wadv, const double *ratingof, int N_enc, const struct ENC *enc, double beta);
+static double adjust_drawrate (double start_wadv, const double *ratingof, long N_enc, const struct ENC *enc, double beta);
 
 // no globals
 static void
@@ -178,7 +178,7 @@ adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, i
 }
 
 static double
-overallerrorE_fwadv (int N_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv)
+overallerrorE_fwadv (long N_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv)
 {
 	int e, w, b;
 	double dp2, f;
@@ -197,7 +197,7 @@ overallerrorE_fwadv (int N_enc, const struct ENC *enc, const double *ratingof, d
 #define START_DELTA 100
 
 static double
-adjust_wadv (double start_wadv, const double *ratingof, int N_enc, const struct ENC *enc, double beta, double start_delta)
+adjust_wadv (double start_wadv, const double *ratingof, long N_enc, const struct ENC *enc, double beta, double start_delta)
 {
 	double delta, wa, ei, ej, ek;
 
@@ -234,7 +234,7 @@ static void ratings_copy (const double *r, long n, double *t) {long i;	for (i = 
 
 static double 
 unfitness		( const struct ENC *enc
-				, int 			n_enc
+				, long 			n_enc
 				, int			n_players
 				, const double *ratingof
 				, const bool_t *flagged
@@ -269,7 +269,7 @@ mobile_center_apply_excess (double excess, long n_players, const bool_t *flagged
 static double
 unfitness_fcenter 	( double excess
 					, const struct ENC *enc
-					, int 			n_enc
+					, long 			n_enc
 					, int			n_players
 					, const double *ratingof
 					, const bool_t *flagged
@@ -309,7 +309,7 @@ static double absol(double x) {return x >= 0? x: -x;}
 
 struct UNFITPAR {
 	const struct ENC *	enc;
-	int 				n_enc;
+	long 				n_enc;
 	int					n_players;
 	const double *		ratingof;
 	const bool_t *		flagged;
@@ -342,7 +342,7 @@ static double
 optimum_centerdelta	( double 			start_delta
 					, double 			resolution
 					, const struct ENC *enc
-					, int 				n_enc
+					, long 				n_enc
 					, int				n_players
 					, const double *	ratingof
 					, const bool_t *	flagged
@@ -381,10 +381,10 @@ optimum_centerdelta	( double 			start_delta
 
 
 
-int
+long
 calc_rating2 	( bool_t 		quiet
 				, struct ENC *	enc
-				, int 			N_enc
+				, long 			N_enc
 
 				, int			N_players
 				, double *		Obtained
@@ -610,7 +610,7 @@ calc_rating2 	( bool_t 		quiet
 
 
 static double
-overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv, double dr0)
+overallerrorE_fdrawrate (long N_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv, double dr0)
 {
 	int e, w, b;
 	double dp2, f;
@@ -635,7 +635,7 @@ overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, const double *ratingo
 
 
 static double
-adjust_drawrate (double start_wadv, const double *ratingof, int N_enc, const struct ENC *enc, double beta)
+adjust_drawrate (double start_wadv, const double *ratingof, long N_enc, const struct ENC *enc, double beta)
 {
 	double delta, wa, ei, ej, ek, dr;
 

@@ -208,7 +208,7 @@ static double calc_ind_rating_superplayer (int perf_type, double x_estimated, do
 void
 rate_super_players 	( bool_t quiet
 					, struct ENC *enc
-					, int N_enc
+					, long N_enc
 					, int *performance_type
 					, int n_players
 					, double *ratingof

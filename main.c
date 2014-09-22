@@ -195,7 +195,7 @@ static int 		N_games = 0;
 /* encounters */
 
 static struct ENC	Encounter[MAXENCOUNTERS];
-static int 			N_encounters = 0;
+static long int		N_encounters = 0;
 
 /**/
 static double	Confidence = 95;
@@ -276,8 +276,8 @@ static void 	relpriors_load(const char *f_name);
 static bool_t	Prior_mode;
 
 /*------------------------------------------------------------------------*/
-static int		purge_players    (bool_t quiet, struct ENC *enc);
-static int		set_super_players(bool_t quiet, struct ENC *enc);
+static long		purge_players    (bool_t quiet, struct ENC *enc);
+static long		set_super_players(bool_t quiet, long N_enc, struct ENC *enc);
 
 static void		clear_flagged (long n_players, bool_t *flagged);
 
@@ -287,7 +287,7 @@ static void		reset_rating (double general_average, long n_players, const bool_t 
 static void		ratings_copy (const double *r, long n, double *t);
 static void		init_manchors(const char *fpins_name);
 
-static int		calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage, bool_t adjust_wadv, double *pDraw_rate);
+static long		calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage, bool_t adjust_wadv, double *pDraw_rate);
 
 static void 	ratings_results (void);
 static void 	ratings_for_purged (void);
@@ -684,7 +684,7 @@ int main (int argc, char *argv[])
 		printf (" - Draws            %8ld\n", Game_stats.draws);
 		printf (" - Black wins       %8ld\n", Game_stats.black_wins);
 		printf (" - Truncated        %8ld\n", Game_stats.noresult);
-		printf ("Unique head to head %8.2f%s\n", 100.0*N_encounters/N_games, "%");
+		printf ("Unique head to head %8.2f%s\n", 100.0*(double)N_encounters/N_games, "%");
 		if (Anchor_use) {
 			printf ("Reference rating    %8.1lf",General_average);
 			printf (" (set to \"%s\")\n", Anchor_name);
@@ -821,13 +821,13 @@ int main (int argc, char *argv[])
 	if (group_is_output) {
 
 		static struct ENC 		Encounter2[MAXENCOUNTERS];
-		static int 				N_encounters2 = 0;
+		static long	int			N_encounters2 = 0;
 		static struct ENC 		Encounter3[MAXENCOUNTERS];
-		static int 				N_encounters3 = 0;
+		static long	int			N_encounters3 = 0;
 
 		convert_to_groups(groupf, N_players, Name);
 		sieve_encounters(Encounter, N_encounters, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
-		printf ("Encounters, Total=%d, Main=%d, @ Interface between groups=%d\n",N_encounters, N_encounters2, N_encounters3);
+		printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n",N_encounters, N_encounters2, N_encounters3);
 
 		if (textstr == NULL && csvstr == NULL)	
 			exit(EXIT_SUCCESS);
@@ -835,7 +835,9 @@ int main (int argc, char *argv[])
 
 	/*=====================*/
 
-	N_encounters = set_super_players(QUIET_MODE, Encounter);
+N_encounters = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+
+	N_encounters = set_super_players(QUIET_MODE, N_encounters, Encounter);
 	N_encounters = purge_players(QUIET_MODE, Encounter);
 	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 	N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters, &White_advantage, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch);
@@ -913,7 +915,9 @@ int main (int argc, char *argv[])
 					reset_rating (General_average, N_players, Prefed, Flagged, Ratingof);
 					reset_rating (General_average, N_players, Prefed, Flagged, Ratingbk);
 
-					N_encounters = set_super_players(QUIET_MODE, Encounter);
+	N_encounters = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+
+					N_encounters = set_super_players(QUIET_MODE, N_encounters, Encounter);
 					N_encounters = purge_players(QUIET_MODE, Encounter);
 					N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 					N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters, &White_advantage, FALSE, &sim_draw_rate);
@@ -2001,12 +2005,12 @@ priors_load(const char *fpriors_name)
 
 //== END PRIORS ======================================================
 
-static int
+static long int
 purge_players(bool_t quiet, struct ENC *enc)
 {
 	bool_t foundproblem;
 	int j;
-	int N_enc;
+	long N_enc;
 
 	assert(Performance_type_set);
 	do {
@@ -2120,12 +2124,12 @@ simulate_scores ( double 		deq
 
 //==== CALCULATE INDIVIDUAL RATINGS =========================
 
-static int
-calc_rating (bool_t quiet, struct ENC *enc, int N_enc, double *pWhite_advantage, bool_t adjust_wadv, double *pDraw_rate)
+static long
+calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage, bool_t adjust_wadv, double *pDraw_rate)
 {
 	double dr = *pDraw_rate;
 
-	int ret;
+	long ret;
 
 	if (Prior_mode) {
 
@@ -2289,16 +2293,16 @@ table_output(double rtng_76)
 }
 
 
-static int		
-set_super_players(bool_t quiet, struct ENC *enc)
+static long int		
+set_super_players(bool_t quiet, long N_enc, struct ENC *enc)
 {
 	static double 	obt [MAXPLAYERS];
 	static int		pla [MAXPLAYERS];
 
 	int e, j, w, b;
-	int N_enc;
+//	int N_enc;
 
-	N_enc = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
+//	N_enc = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
 
 	for (j = 0; j < N_players; j++) {
 		obt[j] = 0.0;	

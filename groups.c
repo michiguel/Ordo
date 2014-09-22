@@ -346,10 +346,10 @@ group_belonging(int plyr)
 }
 
 void
-sieve_encounters(const struct ENC *enc, int N_enc, struct ENC *enca, int *N_enca, struct ENC *encb, int *N_encb)
+sieve_encounters(const struct ENC *enc, long N_enc, struct ENC *enca, long *N_enca, struct ENC *encb, long *N_encb)
 {
 	int e,w,b;
-	int na=0,nb=0;
+	long na = 0, nb = 0;
 
 	*N_enca = 0;
 	*N_encb = 0;
@@ -998,7 +998,7 @@ static bool_t encounter_is_SW(const struct ENC *e) {return (e->played - e->wscor
 static bool_t encounter_is_SL(const struct ENC *e) {return              e->wscore  < 0.0001;}
 
 void
-scan_encounters(const struct ENC *enc, int N_enc, int N_plyrs)
+scan_encounters(const struct ENC *enc, long N_enc, int N_plyrs)
 {
 	int i,e;
 

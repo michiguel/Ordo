@@ -27,15 +27,14 @@
 #include "mytypes.h"
 #include "ordolim.h"
 
-extern int
-calc_rating_bayes2 	(  
-			bool_t 		quiet
+extern long
+calc_rating_bayes2 	
+			( bool_t 		quiet
 			, struct ENC *	enc
-			, int 			N_enc
+			, long 			N_enc
 
 			, int			n_players
 			, double *		obtained
-//				, double * 		expected
 			, int *			playedby
 			, double *		ratingof
 			, double *		ratingbk

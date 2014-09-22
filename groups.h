@@ -81,9 +81,9 @@ struct CONNECT_BUFFER {
 
 //
 
-extern void scan_encounters(const struct ENC Encounter[], int N_encounters, int N_players);
+extern void scan_encounters(const struct ENC Encounter[], long N_encounters, int N_players);
 extern void	convert_to_groups(FILE *f, int N_plyers, char **name);
-extern void	sieve_encounters(const struct ENC *enc, int N_enc, struct ENC *enca, int *N_enca, struct ENC *encb, int *N_encb);
+extern void	sieve_encounters(const struct ENC *enc, long N_enc, struct ENC *enca, long *N_enca, struct ENC *encb, long *N_encb);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

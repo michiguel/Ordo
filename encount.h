@@ -33,7 +33,7 @@ enum SELECTIVITY {
 
 
 // no globals
-extern int
+extern long
 calc_encounters ( int selectivity
 				, int n_games
 				, const int *score 
@@ -45,12 +45,12 @@ calc_encounters ( int selectivity
 
 // no globals
 extern void
-calc_obtained_playedby (const struct ENC *enc, int N_enc, int n_players, double *obtained, int *playedby);
+calc_obtained_playedby (const struct ENC *enc, long N_enc, int n_players, double *obtained, int *playedby);
 
 
 // no globals
 extern void
-calc_expected (const struct ENC *enc, int N_enc, double white_advantage, int n_players, const double *ratingof, double *expected, double beta);
+calc_expected (const struct ENC *enc, long N_enc, double white_advantage, int n_players, const double *ratingof, double *expected, double beta);
 
 
 
