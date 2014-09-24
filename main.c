@@ -276,7 +276,9 @@ static void 	relpriors_load(const char *f_name);
 static bool_t	Prior_mode;
 
 /*------------------------------------------------------------------------*/
-static void		purge_players    (bool_t quiet); //, long N_enc, const struct ENC *enc);
+
+static void		purge_players (bool_t quiet, long n_players, const int *performance_type, char **name, bool_t *flagged);
+
 static long 	set_super_players(bool_t quiet, long N_enc, const struct ENC *enc, long n_players, int *perftype, char *name[], bool_t *perftype_set);
 
 static void		clear_flagged (long n_players, bool_t *flagged);
@@ -837,7 +839,7 @@ int main (int argc, char *argv[])
 
 	N_encounters = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 	if (0 < set_super_players(QUIET_MODE, N_encounters, Encounter, N_players, Performance_type, Name, &Performance_type_set)) {
-		purge_players(QUIET_MODE);
+		purge_players (QUIET_MODE, N_players, Performance_type, Name, Flagged);
 		N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 	}
 	N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters, &White_advantage, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch);
@@ -917,7 +919,7 @@ int main (int argc, char *argv[])
 
 					N_encounters = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 					if (0 < set_super_players(QUIET_MODE, N_encounters, Encounter, N_players, Performance_type, Name, &Performance_type_set)) {
-						purge_players(QUIET_MODE);
+						purge_players (QUIET_MODE, N_players, Performance_type, Name, Flagged);
 						N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
 					}
 					N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters, &White_advantage, FALSE, &sim_draw_rate);
@@ -2005,43 +2007,19 @@ priors_load(const char *fpriors_name)
 
 //== END PRIORS ======================================================
 
-#if 0
-long int
-calc_encounters ( int selectivity
-				, int n_games
-				, const int *score 
-				, const bool_t *flagged
-				, const int *whiteplayer
-				, const int *blackplayer
-				, struct ENC *enc // out
-#endif
-static 
-//long int
-void
-purge_players (bool_t quiet)
-//, long N_enc, const struct ENC *enc)
+// no globals
+static void
+purge_players (bool_t quiet, long n_players, const int *performance_type, char **name, bool_t *flagged)
 {
-//	bool_t foundproblem;
 	int j;
-//	long N_enc;
-
 	assert(Performance_type_set);
-//	do {
-//		N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
-//		calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
-
-//		foundproblem = FALSE;
-		for (j = 0; j < N_players; j++) {
-			if (Flagged[j]) continue;
-			if (Performance_type[j] != PERF_NORMAL) {
-				Flagged[j]= TRUE;
-				if (!quiet) printf ("purge --> %s\n", Name[j]);
-//				foundproblem = TRUE;
-			} 
-		}
-//	} while (foundproblem);
-
-//	return N_enc;
+	for (j = 0; j < n_players; j++) {
+		if (flagged[j]) continue;
+		if (performance_type[j] != PERF_NORMAL) {
+			flagged[j]= TRUE;
+			if (!quiet) printf ("purge --> %s\n", name[j]);
+		} 
+	}
 }
 
 static void
