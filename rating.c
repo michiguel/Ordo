@@ -638,6 +638,7 @@ static double
 adjust_drawrate (double start_wadv, const double *ratingof, long N_enc, const struct ENC *enc, double beta)
 {
 	double delta, wa, ei, ej, ek, dr;
+double lo,hi;
 
 	delta = 0.5;
 	wa = start_wadv;
@@ -650,6 +651,13 @@ adjust_drawrate (double start_wadv, const double *ratingof, long N_enc, const st
 		ej = overallerrorE_fdrawrate (N_enc, enc, ratingof, beta, wa, dr + 0    );     
 		ek = overallerrorE_fdrawrate (N_enc, enc, ratingof, beta, wa, dr + delta);
 
+#if 0
+printf ("i=%f, dr=%f\n",ei,dr-delta);
+printf ("j=%f, dr=%f\n",ej,dr-0);
+printf ("k=%f, dr=%f\n",ek,dr+delta);
+printf ("\n");
+#endif
+
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 2;
 		} else
@@ -659,6 +667,11 @@ adjust_drawrate (double start_wadv, const double *ratingof, long N_enc, const st
 		if (ei >= ek && ek <= ej) {
 			dr += delta;
 		}
+
+hi = dr+delta > 1.0? 1.0: dr+delta;
+lo = dr-delta < 0.0? 0.0: dr-delta;
+dr = (hi+lo)/2;
+delta = (hi-lo)/2;
 
 	} while (
 		delta > 0.0001 
