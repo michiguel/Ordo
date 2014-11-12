@@ -162,6 +162,213 @@ const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:XN:
 |
 \*--------------------------------------------------------------*/
 
+struct GAMES {
+	uint32_t 	n_games;
+	uint32_t 	*whiteplayer;
+	uint32_t 	*blackplayer;
+	uint32_t 	*score;
+};
+
+struct PLAYERS {
+	uint32_t	n_players;
+	char 		**name;
+	bool_t		*flagged;
+	int			*performance_type; 
+};
+
+struct RATINGS {
+	uint32_t	n_players;
+	uint32_t	*sorted; 	/* sorted index by rating */
+	double		*obtained;
+	uint32_t	*playedby; 	/* N games played by player "i" */
+ 	double		*ratingof; 	/* rating current */
+ 	double		*ratingbk; 	/* rating backup  */
+ 	double		*changing; 	/* rating backup  */
+	double		*ratingof_results;
+	double		*obtained_results;
+	uint32_t	*playedby_results;
+};
+
+struct ENCOUNTERS {
+	uint32_t	n_enc;
+	struct ENC	*enc;
+};
+
+struct GAMES 		Games;
+struct PLAYERS 		Players;
+struct RATINGS 		Ratings;
+struct ENCOUNTERS 	Encounters;
+
+static bool_t 
+ratings_init (uint32_t n, struct RATINGS *r) 
+{
+	enum {MAXU=3, MAXD=6};
+	uint32_t 	*pu[MAXU];
+	double		*pd[MAXD];
+	bool_t		failed;
+	int i,u,d;
+	r->n_players = n;
+
+	for (failed = FALSE, u = 0, i = 0; i < MAXU && !failed; i++) {
+		if (NULL != (pu[i] = malloc (sizeof(uint32_t) * n))) { 
+			u++;
+		} else {
+			while (u-->0) free(pu[u]);
+			failed = TRUE;
+		}
+	}
+	if (failed) return FALSE;
+
+	for (failed = FALSE, d = 0, i = 0; i < MAXD && !failed; i++) {
+		if (NULL != (pd[d] = malloc (sizeof(uint32_t) * n))) { 
+			d++;
+		} else {
+			while (d-->0) free(pd[d]);
+			while (u-->0) free(pu[u]);
+			failed = TRUE;
+		}
+	}
+	if (failed) return FALSE;
+
+	r->n_players = n;
+	r->sorted 			= pu[0];
+	r->playedby 		= pu[1];
+	r->playedby_results = pu[2];
+
+	r->obtained 		= pd[0];
+ 	r->ratingof 		= pd[1];
+ 	r->ratingbk 		= pd[2];
+ 	r->changing 		= pd[3];
+	r->ratingof_results = pd[4];
+	r->obtained_results = pd[5];
+	return TRUE;
+}
+
+static void 
+ratings_done (struct RATINGS *r)
+{
+	r->n_players = 0;
+	free(r->sorted);
+	free(r->playedby);
+	free(r->playedby_results);
+	free(r->obtained);
+ 	free(r->ratingof);
+ 	free(r->ratingbk);
+ 	free(r->changing);
+	free(r->ratingof_results);
+	free(r->obtained_results);
+} 
+
+
+static bool_t 
+games_init (uint32_t n, struct GAMES *g)
+{
+	enum {MAXU=3};
+	uint32_t 	*pu[MAXU];
+	bool_t		failed;
+	int i,u;
+
+	for (failed = FALSE, u = 0, i = 0; i < MAXU && !failed; i++) {
+		if (NULL != (pu[i] = malloc (sizeof(uint32_t) * n))) { 
+			u++;
+		} else {
+			while (u-->0) free(pu[u]);
+			failed = TRUE;
+		}
+	}
+	if (failed) return FALSE;
+
+	g->n_games 		= n;
+	g->whiteplayer 	= pu[0];
+	g->blackplayer 	= pu[1];
+	g->score		= pu[2];
+	return TRUE;
+}
+
+static void 
+games_done (struct GAMES *g)
+{
+	free(g->whiteplayer);
+	free(g->blackplayer);
+	free(g->score);
+	g->n_games 		= 0;
+	g->whiteplayer 	= NULL;
+	g->blackplayer 	= NULL;
+	g->score		= NULL;
+} 
+
+//
+
+static bool_t 
+encounters_init (uint32_t n, struct ENCOUNTERS *e)
+{
+	bool_t		failed;
+	struct ENC 	*p;
+
+	if (NULL != (p = malloc (sizeof(struct ENC) * n))) {
+		failed = FALSE;
+	} else {
+		free(p);
+		failed = TRUE;
+	}
+
+	if (failed) return FALSE;
+
+	e->n_enc 	= n;
+	e->enc		= p;
+	return TRUE;
+}
+
+static void 
+encounters_done (struct ENCOUNTERS *e)
+{
+	free(e->enc);
+	e->n_enc = 0;
+	e->enc	 = NULL;
+} 
+
+
+static bool_t 
+players_init (uint32_t n, struct PLAYERS *x)
+{
+	enum VARIAB {NV = 3};
+	bool_t failed;
+	size_t sz[NV];
+	void * pv[NV];
+	int i, j;
+
+	sz[0] = sizeof(char);
+	sz[1] = sizeof(bool_t);
+	sz[2] = sizeof(int);
+	for (failed = FALSE, i = 0; !failed && i < NV; i++) {
+		if (NULL == (pv[i] = malloc (sz[i] * n))) {
+			for (j = 0; j < i; j++) free(pv[j]);
+			failed = TRUE;
+		}
+	}
+	if (failed) return FALSE;
+
+	x->n_players		= n;
+	x->name 			= pv[0];
+	x->flagged			= pv[1];
+	x->performance_type = pv[2]; 
+	return TRUE;
+}
+
+static void 
+players_done (struct PLAYERS *x)
+{
+	free(x->name);
+	free(x->flagged);
+	free(x->performance_type);
+	x->n_players = 0;
+	x->name = NULL;
+	x->flagged = NULL;
+	x->performance_type = NULL;
+} 
+
+//=====================================================
+
 static char		Labelbuffer[LABELBUFFERSIZE] = {'\0'};
 static char		*Labelbuffer_end = Labelbuffer;
 
