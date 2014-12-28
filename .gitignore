@@ -1,12 +1,14 @@
 ordo
-readme.pdf
 ordo-win*
 ordo-linux*
 ordoprep*
-sources.txt
-gplnotice.txt
-post.sh
+readme.pdf
 readme.aux
+dr.pdf
+dr.tex
+equation.pdf
+equation.tex
+gplnotice.txt
 switches.txt
 install.txt
 temp*.c
@@ -26,8 +28,9 @@ papers/*
 figures/*
 windows/*
 Ordo_ratings/*
-
-
-
+differences/*
+fit1d/*
+merging/*
+tmp/*
 
 
