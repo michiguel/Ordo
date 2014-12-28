@@ -199,6 +199,11 @@ struct PLAYERS 		Players;
 struct RATINGS 		Ratings;
 struct ENCOUNTERS 	Encounters;
 
+#if 0
+#define NEWFUNC
+#endif
+
+#ifdef NEWFUNC
 static bool_t 
 ratings_init (uint32_t n, struct RATINGS *r) 
 {
@@ -366,6 +371,7 @@ players_done (struct PLAYERS *x)
 	x->flagged = NULL;
 	x->performance_type = NULL;
 } 
+#endif
 
 //=====================================================
 
