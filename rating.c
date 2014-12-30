@@ -77,6 +77,27 @@ deviation (int n_players, const bool_t *flagged, const double *expected, const d
 	return accum;
 }
 
+static double
+calc_excess		( int n_players
+				, const bool_t *flagged
+				, double general_average
+				, double *ratingof)
+{
+	int 	j, notflagged;
+	double 	accum, average, excess;
+
+	for (notflagged = 0, accum = 0, j = 0; j < n_players; j++) {
+		if (!flagged[j]) {
+			notflagged++;
+			accum += ratingof[j];
+		}
+	}
+	average = accum / notflagged;
+	excess  = average - general_average;
+
+	return excess;
+}
+
 // no globals
 static double
 adjust_rating 	( double delta
@@ -94,11 +115,10 @@ adjust_rating 	( double delta
 				, double *ratingof
 )
 {
-	int 	j, notflagged;
-	double 	d, excess, average;
+	int 	j;
+	double 	d, excess;
 	double 	y = 1.0;
 	double 	ymax = 0;
-	double 	accum = 0;
 
 	/*
 	|	1) delta and 2) kappa control convergence speed:
@@ -141,16 +161,9 @@ adjust_rating 	( double delta
 
 	if (!multiple_anchors_present) {
 		if (anchor_use) {
-			excess  = ratingof[anchor] - general_average;
+			excess = ratingof[anchor] - general_average;
 		} else {
-			for (notflagged = 0, accum = 0, j = 0; j < n_players; j++) {
-				if (!flagged[j]) {
-					notflagged++;
-					accum += ratingof[j];
-				}
-			}
-			average = accum / notflagged;
-			excess  = average - general_average;
+			excess = calc_excess (n_players, flagged, general_average, ratingof);
 		}
 		for (j = 0; j < n_players; j++) {
 			if (!flagged[j] && !prefed[j]) ratingof[j] -= excess;
@@ -518,22 +531,26 @@ calc_rating2 	( bool_t 		quiet
 					failed = TRUE;
 				};	
 
-				cd = optimum_centerdelta	
-					( last_cd
-					, min_resol 
-					, enc
-					, N_enc
-					, N_players
-					, Ratingof
-					, Flagged
-					, Prefed
-					, white_adv
-					, BETA
-					, Obtained
-					, expected
-					, Playedby
-					, ratingtmp
-					);
+				if (Multiple_anchors_present || Anchor_use) {
+					cd = optimum_centerdelta	
+						( last_cd
+						, min_resol 
+						, enc
+						, N_enc
+						, N_players
+						, Ratingof
+						, Flagged
+						, Prefed
+						, white_adv
+						, BETA
+						, Obtained
+						, expected
+						, Playedby
+						, ratingtmp
+						);
+				} else {
+					cd = 0;
+				}
 
 				last_cd = cd;
 
@@ -550,6 +567,7 @@ calc_rating2 	( bool_t 		quiet
 					done = outputdev < min_devia || (absol(resol)+absol(cd)) < min_resol;
 					kk *= 0.995;
 				}
+
 			}
 
 			delta /= denom;
@@ -562,6 +580,7 @@ calc_rating2 	( bool_t 		quiet
 				printf ("\n");
 			}
 			phase++;
+
 		}
 
 		if (!quiet) printf ("done\n");
@@ -594,6 +613,8 @@ calc_rating2 	( bool_t 		quiet
 		if (!quiet) 
 			printf ("done\n");
 		#endif
+
+		// printf ("EXCESS =%lf\n", calc_excess	(N_players, Flagged, General_average, Ratingof));
 
 		if (!Multiple_anchors_present)
 			adjust_rating_byanchor (Anchor_use, Anchor, General_average, N_players, Flagged, Prefed, Ratingof);
