@@ -34,10 +34,6 @@
 static bool_t is_nan (double x) {if (x != x) return TRUE; else return FALSE;}
 #endif
 
-#if 1
-#define CALCIND_SWSL
-#endif
-
 static double adjust_drawrate (double start_wadv, const double *ratingof, long N_enc, const struct ENC *enc, double beta);
 
 // no globals
@@ -343,13 +339,11 @@ unfitf (double x, const void *p)
 {
 	double r;
 	const struct UNFITPAR *q = p;
-
 	assert(!is_nan(x));
-	r =	unfitness_fcenter 	(x
-						, q->enc, q->n_enc, q->n_players, q->ratingof, q->flagged, q->prefed
-						, q->white_adv, q->beta, q->obtained, q->expected, q->playedby, q->ratingtmp);
+	r =	unfitness_fcenter 	( x
+							, q->enc, q->n_enc, q->n_players, q->ratingof, q->flagged, q->prefed
+							, q->white_adv, q->beta, q->obtained, q->expected, q->playedby, q->ratingtmp);
 	assert(!is_nan(r));
-
 	return r;
 }
 
@@ -607,7 +601,6 @@ calc_rating2 	( bool_t 		quiet
 					printf ("Adjusted Draw Rate = %.1f %s\n\n", 100*draw_rate, "%");
 		} 
 
-		#ifdef CALCIND_SWSL
 		if (!quiet) 
 			printf ("Post-Convergence rating estimation\n");
 
@@ -619,7 +612,6 @@ calc_rating2 	( bool_t 		quiet
 
 		if (!quiet) 
 			printf ("done\n");
-		#endif
 
 		// printf ("EXCESS =%lf\n", calc_excess	(N_players, Flagged, General_average, Ratingof));
 
@@ -630,7 +622,6 @@ calc_rating2 	( bool_t 		quiet
 
 	*pWhite_advantage = white_adv;
 	*pDraw_date = draw_rate;
-
 
 	free(expected);
 	return N_enc;
