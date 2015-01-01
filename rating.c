@@ -315,6 +315,8 @@ unfitness_fcenter 	( double excess
 
 #define MIN_DEVIA 0.000000001
 #define MIN_RESOL 0.000001
+#define START_RESOL 10.0
+#define ACCEPTABLE_RESOL 0.001
 
 static double absol(double x) {return x >= 0? x: -x;}
 
@@ -453,7 +455,7 @@ calc_rating2 	( bool_t 		quiet
 	double wa_previous = *pWhite_advantage;
 	double wa_progress = START_DELTA;
 	double min_devia = MIN_DEVIA;
-	double min_resol = MIN_RESOL;
+	double min_resol = START_RESOL;
 
 	double draw_rate = *pDraw_date;
 
@@ -469,7 +471,7 @@ calc_rating2 	( bool_t 		quiet
 
 	max_cycle = adjust_white_advantage? 10: 1;
 
-	for (cycle = 0; cycle < max_cycle && wa_progress > 0.01; cycle++) {
+	for (cycle = 0; (cycle < max_cycle && wa_progress > 0.01) || min_resol > ACCEPTABLE_RESOL; cycle++) {
 
 		bool_t done = FALSE;
 
@@ -480,7 +482,12 @@ calc_rating2 	( bool_t 		quiet
 		phase = 0;
 		n = 20;
 
-		min_resol = cycle == 0? 10: (cycle == 1? 0.1: MIN_RESOL);
+		min_resol = cycle == 0? START_RESOL: (
+					cycle == 1? START_RESOL/100: (
+					cycle == 2? START_RESOL/10000: (
+					MIN_RESOL
+					)))
+		;
 
 		doneonce = FALSE;
 
@@ -567,7 +574,6 @@ calc_rating2 	( bool_t 		quiet
 					done = outputdev < min_devia || (absol(resol)+absol(cd)) < min_resol;
 					kk *= 0.995;
 				}
-
 			}
 
 			delta /= denom;
