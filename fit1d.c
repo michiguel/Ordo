@@ -30,41 +30,6 @@ static bool_t is_nan (double x) {if (x != x) return TRUE; else return FALSE;}
 static double absol(double x) {return x >= 0? x: -x;}
 
 
-#if 0
-
-static bool_t
-find_parabolic_min_x (const double *x, const double *y, double *result)
-{
-	double y12, x12, y13, x13, s12, s13, d1, d2, den, res;
-
-	assert (x[3] > x[2]);
- 	assert (x[2] > x[1]);
-
-	y12 = y[1] - y[2];
-	x12 = x[1] - x[2];
-	y13 = y[1] - y[3];
-	x13 = x[1] - x[3];
-	s12 = x[1]*x[1] - x[2]*x[2];
-	s13 = x[1]*x[1] - x[3]*x[3];
-
-	if (x12*y13 <= y12*x13) // not a minimum
-		return FALSE;
-
-	d1 = y13*x12;
-	d2 = y12*x13;
-	den = d1 - d2;
-
-	if (den < 1E-64)
-		return FALSE;
-
-	res = ((y13*s12 - y12*s13) / den)/2;
-	assert(!is_nan(res));
-
-	*result = res;
-	return TRUE;
-}
-
-#else
 static bool_t
 find_parabolic_min_x (const double *x, const double *y, double *result)
 {
@@ -79,7 +44,6 @@ find_parabolic_min_x (const double *x, const double *y, double *result)
 	x1 = x[1] - reference;
 	x2 = x[2] - reference;
 	x3 = x[3] - reference;
-
 
 	y12 = y[1] - y[2];
 	x12 = x1 - x2;
@@ -105,7 +69,6 @@ find_parabolic_min_x (const double *x, const double *y, double *result)
 	*result = res;
 	return TRUE;
 }
-#endif
 
 #define Epsilon 1E-7
 
@@ -209,29 +172,24 @@ quadfit1d_2 (double limit,
 
 			x[0] = x[2];
 
-//printf ("TL=%lf\n", (thirdlo-x[1])/(x[3]-x[1]));
-//printf ("TH=%lf\n", (thirdhi-x[1])/(x[3]-x[1])); 
-
 			if (x[3]-x[2] > 2*(x[2]-x[1]) ) { // lower third
-//printf ("lt %.12le %.12le %.12le [%lf]: ", x[1], x[2], x[3], (x[2]-x[1])/(x[3]-x[1])  );
+
 				do {
 					x[0] = x[0] + (x[0] - x[1]);
 					y[0] = unfitnessf( x[0], p);
 
-//printf ("%lf, ", (x[0]-x[1])/(x[3]-x[1]));
 				} while (x[0] < thirdlo && y[0] <= y[2]);
-//printf (" end=%lf\n", (x[0]-x[1])/(x[3]-x[1]));
 
 			} else 
 			if (x[3]-x[2] < (x[2]-x[1])/2 ) { // upper third
-//printf ("ut\n");
+
 				do {
 					x[0] = x[0] - (x[3] - x[0]);
 					y[0] = unfitnessf( x[0], p);
 				} while (x[0] > thirdhi && y[0] <= y[2]);
 
 			} else {
-//printf ("ct\n");
+
 				x[0] = (x[2] + (leftchop==0?x[1]:x[3]) ) / 2;
 				y[0] = unfitnessf( x[0], p);
 			}
