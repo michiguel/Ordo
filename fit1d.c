@@ -273,6 +273,7 @@ quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const 
 	ej = unfitnessf	(xj, p);
 	ek = unfitnessf	(xk, p);
 
+	// find if the input is quasi-flat, the return center
 	r1 = (ei <= ej)? ej/ei: ei/ej;
 	r2 = (ej <= ek)? ek/ej: ej/ek;
 	if (r1 < 1.0000001 && r2 < 1.0000001) {
