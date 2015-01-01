@@ -246,7 +246,6 @@ quadfit1d_2 (double limit,
 }
 
 
-
 double
 quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const void *), const void *p)
 {
@@ -254,6 +253,7 @@ quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const 
 	double delta_neg, delta_pos;
 	double ei, ej, ek;
 	double xi, xj, xk;
+	double r1, r2;
 
 	assert(!is_nan(limit));
 	assert(!is_nan(a));
@@ -273,7 +273,11 @@ quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const 
 	ej = unfitnessf	(xj, p);
 	ek = unfitnessf	(xk, p);
 
-
+	r1 = (ei <= ej)? ej/ei: ei/ej;
+	r2 = (ej <= ek)? ek/ej: ej/ek;
+	if (r1 < 1.0000001 && r2 < 1.0000001) {
+		return xj;
+	}
 
 	for (;;) {	
 
@@ -282,7 +286,6 @@ quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const 
 		assert(!is_nan(ek));
 
 		if (ei >= ej && ej <= ek) {
-
 			double r;
 			assert(!is_nan(xi));
 			assert(!is_nan(xj));
@@ -298,9 +301,9 @@ quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const 
 			ek = ej;
 			ej = ei; 
 
-xk = xj;
-xj = xi;
-xi = cente - delta_neg;
+			xk = xj;
+			xj = xi;
+			xi = cente - delta_neg;
 
 			assert (!is_nan(xi));
 			ei = unfitnessf	(xi, p);
@@ -313,9 +316,9 @@ xi = cente - delta_neg;
 			ei = ej;
 			ej = ek;
 
-xi = xj;
-xj = xk;
-xk = cente + delta_pos;
+			xi = xj;
+			xj = xk;
+			xk = cente + delta_pos;
 
 			assert(!is_nan(xk));
 			ek = unfitnessf	(xk, p);
@@ -323,9 +326,7 @@ xk = cente + delta_pos;
 		} else {
 			assert(0);
 		}
-
 	} 
-
 }
 
 //============ center adjustment end
