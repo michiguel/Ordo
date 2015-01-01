@@ -572,7 +572,8 @@ calc_rating2 	( bool_t 		quiet
 	
 					outputdev = 1000*sqrt(curdev/N_games);
 					done = outputdev < min_devia || (absol(resol)+absol(cd)) < min_resol;
-					kk *= 0.995;
+					//kk *= 0.995;
+					kk *= (1.0-1.0/200);
 				}
 			}
 
@@ -660,6 +661,7 @@ overallerrorE_fdrawrate (long N_enc, const struct ENC *enc, const double *rating
 	return dp2;
 }
 
+#define DRAWRATE_RESOLUTION 0.0001
 
 static double
 adjust_drawrate (double start_wadv, const double *ratingof, long N_enc, const struct ENC *enc, double beta)
@@ -693,7 +695,7 @@ adjust_drawrate (double start_wadv, const double *ratingof, long N_enc, const st
 		dr = (hi+lo)/2;
 		delta = (hi-lo)/2;
 
-	} while (delta > 0.0001);
+	} while (delta > DRAWRATE_RESOLUTION);
 	
 	return dr;
 }
