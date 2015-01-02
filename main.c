@@ -199,7 +199,7 @@ struct PLAYERS 		Players;
 struct RATINGS 		Ratings;
 struct ENCOUNTERS 	Encounters;
 
-#if 0
+#if 1
 #define NEWFUNC
 #endif
 
@@ -849,6 +849,27 @@ int main (int argc, char *argv[])
 
 	Prior_mode = switch_k || switch_u || NULL != relstr || NULL != priorsstr;
 
+	/*==== memory initialization ====*/
+
+	if (!ratings_init (MAXPLAYERS, &Ratings)) {
+		fprintf (stderr, "Could not initialize rating memory\n"); exit(0);	
+	} else 
+	if (!games_init (MAXGAMES, &Games)) {
+		ratings_done (&Ratings);
+		fprintf (stderr, "Could not initialize Games memory\n"); exit(0);
+	} else 
+	if (!encounters_init (MAXENCOUNTERS, &Encounters)) {
+		ratings_done (&Ratings);
+		games_done (&Games);
+		fprintf (stderr, "Could not initialize Encounters memory\n"); exit(0);
+	} else 
+	if (!players_init (MAXPLAYERS, &Players)) {
+		ratings_done (&Ratings);
+		games_done (&Games);
+		encounters_done (&Encounters);
+		fprintf (stderr, "Could not initialize Players memory\n"); exit(0);
+	}
+
 	/*==== SET INPUT ====*/
 
 	if (!pgn_getresults(inputf, QUIET_MODE)) {
@@ -1217,6 +1238,12 @@ int main (int argc, char *argv[])
 	if (sim != NULL) free(sim);
 
 	/*==== END CALCULATION ====*/
+
+	// memory done
+	ratings_done (&Ratings);
+	games_done (&Games);
+	encounters_done (&Encounters);
+	players_done (&Players);
 
 	return EXIT_SUCCESS;
 }
