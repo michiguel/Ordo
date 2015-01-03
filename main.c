@@ -163,7 +163,7 @@ const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:XN:
 \*--------------------------------------------------------------*/
 
 struct GAMES {
-	int32_t	 	n_games; //FIXME transform to size_t
+	int32_t	 	n; //FIXME transform to size_t
 	int32_t		size;
 	int32_t 	*whiteplayer;
 	int32_t 	*blackplayer;
@@ -294,7 +294,7 @@ games_init (int32_t n, struct GAMES *g)
 	}
 	if (failed) return FALSE;
 
-	g->n_games 		= 0; /* empty for now */
+	g->n	 		= 0; /* empty for now */
 	g->size			= n;
 	g->whiteplayer 	= pu[0];
 	g->blackplayer 	= pu[1];
@@ -308,7 +308,7 @@ games_done (struct GAMES *g)
 	free(g->whiteplayer);
 	free(g->blackplayer);
 	free(g->score);
-	g->n_games 		= 0;
+	g->n	 		= 0;
 	g->size			= 0;
 	g->whiteplayer 	= NULL;
 	g->blackplayer 	= NULL;
@@ -635,7 +635,7 @@ save_simulated(int num)
 
 	if (NULL != (fout = fopen (filename, "w"))) {
 
-		for (i = 0; i < Games.n_games; i++) {
+		for (i = 0; i < Games.n; i++) {
 
 			if (Games.score[i] == DISCARD) continue;
 	
@@ -665,7 +665,7 @@ calc_encounters__
 {
 	e->n_enc = (int)
 	calc_encounters	( selectivity
-					, g->n_games
+					, g->n
 					, g->score
 					, flagged
 					, g->whiteplayer
@@ -995,7 +995,7 @@ int main (int argc, char *argv[])
 		printf (" - Draws            %8ld\n", Game_stats.draws);
 		printf (" - Black wins       %8ld\n", Game_stats.black_wins);
 		printf (" - Truncated        %8ld\n", Game_stats.noresult);
-		printf ("Unique head to head %8.2f%s\n", 100.0*(double)Encounters.n_enc/(double)Games.n_games, "%");
+		printf ("Unique head to head %8.2f%s\n", 100.0*(double)Encounters.n_enc/(double)Games.n, "%");
 		if (Anchor_use) {
 			printf ("Reference rating    %8.1lf",General_average);
 			printf (" (set to \"%s\")\n", Anchor_name);
@@ -1205,7 +1205,7 @@ int main (int argc, char *argv[])
 					simulate_scores ( Drawrate_evenmatch
 									, White_advantage
 									, BETA
-									, Games.n_games
+									, Games.n
 									, RA.ratingof_results
 									, Games.whiteplayer
 									, Games.blackplayer
@@ -1381,7 +1381,7 @@ DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct G
 	}
 	Labelbuffer_end = Labelbuffer + db->labels_end_idx;
 	p->n = db->n_players;
-	g->n_games   = db->n_games;
+	g->n = db->n_games;
 
 	for (i = 0; i < db->n_players; i++) {
 		p->name[i] = Labelbuffer + db->name[i];
@@ -2469,7 +2469,7 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 				, Anchor_use && !Anchor_err_rel2avg
 				, Anchor
 				
-				, Games.n_games
+				, Games.n
 				, Games.score
 				, Games.whiteplayer
 				, Games.blackplayer
@@ -2520,7 +2520,7 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 					, Anchor_use && !Anchor_err_rel2avg
 					, Anchor
 					
-					, Games.n_games
+					, Games.n
 					, Games.score
 					, Games.whiteplayer
 					, Games.blackplayer
