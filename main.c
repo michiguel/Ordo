@@ -233,7 +233,7 @@ ratings_init (int32_t n, struct RATINGS *r)
 	if (failed) return FALSE;
 
 	for (failed = FALSE, d = 0, i = 0; i < MAXD && !failed; i++) {
-		if (NULL != (pd[d] = malloc (sizeof(uint32_t) * (size_t)n))) { 
+		if (NULL != (pd[d] = malloc (sizeof(double) * (size_t)n))) { 
 			d++;
 		} else {
 			while (d-->0) free(pd[d]);
@@ -263,6 +263,7 @@ ratings_done (struct RATINGS *r)
 {
 //	r->n = 0;
 	r->size	= 0;
+
 	free(r->sorted);
 	free(r->playedby);
 	free(r->playedby_results);
@@ -362,10 +363,12 @@ players_init (int32_t n, struct PLAYERS *x)
 
 	assert (n > 0);
 
-	sz[0] = sizeof(char);
+	// size of the individual elements
+	sz[0] = sizeof(char *);
 	sz[1] = sizeof(bool_t);
 	sz[2] = sizeof(bool_t);
 	sz[3] = sizeof(int);
+
 	for (failed = FALSE, i = 0; !failed && i < NV; i++) {
 		if (NULL == (pv[i] = malloc (sz[i] * (size_t)n))) {
 			for (j = 0; j < i; j++) free(pv[j]);
@@ -876,11 +879,11 @@ int main (int argc, char *argv[])
 
 	/*==== memory initialization ====*/
 	{
-	int32_t mp = MAXPLAYERS;
-	int32_t mg = MAXGAMES;
-	int32_t me = MAXENCOUNTERS;
-
-	if (!ratings_init (mp, &RA)) {
+	int32_t mpr = pdaba->n_players; 
+	int32_t mpp = pdaba->n_players; 
+	int32_t mg  = pdaba->n_games;
+	int32_t me  = pdaba->n_games;
+	if (!ratings_init (mpr, &RA)) {
 		fprintf (stderr, "Could not initialize rating memory\n"); exit(0);	
 	} else 
 	if (!games_init (mg, &Games)) {
@@ -892,7 +895,7 @@ int main (int argc, char *argv[])
 		games_done (&Games);
 		fprintf (stderr, "Could not initialize Encounters memory\n"); exit(0);
 	} else 
-	if (!players_init (mp, &Players)) {
+	if (!players_init (mpp, &Players)) {
 		ratings_done (&RA);
 		games_done (&Games);
 		encounters_done (&Encounters);
@@ -2478,6 +2481,7 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 					, &dr
 					, ratingtmp_memory
 			);
+
 			free(ratingtmp_memory);
 
 		} else {
@@ -2597,6 +2601,7 @@ set_super_players(bool_t quiet, long N_enc, const struct ENC *enc, long n_player
 		pla[j] = 0;
 	}	
 	*perftype_set = TRUE;
+
 	free(obt);
 	free(pla);
 	return super;
