@@ -172,13 +172,15 @@ struct GAMES {
 */
 struct GAMES {
 	int32_t	 	n_games; //FIXME transform to size_t
+	int32_t		size;
 	int32_t 	*whiteplayer;
 	int32_t 	*blackplayer;
 	int32_t 	*score;
 };
 
 struct PLAYERS {
-	int32_t		n_players;
+	int32_t		n_players; //FIXME transform to size_t
+	int32_t		size;
 	char 		**name;
 	bool_t		*flagged;
 	int			*performance_type; 
@@ -186,6 +188,7 @@ struct PLAYERS {
 
 struct RATINGS {
 	int32_t		n_players;
+	int32_t		size;
 	int32_t		*sorted; 	/* sorted index by rating */
 	double		*obtained;
 	int32_t		*playedby; 	/* N games played by player "i" */
@@ -198,13 +201,15 @@ struct RATINGS {
 };
 
 struct ENCOUNTERS {
-	int32_t	n_enc;
+	int32_t	n_enc;	//FIXME transform to size_t
+	int32_t		size;
 	struct ENC	*enc;
 };
 
 struct GAMES 		Games;
 struct PLAYERS 		Players;
-struct RATINGS 		Ratings;
+//struct RATINGS 		Ratings;
+struct RATINGS 		RA;
 struct ENCOUNTERS 	Encounters;
 
 #if 1
@@ -246,7 +251,8 @@ ratings_init (int32_t n, struct RATINGS *r)
 	}
 	if (failed) return FALSE;
 
-	r->n_players = n;
+	r->n_players 		= n;
+	r->size				= n;
 	r->sorted 			= pu[0];
 	r->playedby 		= pu[1];
 	r->playedby_results = pu[2];
@@ -264,6 +270,7 @@ static void
 ratings_done (struct RATINGS *r)
 {
 	r->n_players = 0;
+	r->size	= 0;
 	free(r->sorted);
 	free(r->playedby);
 	free(r->playedby_results);
@@ -297,6 +304,7 @@ games_init (int32_t n, struct GAMES *g)
 	if (failed) return FALSE;
 
 	g->n_games 		= n;
+	g->size			= n;
 	g->whiteplayer 	= pu[0];
 	g->blackplayer 	= pu[1];
 	g->score		= pu[2];
@@ -310,6 +318,7 @@ games_done (struct GAMES *g)
 	free(g->blackplayer);
 	free(g->score);
 	g->n_games 		= 0;
+	g->size			= 0;
 	g->whiteplayer 	= NULL;
 	g->blackplayer 	= NULL;
 	g->score		= NULL;
@@ -335,6 +344,7 @@ encounters_init (int32_t n, struct ENCOUNTERS *e)
 	if (failed) return FALSE;
 
 	e->n_enc 	= n;
+	e->size 	= n;
 	e->enc		= p;
 	return TRUE;
 }
@@ -344,6 +354,7 @@ encounters_done (struct ENCOUNTERS *e)
 {
 	free(e->enc);
 	e->n_enc = 0;
+	e->size	 = 0;
 	e->enc	 = NULL;
 } 
 
@@ -371,6 +382,7 @@ players_init (int32_t n, struct PLAYERS *x)
 	if (failed) return FALSE;
 
 	x->n_players		= n;
+	x->size				= n;
 	x->name 			= pv[0];
 	x->flagged			= pv[1];
 	x->performance_type = pv[2]; 
@@ -384,6 +396,7 @@ players_done (struct PLAYERS *x)
 	free(x->flagged);
 	free(x->performance_type);
 	x->n_players = 0;
+	x->size	= 0;
 	x->name = NULL;
 	x->flagged = NULL;
 	x->performance_type = NULL;
@@ -437,8 +450,30 @@ static long int		gN_encounters = 0;
 #endif
 
 /**/
+
+#if 0
+struct RATINGS {
+	int32_t		n_players;
+	int32_t		*sorted; 	/* sorted index by rating */
+	double		*obtained;
+	int32_t		*playedby; 	/* N games played by player "i" */
+ 	double		*ratingof; 	/* rating current */
+ 	double		*ratingbk; 	/* rating backup  */
+ 	double		*changing; 	/* rating backup  */
+	double		*ratingof_results;
+	double		*obtained_results;
+	int32_t		*playedby_results;
+};
+#endif
+
+
+
 static double	Confidence = 95;
 static double	General_average = 2300.0;
+
+
+
+#if 0
 static int		Sorted  [MAXPLAYERS]; /* sorted index by rating */
 static double	Obtained[MAXPLAYERS];
 static int		Playedby[MAXPLAYERS]; /* N games played by player "i" */
@@ -449,6 +484,12 @@ static double	Changing[MAXPLAYERS]; /* rating backup  */
 static double	Ratingof_results[MAXPLAYERS];
 static double	Obtained_results[MAXPLAYERS];
 static int		Playedby_results[MAXPLAYERS];
+#endif
+
+
+
+
+
 
 static double	Sum1[MAXPLAYERS]; 
 static double	Sum2[MAXPLAYERS]; 
@@ -897,20 +938,20 @@ int main (int argc, char *argv[])
 
 	/*==== memory initialization ====*/
 
-	if (!ratings_init (MAXPLAYERS, &Ratings)) {
+	if (!ratings_init (MAXPLAYERS, &RA)) {
 		fprintf (stderr, "Could not initialize rating memory\n"); exit(0);	
 	} else 
 	if (!games_init (MAXGAMES, &Games)) {
-		ratings_done (&Ratings);
+		ratings_done (&RA);
 		fprintf (stderr, "Could not initialize Games memory\n"); exit(0);
 	} else 
 	if (!encounters_init (MAXENCOUNTERS, &Encounters)) {
-		ratings_done (&Ratings);
+		ratings_done (&RA);
 		games_done (&Games);
 		fprintf (stderr, "Could not initialize Encounters memory\n"); exit(0);
 	} else 
 	if (!players_init (MAXPLAYERS, &Players)) {
-		ratings_done (&Ratings);
+		ratings_done (&RA);
 		games_done (&Games);
 		encounters_done (&Encounters);
 		fprintf (stderr, "Could not initialize Players memory\n"); exit(0);
@@ -1174,7 +1215,7 @@ int main (int argc, char *argv[])
 									, White_advantage
 									, BETA
 									, Games.n_games
-									, Ratingof_results
+									, RA.ratingof_results
 									, Games.whiteplayer
 									, Games.blackplayer
 									, Games.score // out
@@ -1193,8 +1234,8 @@ int main (int argc, char *argv[])
 					#endif
 
 					// may improve convergence in pathological cases
-					reset_rating (General_average, Players.n_players, Prefed, Players.flagged, Ratingof);
-					reset_rating (General_average, Players.n_players, Prefed, Players.flagged, Ratingbk);
+					reset_rating (General_average, Players.n_players, Prefed, Players.flagged, RA.ratingof);
+					reset_rating (General_average, Players.n_players, Prefed, Players.flagged, RA.ratingbk);
 
 					calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 					if (0 < set_super_players(QUIET_MODE, Encounters.n_enc, Encounters.enc, Players.n_players
@@ -1215,13 +1256,13 @@ int main (int argc, char *argv[])
 					}
 
 					if (Anchor_err_rel2avg) {
-						ratings_copy (Ratingof, Players.n_players, Ratingbk);
-						ratings_center_to_zero (Players.n_players, Players.flagged, Ratingof);
+						ratings_copy (RA.ratingof, Players.n_players, RA.ratingbk);
+						ratings_center_to_zero (Players.n_players, Players.flagged, RA.ratingof);
 					}
 
 					for (i = 0; i < Players.n_players; i++) {
-						Sum1[i] += Ratingof[i];
-						Sum2[i] += Ratingof[i]*Ratingof[i];
+						Sum1[i] += RA.ratingof[i];
+						Sum2[i] += RA.ratingof[i]*RA.ratingof[i];
 					}
 	
 					for (i = 0; i < (Players.n_players); i++) {
@@ -1229,14 +1270,14 @@ int main (int argc, char *argv[])
 							//idx = (i*i-i)/2+j;
 							idx = head2head_idx_sdev (i, j);
 							assert(idx < est || !printf("idx=%ld est=%ld\n",idx,est));
-							diff = Ratingof[i] - Ratingof[j];	
+							diff = RA.ratingof[i] - RA.ratingof[j];	
 							sim[idx].sum1 += diff; 
 							sim[idx].sum2 += diff * diff;
 						}
 					}
 
 					if (Anchor_err_rel2avg) {
-						ratings_copy (Ratingbk, Players.n_players, Ratingof); //restore
+						ratings_copy (RA.ratingbk, Players.n_players, RA.ratingof); //restore
 					}
 				}
 
@@ -1289,7 +1330,7 @@ int main (int argc, char *argv[])
 	/*==== END CALCULATION ====*/
 
 	// memory done
-	ratings_done (&Ratings);
+	ratings_done (&RA);
 	games_done (&Games);
 	encounters_done (&Encounters);
 	players_done (&Players);
@@ -1402,8 +1443,8 @@ compareit (const void *a, const void *b)
 	const int *ja = (const int *) a;
 	const int *jb = (const int *) b;
 
-	const double da = Ratingof_results[*ja];
-	const double db = Ratingof_results[*jb];
+	const double da = RA.ratingof_results[*ja];
+	const double db = RA.ratingof_results[*jb];
     
 	return (da < db) - (da > db);
 }
@@ -1435,12 +1476,12 @@ errorsout(const char *out)
 		fprintf(f, "\n");	
 
 		for (i = 0; i < Players.n_players; i++) {
-			y = Sorted[i];
+			y = RA.sorted[i];
 
 			fprintf(f, "%ld,\"%21s\"", i, Players.name[y]);
 
 			for (j = 0; j < i; j++) {
-				x = Sorted[j];
+				x = RA.sorted[j];
 
 				idx = head2head_idx_sdev (x, y);
 
@@ -1475,14 +1516,14 @@ ctsout(const char *out)
 		fprintf(f, "\n");	
 
 		for (i = 0; i < Players.n_players; i++) {
-			y = Sorted[i];
+			y = RA.sorted[i];
 			fprintf(f, "%ld,\"%21s\"", i, Players.name[y]);
 
 			for (j = 0; j < Players.n_players; j++) {
 				double ctrs, sd, dr;
-				x = Sorted[j];
+				x = RA.sorted[j];
 				if (x != y) {
-					dr = Ratingof_results[y] - Ratingof_results[x];
+					dr = RA.ratingof_results[y] - RA.ratingof_results[x];
 					idx = head2head_idx_sdev (x, y);
 					sd = sim[idx].sdev;
 					ctrs = 100*gauss_integral(dr/sd);
@@ -1585,13 +1626,13 @@ all_report (FILE *csvf, FILE *textf)
 
 	calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 
-	calc_obtained_playedby(Encounters.enc, Encounters.n_enc, Players.n_players, Obtained, Playedby);
+	calc_obtained_playedby(Encounters.enc, Encounters.n_enc, Players.n_players, RA.obtained, RA.playedby);
 
 	for (j = 0; j < Players.n_players; j++) {
-		Sorted[j] = j;
+		RA.sorted[j] = j;
 	}
 
-	qsort (Sorted, (size_t)Players.n_players, sizeof (Sorted[0]), compareit);
+	qsort (RA.sorted, (size_t)Players.n_players, sizeof (RA.sorted[0]), compareit);
 
 	/* output in text format */
 	f = textf;
@@ -1608,7 +1649,7 @@ all_report (FILE *csvf, FILE *textf)
 	
 			for (i = 0; i < Players.n_players; i++) {
 
-				j = Sorted[i];
+				j = RA.sorted[i];
 				if (!Players.flagged[j]) {
 
 					char rankbuf[80];
@@ -1629,10 +1670,10 @@ all_report (FILE *csvf, FILE *textf)
 							Players.name[j],
 							get_super_player_symbolstr(j),
 							OUTDECIMALS,
-							rating_round (Ratingof_results[j], OUTDECIMALS), 
-							Obtained_results[j], 
-							Playedby_results[j], 
-							Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j], 
+							rating_round (RA.ratingof_results[j], OUTDECIMALS), 
+							RA.obtained_results[j], 
+							RA.playedby_results[j], 
+							RA.playedby_results[j]==0? 0: 100.0*RA.obtained_results[j]/RA.playedby_results[j], 
 							"%"
 						);
 					}
@@ -1653,7 +1694,7 @@ all_report (FILE *csvf, FILE *textf)
 				"PLAYER", "RATING", "ERROR", "POINTS", "PLAYED", "(%)");
 	
 			for (i = 0; i < Players.n_players; i++) {
-				j = Sorted[i];
+				j = RA.sorted[i];
 
 				sdev_str = get_sdev_str (Sdev[j], Confidence_factor, sdev_str_buffer);
 
@@ -1678,11 +1719,11 @@ all_report (FILE *csvf, FILE *textf)
 						Players.name[j],
  						get_super_player_symbolstr(j),
 						OUTDECIMALS,
-						rating_round(Ratingof_results[j], OUTDECIMALS), 
+						rating_round(RA.ratingof_results[j], OUTDECIMALS), 
 						sdev_str, 
-						Obtained_results[j], 
-						Playedby_results[j], 
-						Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], 
+						RA.obtained_results[j], 
+						RA.playedby_results[j], 
+						RA.playedby_results[j]==0?0:100.0*RA.obtained_results[j]/RA.playedby_results[j], 
 						"%"
 						);
 					}
@@ -1693,11 +1734,11 @@ all_report (FILE *csvf, FILE *textf)
 						(int)ml+1, 
 						Players.name[j], 
 						OUTDECIMALS,
-						rating_round(Ratingof_results[j], OUTDECIMALS), 
+						rating_round(RA.ratingof_results[j], OUTDECIMALS), 
 						"  ****", 
-						Obtained_results[j], 
-						Playedby_results[j], 
-						Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j], 
+						RA.obtained_results[j], 
+						RA.playedby_results[j], 
+						RA.playedby_results[j]==0?0:100.0*RA.obtained_results[j]/RA.playedby_results[j], 
 						"%"
 					);
 				} else {
@@ -1740,7 +1781,7 @@ all_report (FILE *csvf, FILE *textf)
 			,"\"(%)\"" 
 			);
 		for (i = 0; i < Players.n_players; i++) {
-			j = Sorted[i];
+			j = RA.sorted[i];
 
 				if (Sdev[j] > 0.00000001) {
 					sprintf(sdev_str_buffer, "%.1f", Sdev[j] * Confidence_factor);
@@ -1756,11 +1797,11 @@ all_report (FILE *csvf, FILE *textf)
 			",%.2f"
 			"\n"		
 			,Players.name[j]
-			,Ratingof_results[j] 
+			,RA.ratingof_results[j] 
 			,sdev_str
-			,Obtained_results[j]
-			,Playedby_results[j]
-			,Playedby_results[j]==0?0:100.0*Obtained_results[j]/Playedby_results[j] 
+			,RA.obtained_results[j]
+			,RA.playedby_results[j]
+			,RA.playedby_results[j]==0?0:100.0*RA.obtained_results[j]/RA.playedby_results[j] 
 			);
 		}
 	}
@@ -1777,10 +1818,10 @@ init_rating (void)
 {
 	int i;
 	for (i = 0; i < Players.n_players; i++) {
-		Ratingof[i] = General_average;
+		RA.ratingof[i] = General_average;
 	}
 	for (i = 0; i < Players.n_players; i++) {
-		Ratingbk[i] = General_average;
+		RA.ratingbk[i] = General_average;
 	}
 }
 
@@ -1819,7 +1860,7 @@ anchor_j (long int j, double x)
 {
 	Multiple_anchors_present = TRUE;
 	Prefed[j] = TRUE;
-	Ratingof[j] = x;
+	RA.ratingof[j] = x;
 	Anchored_n++;
 }
 
@@ -2320,9 +2361,9 @@ ratings_results (void)
 	int j;
 	ratings_for_purged();
 	for (j = 0; j < Players.n_players; j++) {
-		Ratingof_results[j] = Ratingof[j];
-		Obtained_results[j] = Obtained[j];
-		Playedby_results[j] = Playedby[j];
+		RA.ratingof_results[j] = RA.ratingof[j];
+		RA.obtained_results[j] = RA.obtained[j];
+		RA.playedby_results[j] = RA.playedby[j];
 	}
 
 	// shifting ratings to fix the anchor.
@@ -2331,9 +2372,9 @@ ratings_results (void)
 	// If Anchor_err_rel2avg is set, shifting in the calculation (later) is deactivated.
 	excess = 0.0;
 	if (Anchor_err_rel2avg && Anchor_use) {
-		excess = General_average - Ratingof_results[Anchor];		
+		excess = General_average - RA.ratingof_results[Anchor];		
 		for (j = 0; j < Players.n_players; j++) {
-			Ratingof_results[j] += excess;
+			RA.ratingof_results[j] += excess;
 		}
 	}
 
@@ -2354,7 +2395,7 @@ ratings_for_purged (void)
 	int j;
 	for (j = 0; j < Players.n_players; j++) {
 		if (Players.flagged[j]) {
-			Ratingof[j] = 0;
+			RA.ratingof[j] = 0;
 		}
 	}	
 }
@@ -2420,10 +2461,10 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 				, N_enc
 
 				, Players.n_players
-				, Obtained
-				, Playedby
-				, Ratingof
-				, Ratingbk
+				, RA.obtained
+				, RA.playedby
+				, RA.ratingof
+				, RA.ratingbk
 				, Players.performance_type
 
 				, Players.flagged
@@ -2444,7 +2485,7 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 				, Players.name
 				, BETA
 
-				, Changing
+				, RA.changing
 				, N_relative_anchors
 				, PP
 				, Probarray 
@@ -2471,10 +2512,10 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 					, N_enc
 	
 					, Players.n_players
-					, Obtained
-					, Playedby
-					, Ratingof
-					, Ratingbk
+					, RA.obtained
+					, RA.playedby
+					, RA.ratingof
+					, RA.ratingbk
 					, Players.performance_type
 
 					, Players.flagged
@@ -2635,20 +2676,20 @@ static void cegt_output(void)
 	int j;
 
 	calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
-	calc_obtained_playedby(Encounters.enc, Encounters.n_enc, Players.n_players, Obtained, Playedby);
+	calc_obtained_playedby(Encounters.enc, Encounters.n_enc, Players.n_players, RA.obtained, RA.playedby);
 	for (j = 0; j < Players.n_players; j++) {
-		Sorted[j] = j;
+		RA.sorted[j] = j;
 	}
-	qsort (Sorted, (size_t)Players.n_players, sizeof (Sorted[0]), compareit);
+	qsort (RA.sorted, (size_t)Players.n_players, sizeof (RA.sorted[0]), compareit);
 
 	cegt.n_enc = Encounters.n_enc; 
 	cegt.enc = Encounters.enc;
 	cegt.simulate = Simulate;
 	cegt.n_players = Players.n_players;
-	cegt.sorted = Sorted;
-	cegt.ratingof_results = Ratingof_results;
-	cegt.obtained_results = Obtained_results;
-	cegt.playedby_results = Playedby_results;
+	cegt.sorted = RA.sorted;
+	cegt.ratingof_results = RA.ratingof_results;
+	cegt.obtained_results = RA.obtained_results;
+	cegt.playedby_results = RA.playedby_results;
 	cegt.sdev = Sdev; 
 	cegt.flagged = Players.flagged;
 	cegt.name = Players.name;
@@ -2670,20 +2711,20 @@ static void head2head_output(const char *head2head_str)
 	int j;
 
 	calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
-	calc_obtained_playedby(Encounters.enc, Encounters.n_enc, Players.n_players, Obtained, Playedby);
+	calc_obtained_playedby(Encounters.enc, Encounters.n_enc, Players.n_players, RA.obtained, RA.playedby);
 	for (j = 0; j < Players.n_players; j++) {
-		Sorted[j] = j;
+		RA.sorted[j] = j;
 	}
-	qsort (Sorted, (size_t)Players.n_players, sizeof (Sorted[0]), compareit);
+	qsort (RA.sorted, (size_t)Players.n_players, sizeof (RA.sorted[0]), compareit);
 
 	cegt.n_enc = Encounters.n_enc;
 	cegt.enc = Encounters.enc;
 	cegt.simulate = Simulate;
 	cegt.n_players = Players.n_players;
-	cegt.sorted = Sorted;
-	cegt.ratingof_results = Ratingof_results;
-	cegt.obtained_results = Obtained_results;
-	cegt.playedby_results = Playedby_results;
+	cegt.sorted = RA.sorted;
+	cegt.ratingof_results = RA.ratingof_results;
+	cegt.obtained_results = RA.obtained_results;
+	cegt.playedby_results = RA.playedby_results;
 	cegt.sdev = Sdev; 
 	cegt.flagged = Players.flagged;
 	cegt.name = Players.name;
