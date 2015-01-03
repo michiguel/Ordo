@@ -193,7 +193,7 @@ struct RATINGS {
 };
 
 struct ENCOUNTERS {
-	int32_t		n_enc;	//FIXME transform to size_t
+	int32_t		n;		//FIXME transform to size_t
 	int32_t		size;
 	struct ENC	*enc;
 };
@@ -334,7 +334,7 @@ encounters_init (int32_t n, struct ENCOUNTERS *e)
 
 	if (failed) return FALSE;
 
-	e->n_enc 	= 0; /* empty for now */
+	e->n	 	= 0; /* empty for now */
 	e->size 	= n;
 	e->enc		= p;
 	return TRUE;
@@ -344,7 +344,7 @@ static void
 encounters_done (struct ENCOUNTERS *e)
 {
 	free(e->enc);
-	e->n_enc = 0;
+	e->n	 = 0;
 	e->size	 = 0;
 	e->enc	 = NULL;
 } 
@@ -663,7 +663,7 @@ calc_encounters__
 				, struct ENCOUNTERS	*e
 ) 
 {
-	e->n_enc = (int)
+	e->n = (int)
 	calc_encounters	( selectivity
 					, g->n
 					, g->score
@@ -995,7 +995,7 @@ int main (int argc, char *argv[])
 		printf (" - Draws            %8ld\n", Game_stats.draws);
 		printf (" - Black wins       %8ld\n", Game_stats.black_wins);
 		printf (" - Truncated        %8ld\n", Game_stats.noresult);
-		printf ("Unique head to head %8.2f%s\n", 100.0*(double)Encounters.n_enc/(double)Games.n, "%");
+		printf ("Unique head to head %8.2f%s\n", 100.0*(double)Encounters.n/(double)Games.n, "%");
 		if (Anchor_use) {
 			printf ("Reference rating    %8.1lf",General_average);
 			printf (" (set to \"%s\")\n", Anchor_name);
@@ -1128,7 +1128,7 @@ int main (int argc, char *argv[])
 	/*===== GROUPS ========*/
 
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
-	scan_encounters(Encounters.enc, Encounters.n_enc, Players.n); 
+	scan_encounters(Encounters.enc, Encounters.n, Players.n); 
 	if (group_is_output) {
 
 		static struct ENC 		Encounter2[MAXENCOUNTERS];
@@ -1137,8 +1137,8 @@ int main (int argc, char *argv[])
 		static long	int			N_encounters3 = 0;
 
 		convert_to_groups(groupf, Players.n, Players.name);
-		sieve_encounters(Encounters.enc, Encounters.n_enc, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
-		printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n",(long)Encounters.n_enc, N_encounters2, N_encounters3);
+		sieve_encounters(Encounters.enc, Encounters.n, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
+		printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n",(long)Encounters.n, N_encounters2, N_encounters3);
 
 		if (textstr == NULL && csvstr == NULL)	
 			exit(EXIT_SUCCESS);
@@ -1147,12 +1147,12 @@ int main (int argc, char *argv[])
 	/*=====================*/
 
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
-	if (0 < set_super_players(QUIET_MODE, Encounters.n_enc, Encounters.enc, Players.n
+	if (0 < set_super_players(QUIET_MODE, Encounters.n, Encounters.enc, Players.n
 										, Players.performance_type, Players.name, &Performance_type_set)) {
 		purge_players (QUIET_MODE, Players.n, Players.performance_type, Players.name, Players.flagged);
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
-	Encounters.n_enc = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n_enc, &White_advantage, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch);
+	Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch);
 
 	ratings_results();
 
@@ -1229,12 +1229,12 @@ int main (int argc, char *argv[])
 					reset_rating (General_average, Players.n, Prefed, Players.flagged, RA.ratingbk);
 
 					calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
-					if (0 < set_super_players(QUIET_MODE, Encounters.n_enc, Encounters.enc, Players.n
+					if (0 < set_super_players(QUIET_MODE, Encounters.n, Encounters.enc, Players.n
 														, Players.performance_type, Players.name, &Performance_type_set)) {
 						purge_players (QUIET_MODE, Players.n, Players.performance_type, Players.name, Players.flagged);
 						calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 					}
-					Encounters.n_enc = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n_enc, &White_advantage, FALSE, &sim_draw_rate);
+					Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, FALSE, &sim_draw_rate);
 					ratings_for_purged ();
 
 					relpriors_copy(Ra_store, N_relative_anchors, Ra);
@@ -1618,7 +1618,7 @@ all_report (FILE *csvf, FILE *textf)
 
 	calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 
-	calc_obtained_playedby(Encounters.enc, Encounters.n_enc, Players.n, RA.obtained, RA.playedby);
+	calc_obtained_playedby(Encounters.enc, Encounters.n, Players.n, RA.obtained, RA.playedby);
 
 	for (j = 0; j < Players.n; j++) {
 		RA.sorted[j] = j;
@@ -2668,13 +2668,13 @@ static void cegt_output(void)
 	int j;
 
 	calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
-	calc_obtained_playedby(Encounters.enc, Encounters.n_enc, Players.n, RA.obtained, RA.playedby);
+	calc_obtained_playedby(Encounters.enc, Encounters.n, Players.n, RA.obtained, RA.playedby);
 	for (j = 0; j < Players.n; j++) {
 		RA.sorted[j] = j;
 	}
 	qsort (RA.sorted, (size_t)Players.n, sizeof (RA.sorted[0]), compareit);
 
-	cegt.n_enc = Encounters.n_enc; 
+	cegt.n_enc = Encounters.n; 
 	cegt.enc = Encounters.enc;
 	cegt.simulate = Simulate;
 	cegt.n_players = Players.n;
@@ -2703,13 +2703,13 @@ static void head2head_output(const char *head2head_str)
 	int j;
 
 	calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
-	calc_obtained_playedby(Encounters.enc, Encounters.n_enc, Players.n, RA.obtained, RA.playedby);
+	calc_obtained_playedby(Encounters.enc, Encounters.n, Players.n, RA.obtained, RA.playedby);
 	for (j = 0; j < Players.n; j++) {
 		RA.sorted[j] = j;
 	}
 	qsort (RA.sorted, (size_t)Players.n, sizeof (RA.sorted[0]), compareit);
 
-	cegt.n_enc = Encounters.n_enc;
+	cegt.n_enc = Encounters.n;
 	cegt.enc = Encounters.enc;
 	cegt.simulate = Simulate;
 	cegt.n_players = Players.n;
