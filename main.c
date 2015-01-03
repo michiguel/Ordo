@@ -251,7 +251,7 @@ ratings_init (int32_t n, struct RATINGS *r)
 	}
 	if (failed) return FALSE;
 
-	r->n_players 		= n;
+	r->n_players 		= 0; /* empty for now */
 	r->size				= n;
 	r->sorted 			= pu[0];
 	r->playedby 		= pu[1];
@@ -303,7 +303,7 @@ games_init (int32_t n, struct GAMES *g)
 	}
 	if (failed) return FALSE;
 
-	g->n_games 		= n;
+	g->n_games 		= 0; /* empty for now */
 	g->size			= n;
 	g->whiteplayer 	= pu[0];
 	g->blackplayer 	= pu[1];
@@ -591,7 +591,7 @@ static void		ctsout(const char *out);
 /*------------------------------------------------------------------------*/
 
 static void 	DB_ignore_draws (struct DATA *db);
-static void 	DB_transform(struct DATA *db, struct GAMESTATS *gs);
+static void 	DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct GAMESTATS *gs);
 static bool_t	find_anchor_player(int *anchor);
 
 /*------------------------------------------------------------------------*/
@@ -966,7 +966,7 @@ int main (int argc, char *argv[])
 		return EXIT_FAILURE; 
 	}
 
-	DB_transform(pdaba, &Game_stats); /* convert DB to global variables */
+	DB_transform(pdaba, &Games, &Players, &Game_stats); /* convert DB to global variables */
 
 	if (Anchor_use) {
 		if (find_anchor_player(&Anchor)) {
@@ -1296,7 +1296,7 @@ int main (int argc, char *argv[])
 			}
 		}
 
-		DB_transform(pdaba, &Game_stats); /* convert DB to global variables, to restore original data */
+		DB_transform(pdaba, &Games, &Players, &Game_stats); /* convert DB to global variables, to restore original data */
 	}
 	/* Simulation block, end */
 
@@ -1377,8 +1377,9 @@ usage (void)
 |
 \**/
 
+
 static void 
-DB_transform(struct DATA *db, struct GAMESTATS *gs)
+DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct GAMESTATS *gs)
 {
 	int i;
 	ptrdiff_t x;
@@ -1388,19 +1389,19 @@ DB_transform(struct DATA *db, struct GAMESTATS *gs)
 		Labelbuffer[x] = db->labels[x];
 	}
 	Labelbuffer_end = Labelbuffer + db->labels_end_idx;
-	Players.n_players = db->n_players;
-	Games.n_games   = db->n_games;
+	p->n_players = db->n_players;
+	g->n_games   = db->n_games;
 
 	for (i = 0; i < db->n_players; i++) {
-		Players.name[i] = Labelbuffer + db->name[i];
-		Players.flagged[i] = FALSE;
+		p->name[i] = Labelbuffer + db->name[i];
+		p->flagged[i] = FALSE;
 	}
 
 	for (i = 0; i < db->n_games; i++) {
-		Games.whiteplayer[i] = db->white[i];
-		Games.blackplayer[i] = db->black[i]; 
-		Games.score[i]       = db->score[i];
-		if (Games.score[i] <= DISCARD) gamestat[Games.score[i]]++;
+		g->whiteplayer[i] = db->white[i];
+		g->blackplayer[i] = db->black[i]; 
+		g->score[i]       = db->score[i];
+		if (g->score[i] <= DISCARD) gamestat[g->score[i]]++;
 	}
 
 	gs->white_wins	= gamestat[WHITE_WIN];
