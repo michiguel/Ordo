@@ -404,17 +404,6 @@ players_done (struct PLAYERS *x)
 static char		Labelbuffer[LABELBUFFERSIZE] = {'\0'};
 static char		*Labelbuffer_end = Labelbuffer;
 
-/* players */
-
-#if 0
-static char 	*Name   [MAXPLAYERS];
-static int 		N_players = 0;
-static bool_t	Flagged [MAXPLAYERS];
-static int		Performance_type[MAXPLAYERS]; //enum Player_Performance_Type 
-#endif
-
-//static bool_t	Prefed [MAXPLAYERS];////
-
 enum 			AnchorSZ	{MAX_ANCHORSIZE=256};
 static bool_t	Anchor_use = FALSE;
 static int		Anchor = 0;
@@ -428,64 +417,8 @@ static bool_t	General_average_set = FALSE;
 static int		Anchored_n = 0;
 static bool_t	Performance_type_set = FALSE;
 
-
-/* games */
-
-#if 0
-static int 		Whiteplayer	[MAXGAMES];
-static int 		Blackplayer	[MAXGAMES];
-static int 		Score		[MAXGAMES];
-static int 		N_games = 0;
-#endif
-
-/* encounters */
-
-#if 0
-static struct ENC	gEncounter[MAXENCOUNTERS];
-static long int		gN_encounters = 0;
-#endif
-
-/**/
-
-#if 0
-struct RATINGS {
-	int32_t		n_players;
-	int32_t		*sorted; 	/* sorted index by rating */
-	double		*obtained;
-	int32_t		*playedby; 	/* N games played by player "i" */
- 	double		*ratingof; 	/* rating current */
- 	double		*ratingbk; 	/* rating backup  */
- 	double		*changing; 	/* rating backup  */
-	double		*ratingof_results;
-	double		*obtained_results;
-	int32_t		*playedby_results;
-};
-#endif
-
-
-
 static double	Confidence = 95;
 static double	General_average = 2300.0;
-
-
-
-#if 0
-static int		Sorted  [MAXPLAYERS]; /* sorted index by rating */
-static double	Obtained[MAXPLAYERS];
-static int		Playedby[MAXPLAYERS]; /* N games played by player "i" */
-static double	Ratingof[MAXPLAYERS]; /* rating current */
-static double	Ratingbk[MAXPLAYERS]; /* rating backup  */
-static double	Changing[MAXPLAYERS]; /* rating backup  */
-
-static double	Ratingof_results[MAXPLAYERS];
-static double	Obtained_results[MAXPLAYERS];
-static int		Playedby_results[MAXPLAYERS];
-#endif
-
-
-
-
-
 
 static double	Sum1[MAXPLAYERS]; 
 static double	Sum2[MAXPLAYERS]; 
