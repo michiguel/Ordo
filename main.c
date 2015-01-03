@@ -175,6 +175,7 @@ struct PLAYERS {
 	int32_t		size;
 	char 		**name;
 	bool_t		*flagged;
+	bool_t		*prefed;
 	int			*performance_type; 
 };
 
@@ -353,7 +354,7 @@ encounters_done (struct ENCOUNTERS *e)
 static bool_t 
 players_init (int32_t n, struct PLAYERS *x)
 {
-	enum VARIAB {NV = 3};
+	enum VARIAB {NV = 4};
 	bool_t failed;
 	size_t sz[NV];
 	void * pv[NV];
@@ -363,7 +364,8 @@ players_init (int32_t n, struct PLAYERS *x)
 
 	sz[0] = sizeof(char);
 	sz[1] = sizeof(bool_t);
-	sz[2] = sizeof(int);
+	sz[2] = sizeof(bool_t);
+	sz[3] = sizeof(int);
 	for (failed = FALSE, i = 0; !failed && i < NV; i++) {
 		if (NULL == (pv[i] = malloc (sz[i] * (size_t)n))) {
 			for (j = 0; j < i; j++) free(pv[j]);
@@ -376,7 +378,8 @@ players_init (int32_t n, struct PLAYERS *x)
 	x->size				= n;
 	x->name 			= pv[0];
 	x->flagged			= pv[1];
-	x->performance_type = pv[2]; 
+	x->prefed			= pv[2];
+	x->performance_type = pv[3]; 
 	return TRUE;
 }
 
@@ -385,11 +388,13 @@ players_done (struct PLAYERS *x)
 {
 	free(x->name);
 	free(x->flagged);
+	free(x->prefed);
 	free(x->performance_type);
 	x->n = 0;
 	x->size	= 0;
 	x->name = NULL;
 	x->flagged = NULL;
+	x->prefed = NULL;
 	x->performance_type = NULL;
 } 
 #endif
