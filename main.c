@@ -171,7 +171,7 @@ struct GAMES {
 };
 */
 struct GAMES {
-	int32_t	 	n_games;
+	int32_t	 	n_games; //FIXME transform to size_t
 	int32_t 	*whiteplayer;
 	int32_t 	*blackplayer;
 	int32_t 	*score;
@@ -410,6 +410,7 @@ static bool_t	Performance_type_set = FALSE;
 static int		Performance_type[MAXPLAYERS]; //enum Player_Performance_Type 
 
 /* games */
+
 #if 0
 static int 		Whiteplayer	[MAXGAMES];
 static int 		Blackplayer	[MAXGAMES];
