@@ -162,11 +162,19 @@ const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:XN:
 |
 \*--------------------------------------------------------------*/
 
+/*
 struct GAMES {
 	uint32_t 	n_games;
 	uint32_t 	*whiteplayer;
 	uint32_t 	*blackplayer;
 	uint32_t 	*score;
+};
+*/
+struct GAMES {
+	int32_t	 	n_games;
+	int32_t 	*whiteplayer;
+	int32_t 	*blackplayer;
+	int32_t 	*score;
 };
 
 struct PLAYERS {
@@ -266,15 +274,17 @@ ratings_done (struct RATINGS *r)
 
 
 static bool_t 
-games_init (uint32_t n, struct GAMES *g)
+games_init (int32_t n, struct GAMES *g)
 {
 	enum {MAXU=3};
-	uint32_t 	*pu[MAXU];
+	int32_t 	*pu[MAXU];
 	bool_t		failed;
 	int i,u;
 
+	assert (n > 0);
+
 	for (failed = FALSE, u = 0, i = 0; i < MAXU && !failed; i++) {
-		if (NULL != (pu[i] = malloc (sizeof(uint32_t) * n))) { 
+		if (NULL != (pu[i] = malloc (sizeof(int32_t) * (size_t)n))) { 
 			u++;
 		} else {
 			while (u-->0) free(pu[u]);
@@ -400,10 +410,12 @@ static bool_t	Performance_type_set = FALSE;
 static int		Performance_type[MAXPLAYERS]; //enum Player_Performance_Type 
 
 /* games */
+#if 0
 static int 		Whiteplayer	[MAXGAMES];
 static int 		Blackplayer	[MAXGAMES];
 static int 		Score		[MAXGAMES];
 static int 		N_games = 0;
+#endif
 
 /* encounters */
 
@@ -595,6 +607,25 @@ save_simulated(int num)
 	}
 }
 #endif
+
+
+static long
+calc_encounters__
+				( int selectivity
+				, struct GAMES *g
+				, const bool_t *flagged
+				, struct ENC *enc
+) 
+{
+	return
+	calc_encounters	( selectivity
+					, g->n_games
+					, g->score
+					, flagged
+					, g->whiteplayer
+					, g->blackplayer
+					, enc);
+}
 
 /*
 |
@@ -874,9 +905,7 @@ int main (int argc, char *argv[])
 	/*==== SET INPUT ====*/
 
 	if (NULL != (pdaba = database_init_frompgn(inputf, QUIET_MODE))) {
-		if (Ignore_draws) {
-			DB_ignore_draws(pdaba);
-		}
+		if (Ignore_draws) DB_ignore_draws(pdaba);
 	} else {
 		fprintf (stderr, "Problems reading results from: %s\n", inputf);
 		return EXIT_FAILURE; 
@@ -909,7 +938,7 @@ int main (int argc, char *argv[])
 			return EXIT_FAILURE; 
 	}
 
-	N_encounters = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+	N_encounters = calc_encounters__(ENCOUNTERS_FULL, &Games, Flagged, Encounter);
 
 	if (!QUIET_MODE) {
 		printf ("Total games         %8ld\n", Game_stats.white_wins
@@ -920,7 +949,7 @@ int main (int argc, char *argv[])
 		printf (" - Draws            %8ld\n", Game_stats.draws);
 		printf (" - Black wins       %8ld\n", Game_stats.black_wins);
 		printf (" - Truncated        %8ld\n", Game_stats.noresult);
-		printf ("Unique head to head %8.2f%s\n", 100.0*(double)N_encounters/N_games, "%");
+		printf ("Unique head to head %8.2f%s\n", 100.0*(double)N_encounters/(double)Games.n_games, "%");
 		if (Anchor_use) {
 			printf ("Reference rating    %8.1lf",General_average);
 			printf (" (set to \"%s\")\n", Anchor_name);
@@ -1052,7 +1081,7 @@ int main (int argc, char *argv[])
 
 	/*===== GROUPS ========*/
 
-	N_encounters = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+	N_encounters = calc_encounters__(ENCOUNTERS_FULL, &Games, Flagged, Encounter);
 	scan_encounters(Encounter, N_encounters, N_players); 
 	if (group_is_output) {
 
@@ -1071,10 +1100,10 @@ int main (int argc, char *argv[])
 
 	/*=====================*/
 
-	N_encounters = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+	N_encounters = calc_encounters__(ENCOUNTERS_FULL, &Games, Flagged, Encounter);
 	if (0 < set_super_players(QUIET_MODE, N_encounters, Encounter, N_players, Performance_type, Name, &Performance_type_set)) {
 		purge_players (QUIET_MODE, N_players, Performance_type, Name, Flagged);
-		N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+		N_encounters = calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Flagged, Encounter);
 	}
 	N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters, &White_advantage, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch);
 
@@ -1128,11 +1157,11 @@ int main (int argc, char *argv[])
 					simulate_scores ( Drawrate_evenmatch
 									, White_advantage
 									, BETA
-									, N_games
+									, Games.n_games
 									, Ratingof_results
-									, Whiteplayer
-									, Blackplayer
-									, Score // out
+									, Games.whiteplayer
+									, Games.blackplayer
+									, Games.score // out
 					);
 
 					relpriors_copy(Ra, N_relative_anchors, Ra_store);
@@ -1151,10 +1180,10 @@ int main (int argc, char *argv[])
 					reset_rating (General_average, N_players, Prefed, Flagged, Ratingof);
 					reset_rating (General_average, N_players, Prefed, Flagged, Ratingbk);
 
-					N_encounters = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+					N_encounters = calc_encounters__(ENCOUNTERS_FULL, &Games, Flagged, Encounter);
 					if (0 < set_super_players(QUIET_MODE, N_encounters, Encounter, N_players, Performance_type, Name, &Performance_type_set)) {
 						purge_players (QUIET_MODE, N_players, Performance_type, Name, Flagged);
-						N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+						N_encounters = calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Flagged, Encounter);
 					}
 					N_encounters = calc_rating(QUIET_MODE, Encounter, N_encounters, &White_advantage, FALSE, &sim_draw_rate);
 					ratings_for_purged ();
@@ -1302,7 +1331,7 @@ DB_transform(struct DATA *db, struct GAMESTATS *gs)
 	}
 	Labelbuffer_end = Labelbuffer + db->labels_end_idx;
 	N_players = db->n_players;
-	N_games   = db->n_games;
+	Games.n_games   = db->n_games;
 
 	for (i = 0; i < db->n_players; i++) {
 		Name[i] = Labelbuffer + db->name[i];
@@ -1310,10 +1339,10 @@ DB_transform(struct DATA *db, struct GAMESTATS *gs)
 	}
 
 	for (i = 0; i < db->n_games; i++) {
-		Whiteplayer[i] = db->white[i];
-		Blackplayer[i] = db->black[i]; 
-		Score[i]       = db->score[i];
-		if (Score[i] <= DISCARD) gamestat[Score[i]]++;
+		Games.whiteplayer[i] = db->white[i];
+		Games.blackplayer[i] = db->black[i]; 
+		Games.score[i]       = db->score[i];
+		if (Games.score[i] <= DISCARD) gamestat[Games.score[i]]++;
 	}
 
 	gs->white_wins	= gamestat[WHITE_WIN];
@@ -1537,7 +1566,8 @@ all_report (FILE *csvf, FILE *textf)
 	int rank = 0;
 	bool_t showrank = TRUE;
 
-	N_encounters = calc_encounters (ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+	N_encounters = calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Flagged, Encounter);
+
 	calc_obtained_playedby(Encounter, N_encounters, N_players, Obtained, Playedby);
 
 	for (j = 0; j < N_players; j++) {
@@ -2389,10 +2419,10 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 				, Anchor_use && !Anchor_err_rel2avg
 				, Anchor
 				
-				, N_games
-				, Score
-				, Whiteplayer
-				, Blackplayer
+				, Games.n_games
+				, Games.score
+				, Games.whiteplayer
+				, Games.blackplayer
 
 				, Name
 				, BETA
@@ -2440,10 +2470,10 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 					, Anchor_use && !Anchor_err_rel2avg
 					, Anchor
 					
-					, N_games
-					, Score
-					, Whiteplayer
-					, Blackplayer
+					, Games.n_games
+					, Games.score
+					, Games.whiteplayer
+					, Games.blackplayer
 	
 					, Name
 					, BETA
@@ -2587,7 +2617,7 @@ static void cegt_output(void)
 	struct CEGT cegt;
 	int j;
 
-	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+	N_encounters = calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Flagged, Encounter);
 	calc_obtained_playedby(Encounter, N_encounters, N_players, Obtained, Playedby);
 	for (j = 0; j < N_players; j++) {
 		Sorted[j] = j;
@@ -2622,7 +2652,7 @@ static void head2head_output(const char *head2head_str)
 	struct CEGT cegt;
 	int j;
 
-	N_encounters = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, Encounter);
+	N_encounters = calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Flagged, Encounter);
 	calc_obtained_playedby(Encounter, N_encounters, N_players, Obtained, Playedby);
 	for (j = 0; j < N_players; j++) {
 		Sorted[j] = j;
