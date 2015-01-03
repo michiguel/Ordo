@@ -523,9 +523,9 @@ static void		ctsout(const char *out);
 
 /*------------------------------------------------------------------------*/
 
-static void 	transform_DB(struct DATA *db, struct GAMESTATS *gs);
-static bool_t	find_anchor_player(int *anchor);
 static void 	DB_ignore_draws (struct DATA *db);
+static void 	DB_transform(struct DATA *db, struct GAMESTATS *gs);
+static bool_t	find_anchor_player(int *anchor);
 
 /*------------------------------------------------------------------------*/
 
@@ -602,6 +602,7 @@ save_simulated(int num)
 |
 \*--------------------------------------------------------------*/
 
+static struct DATA *pdaba;
 
 int main (int argc, char *argv[])
 {
@@ -872,17 +873,16 @@ int main (int argc, char *argv[])
 
 	/*==== SET INPUT ====*/
 
-	if (!pgn_getresults(inputf, QUIET_MODE)) {
+	if (NULL != (pdaba = database_init_frompgn(inputf, QUIET_MODE))) {
+		if (Ignore_draws) {
+			DB_ignore_draws(pdaba);
+		}
+	} else {
 		fprintf (stderr, "Problems reading results from: %s\n", inputf);
 		return EXIT_FAILURE; 
 	}
-	
 
-	if (Ignore_draws) {
-		DB_ignore_draws(&DB);
-	}
-
-	transform_DB(&DB, &Game_stats); /* convert DB to global variables */
+	DB_transform(pdaba, &Game_stats); /* convert DB to global variables */
 
 	if (Anchor_use) {
 		if (find_anchor_player(&Anchor)) {
@@ -1209,7 +1209,7 @@ int main (int argc, char *argv[])
 			}
 		}
 
-		transform_DB(&DB, &Game_stats); /* convert DB to global variables, to restore original data */
+		DB_transform(pdaba, &Game_stats); /* convert DB to global variables, to restore original data */
 	}
 	/* Simulation block, end */
 
@@ -1236,6 +1236,9 @@ int main (int argc, char *argv[])
 	if (groupf_opened) 	fclose(groupf);
 
 	if (sim != NULL) free(sim);
+
+	if (pdaba != NULL)
+	database_done (pdaba);
 
 	/*==== END CALCULATION ====*/
 
@@ -1288,7 +1291,7 @@ usage (void)
 \**/
 
 static void 
-transform_DB(struct DATA *db, struct GAMESTATS *gs)
+DB_transform(struct DATA *db, struct GAMESTATS *gs)
 {
 	int i;
 	ptrdiff_t x;

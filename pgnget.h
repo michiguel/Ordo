@@ -34,9 +34,8 @@ enum RESULTS {
 	DISCARD = 3
 };
 
-extern struct DATA DB;
-
-extern bool_t pgn_getresults (const char *pgn, bool_t quiet);
+extern struct DATA * 	database_init_frompgn (const char *pgn, bool_t quiet);
+extern void 			database_done (struct DATA *p);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

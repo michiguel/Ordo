@@ -54,7 +54,8 @@ struct pgn_result {
 	char 	btag[PGNSTRSIZE];
 };
 
-struct DATA DB;
+static struct DATA DaBa;
+
 static void 	data_init (struct DATA *d);
 
 /*------------------------------------------------------------------------*/
@@ -76,21 +77,33 @@ static bool_t 	pgn_result_collect (struct pgn_result *p);
 |
 \*--------------------------------------------------------------*/
 
-bool_t
-pgn_getresults (const char *pgn, bool_t quiet)
+struct DATA *
+database_init_frompgn (const char *pgn, bool_t quiet)
 {
+	struct DATA *pDAB = NULL;
 	FILE *fpgn;
 	bool_t ok = FALSE;
 
-	data_init (&DB);
+	data_init (&DaBa);
 
 	if (NULL != (fpgn = fopen (pgn, "r"))) {
 		ok = fpgnscan (fpgn, quiet);
 		fclose(fpgn);
 	}
 
+	pDAB = &DaBa;
+
+	return ok? pDAB: NULL;
+
 	//hashstat();
-	return ok;
+}
+
+void 
+database_done (struct DATA *p)
+{
+	p->n_players = 0;	// just to silence warnings, it will have to deallocate dynamic memory
+	p->n_games = 0; 	// just to silence warnings, it will have to deallocate dynamic memory
+	return;
 }
 
 /*--------------------------------------------------------------*\
@@ -114,9 +127,9 @@ playeridx_from_str (const char *s, int *idx)
 {
 	int i;
 	bool_t found;
-	for (i = 0, found = FALSE; !found && i < DB.n_players; i++) {
-		ptrdiff_t x = DB.name[i];
-		char * l = DB.labels + x;	
+	for (i = 0, found = FALSE; !found && i < DaBa.n_players; i++) {
+		ptrdiff_t x = DaBa.name[i];
+		char * l = DaBa.labels + x;	
 		found = (0 == strcmp (s, l) );
 		if (found) *idx = i;
 	}
@@ -128,22 +141,22 @@ static bool_t
 addplayer (const char *s, int *idx)
 {
 	long int i;
-	char *b = DB.labels + DB.labels_end_idx;
-	long int remaining = (long int) (&DB.labels[LABELBUFFERSIZE] - b - 1);
+	char *b = DaBa.labels + DaBa.labels_end_idx;
+	long int remaining = (long int) (&DaBa.labels[LABELBUFFERSIZE] - b - 1);
 	long int len = (long int) strlen(s);
-	bool_t success = len < remaining && DB.n_players < MAXPLAYERS;
+	bool_t success = len < remaining && DaBa.n_players < MAXPLAYERS;
 
 	if (success) {
-		int x = DB.n_players++;
+		int x = DaBa.n_players++;
 		*idx = x;
-		DB.name[x] = b - DB.labels;
+		DaBa.name[x] = b - DaBa.labels;
 		for (i = 0; i < len; i++)  {
 			*b++ = *s++;
 		}
 		*b++ = '\0';
 	}
 
-	DB.labels_end_idx = b - DB.labels;
+	DaBa.labels_end_idx = b - DaBa.labels;
 	return success;
 }
 
@@ -175,7 +188,7 @@ struct NAMEPOD namehashtab[PODMAX];
 struct NAMEPEA nameremains[PEA_REM_MAX];
 int nameremains_n;
 
-static const char *get_DB_name(int i) {return DB.labels + DB.name[i];}
+static const char *get_DB_name(int i) {return DaBa.labels + DaBa.name[i];}
 
 #if 0
 static void
@@ -318,12 +331,12 @@ pgn_result_collect (struct pgn_result *p)
 }
 #endif
 
-	ok = ok && DB.n_games < MAXGAMES;
+	ok = ok && DaBa.n_games < MAXGAMES;
 	if (ok) {
-		DB.white [DB.n_games] = i;
-		DB.black [DB.n_games] = j;
-		DB.score [DB.n_games] = p->result;
-		DB.n_games++;
+		DaBa.white [DaBa.n_games] = i;
+		DaBa.black [DaBa.n_games] = j;
+		DaBa.score [DaBa.n_games] = p->result;
+		DaBa.n_games++;
 	}
 
 	return ok;
