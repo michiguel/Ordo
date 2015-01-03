@@ -187,7 +187,7 @@ struct PLAYERS {
 };
 
 struct RATINGS {
-	int32_t		n_players;
+//	int32_t		n;
 	int32_t		size;
 	int32_t		*sorted; 	/* sorted index by rating */
 	double		*obtained;
@@ -228,7 +228,7 @@ ratings_init (int32_t n, struct RATINGS *r)
 
 	assert (n > 0);
 
-	r->n_players = n;
+	r->size = n;
 
 	for (failed = FALSE, u = 0, i = 0; i < MAXU && !failed; i++) {
 		if (NULL != (pu[i] = malloc (sizeof(uint32_t) * (size_t)n))) { 
@@ -251,7 +251,7 @@ ratings_init (int32_t n, struct RATINGS *r)
 	}
 	if (failed) return FALSE;
 
-	r->n_players 		= 0; /* empty for now */
+//	r->n		 		= 0; /* empty for now */
 	r->size				= n;
 	r->sorted 			= pu[0];
 	r->playedby 		= pu[1];
@@ -269,7 +269,7 @@ ratings_init (int32_t n, struct RATINGS *r)
 static void 
 ratings_done (struct RATINGS *r)
 {
-	r->n_players = 0;
+//	r->n = 0;
 	r->size	= 0;
 	free(r->sorted);
 	free(r->playedby);
