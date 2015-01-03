@@ -875,26 +875,30 @@ int main (int argc, char *argv[])
 	}
 
 	/*==== memory initialization ====*/
+	{
+	int32_t mp = MAXPLAYERS;
+	int32_t mg = MAXGAMES;
+	int32_t me = MAXENCOUNTERS;
 
-	if (!ratings_init (MAXPLAYERS, &RA)) {
+	if (!ratings_init (mp, &RA)) {
 		fprintf (stderr, "Could not initialize rating memory\n"); exit(0);	
 	} else 
-	if (!games_init (MAXGAMES, &Games)) {
+	if (!games_init (mg, &Games)) {
 		ratings_done (&RA);
 		fprintf (stderr, "Could not initialize Games memory\n"); exit(0);
 	} else 
-	if (!encounters_init (MAXENCOUNTERS, &Encounters)) {
+	if (!encounters_init (me, &Encounters)) {
 		ratings_done (&RA);
 		games_done (&Games);
 		fprintf (stderr, "Could not initialize Encounters memory\n"); exit(0);
 	} else 
-	if (!players_init (MAXPLAYERS, &Players)) {
+	if (!players_init (mp, &Players)) {
 		ratings_done (&RA);
 		games_done (&Games);
 		encounters_done (&Encounters);
 		fprintf (stderr, "Could not initialize Players memory\n"); exit(0);
 	}
-
+	}
 	/**/
 
 	DB_transform(pdaba, &Games, &Players, &Game_stats); /* convert DB to global variables */
