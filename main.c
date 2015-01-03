@@ -413,7 +413,7 @@ static bool_t	Flagged [MAXPLAYERS];
 static int		Performance_type[MAXPLAYERS]; //enum Player_Performance_Type 
 #endif
 
-static bool_t	Prefed [MAXPLAYERS];////
+//static bool_t	Prefed [MAXPLAYERS];////
 
 enum 			AnchorSZ	{MAX_ANCHORSIZE=256};
 static bool_t	Anchor_use = FALSE;
@@ -1230,8 +1230,8 @@ int main (int argc, char *argv[])
 					#endif
 
 					// may improve convergence in pathological cases
-					reset_rating (General_average, Players.n, Prefed, Players.flagged, RA.ratingof);
-					reset_rating (General_average, Players.n, Prefed, Players.flagged, RA.ratingbk);
+					reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingof);
+					reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingbk);
 
 					calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 					if (0 < set_super_players(QUIET_MODE, Encounters.n, Encounters.enc, Players.n
@@ -1856,7 +1856,7 @@ static void
 anchor_j (long int j, double x)
 {
 	Multiple_anchors_present = TRUE;
-	Prefed[j] = TRUE;
+	Players.prefed[j] = TRUE;
 	RA.ratingof[j] = x;
 	Anchored_n++;
 }
@@ -2465,7 +2465,7 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 				, Players.performance_type
 
 				, Players.flagged
-				, Prefed
+				, Players.prefed
 
 				, pWhite_advantage
 				, General_average
@@ -2516,7 +2516,7 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 					, Players.performance_type
 
 					, Players.flagged
-					, Prefed
+					, Players.prefed
 
 					, pWhite_advantage
 					, General_average
