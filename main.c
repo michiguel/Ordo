@@ -865,6 +865,15 @@ int main (int argc, char *argv[])
 
 	Prior_mode = switch_k || switch_u || NULL != relstr || NULL != priorsstr;
 
+	/*==== SET INPUT ====*/
+
+	if (NULL != (pdaba = database_init_frompgn(inputf, QUIET_MODE))) {
+		if (Ignore_draws) DB_ignore_draws(pdaba);
+	} else {
+		fprintf (stderr, "Problems reading results from: %s\n", inputf);
+		return EXIT_FAILURE; 
+	}
+
 	/*==== memory initialization ====*/
 
 	if (!ratings_init (MAXPLAYERS, &RA)) {
@@ -886,14 +895,7 @@ int main (int argc, char *argv[])
 		fprintf (stderr, "Could not initialize Players memory\n"); exit(0);
 	}
 
-	/*==== SET INPUT ====*/
-
-	if (NULL != (pdaba = database_init_frompgn(inputf, QUIET_MODE))) {
-		if (Ignore_draws) DB_ignore_draws(pdaba);
-	} else {
-		fprintf (stderr, "Problems reading results from: %s\n", inputf);
-		return EXIT_FAILURE; 
-	}
+	/**/
 
 	DB_transform(pdaba, &Games, &Players, &Game_stats); /* convert DB to global variables */
 
