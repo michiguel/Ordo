@@ -201,7 +201,7 @@ struct RATINGS {
 };
 
 struct ENCOUNTERS {
-	int32_t	n_enc;	//FIXME transform to size_t
+	int32_t		n_enc;	//FIXME transform to size_t
 	int32_t		size;
 	struct ENC	*enc;
 };
@@ -343,7 +343,7 @@ encounters_init (int32_t n, struct ENCOUNTERS *e)
 
 	if (failed) return FALSE;
 
-	e->n_enc 	= n;
+	e->n_enc 	= 0; /* empty for now */
 	e->size 	= n;
 	e->enc		= p;
 	return TRUE;
@@ -381,7 +381,7 @@ players_init (int32_t n, struct PLAYERS *x)
 	}
 	if (failed) return FALSE;
 
-	x->n_players		= n;
+	x->n_players		= 0; /* empty for now */
 	x->size				= n;
 	x->name 			= pv[0];
 	x->flagged			= pv[1];
