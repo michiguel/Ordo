@@ -322,19 +322,16 @@ games_done (struct GAMES *g)
 static bool_t 
 encounters_init (int32_t n, struct ENCOUNTERS *e)
 {
-	bool_t		failed;
 	struct ENC 	*p;
 
 	assert (n > 0);
 
-	if (NULL != (p = malloc (sizeof(struct ENC) * (size_t)n))) {
-		failed = FALSE;
-	} else {
-		free(p);
-		failed = TRUE;
+	if (NULL == (p = malloc (sizeof(struct ENC) * (size_t)n))) {
+		e->n	 	= 0; 
+		e->size 	= 0;
+		e->enc		= NULL;
+		return FALSE; // failed
 	}
-
-	if (failed) return FALSE;
 
 	e->n	 	= 0; /* empty for now */
 	e->size 	= n;
