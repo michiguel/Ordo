@@ -221,72 +221,80 @@ rate_super_players 	( bool_t quiet
 {
 	int j, e;
 	int myenc_n = 0;
-	static struct ENC myenc[MAXENCOUNTERS];
+	static struct ENC *myenc;
 
-	for (j = 0; j < n_players; j++) {
+	if (NULL != (myenc = malloc (sizeof(struct ENC) * (size_t)N_enc))) {
 
-		if (performance_type[j] != PERF_SUPERWINNER && performance_type[j] != PERF_SUPERLOSER) 
-			continue;
+		for (j = 0; j < n_players; j++) {
 
-		myenc_n = 0; // reset
+			if (performance_type[j] != PERF_SUPERWINNER && performance_type[j] != PERF_SUPERLOSER) 
+				continue;
 
-		if (performance_type[j] == PERF_SUPERWINNER)
-			if (!quiet) printf ("  all wins   --> %s\n", Name[j]);
+			myenc_n = 0; // reset
 
-		if (performance_type[j] == PERF_SUPERLOSER) 
-			if (!quiet) printf ("  all losses --> %s\n", Name[j]);
+			if (performance_type[j] == PERF_SUPERWINNER)
+				if (!quiet) printf ("  all wins   --> %s\n", Name[j]);
 
-		for (e = 0; e < N_enc; e++) {
-			int w = enc[e].wh;
-			int b = enc[e].bl;
-			if (j == w /*&& performance_type[b] == PERF_NORMAL*/) {
-				myenc[myenc_n++] = enc[e];
-			} else
-			if (j == b /*&& performance_type[w] == PERF_NORMAL*/) {
-				myenc[myenc_n++] = enc[e];
+			if (performance_type[j] == PERF_SUPERLOSER) 
+				if (!quiet) printf ("  all losses --> %s\n", Name[j]);
+
+			for (e = 0; e < N_enc; e++) {
+				int w = enc[e].wh;
+				int b = enc[e].bl;
+				if (j == w /*&& performance_type[b] == PERF_NORMAL*/) {
+					myenc[myenc_n++] = enc[e];
+				} else
+				if (j == b /*&& performance_type[w] == PERF_NORMAL*/) {
+					myenc[myenc_n++] = enc[e];
+				}
 			}
-		}
 
-		{
-			double	cume_score = 0; 
-			double	cume_total = 0;
-			static double weig[MAXPLAYERS];
-			static double rtng[MAXPLAYERS];
-			int		r = 0;
+			{
+				double	cume_score = 0; 
+				double	cume_total = 0;
+				static double weig[MAXPLAYERS];
+				static double rtng[MAXPLAYERS];
+				int		r = 0;
  	
-			while (myenc_n-->0) {
-				int n = myenc_n;
-				if (myenc[n].wh == j) {
-					int opp = myenc[n].bl;
-					weig[r	] = myenc[n].played;
-					rtng[r++] = ratingof[opp] - white_advantage;
-					cume_score += myenc[n].wscore;
-					cume_total += myenc[n].played;
-			 	} else 
-				if (myenc[myenc_n].bl == j) {
-					int opp = myenc[n].wh;
-					weig[r	] = myenc[n].played;
-					rtng[r++] = ratingof[opp] + white_advantage;
-					cume_score += myenc[n].played - myenc[n].wscore;
-					cume_total += myenc[n].played;
-				} else {
-					fprintf(stderr,"ERROR!! function rate_super_players()\n");
-					exit(0);
-					continue;
-				} 
-			}
+				while (myenc_n-->0) {
+					int n = myenc_n;
+					if (myenc[n].wh == j) {
+						int opp = myenc[n].bl;
+						weig[r	] = myenc[n].played;
+						rtng[r++] = ratingof[opp] - white_advantage;
+						cume_score += myenc[n].wscore;
+						cume_total += myenc[n].played;
+				 	} else 
+					if (myenc[myenc_n].bl == j) {
+						int opp = myenc[n].wh;
+						weig[r	] = myenc[n].played;
+						rtng[r++] = ratingof[opp] + white_advantage;
+						cume_score += myenc[n].played - myenc[n].wscore;
+						cume_total += myenc[n].played;
+					} else {
+						fprintf(stderr,"ERROR!! function rate_super_players()\n");
+						exit(0);
+						continue;
+					} 
+				}
 
-			if (performance_type[j] == PERF_SUPERWINNER) {
-				double ori_estimation = calc_ind_rating (cume_score-0.25, rtng, weig, r, beta); 
-				ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERWINNER, ori_estimation, rtng, weig, r, deq, beta);
-			}
-			if (performance_type[j] == PERF_SUPERLOSER) {
-				double ori_estimation = calc_ind_rating (cume_score+0.25, rtng, weig, r, beta); 
-				ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERLOSER,  ori_estimation, rtng, weig, r, deq, beta);
-			}
-			flagged[j] = FALSE;
+				if (performance_type[j] == PERF_SUPERWINNER) {
+					double ori_estimation = calc_ind_rating (cume_score-0.25, rtng, weig, r, beta); 
+					ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERWINNER, ori_estimation, rtng, weig, r, deq, beta);
+				}
+				if (performance_type[j] == PERF_SUPERLOSER) {
+					double ori_estimation = calc_ind_rating (cume_score+0.25, rtng, weig, r, beta); 
+					ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERLOSER,  ori_estimation, rtng, weig, r, deq, beta);
+				}
+				flagged[j] = FALSE;
 
+			}
 		}
+
+		free(myenc);
+	} else {
+		fprintf (stderr, "not enough memory for encounters allocation in rate_super_players\n");
+		exit(EXIT_FAILURE);
 	}
 
 	return;
