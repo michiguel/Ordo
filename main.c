@@ -1073,17 +1073,17 @@ int main (int argc, char *argv[])
 
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
-if (group_is_output) {
+	if (group_is_output) {
 
-	if (supporting_encmem_init ((size_t)Encounters.n)) {
+		if (supporting_encmem_init ((size_t)Encounters.n)) {
 
-			bool_t ok;
-			static struct ENC 		*Encounter2;
-			static long	int			N_encounters2 = 0;
-			static struct ENC 		*Encounter3;
-			static long	int			N_encounters3 = 0;
-			struct ENC *a;
-			struct ENC *b;
+			bool_t 			ok;
+			struct ENC *	Encounter2;
+			long int		N_encounters2 = 0;
+			struct ENC *	Encounter3;
+			long int		N_encounters3 = 0;
+			struct ENC *	a;
+			struct ENC *	b;
 			size_t nenc = (size_t)Encounters.n;
 	
 			if (NULL == (a = malloc (sizeof(struct ENC) * nenc))) {
@@ -1104,23 +1104,22 @@ if (group_is_output) {
 			}
 
 			scan_encounters(Encounters.enc, Encounters.n, Players.n); 
-
 			convert_to_groups(groupf, Players.n, Players.name);
 			sieve_encounters(Encounters.enc, Encounters.n, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
+
 			printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n",(long)Encounters.n, N_encounters2, N_encounters3);
 	
-			if (textstr == NULL && csvstr == NULL)	{
-				supporting_encmem_done ();
-				exit(EXIT_SUCCESS);
-			}
+			supporting_encmem_done ();
+	
+		} else {
+			fprintf (stderr, "not enough memory for encounters scanning\n");
+			exit(EXIT_FAILURE);
+		}	
 
-		supporting_encmem_done ();
-
-	} else {
-		fprintf (stderr, "not enough memory for encounters scanning\n");
-		exit(EXIT_FAILURE);
-	}	
-}
+		if (textstr == NULL && csvstr == NULL)	{
+			exit(EXIT_SUCCESS);
+		}
+	}
 
 	/*=====================*/
 
