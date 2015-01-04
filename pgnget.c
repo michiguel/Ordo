@@ -34,7 +34,9 @@
 #define TESTHASH
 #endif
 
-//static void	hashstat(void);
+#if 0
+static void	hashstat(void);
+#endif
 
 /*
 |
@@ -56,7 +58,7 @@ struct pgn_result {
 
 static struct DATA DaBa;
 
-static void 	data_init (struct DATA *d);
+static bool_t	data_init (struct DATA *d);
 
 /*------------------------------------------------------------------------*/
 
@@ -84,25 +86,28 @@ database_init_frompgn (const char *pgn, bool_t quiet)
 	FILE *fpgn;
 	bool_t ok = FALSE;
 
-	data_init (&DaBa);
+	ok = data_init (&DaBa);
 
-	if (NULL != (fpgn = fopen (pgn, "r"))) {
-		ok = fpgnscan (fpgn, quiet);
-		fclose(fpgn);
+	if (ok) {
+		if (NULL != (fpgn = fopen (pgn, "r"))) {
+			ok = fpgnscan (fpgn, quiet);
+			fclose(fpgn);
+		}
+		pDAB = &DaBa;
 	}
-
-	pDAB = &DaBa;
-
 	return ok? pDAB: NULL;
 
-	//hashstat();
+	#if 0
+	hashstat();
+	#endif
 }
+
+static void data_done (struct DATA *d);
 
 void 
 database_done (struct DATA *p)
 {
-	p->n_players = 0;	// just to silence warnings, it will have to deallocate dynamic memory
-	p->n_games = 0; 	// just to silence warnings, it will have to deallocate dynamic memory
+	data_done (p);
 	return;
 }
 
@@ -111,15 +116,51 @@ database_done (struct DATA *p)
 |
 \**/
 
-
-static void
+static bool_t
 data_init (struct DATA *d)
 {
+	struct GAMEBLOCK *p;
+
 	d->labels[0] = '\0';
 	d->labels_end_idx = 0;
 	d->n_players = 0;
 	d->n_games = 0;
+
+	d->gb_filled = 0;;
+	d->gb_idx = 0;
+		
+	d->gb_allocated = 0;
+	if (NULL == (p = malloc (sizeof(struct GAMEBLOCK) * (size_t)1))) {
+		d->gb[0] = NULL;
+		return FALSE; // failed
+	} else {
+		d->gb[0] = p;
+		d->gb_allocated++;
+		return TRUE;
+	}
 }
+
+static void
+data_done (struct DATA *d)
+{
+	int n;
+
+	d->labels[0] = '\0';
+	d->labels_end_idx = 0;
+	d->n_players = 0;
+	d->n_games = 0;
+
+	n = d->gb_allocated;
+
+	while (n-->0) {
+		free(d->gb[n]);
+	}
+
+	d->gb_filled = 0;;
+	d->gb_idx = 0;
+	d->gb_allocated = 0;
+}
+
 
 #ifndef TESTHASH
 static bool_t
@@ -331,12 +372,36 @@ pgn_result_collect (struct pgn_result *p)
 }
 #endif
 
-	ok = ok && DaBa.n_games < MAXGAMES;
+	ok = ok && (size_t)DaBa.n_games < ((size_t)MAXGAMESxBLOCK*(size_t)MAXBLOCKS);
+
 	if (ok) {
-		DaBa.white [DaBa.n_games] = i;
-		DaBa.black [DaBa.n_games] = j;
-		DaBa.score [DaBa.n_games] = p->result;
+
+		struct GAMEBLOCK *g;
+
+		int idx = DaBa.gb_idx;
+		int blk = DaBa.gb_filled;
+
+		DaBa.gb[blk]->white [idx] = i;
+		DaBa.gb[blk]->black [idx] = j;
+		DaBa.gb[blk]->score [idx] = p->result;
 		DaBa.n_games++;
+		DaBa.gb_idx++;
+
+		if (DaBa.gb_idx == MAXGAMESxBLOCK) { // hit new block
+
+			DaBa.gb_idx = 0;
+			DaBa.gb_filled++;
+
+			blk = DaBa.gb_filled;
+			if (NULL == (g = malloc (sizeof(struct GAMEBLOCK) * (size_t)1))) {
+				DaBa.gb[blk] = NULL;
+				ok = FALSE; // failed
+			} else {
+				DaBa.gb[blk] = g;
+				DaBa.gb_allocated++;
+				ok = TRUE;
+			}
+		}
 	}
 
 	return ok;

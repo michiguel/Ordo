@@ -1332,12 +1332,44 @@ DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct G
 		p->flagged[i] = FALSE;
 	}
 
-	for (i = 0; i < db->n_games; i++) {
-		g->whiteplayer[i] = db->white[i];
-		g->blackplayer[i] = db->black[i]; 
-		g->score[i]       = db->score[i];
-		if (g->score[i] <= DISCARD) gamestat[g->score[i]]++;
+{
+	int	blk_filled = db->gb_filled;
+	int	idx_last   = db->gb_idx;
+	int blk;
+	int idx;
+
+	i = 0;
+
+	for (blk = 0; blk < blk_filled; blk++) {
+
+		for (idx = 0; idx < MAXGAMESxBLOCK; idx++) {
+
+			g->whiteplayer[i] = db->gb[blk]->white[idx];
+			g->blackplayer[i] = db->gb[blk]->black[idx]; 
+			g->score[i]       = db->gb[blk]->score[idx];
+			if (g->score[i] <= DISCARD) gamestat[g->score[i]]++;
+			i++;
+		}
+	
 	}
+
+	blk = blk_filled;
+
+		for (idx = 0; idx < idx_last; idx++) {
+
+			g->whiteplayer[i] = db->gb[blk]->white[idx];
+			g->blackplayer[i] = db->gb[blk]->black[idx]; 
+			g->score[i]       = db->gb[blk]->score[idx];
+			if (g->score[i] <= DISCARD) gamestat[g->score[i]]++;
+			i++;
+		}
+
+
+	if (i != db->n_games) {
+		fprintf (stderr, "Error, games not loaded propely\n");
+		exit(EXIT_FAILURE);
+	}
+}
 
 	gs->white_wins	= gamestat[WHITE_WIN];
 	gs->draws		= gamestat[RESULT_DRAW];
@@ -1351,13 +1383,32 @@ DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct G
 static void 
 DB_ignore_draws (struct DATA *db)
 {
-	long int i;
-	for (i = 0; i < db->n_games; i++) {
-		if (db->score[i] == RESULT_DRAW)
-			db->score[i] = DISCARD;
+	int	blk_filled = db->gb_filled;
+	int	idx_last   = db->gb_idx;
+	int blk;
+	int idx;
+
+	blk_filled = db->gb_filled;
+	idx_last   = db->gb_idx;
+
+	for (blk = 0; blk < blk_filled; blk++) {
+		for (idx = 0; idx < MAXGAMESxBLOCK; idx++) {
+			if (db->gb[blk]->score[idx] == RESULT_DRAW)
+				db->gb[blk]->score[idx] = DISCARD;
+		}
 	}
+
+	blk = blk_filled;
+
+		for (idx = 0; idx < idx_last; idx++) {
+			if (db->gb[blk]->score[idx] == RESULT_DRAW)
+				db->gb[blk]->score[idx] = DISCARD;
+		}
+
 	return;
 }
+
+
 
 static bool_t
 find_anchor_player(int *anchor)

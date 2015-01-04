@@ -24,11 +24,14 @@
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
 
-#define MAXGAMES 3000000
+//#define MAXGAMES 3000000
 #define LABELBUFFERSIZE 1000000
 #define MAXPLAYERS 50000
 
-#define MAXENCOUNTERS MAXGAMES
+#define MAXENCOUNTERS 3000000
+
+#define MAXGAMESxBLOCK (1024*1024)
+#define MAXBLOCKS (4*1024)
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif
