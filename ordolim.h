@@ -31,7 +31,7 @@
 //#define MAXENCOUNTERS 3000000
 
 #define MAXGAMESxBLOCK (1024*1024)
-#define MAXBLOCKS (4*1024)
+#define MAXBLOCKS (2*1024)
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

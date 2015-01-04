@@ -372,7 +372,7 @@ pgn_result_collect (struct pgn_result *p)
 }
 #endif
 
-	ok = ok && (size_t)DaBa.n_games < ((size_t)MAXGAMESxBLOCK*(size_t)MAXBLOCKS);
+	ok = ok && (uint64_t)DaBa.n_games < ((uint64_t)MAXGAMESxBLOCK*(uint64_t)MAXBLOCKS);
 
 	if (ok) {
 
