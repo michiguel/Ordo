@@ -1072,21 +1072,59 @@ int main (int argc, char *argv[])
 	/*===== GROUPS ========*/
 
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
-	scan_encounters(Encounters.enc, Encounters.n, Players.n); 
-	if (group_is_output) {
 
-		static struct ENC 		Encounter2[MAXENCOUNTERS];
-		static long	int			N_encounters2 = 0;
-		static struct ENC 		Encounter3[MAXENCOUNTERS];
-		static long	int			N_encounters3 = 0;
+	if (supporting_encmem_init ((size_t)Encounters.n)) {
 
-		convert_to_groups(groupf, Players.n, Players.name);
-		sieve_encounters(Encounters.enc, Encounters.n, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
-		printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n",(long)Encounters.n, N_encounters2, N_encounters3);
+		scan_encounters(Encounters.enc, Encounters.n, Players.n); 
+		if (group_is_output) {
 
-		if (textstr == NULL && csvstr == NULL)	
-			exit(EXIT_SUCCESS);
-	}
+			bool_t ok;
+
+			static struct ENC 		*Encounter2;
+			static long	int			N_encounters2 = 0;
+			static struct ENC 		*Encounter3;
+			static long	int			N_encounters3 = 0;
+
+		{
+			struct ENC *a;
+			struct ENC *b;
+	
+			size_t nenc = (size_t)Encounters.n;
+	
+			if (NULL == (a = malloc (sizeof(struct ENC) * nenc))) {
+				ok = FALSE;
+			} else 
+			if (NULL == (b = malloc (sizeof(struct ENC) * nenc))) {
+				free(a);
+				ok = FALSE;
+			} else {
+				Encounter2 = a;
+				Encounter3 = b;
+				ok = TRUE;
+			}
+			
+			if (!ok) {
+				fprintf (stderr, "not enough memory for encounters allocation\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+
+			convert_to_groups(groupf, Players.n, Players.name);
+			sieve_encounters(Encounters.enc, Encounters.n, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
+			printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n",(long)Encounters.n, N_encounters2, N_encounters3);
+	
+			if (textstr == NULL && csvstr == NULL)	{
+				supporting_encmem_done ();
+				exit(EXIT_SUCCESS);
+			}
+		}
+
+		supporting_encmem_done ();
+
+	} else {
+		fprintf (stderr, "not enough memory for encounters scanning\n");
+		exit(EXIT_FAILURE);
+	}	
 
 	/*=====================*/
 

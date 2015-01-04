@@ -20,6 +20,7 @@
 
 
 #include <assert.h>
+#include <stdlib.h>
 #include "groups.h"
 #include "mytypes.h"
 
@@ -34,10 +35,12 @@ static char 		**Namelist = NULL;
 
 //---------------------------------------------------------------------
 
-struct ENC 			SE[MAXENCOUNTERS];
-static int 			N_se = 0;
-struct ENC 			SE2[MAXENCOUNTERS];
+// supporting memory
+static struct ENC 	*SE   = NULL;
+static int 			N_se  = 0;
+static struct ENC 	*SE2  = NULL;
 static int 			N_se2 = 0;
+
 static int 			group_belong[MAXPLAYERS];
 static int			N_groups;
 
@@ -1041,6 +1044,45 @@ scan_encounters(const struct ENC *enc, long N_enc, int N_plyrs)
 		}
 	}
 
+	return;
+}
+
+
+//
+/*
+struct ENC 			*SE   = NULL;
+static int 			N_se  = 0;
+struct ENC 			*SE2  = NULL;
+static int 			N_se2 = 0;
+*/
+
+bool_t
+supporting_encmem_init (size_t nenc)
+{
+	struct ENC *a;
+	struct ENC *b;
+
+	if (NULL == (a = malloc (sizeof(struct ENC) * nenc))) {
+		return FALSE;
+	} else 
+	if (NULL == (b = malloc (sizeof(struct ENC) * nenc))) {
+		free(a);
+		return FALSE;
+	}
+
+	SE = a;
+	SE = b;
+
+	return TRUE;
+}
+
+void
+supporting_encmem_done (void)
+{
+	if (SE) free(SE);
+	if (SE2) free (SE2);
+	N_se = 0;
+	N_se2 = 0;
 	return;
 }
 

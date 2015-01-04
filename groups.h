@@ -85,5 +85,8 @@ extern void scan_encounters(const struct ENC Encounter[], long N_encounters, int
 extern void	convert_to_groups(FILE *f, int N_plyers, char **name);
 extern void	sieve_encounters(const struct ENC *enc, long N_enc, struct ENC *enca, long *N_enca, struct ENC *encb, long *N_encb);
 
+extern bool_t 	supporting_encmem_init (size_t nenc);
+extern void 	supporting_encmem_done (void);
+
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif
