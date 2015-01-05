@@ -486,9 +486,9 @@ static bool_t	Prior_mode;
 
 /*------------------------------------------------------------------------*/
 
-static void		purge_players (bool_t quiet, long n_players, const int *performance_type, char **name, bool_t *flagged);
+static void		purge_players (bool_t quiet, struct PLAYERS *pl);
 
-static long int	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl, bool_t *perftype_set);
+static long 	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl, bool_t *perftype_set);
 
 static void		clear_flagged (long n_players, bool_t *flagged);
 
@@ -1125,7 +1125,7 @@ int main (int argc, char *argv[])
 
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 	if (0 < set_super_players(QUIET_MODE, &Encounters, &Players, &Performance_type_set)) {
-		purge_players (QUIET_MODE, Players.n, Players.performance_type, Players.name, Players.flagged);
+		purge_players (QUIET_MODE, &Players);
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
 	Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch);
@@ -1206,7 +1206,7 @@ int main (int argc, char *argv[])
 
 					calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 					if (0 < set_super_players(QUIET_MODE, &Encounters, &Players, &Performance_type_set)) {
-						purge_players (QUIET_MODE, Players.n, Players.performance_type, Players.name, Players.flagged);
+						purge_players (QUIET_MODE, &Players);
 						calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 					}
 					Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, FALSE, &sim_draw_rate);
@@ -2358,8 +2358,14 @@ priors_load(const char *fpriors_name)
 
 // no globals
 static void
-purge_players (bool_t quiet, long n_players, const int *performance_type, char **name, bool_t *flagged)
+purge_players (bool_t quiet, struct PLAYERS *pl)
 {
+	// Players
+	long n_players = pl->n;
+	const int *performance_type = pl->performance_type;
+	char **name = pl->name;
+	bool_t *flagged = pl->flagged;
+
 	int j;
 	assert(Performance_type_set);
 	for (j = 0; j < n_players; j++) {
