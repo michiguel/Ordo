@@ -488,7 +488,7 @@ static bool_t	Prior_mode;
 
 static void		purge_players (bool_t quiet, long n_players, const int *performance_type, char **name, bool_t *flagged);
 
-static long 	set_super_players(bool_t quiet, long N_enc, const struct ENC *enc, long n_players, int *perftype, char *name[], bool_t *perftype_set);
+static long int	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl, bool_t *perftype_set);
 
 static void		clear_flagged (long n_players, bool_t *flagged);
 
@@ -1124,8 +1124,7 @@ int main (int argc, char *argv[])
 	/*=====================*/
 
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
-	if (0 < set_super_players(QUIET_MODE, Encounters.n, Encounters.enc, Players.n
-										, Players.performance_type, Players.name, &Performance_type_set)) {
+	if (0 < set_super_players(QUIET_MODE, &Encounters, &Players, &Performance_type_set)) {
 		purge_players (QUIET_MODE, Players.n, Players.performance_type, Players.name, Players.flagged);
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
@@ -1206,8 +1205,7 @@ int main (int argc, char *argv[])
 					reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingbk);
 
 					calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
-					if (0 < set_super_players(QUIET_MODE, Encounters.n, Encounters.enc, Players.n
-														, Players.performance_type, Players.name, &Performance_type_set)) {
+					if (0 < set_super_players(QUIET_MODE, &Encounters, &Players, &Performance_type_set)) {
 						purge_players (QUIET_MODE, Players.n, Players.performance_type, Players.name, Players.flagged);
 						calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 					}
@@ -2636,9 +2634,19 @@ table_output(double rtng_76)
 }
 
 // no globals
-static long int		
-set_super_players(bool_t quiet, long N_enc, const struct ENC *enc, long n_players, int *perftype, char *name[], bool_t *perftype_set)
+static long int	
+set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl, bool_t *perftype_set)
+
 {
+	// Encounters
+	long N_enc = ee->n;
+	const struct ENC *enc = ee->enc;
+
+	//Players
+	long n_players = pl->n;
+	int *perftype  = pl->performance_type;
+	char **name    = pl->name;
+
 	double 	*obt;
 	int		*pla;
 	int e, j, w, b;
