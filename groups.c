@@ -36,9 +36,9 @@ static char 		**Namelist = NULL;
 //---------------------------------------------------------------------
 
 // supporting memory
-static struct ENC 	*SE   = NULL;
+static struct ENC *	SE   = NULL;
+static struct ENC *	SE2  = NULL;
 static int 			N_se  = 0;
-static struct ENC 	*SE2  = NULL;
 static int 			N_se2 = 0;
 
 static int 			group_belong[MAXPLAYERS];
@@ -1004,9 +1004,11 @@ void
 scan_encounters(const struct ENC *enc, long N_enc, int N_plyrs)
 {
 	int i,e;
-
 	const struct ENC *pe;
 	int gw, gb, lowerg, higherg;
+
+	assert (SE != NULL);
+	assert (SE2!= NULL);
 
 	N_groups = N_plyrs;
 	for (i = 0; i < N_plyrs; i++) {
@@ -1048,14 +1050,6 @@ scan_encounters(const struct ENC *enc, long N_enc, int N_plyrs)
 }
 
 
-//
-/*
-struct ENC 			*SE   = NULL;
-static int 			N_se  = 0;
-struct ENC 			*SE2  = NULL;
-static int 			N_se2 = 0;
-*/
-
 bool_t
 supporting_encmem_init (size_t nenc)
 {
@@ -1070,8 +1064,8 @@ supporting_encmem_init (size_t nenc)
 		return FALSE;
 	}
 
-	SE = a;
-	SE = b;
+	SE  = a;
+	SE2 = b;
 
 	return TRUE;
 }
@@ -1079,9 +1073,9 @@ supporting_encmem_init (size_t nenc)
 void
 supporting_encmem_done (void)
 {
-	if (SE) free(SE);
+	if (SE ) free (SE );
 	if (SE2) free (SE2);
-	N_se = 0;
+	N_se  = 0;
 	N_se2 = 0;
 	return;
 }
