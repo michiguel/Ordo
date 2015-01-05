@@ -18,7 +18,7 @@ elsif ARGV[0] == 'debug'
 	$ADDPATH=''
 	$CC='gcc'
 	$NAME=$BASENAME
-	$SWITCHES=''
+	$SWITCHES='-g'
 
 elsif ARGV[0] == 'profile'
 
