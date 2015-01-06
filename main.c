@@ -166,7 +166,7 @@ const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:XN:
 
 struct PLAYERS {
 	int32_t		n; //FIXME transform to size_t
-	int32_t		size;
+	size_t		size;
 	char 		**name;
 	bool_t		*flagged;
 	bool_t		*prefed;
@@ -455,12 +455,12 @@ static bool_t 	Some_prior_set = FALSE;
 
 static int 		Priored_n = 0;
 
-static void 	priors_reset(struct prior *p);
-static void		priors_copy(const struct prior *p, long int n, struct prior *q);
-static void 	priors_shuffle(struct prior *p, long int n);
-static void		priors_show (struct prior *p, long int n);
-static bool_t 	set_prior (const char *prior_name, double x, double sigma);
-static void 	priors_load(const char *fpriors_name);
+static void 	priors_reset	(struct prior *p, size_t n);
+static void		priors_copy		(const struct prior *p, size_t n, struct prior *q);
+static void 	priors_shuffle	(struct prior *p, size_t n);
+static void		priors_show 	(struct prior *p, size_t n);
+static bool_t 	set_prior 		(const char *prior_name, double x, double sigma);
+static void 	priors_load		(const char *fpriors_name);
 
 static void		anchor_j (long int j, double x);
 
@@ -472,11 +472,11 @@ static struct relprior Ra_store[MAX_RELPRIORS];
 static long int N_relative_anchors = 0;
 static bool_t 	Hide_old_ver = FALSE;
 
-static void		relpriors_shuffle(struct relprior *rp, long int n);
-static void		relpriors_copy(const struct relprior *r, long int n, struct relprior *s);
-static bool_t 	set_relprior (const char *player_a, const char *player_b, double x, double sigma);
-static void 	relpriors_show(void);
-static void 	relpriors_load(const char *f_name);
+static void		relpriors_shuffle	(struct relprior *rp, size_t n);
+static void		relpriors_copy		(const struct relprior *r, size_t n, struct relprior *s);
+static bool_t 	set_relprior 		(const char *player_a, const char *player_b, double x, double sigma);
+static void 	relpriors_show		(void);
+static void 	relpriors_load		(const char *f_name);
 
 static bool_t	Prior_mode;
 
@@ -957,7 +957,7 @@ int main (int argc, char *argv[])
 	init_rating();
 
 	// PRIORS
-	priors_reset(PP);
+	priors_reset(PP, Players.n);
 
 	if (priorsstr != NULL) {
 		priors_load(priorsstr);
@@ -972,7 +972,6 @@ int main (int argc, char *argv[])
 	}
 	// multiple anchors done
 
-//~~
 	if (relstr != NULL) {
 		relpriors_load(relstr); 
 	}
@@ -981,7 +980,6 @@ int main (int argc, char *argv[])
 		relpriors_show();
 	//FIXME do not allow relpriors to be purged
 	}
-//~~
 
 	if (switch_w && switch_u) {
 		if (White_advantage_SD > PRIOR_SMALLEST_SIGMA) {
@@ -2015,9 +2013,9 @@ if (p_a == -1 || p_b == -1) return FALSE; // defensive programming, not needed.
 
 #if 1
 void
-relpriors_shuffle(struct relprior *rp, long int n)
+relpriors_shuffle(struct relprior *rp, size_t n)
 {
-	int i;
+	size_t i;
 	double value, sigma;
 	for (i = 0; i < n; i++) {
 		value = rp[i].delta;
@@ -2027,8 +2025,8 @@ relpriors_shuffle(struct relprior *rp, long int n)
 }
 
 static void
-relpriors_copy(const struct relprior *r, long int n, struct relprior *s)
-{	int i;
+relpriors_copy(const struct relprior *r, size_t n, struct relprior *s)
+{	size_t i;
 	for (i = 0; i < n; i++) {
 		s[i] = r[i];
 	}
@@ -2163,9 +2161,9 @@ relpriors_load(const char *f_name)
 //== PRIORS ============================================
 
 static void
-priors_reset(struct prior *p)
-{	int i;
-	for (i = 0; i < MAXPLAYERS; i++) {
+priors_reset(struct prior *p, size_t n)
+{	size_t i;
+	for (i = 0; i < n; i++) {
 		p[i].value = 0;
 		p[i].sigma = 1;
 		p[i].isset = FALSE;
@@ -2175,8 +2173,8 @@ priors_reset(struct prior *p)
 }
 
 static void
-priors_copy(const struct prior *p, long int n, struct prior *q)
-{	int i;
+priors_copy(const struct prior *p, size_t n, struct prior *q)
+{	size_t i;
 	for (i = 0; i < n; i++) {
 		q[i] = p[i];
 	}
@@ -2184,9 +2182,9 @@ priors_copy(const struct prior *p, long int n, struct prior *q)
 
 #if 1
 static void
-priors_shuffle(struct prior *p, long int n)
+priors_shuffle(struct prior *p, size_t n)
 {
-	int i;
+	size_t i;
 	double value, sigma;
 	for (i = 0; i < n; i++) {
 		if (p[i].isset) {
@@ -2200,9 +2198,9 @@ priors_shuffle(struct prior *p, long int n)
 
 #if 1
 static void
-priors_show (struct prior *p, long int n)
+priors_show (struct prior *p, size_t n)
 { 
-	int i;
+	size_t i;
 	if (Priored_n > 0) {
 		printf ("Loose Anchors {\n");
 		for (i = 0; i < n; i++) {
@@ -2500,11 +2498,6 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 				, Anchor_use && !Anchor_err_rel2avg
 				, Anchor
 				
-//				, Games.n
-//				, Games.score
-//				, Games.whiteplayer
-//				, Games.blackplayer
-
 				, &Games
 
 				, Players.name
@@ -2528,8 +2521,8 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 	} else {
 
 		double *ratingtmp_memory;
-
-		if (NULL != (ratingtmp_memory = malloc (sizeof(double) * MAXPLAYERS))) {
+		size_t bufsize = (size_t)Players.n; 
+		if (NULL != (ratingtmp_memory = malloc (sizeof(double) * bufsize))) {
 
 			ret = calc_rating2 	
 					( quiet
@@ -2553,12 +2546,7 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 					, Anchor_use && !Anchor_err_rel2avg
 					, Anchor
 					
-//				, Games.n
-//				, Games.score
-//				, Games.whiteplayer
-//				, Games.blackplayer
-
-				, &Games
+					, &Games
 	
 					, Players.name
 					, BETA

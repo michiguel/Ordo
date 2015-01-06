@@ -377,7 +377,7 @@ optimum_centerdelta	( double 			start_delta
 	p.obtained	= obtained;
 	p.expected	= expected;
 	p.playedby	= playedby;
-	p.ratingtmp= ratingtmp;
+	p.ratingtmp = ratingtmp;
 
 	d = absol (start_delta);
 
