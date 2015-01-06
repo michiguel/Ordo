@@ -162,13 +162,7 @@ const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:XN:
 |
 \*--------------------------------------------------------------*/
 
-struct GAMES {
-	int32_t	 	n; //FIXME transform to size_t
-	int32_t		size;
-	int32_t 	*whiteplayer;
-	int32_t 	*blackplayer;
-	int32_t 	*score;
-};
+
 
 struct PLAYERS {
 	int32_t		n; //FIXME transform to size_t
@@ -196,7 +190,7 @@ struct RATINGS {
 struct ENCOUNTERS {
 	int32_t		n;		//FIXME transform to size_t
 	int32_t		size;
-	struct ENC	*enc;
+	struct ENC *enc;
 };
 
 struct GAMES 		Games;
@@ -279,42 +273,31 @@ ratings_done (struct RATINGS *r)
 static bool_t 
 games_init (int32_t n, struct GAMES *g)
 {
-	enum {MAXU=3};
-	int32_t 	*pu[MAXU];
-	bool_t		failed;
-	int i,u;
+	struct gamei *p;
 
 	assert (n > 0);
 
-	for (failed = FALSE, u = 0, i = 0; i < MAXU && !failed; i++) {
-		if (NULL != (pu[i] = malloc (sizeof(int32_t) * (size_t)n))) { 
-			u++;
-		} else {
-			while (u-->0) free(pu[u]);
-			failed = TRUE;
-		}
+	if (NULL == (p = malloc (sizeof(struct gamei) * (size_t)n))) {
+		g->n	 	= 0; 
+		g->size 	= 0;
+		g->ga		= NULL;
+		return FALSE; // failed
 	}
-	if (failed) return FALSE;
 
-	g->n	 		= 0; /* empty for now */
-	g->size			= n;
-	g->whiteplayer 	= pu[0];
-	g->blackplayer 	= pu[1];
-	g->score		= pu[2];
+	g->n	 	= 0; /* empty for now */
+	g->size 	= n;
+	g->ga		= p;
 	return TRUE;
 }
+
 
 static void 
 games_done (struct GAMES *g)
 {
-	free(g->whiteplayer);
-	free(g->blackplayer);
-	free(g->score);
+	free(g->ga);
 	g->n	 		= 0;
 	g->size			= 0;
-	g->whiteplayer 	= NULL;
-	g->blackplayer 	= NULL;
-	g->score		= NULL;
+	g->ga		 	= NULL;
 } 
 
 //
@@ -507,11 +490,8 @@ static void
 simulate_scores ( double 		deq
 				, double 		wadv
 				, double 		beta
-				, long 			n_games
+				, struct GAMES *g
 				, const double 	*ratingof_results
-				, const int		*whiteplayer
-				, const int		*blackplayer
-				, int			*score // out
 );
 
 static void		errorsout(const char *out);
@@ -575,11 +555,15 @@ save_simulated(int num)
 
 		for (i = 0; i < Games.n; i++) {
 
-			if (Games.score[i] == DISCARD) continue;
+			uint32_t score_i = Games.ga[i].score;
+			uint32_t wp_i = Games.ga[i].whiteplayer;
+			uint32_t bp_i = Games.ga[i].blackplayer;
+
+			if (score_i == DISCARD) continue;
 	
-			name_w = Players.name [Games.whiteplayer[i]];
-			name_b = Players.name [Games.blackplayer[i]];		
-			result = Result_string[Games.score[i]];
+			name_w = Players.name [wp_i];
+			name_b = Players.name [bp_i];		
+			result = Result_string[score_i];
 
 			fprintf(fout,"[White \"%s\"]\n",name_w);
 			fprintf(fout,"[Black \"%s\"]\n",name_b);
@@ -603,12 +587,10 @@ calc_encounters__
 {
 	e->n = (int)
 	calc_encounters	( selectivity
-					, g->n
-					, g->score
+					, g
 					, flagged
-					, g->whiteplayer
-					, g->blackplayer
 					, e->enc);
+
 }
 
 /*
@@ -1181,11 +1163,8 @@ int main (int argc, char *argv[])
 					simulate_scores ( Drawrate_evenmatch
 									, White_advantage
 									, BETA
-									, Games.n
+									, &Games //out
 									, RA.ratingof_results
-									, Games.whiteplayer
-									, Games.blackplayer
-									, Games.score // out
 					);
 
 					relpriors_copy(Ra, N_relative_anchors, Ra_store);
@@ -1375,10 +1354,10 @@ DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct G
 
 		for (idx = 0; idx < MAXGAMESxBLOCK; idx++) {
 
-			g->whiteplayer[i] = db->gb[blk]->white[idx];
-			g->blackplayer[i] = db->gb[blk]->black[idx]; 
-			g->score[i]       = db->gb[blk]->score[idx];
-			if (g->score[i] <= DISCARD) gamestat[g->score[i]]++;
+			g->ga[i].whiteplayer = db->gb[blk]->white[idx];
+			g->ga[i].blackplayer = db->gb[blk]->black[idx]; 
+			g->ga[i].score       = db->gb[blk]->score[idx];
+			if (g->ga[i].score <= DISCARD) gamestat[g->ga[i].score]++;
 			i++;
 		}
 	
@@ -1388,10 +1367,10 @@ DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct G
 
 		for (idx = 0; idx < idx_last; idx++) {
 
-			g->whiteplayer[i] = db->gb[blk]->white[idx];
-			g->blackplayer[i] = db->gb[blk]->black[idx]; 
-			g->score[i]       = db->gb[blk]->score[idx];
-			if (g->score[i] <= DISCARD) gamestat[g->score[i]]++;
+			g->ga[i].whiteplayer = db->gb[blk]->white[idx];
+			g->ga[i].blackplayer = db->gb[blk]->black[idx]; 
+			g->ga[i].score       = db->gb[blk]->score[idx];
+			if (g->ga[i].score <= DISCARD) gamestat[g->ga[i].score]++;
 			i++;
 		}
 
@@ -2447,23 +2426,28 @@ static void
 simulate_scores ( double 		deq
 				, double 		wadv
 				, double 		beta
-				, long 			n_games
+				, struct GAMES *g
 				, const double 	*ratingof_results
-				, const int		*whiteplayer
-				, const int		*blackplayer
-				, int			*score // out
 )
 {
+int n_games = g->n;
+struct gamei *gam = g->ga;
+
 	long int i, w, b;
 	const double *rating = ratingof_results;
 	double pwin, pdraw, plos;
 
 	for (i = 0; i < n_games; i++) {
-		if (score[i] != DISCARD) {
-			w = whiteplayer[i];
-			b = blackplayer[i];
+
+		int32_t score_i = gam[i].score;
+		int32_t wp_i = gam[i].whiteplayer;
+		int32_t bp_i = gam[i].blackplayer;
+
+		if (score_i != DISCARD) {
+			w = wp_i;
+			b = bp_i;
 			get_pWDL(rating[w] + wadv - rating[b], &pwin, &pdraw, &plos, deq, beta);
-			score [i] = rand_threeway_wscore(pwin,pdraw);
+			gam[i].score = rand_threeway_wscore(pwin,pdraw);
 		}
 	}
 }
@@ -2501,10 +2485,12 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 				, Anchor_use && !Anchor_err_rel2avg
 				, Anchor
 				
-				, Games.n
-				, Games.score
-				, Games.whiteplayer
-				, Games.blackplayer
+//				, Games.n
+//				, Games.score
+//				, Games.whiteplayer
+//				, Games.blackplayer
+
+				, &Games
 
 				, Players.name
 				, BETA
@@ -2552,10 +2538,12 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 					, Anchor_use && !Anchor_err_rel2avg
 					, Anchor
 					
-					, Games.n
-					, Games.score
-					, Games.whiteplayer
-					, Games.blackplayer
+//				, Games.n
+//				, Games.score
+//				, Games.whiteplayer
+//				, Games.blackplayer
+
+				, &Games
 	
 					, Players.name
 					, BETA

@@ -74,6 +74,18 @@
 
 #include "boolean.h"
 
+struct gamei {
+	int32_t 	whiteplayer;
+	int32_t 	blackplayer;
+	int32_t 	score;	
+};
+
+struct GAMES {
+	int32_t	 	n; //FIXME transform to size_t
+	int32_t		size;
+	struct gamei *ga;
+};
+
 struct ENC {
 	// FIXME covert to long ints or int32_t
 	double 	wscore;

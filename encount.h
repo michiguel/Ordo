@@ -31,16 +31,11 @@ enum SELECTIVITY {
 	ENCOUNTERS_NOFLAGGED = 1
 };
 
-
-// no globals
-extern long
+long int
 calc_encounters ( int selectivity
-				, int n_games
-				, const int *score 
+				, const struct GAMES *g
 				, const bool_t *flagged
-				, const int *whiteplayer
-				, const int *blackplayer
-				, struct ENC *enc
+				, struct ENC *enc // out
 );
 
 // no globals

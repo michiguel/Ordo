@@ -50,15 +50,12 @@ calc_rating_bayes2
 			, bool_t		anchor_use
 			, int			anchor
 				
-			, int			n_games
-			, int *			score
-			, int *			whiteplayer
-			, int *			blackplayer
+			, struct GAMES *g
 
 			, char *		name[]
 			, double		beta
 
-// different from non bayes calc
+			// different from non bayes calc
 
 			, double *			changing
 			, long int 			n_relative_anchors

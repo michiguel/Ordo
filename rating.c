@@ -413,10 +413,7 @@ calc_rating2 	( bool_t 		quiet
 				, bool_t		Anchor_use
 				, int			Anchor
 				
-				, int			N_games
-				, int *			Score
-				, int *			Whiteplayer
-				, int *			Blackplayer
+				, struct GAMES *g
 
 				, char *		Name[]
 				, double		BETA
@@ -428,6 +425,7 @@ calc_rating2 	( bool_t 		quiet
 				, double		*ratingtmp_buffer
 )
 {
+	int		N_games = g->n;
 
 	double 	*ratingtmp = ratingtmp_buffer;
 
@@ -604,10 +602,10 @@ calc_rating2 	( bool_t 		quiet
 		if (!quiet) 
 			printf ("Post-Convergence rating estimation\n");
 
-		N_enc = calc_encounters(ENCOUNTERS_FULL, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
+		N_enc = calc_encounters(ENCOUNTERS_FULL, g, Flagged, enc);
 		calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
 		rate_super_players(quiet, enc, N_enc, Performance_type, N_players, Ratingof, white_adv, Flagged, Name, draw_rate, BETA);
-		N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, N_games, Score, Flagged, Whiteplayer, Blackplayer, enc);
+		N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, Flagged, enc);;
 		calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
 
 		if (!quiet) 

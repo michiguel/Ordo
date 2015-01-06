@@ -49,10 +49,7 @@ calc_rating2 	( bool_t 		quiet
 				, bool_t		Anchor_use
 				, int			Anchor
 				
-				, int			N_games
-				, int *			Score
-				, int *			Whiteplayer
-				, int *			Blackplayer
+				, struct GAMES *g
 
 				, char *		Name[]
 				, double		BETA

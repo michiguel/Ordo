@@ -261,11 +261,8 @@ calc_rating_bayes2
 			, bool_t		multiple_anchors_present
 			, bool_t		anchor_use
 			, int			anchor
-				
-			, int			n_games
-			, int *			score
-			, int *			whiteplayer
-			, int *			blackplayer
+
+			, struct GAMES *g
 
 			, char *		name[]
 			, double		beta
@@ -287,6 +284,8 @@ calc_rating_bayes2
 			, double			*pDraw_date
 )
 {
+	int n_games = g->n;
+
 	double 	olddev, curdev, outputdev;
 	int 	i;
 	int		rounds = 10000;
@@ -383,11 +382,6 @@ calc_rating_bayes2
 							, dr_prior
 							, beta);
 
-//if (i % 100 == 0 && i != 0) {printf ("~~~~~~~~~~~~~~~~~~~~~stopping at %d\n",i);exit(0);}
-
-
-
-
 			if (
 				(curdev < olddev) 
 				&& (curdev/olddev < 0.99999) 
@@ -455,8 +449,6 @@ calc_rating_bayes2
 							, dr_prior
 							, beta);
 
-//			if (!quiet)
-//				printf ("Adjusted Draw Rate 2 = %.1f %s\n\n", 100*deqx, "%");
 			resol_dr = deqx > deq? deqx - deq: deq - deqx;
 			deq = deqx;
 		}
@@ -465,33 +457,14 @@ calc_rating_bayes2
 	if (!quiet) 
 		printf ("done\n\n");
 
-//	if (!quiet) 
-//		printf ("White_advantage = %lf\n\n", white_advantage);
-
-//	if (adjust_draw_rate) {
-//			deq = adjust_drawrate (white_advantage, ratingof, N_enc, enc, beta);
-//			if (!quiet)
-//				printf ("Adjusted Draw Rate = %.1f %s\n\n", 100*deq, "%");
-//	}
-	 
-
-
-
-
-
-
-
-
-
-
 	#ifdef CALCIND_SWSL
 	if (!quiet && super_players_present(n_players, performance_type)) 
 		printf ("Post-Convergence rating estimation for all-wins / all-losses players\n\n");
 
-	N_enc = calc_encounters(ENCOUNTERS_FULL, n_games, score, flagged, whiteplayer, blackplayer, enc);
+	N_enc = calc_encounters(ENCOUNTERS_FULL, g, flagged, enc);
 	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby);
 	rate_super_players(quiet, enc, N_enc, performance_type, n_players, ratingof, white_advantage, flagged, name, deq, beta);
-	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, n_games, score, flagged, whiteplayer, blackplayer, enc);
+	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, flagged, enc);
 	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby);
 	#endif
 
@@ -659,12 +632,6 @@ adjust_drawrate_bayes
 
 		olddr = dr;
 
-#if 0
-printf ("i=%f, dr=%f\n",ei,dr-delta);
-printf ("j=%f, dr=%f\n",ej,dr-0);
-printf ("k=%f, dr=%f\n",ek,dr+delta);
-printf ("\n");
-#endif
 
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 4;
@@ -687,7 +654,6 @@ printf ("\n");
 			delta = olddr - dr;			
 		}
 
-
 	} while (
 		delta > MIN_DRAW_RATE_RESOLUTION
 	);
@@ -696,25 +662,6 @@ printf ("\n");
 
 	#undef MIN_DRAW_RATE_RESOLUTION
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 static double
 wdl_probabilities (int ww, int dd, int ll, double pw, double pd, double pl)
