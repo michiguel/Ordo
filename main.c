@@ -198,6 +198,19 @@ struct PLAYERS 		Players;
 struct RATINGS 		RA;
 struct ENCOUNTERS 	Encounters;
 
+static int compare_GAME (const void * a, const void * b)
+{
+	const struct gamei *ap = a;
+	const struct gamei *bp = b;
+	if (ap->whiteplayer == bp->whiteplayer && ap->blackplayer == bp->blackplayer) return 0;
+	if (ap->whiteplayer == bp->whiteplayer) {
+		if (ap->blackplayer > bp->blackplayer) return 1; else return -1;
+	} else {	 
+		if (ap->whiteplayer > bp->whiteplayer) return 1; else return -1;
+	}
+	return 0;	
+}
+
 #if 1
 #define NEWFUNC
 #endif
@@ -884,6 +897,7 @@ int main (int argc, char *argv[])
 	/**/
 
 	DB_transform(pdaba, &Games, &Players, &Game_stats); /* convert DB to global variables */
+	qsort (Games.ga, (size_t)Games.n, sizeof(struct gamei), compare_GAME);
 
 	if (Anchor_use) {
 		if (find_anchor_player(&Anchor)) {
@@ -1242,6 +1256,7 @@ int main (int argc, char *argv[])
 		}
 
 		DB_transform(pdaba, &Games, &Players, &Game_stats); /* convert DB to global variables, to restore original data */
+		qsort (Games.ga, (size_t)Games.n, sizeof(struct gamei), compare_GAME);
 	}
 	/* Simulation block, end */
 
