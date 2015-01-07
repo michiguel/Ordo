@@ -25,16 +25,17 @@
 
 #include <stddef.h>
 #include "ordolim.h"
+#include "mytypes.h"
 
 struct GAMEBLOCK {
-	int 		white	[MAXGAMESxBLOCK];
-	int 		black	[MAXGAMESxBLOCK];
-	int 		score	[MAXGAMESxBLOCK];
+	int32_t		white	[MAXGAMESxBLOCK];
+	int32_t		black	[MAXGAMESxBLOCK];
+	int32_t		score	[MAXGAMESxBLOCK];
 };
 
 struct DATA {	
-	int 		n_players;
-	int 		n_games;
+	size_t 		n_players;
+	size_t 		n_games;
 	char		labels[LABELBUFFERSIZE];
 	ptrdiff_t	labels_end_idx;
 	ptrdiff_t	name	[MAXPLAYERS];

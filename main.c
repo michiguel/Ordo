@@ -868,10 +868,11 @@ int main (int argc, char *argv[])
 
 	/*==== memory initialization ====*/
 	{
-	size_t mpr = (size_t) pdaba->n_players; //FIXME
-	size_t mpp = (size_t) pdaba->n_players; //FIXME
-	size_t mg  = (size_t) pdaba->n_games;//FIXME
-	size_t me  = (size_t) pdaba->n_games;//FIXME
+	size_t mpr = pdaba->n_players;
+	size_t mpp = pdaba->n_players;
+	size_t mg  = pdaba->n_games;
+	size_t me  = pdaba->n_games;
+
 	if (!ratings_init (mpr, &RA)) {
 		fprintf (stderr, "Could not initialize rating memory\n"); exit(0);	
 	} else 
@@ -954,7 +955,7 @@ int main (int argc, char *argv[])
 	init_rating();
 
 	// PRIORS
-	priors_reset(PP, (size_t) Players.n); //FIXME
+	priors_reset(PP, Players.n);
 
 	if (priorsstr != NULL) {
 		priors_load(priorsstr);
@@ -973,7 +974,7 @@ int main (int argc, char *argv[])
 		relpriors_load(relstr); 
 	}
 	if (!QUIET_MODE) {
-		priors_show(PP, (size_t)Players.n); //FIXME
+		priors_show(PP, Players.n);
 		relpriors_show();
 	//FIXME do not allow relpriors to be purged
 	}
@@ -1337,7 +1338,8 @@ usage (void)
 static void 
 DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct GAMESTATS *gs)
 {
-	int i;
+	size_t i;
+	size_t topn;
 	ptrdiff_t x;
 	long int gamestat[4] = {0,0,0,0};
 
@@ -1345,10 +1347,11 @@ DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct G
 		Labelbuffer[x] = db->labels[x];
 	}
 	Labelbuffer_end = Labelbuffer + db->labels_end_idx;
-	p->n = (size_t) db->n_players; //FIXME size_t
-	g->n = (size_t) db->n_games; //FIXME size_t
+	p->n = db->n_players; 
+	g->n = db->n_games; 
 
-	for (i = 0; i < db->n_players; i++) {
+	topn = db->n_players;
+	for (i = 0; i < topn; i++) {
 		p->name[i] = Labelbuffer + db->name[i];
 		p->flagged[i] = FALSE;
 	}
