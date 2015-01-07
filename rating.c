@@ -34,13 +34,13 @@
 static bool_t is_nan (double x) {if (x != x) return TRUE; else return FALSE;}
 #endif
 
-static double adjust_drawrate (double start_wadv, const double *ratingof, long N_enc, const struct ENC *enc, double beta);
+static double adjust_drawrate (double start_wadv, const double *ratingof, size_t N_enc, const struct ENC *enc, double beta);
 
 // no globals
 static void
-ratings_restore (int n_players, const double *r_bk, double *r_of)
+ratings_restore (size_t n_players, const double *r_bk, double *r_of)
 {
-	int j;
+	size_t j;
 	for (j = 0; j < n_players; j++) {
 		r_of[j] = r_bk[j];
 	}	
@@ -48,9 +48,9 @@ ratings_restore (int n_players, const double *r_bk, double *r_of)
 
 // no globals
 static void
-ratings_backup (int n_players, const double *r_of, double *r_bk)
+ratings_backup (size_t n_players, const double *r_of, double *r_bk)
 {
-	int j;
+	size_t j;
 	for (j = 0; j < n_players; j++) {
 		r_bk[j] = r_of[j];
 	}	
@@ -58,11 +58,11 @@ ratings_backup (int n_players, const double *r_of, double *r_bk)
 
 // no globals
 static double 
-deviation (int n_players, const bool_t *flagged, const double *expected, const double *obtained, const int *playedby)
+deviation (size_t n_players, const bool_t *flagged, const double *expected, const double *obtained, const int *playedby)
 {
 	double accum = 0;
 	double diff;
-	int j;
+	size_t j;
 
 	for (accum = 0, j = 0; j < n_players; j++) {
 		if (!flagged[j]) {
@@ -74,12 +74,12 @@ deviation (int n_players, const bool_t *flagged, const double *expected, const d
 }
 
 static double
-calc_excess		( int n_players
+calc_excess		( size_t n_players
 				, const bool_t *flagged
 				, double general_average
 				, double *ratingof)
 {
-	int 	j, notflagged;
+	size_t 	j, notflagged;
 	double 	accum, average, excess;
 
 	for (notflagged = 0, accum = 0, j = 0; j < n_players; j++) {
@@ -88,7 +88,7 @@ calc_excess		( int n_players
 			accum += ratingof[j];
 		}
 	}
-	average = accum / notflagged;
+	average = accum /(double) notflagged;
 	excess  = average - general_average;
 
 	return excess;
@@ -98,7 +98,7 @@ calc_excess		( int n_players
 static double
 adjust_rating 	( double delta
 				, double kappa
-				, int n_players
+				, size_t n_players
 				, const bool_t *flagged
 				, const bool_t *prefed
 				, const double *expected 
@@ -111,7 +111,7 @@ adjust_rating 	( double delta
 				, double *ratingof
 )
 {
-	int 	j;
+	size_t 	j;
 	double 	d, excess;
 	double 	y = 1.0;
 	double 	ymax = 0;
@@ -173,11 +173,11 @@ adjust_rating 	( double delta
 
 // no globals
 static void
-adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, int n_players
+adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, size_t n_players
 						, const bool_t *flagged, const bool_t *prefed, double *ratingof)
 {
 	double excess;
-	int j;
+	size_t j;
 	if (anchor_use) {
 		excess  = ratingof[anchor] - general_average;	
 		for (j = 0; j < n_players; j++) {
@@ -187,9 +187,10 @@ adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, i
 }
 
 static double
-overallerrorE_fwadv (long N_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv)
+overallerrorE_fwadv (size_t N_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv)
 {
-	int e, w, b;
+	size_t e;
+	int32_t w, b;
 	double dp2, f;
 	for (dp2 = 0, e = 0; e < N_enc; e++) {
 		w = enc[e].wh;
@@ -206,7 +207,7 @@ overallerrorE_fwadv (long N_enc, const struct ENC *enc, const double *ratingof, 
 #define START_DELTA 100
 
 static double
-adjust_wadv (double start_wadv, const double *ratingof, long N_enc, const struct ENC *enc, double beta, double start_delta)
+adjust_wadv (double start_wadv, const double *ratingof, size_t N_enc, const struct ENC *enc, double beta, double start_delta)
 {
 	double delta, wa, ei, ej, ek;
 
@@ -239,12 +240,12 @@ adjust_wadv (double start_wadv, const double *ratingof, long N_enc, const struct
 
 //============ center adjustment begin
 
-static void ratings_copy (const double *r, long n, double *t) {long i;	for (i = 0; i < n; i++) {t[i] = r[i];}}
+static void ratings_copy (const double *r, size_t n, double *t) {size_t i;	for (i = 0; i < n; i++) {t[i] = r[i];}}
 
 static double 
 unfitness		( const struct ENC *enc
-				, long 			n_enc
-				, int			n_players
+				, size_t		n_enc
+				, size_t		n_players
 				, const double *ratingof
 				, const bool_t *flagged
 				, double		white_adv
@@ -263,9 +264,9 @@ unfitness		( const struct ENC *enc
 }
 
 static void
-mobile_center_apply_excess (double excess, long n_players, const bool_t *flagged, const bool_t *prefed, double *ratingof)
+mobile_center_apply_excess (double excess, size_t n_players, const bool_t *flagged, const bool_t *prefed, double *ratingof)
 {
-	long j;
+	size_t j;
 	assert(!is_nan(excess));
 	for (j = 0; j < n_players; j++) {
 		if (!flagged[j] && !prefed[j]) {
@@ -278,8 +279,8 @@ mobile_center_apply_excess (double excess, long n_players, const bool_t *flagged
 static double
 unfitness_fcenter 	( double excess
 					, const struct ENC *enc
-					, long 			n_enc
-					, int			n_players
+					, size_t		n_enc
+					, size_t		n_players
 					, const double *ratingof
 					, const bool_t *flagged
 					, const bool_t *prefed
@@ -320,8 +321,8 @@ static double absol(double x) {return x >= 0? x: -x;}
 
 struct UNFITPAR {
 	const struct ENC *	enc;
-	long 				n_enc;
-	int					n_players;
+	size_t				n_enc;
+	size_t				n_players;
 	const double *		ratingof;
 	const bool_t *		flagged;
 	const bool_t *		prefed;
@@ -351,8 +352,8 @@ static double
 optimum_centerdelta	( double 			start_delta
 					, double 			resolution
 					, const struct ENC *enc
-					, long 				n_enc
-					, int				n_players
+					, size_t			n_enc
+					, size_t			n_players
 					, const double *	ratingof
 					, const bool_t *	flagged
 					, const bool_t *	prefed
@@ -390,12 +391,12 @@ optimum_centerdelta	( double 			start_delta
 
 
 
-long
+size_t
 calc_rating2 	( bool_t 		quiet
 				, struct ENC *	enc
-				, long 			N_enc
+				, size_t		N_enc
 
-				, int			N_players
+				, size_t		N_players
 				, double *		Obtained
 
 				, int *			Playedby
@@ -454,7 +455,7 @@ calc_rating2 	( bool_t 		quiet
 	double *expected = NULL;
 	size_t allocsize;
 
-	allocsize = sizeof(double) * (size_t)(N_players+1);
+	allocsize = sizeof(double) * (N_players+1);
 	expected = malloc(allocsize);
 	if (expected == NULL) {
 		fprintf(stderr, "Not enough memory to allocate all players\n");
@@ -627,9 +628,10 @@ calc_rating2 	( bool_t 		quiet
 
 
 static double
-overallerrorE_fdrawrate (long N_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv, double dr0)
+overallerrorE_fdrawrate (size_t N_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv, double dr0)
 {
-	int e, w, b;
+	size_t e;
+	int w, b;
 	double dp2, f;
 	double dexp;
 
@@ -653,7 +655,7 @@ overallerrorE_fdrawrate (long N_enc, const struct ENC *enc, const double *rating
 #define DRAWRATE_RESOLUTION 0.0001
 
 static double
-adjust_drawrate (double start_wadv, const double *ratingof, long N_enc, const struct ENC *enc, double beta)
+adjust_drawrate (double start_wadv, const double *ratingof, size_t N_enc, const struct ENC *enc, double beta)
 {
 	double delta, wa, ei, ej, ek, dr;
 	double lo,hi;

@@ -208,9 +208,9 @@ static double calc_ind_rating_superplayer (int perf_type, double x_estimated, do
 void
 rate_super_players 	( bool_t quiet
 					, struct ENC *enc
-					, long N_enc
+					, size_t N_enc
 					, int *performance_type
-					, int n_players
+					, size_t n_players
 					, double *ratingof
 					, double white_advantage
 					, bool_t *flagged
@@ -219,11 +219,12 @@ rate_super_players 	( bool_t quiet
 					, double beta
 )
 {
-	int j, e;
-	int myenc_n = 0;
+	size_t e;
+	size_t j;
+	size_t myenc_n = 0;
 	static struct ENC *myenc;
 
-	if (NULL != (myenc = malloc (sizeof(struct ENC) * (size_t)N_enc))) {
+	if (NULL != (myenc = malloc (sizeof(struct ENC) * N_enc))) {
 
 		for (j = 0; j < n_players; j++) {
 
@@ -241,10 +242,10 @@ rate_super_players 	( bool_t quiet
 			for (e = 0; e < N_enc; e++) {
 				int w = enc[e].wh;
 				int b = enc[e].bl;
-				if (j == w /*&& performance_type[b] == PERF_NORMAL*/) {
+				if (j == (size_t) w /*&& performance_type[b] == PERF_NORMAL*/) { //FIXME size_t
 					myenc[myenc_n++] = enc[e];
 				} else
-				if (j == b /*&& performance_type[w] == PERF_NORMAL*/) {
+				if (j == (size_t) b /*&& performance_type[w] == PERF_NORMAL*/) { //FIXME size_t
 					myenc[myenc_n++] = enc[e];
 				}
 			}
@@ -257,15 +258,15 @@ rate_super_players 	( bool_t quiet
 				int		r = 0;
  	
 				while (myenc_n-->0) {
-					int n = myenc_n;
-					if (myenc[n].wh == j) {
+					size_t n = myenc_n;
+					if ((size_t)myenc[n].wh == j) { //FIXME size_t
 						int opp = myenc[n].bl;
 						weig[r	] = myenc[n].played;
 						rtng[r++] = ratingof[opp] - white_advantage;
 						cume_score += myenc[n].wscore;
 						cume_total += myenc[n].played;
 				 	} else 
-					if (myenc[myenc_n].bl == j) {
+					if ((size_t)myenc[myenc_n].bl == j) { //FIXME size_t
 						int opp = myenc[n].wh;
 						weig[r	] = myenc[n].played;
 						rtng[r++] = ratingof[opp] + white_advantage;

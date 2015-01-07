@@ -68,9 +68,9 @@ relative_anchors_unfitness_full(size_t n_relative_anchors, const struct relprior
 
 // no globals
 static double
-relative_anchors_unfitness_j(double R, int j, double *ratingof, size_t n_relative_anchors, struct relprior *ra)
+relative_anchors_unfitness_j(double R, size_t j, double *ratingof, size_t n_relative_anchors, struct relprior *ra)
 {
-	int a, b;
+	size_t a, b;
 	size_t i;
 	double d, x;
 	double accum = 0;
@@ -80,8 +80,8 @@ relative_anchors_unfitness_j(double R, int j, double *ratingof, size_t n_relativ
 	ratingof[j] = R;
 
 	for (i = 0; i < n_relative_anchors; i++) {
-		a = ra[i].player_a;
-		b = ra[i].player_b;
+		a = (size_t) ra[i].player_a; //FIXME size_t
+		b = (size_t) ra[i].player_b; //FIXME size_t
 		if (a == j || b == j) {
 			d = ratingof[a] - ratingof[b];
 			x = (d - ra[i].delta)/ra[i].sigma;
@@ -96,10 +96,10 @@ relative_anchors_unfitness_j(double R, int j, double *ratingof, size_t n_relativ
 
 // no globals
 static void
-adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, int n_players, double *ratingof, bool_t *flagged)
+adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, size_t n_players, double *ratingof, bool_t *flagged)
 {
 	double excess;
-	int j;
+	size_t j;
 	if (anchor_use) {
 		excess  = ratingof[anchor] - general_average;	
 		for (j = 0; j < n_players; j++) {
@@ -110,9 +110,9 @@ adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, i
 
 // no globals
 static void
-ratings_restore (int n_players, const double *r_bk, double *r_of)
+ratings_restore (size_t n_players, const double *r_bk, double *r_of)
 {
-	int j;
+	size_t j;
 	for (j = 0; j < n_players; j++) {
 		r_of[j] = r_bk[j];
 	}	
@@ -120,9 +120,9 @@ ratings_restore (int n_players, const double *r_bk, double *r_of)
 
 // no globals
 static void
-ratings_backup (int n_players, const double *r_of, double *r_bk)
+ratings_backup (size_t n_players, const double *r_of, double *r_bk)
 {
-	int j;
+	size_t j;
 	for (j = 0; j < n_players; j++) {
 		r_bk[j] = r_of[j];
 	}	
@@ -132,10 +132,10 @@ ratings_backup (int n_players, const double *r_of, double *r_bk)
 
 // no globals
 static bool_t
-super_players_present(int n_players, int *performance_type)
+super_players_present(size_t n_players, int *performance_type)
 { 
 	bool_t found = FALSE;
-	int j;
+	size_t j;
 	for (j = 0; j < n_players && !found; j++) {
 		found = performance_type[j] == PERF_SUPERWINNER || performance_type[j] == PERF_SUPERLOSER; 
 	}
@@ -146,7 +146,7 @@ static double
 adjust_wadv_bayes 
 				( size_t n_enc
 				, const struct ENC *enc
-				, int n_players
+				, size_t n_players
 				, const struct prior *p
 				, double start_wadv
 				, struct prior wa_prior
@@ -164,7 +164,7 @@ static double
 adjust_drawrate_bayes 
 				( size_t n_enc
 				, const struct ENC *enc
-				, int n_players
+				, size_t n_players
 				, const struct prior *p
 				, double start_wadv
 				, struct prior wa_prior
@@ -185,7 +185,7 @@ derivative_vector_calc 	( double delta
 						, const struct ENC *enc
 						, double deq
 						, double beta
-						, int n_players
+						, size_t n_players
 						, double *ratingof
 						, bool_t *flagged
 						, bool_t *prefed
@@ -223,7 +223,7 @@ adjust_rating_bayes
 				, bool_t anchor_use
 				, int anchor
 				, double general_average 
-				, int n_players 
+				, size_t n_players 
 				, const struct prior *p
 				, double white_advantage
 				, struct prior wa_prior
@@ -485,7 +485,7 @@ static double
 adjust_wadv_bayes 
 				( size_t n_enc
 				, const struct ENC *enc
-				, int n_players
+				, size_t n_players
 				, const struct prior *p
 				, double start_wadv
 				, struct prior wa_prior
@@ -567,7 +567,7 @@ static double
 adjust_drawrate_bayes 
 				( size_t n_enc
 				, const struct ENC *enc
-				, int n_players
+				, size_t n_players
 				, const struct prior *p
 				, double start_wadv
 				, struct prior wa_prior
@@ -769,7 +769,7 @@ calc_bayes_unfitness_full
 
 // no globals
 static double
-get_extra_unfitness_j (double R, int j, const struct prior *p, double *ratingof, size_t n_relative_anchors, struct relprior *ra)
+get_extra_unfitness_j (double R, size_t j, const struct prior *p, double *ratingof, size_t n_relative_anchors, struct relprior *ra)
 {
 	double x;
 	double u = 0;
@@ -786,9 +786,9 @@ get_extra_unfitness_j (double R, int j, const struct prior *p, double *ratingof,
 
 // no globals
 static void
-probarray_reset(int n_players, double probarray[MAXPLAYERS][4])
+probarray_reset(size_t n_players, double probarray[MAXPLAYERS][4])
 {
-	int j, k;
+	size_t j, k;
 	for (j = 0; j < n_players; j++) {
 		for (k = 0; k < 4; k++) {
 			probarray[j][k] = 0;
@@ -841,7 +841,7 @@ probarray_build	( size_t n_enc
 
 // no globals
 static double
-derivative_single 	( int j
+derivative_single 	( size_t j
 					, double delta
 					, double *ratingof
 					, const struct prior *pp
@@ -871,7 +871,7 @@ derivative_vector_calc 	( double delta
 						, const struct ENC *enc
 						, double deq
 						, double beta
-						, int n_players
+						, size_t n_players
 						, double *ratingof
 						, bool_t *flagged
 						, bool_t *prefed
@@ -883,7 +883,7 @@ derivative_vector_calc 	( double delta
 						, double *vector 
 )
 {
-	int j;
+	size_t j;
 	probarray_reset(n_players, probarray);
 	probarray_build(n_encounters, enc, delta, deq, beta, ratingof, white_advantage, probarray);
 
@@ -896,7 +896,7 @@ derivative_vector_calc 	( double delta
 	}	
 }
 
-static double fitexcess ( int n_players
+static double fitexcess ( size_t n_players
 						, const struct prior *p
 						, double wadv
 						, struct prior wa_prior
@@ -910,7 +910,7 @@ static double fitexcess ( int n_players
 );
 
 
-static void ratings_apply_excess_correction(double excess, int n_players, const bool_t *flagged, double *ratingof /*out*/);
+static void ratings_apply_excess_correction(double excess, size_t n_players, const bool_t *flagged, double *ratingof /*out*/);
 
 static double absol(double x) {return x < 0? -x: x;}
 
@@ -923,7 +923,7 @@ adjust_rating_bayes
 				, bool_t anchor_use
 				, int anchor
 				, double general_average 
-				, int n_players 
+				, size_t n_players 
 				, const struct prior *p
 				, double white_advantage
 				, struct prior wa_prior
@@ -938,7 +938,8 @@ adjust_rating_bayes
 				, double *ratingbk // out 
 )
 {
-	int 	j, notflagged;
+	int 	notflagged;
+	size_t  j;
 	double 	excess, average;
 	double 	y, ymax = 0;
 	double 	accum = 0;
@@ -1007,9 +1008,9 @@ adjust_rating_bayes
 
 // no globals
 static void
-ratings_apply_excess_correction(double excess, int n_players, const bool_t *flagged, double *ratingof /*out*/)
+ratings_apply_excess_correction(double excess, size_t n_players, const bool_t *flagged, double *ratingof /*out*/)
 {
-	int j;
+	size_t j;
 	for (j = 0; j < n_players; j++) {
 		if (!flagged[j])
 			ratingof[j] -= excess;
@@ -1020,7 +1021,7 @@ ratings_apply_excess_correction(double excess, int n_players, const bool_t *flag
 static double
 ufex
 				( double 				excess
-				, int 					n_players
+				, size_t				n_players
 				, const struct prior 	*p
 				, double				wadv
 				, struct prior 			wa_prior
@@ -1056,7 +1057,7 @@ ufex
 
 // no globals
 static double
-fitexcess 		( int n_players
+fitexcess 		( size_t n_players
 				, const struct prior *p
 				, double wadv
 				, struct prior wa_prior

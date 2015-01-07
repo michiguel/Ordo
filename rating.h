@@ -26,12 +26,12 @@
 #include "boolean.h"
 #include "mytypes.h"
 
-extern long
+extern size_t
 calc_rating2 	( bool_t 		quiet
 				, struct ENC *	enc
-				, long 			N_enc
+				, size_t		N_enc
 
-				, int			N_players
+				, size_t		N_players
 				, double *		Obtained
 
 				, int *			Playedby
