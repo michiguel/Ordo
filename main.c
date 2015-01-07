@@ -491,7 +491,7 @@ static void		reset_rating (double general_average, size_t n_players, const bool_
 static void		ratings_copy (const double *r, size_t n, double *t);
 static void		init_manchors(const char *fpins_name);
 
-static int32_t	calc_rating (bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advantage, bool_t adjust_wadv, double *pDraw_rate);
+static size_t	calc_rating (bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advantage, bool_t adjust_wadv, double *pDraw_rate);
 
 static void 	ratings_results (void);
 static void 	ratings_for_purged (void);
@@ -1125,10 +1125,11 @@ int main (int argc, char *argv[])
 
 	/* Simulation block, begin */
 	{	
-		size_t i,j;
+		ptrdiff_t i,j;
+		ptrdiff_t topn = (ptrdiff_t)Players.n;
 		long z = Simulate;
 		double n = (double) (z);
-		ptrdiff_t np = (ptrdiff_t) Players.n;
+		ptrdiff_t np = topn;
 		ptrdiff_t est = (ptrdiff_t)((np*np-np)/2); /* elements of simulation table */
 		ptrdiff_t idx;
 		size_t allocsize = sizeof(struct DEVIATION_ACC) * (size_t)est;
@@ -1214,12 +1215,12 @@ int main (int argc, char *argv[])
 						ratings_center_to_zero (Players.n, Players.flagged, RA.ratingof);
 					}
 
-					for (i = 0; i < Players.n; i++) {
+					for (i = 0; i < topn; i++) {
 						Sum1[i] += RA.ratingof[i];
 						Sum2[i] += RA.ratingof[i]*RA.ratingof[i];
 					}
 	
-					for (i = 0; i < (Players.n); i++) {
+					for (i = 0; i < topn; i++) {
 						for (j = 0; j < i; j++) {
 							//idx = (i*i-i)/2+j;
 							idx = head2head_idx_sdev ((ptrdiff_t)i, (ptrdiff_t)j);
@@ -1235,7 +1236,7 @@ int main (int argc, char *argv[])
 					}
 				}
 
-				for (i = 0; i < Players.n; i++) {
+				for (i = 0; i < topn; i++) {
 					double xx = n*Sum2[i] - Sum1[i] * Sum1[i];
 					xx = sqrt(xx*xx); // removes problems with -0.00000000000;
 					Sdev[i] = sqrt( xx ) /n;
@@ -2442,10 +2443,11 @@ simulate_scores ( double 		deq
 				, const double 	*ratingof_results
 )
 {
-int n_games = g->n;
-struct gamei *gam = g->ga;
+	size_t n_games = g->n;
+	struct gamei *gam = g->ga;
 
-	long int i, w, b;
+	size_t i;
+	int32_t w, b;
 	const double *rating = ratingof_results;
 	double pwin, pdraw, plos;
 
@@ -2466,12 +2468,12 @@ struct gamei *gam = g->ga;
 
 //==== CALCULATE INDIVIDUAL RATINGS =========================
 
-static int32_t
+static size_t
 calc_rating (bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advantage, bool_t adjust_wadv, double *pDraw_rate)
 {
 	double dr = *pDraw_rate;
 
-	long ret;
+	size_t ret;
 
 	if (Prior_mode) {
 
@@ -2567,7 +2569,7 @@ calc_rating (bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advanta
 
 	*pDraw_rate = dr;
 
-	return (int32_t)ret;
+	return ret;
 }
 
 // no globals

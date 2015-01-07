@@ -286,7 +286,7 @@ calc_rating_bayes2
 			, double			*pDraw_date
 )
 {
-	int n_games = g->n;
+	size_t  n_games = g->n;
 
 	double 	olddev, curdev, outputdev;
 	int 	i;
@@ -403,7 +403,7 @@ calc_rating_bayes2
 		}
 
 		delta /=  denom;
-		outputdev = curdev/n_games;
+		outputdev = curdev/(double)n_games;
 
 		if (!quiet) {
 			printf ("%3d %7d %14.5f", phase, i, outputdev);

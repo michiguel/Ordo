@@ -426,7 +426,7 @@ calc_rating2 	( bool_t 		quiet
 				, double		*ratingtmp_buffer
 )
 {
-	int		N_games = g->n;
+	size_t	N_games = g->n;
 
 	double 	*ratingtmp = ratingtmp_buffer;
 
@@ -563,7 +563,7 @@ calc_rating2 	( bool_t 		quiet
 					calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
 					curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
 	
-					outputdev = 1000*sqrt(curdev/N_games);
+					outputdev = 1000*sqrt(curdev/(double)N_games);
 					done = outputdev < min_devia || (absol(resol)+absol(cd)) < min_resol;
 					//kk *= 0.995;
 					kk *= (1.0-1.0/200);
@@ -572,7 +572,7 @@ calc_rating2 	( bool_t 		quiet
 
 			delta /= denom;
 			kappa *= denom;
-			outputdev = 1000*sqrt(curdev/N_games);
+			outputdev = 1000*sqrt(curdev/(double)N_games);
 
 			if (!quiet) {
 				printf ("%3d %7d %16.9f", phase, i, outputdev);
