@@ -595,7 +595,7 @@ calc_encounters__
 				, struct ENCOUNTERS	*e
 ) 
 {
-	e->n = (int)
+	e->n = 
 	calc_encounters	( selectivity
 					, g
 					, flagged
