@@ -38,11 +38,11 @@ static char 		**Namelist = NULL;
 // supporting memory
 static struct ENC *	SE   = NULL;
 static struct ENC *	SE2  = NULL;
-static int 			N_se  = 0;
-static int 			N_se2 = 0;
+static size_t		N_se  = 0;
+static size_t		N_se2 = 0;
 
-static int 			group_belong[MAXPLAYERS];
-static int			N_groups;
+static int32_t		group_belong[MAXPLAYERS];
+static size_t		N_groups;
 
 struct BITARRAY 	BA;
 struct BITARRAY		BB;
@@ -147,12 +147,12 @@ static group_t * group_combined(group_t *g)
 }
 
 static void
-add_participant (group_t *g, int i)
+add_participant (group_t *g, size_t i)
 {
 	participant_t *nw = participant_new();
 	nw->next = NULL;
 	nw->name = Namelist[i];
-	nw->id = i;
+	nw->id = (int32_t) i; //FIXME size_t
 	if (g->pstart == NULL) {
 		g->pstart = nw; 
 		g->plast = nw;	
@@ -274,7 +274,7 @@ static void
 group_gocombine(group_t *g, group_t *h);
 
 static void
-ifisolated2group (int x)
+ifisolated2group (size_t x)
 {
 	group_t *g;
 
@@ -292,9 +292,9 @@ ifisolated2group (int x)
 }
 
 static void
-convert_general_init(int N_plyrs)
+convert_general_init(size_t N_plyrs)
 {
-	int i;
+	size_t i;
 	connect_init();
 	participant_init();
 	groupset_init();
@@ -305,10 +305,10 @@ convert_general_init(int N_plyrs)
 }
 
 void
-convert_to_groups(FILE *f, int N_plyrs, char **name)
+convert_to_groups(FILE *f, size_t N_plyrs, char **name)
 {
-	int i;
-	int e;
+	size_t i;
+	size_t e;
 
 	Namelist = name;
 
@@ -339,7 +339,7 @@ convert_to_groups(FILE *f, int N_plyrs, char **name)
 }
 
 static int
-group_belonging(int plyr)
+group_belonging(size_t plyr)
 {
 	group_t *ggg = group_pointed_by_node(&Gnode[plyr]);
 	if (ggg) 
@@ -349,17 +349,18 @@ group_belonging(int plyr)
 }
 
 void
-sieve_encounters(const struct ENC *enc, long N_enc, struct ENC *enca, long *N_enca, struct ENC *encb, long *N_encb)
+sieve_encounters(const struct ENC *enc, size_t N_enc, struct ENC *enca, size_t *N_enca, struct ENC *encb, size_t *N_encb)
 {
-	int e,w,b;
-	long na = 0, nb = 0;
+	size_t e;
+	size_t w,b;
+	size_t na = 0, nb = 0;
 
 	*N_enca = 0;
 	*N_encb = 0;
 
 	for (e = 0; e < N_enc; e++) {
-		w = enc[e].wh;
-		b = enc[e].bl;
+		w = (size_t) enc[e].wh; //FIXME size_t
+		b = (size_t) enc[e].bl; //FIXME size_t
 		if (group_belonging(w) == group_belonging(b)) {
 			enca[na] = enc[e]; na += 1;
 		} else {
@@ -1001,9 +1002,9 @@ static bool_t encounter_is_SW(const struct ENC *e) {return (e->played - e->wscor
 static bool_t encounter_is_SL(const struct ENC *e) {return              e->wscore  < 0.0001;}
 
 void
-scan_encounters(const struct ENC *enc, long N_enc, int N_plyrs)
+scan_encounters(const struct ENC *enc, size_t N_enc, size_t N_plyrs)
 {
-	int i,e;
+	size_t i,e;
 	const struct ENC *pe;
 	int gw, gb, lowerg, higherg;
 
@@ -1012,7 +1013,7 @@ scan_encounters(const struct ENC *enc, long N_enc, int N_plyrs)
 
 	N_groups = N_plyrs;
 	for (i = 0; i < N_plyrs; i++) {
-		group_belong[i] = i;
+		group_belong[i] = (int32_t)i;
 	}
 
 	for (e = 0; e < N_enc; e++) {

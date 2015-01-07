@@ -66,24 +66,24 @@ struct GROUP_BUFFER {
 	group_t		list[MAXPLAYERS];
 	group_t		*tail;
 	group_t		*prehead;
-	int			n;
+	size_t		n;
 } group_buffer;
 
 struct PARTICIPANT_BUFFER {
 	participant_t		list[MAXPLAYERS];
-	int					n;
+	size_t				n;
 } participant_buffer;
 
 struct CONNECT_BUFFER {
 	connection_t		list[MAXPLAYERS];
-	int					n;
+	size_t				n;
 } connection_buffer;
 
 //
 
-extern void scan_encounters(const struct ENC Encounter[], long N_encounters, int N_players);
-extern void	convert_to_groups(FILE *f, int N_plyers, char **name);
-extern void	sieve_encounters(const struct ENC *enc, long N_enc, struct ENC *enca, long *N_enca, struct ENC *encb, long *N_encb);
+extern void scan_encounters(const struct ENC Encounter[], size_t N_encounters, size_t N_players);
+extern void	convert_to_groups(FILE *f, size_t N_plyers, char **name);
+extern void	sieve_encounters(const struct ENC *enc, size_t N_enc, struct ENC *enca, size_t *N_enca, struct ENC *encb, size_t *N_encb);
 
 extern bool_t 	supporting_encmem_init (size_t nenc);
 extern void 	supporting_encmem_done (void);

@@ -41,7 +41,7 @@ struct OPP_LINE {
 static struct OPP_LINE oline[MAXPLAYERS];
 
 // STATICS
-static size_t find_maxlen (char *nm[], long int n);
+static size_t find_maxlen (char *nm[], size_t n);
 static const char *SP_symbolstr[3] = {"<",">"," "};
 static const char *get_super_player_symbolstr(int j, struct CEGT *p);
 static void all_report_rat (FILE *textf, struct CEGT *p);
@@ -143,11 +143,11 @@ output_report_individual_f (FILE *indf, struct CEGT *p, int simulate)
 //
 
 static size_t
-find_maxlen (char *nm[], long int n)
+find_maxlen (char *nm[], size_t n)
 {
 	size_t maxl = 0;
 	size_t length;
-	long int i;
+	size_t i;
 	for (i = 0; i < n; i++) {
 		length = strlen(nm[i]);
 		if (length > maxl) maxl = length;
@@ -168,14 +168,15 @@ get_super_player_symbolstr(int j, struct CEGT *p)
 
 static double av_opp(long int j, struct CEGT *p)
 {
-	long int e, opp;
+	size_t e;
+	int32_t opp;
 	long target = j;
 
 	double rsum = 0;
 	long nsum = 0;
 
 	struct ENC 	*enc = p->enc;
-	long int 	n_enc = p->n_enc ;
+	size_t	 	n_enc = p->n_enc ;
 	double		*ratingof_results = p->ratingof_results ;
 
 	for (e = 0; e < n_enc; e++) {
@@ -189,9 +190,9 @@ static double av_opp(long int j, struct CEGT *p)
 	return rsum/ (double) nsum;
 }
 
-static double draw_percentage(int j, struct ENC *enc, long int n_enc)
+static double draw_percentage(int32_t j, struct ENC *enc, size_t n_enc)
 {
-	long int e;
+	size_t e;
 	long target = j;
 
 	long draws = 0;
@@ -213,13 +214,13 @@ all_report_rat (FILE *textf, struct CEGT *p)
 {
 	FILE *f;
 	int j;
-	int i;
+	size_t i;
 	size_t ml;
 
 	// Interface p with internal variables or pointers
 	struct ENC 	*Enc = p->enc;
-	long int 	N_enc = p->n_enc ;
-	long int 	N_players = p->n_players ;
+	size_t	 	N_enc = p->n_enc ;
+	size_t	 	N_players = p->n_players ;
 	int			*Sorted = p->sorted ;
 	double		*Ratingof_results = p->ratingof_results ;
 	double		*Obtained_results = p->obtained_results ;
@@ -247,7 +248,7 @@ all_report_rat (FILE *textf, struct CEGT *p)
 			for (i = 0; i < N_players; i++) {
 				j = Sorted[i];
 				if (!Flagged[j]) {
-					fprintf(f, "%4d %-*s %s :%5.0f%5.0f%5.0f %5d %7.1f%s %6.0f %6.1f%s\n", 
+					fprintf(f, "%4lu %-*s %s :%5.0f%5.0f%5.0f %5d %7.1f%s %6.0f %6.1f%s\n", 
 						i+1,
 						(int)ml+1,
 						Name[j],
@@ -264,7 +265,7 @@ all_report_rat (FILE *textf, struct CEGT *p)
 						" %"
 					);
 				} else {
-					fprintf(f, "%4d %-*s %s :%5s%5s%5s %5d %7.1f%s %6.0f %6.1f%s\n", 
+					fprintf(f, "%4lu %-*s %s :%5s%5s%5s %5d %7.1f%s %6.0f %6.1f%s\n", 
 						i+1,
 						(int)ml+1,
 						Name[j],
@@ -314,13 +315,14 @@ static void
 all_report_prg (FILE *textf, struct CEGT *p)
 {
 	FILE *f;
-	long i, j;
+	size_t i;
+	int32_t j;
 	size_t ml;
 
 	// Interface p with internal variables or pointers
 	struct ENC 	*Enc = p->enc;
-	long int 	N_enc = p->n_enc ;
-	long int 	N_players = p->n_players ;
+	size_t	 	N_enc = p->n_enc ;
+	size_t	 	N_players = p->n_players ;
 	int			*Sorted = p->sorted ;
 	double		*Ratingof_results = p->ratingof_results ;
 	bool_t		*Flagged = p->flagged ;
@@ -346,9 +348,9 @@ all_report_prg (FILE *textf, struct CEGT *p)
 			j = Sorted[i];
 
 			if (!Flagged[j]) {
-				long int e;
-				long t;
-				long target = j;
+				size_t e;
+				size_t t;
+				int32_t target = j;
 
 				long won; 
 				long dra; 
@@ -361,7 +363,7 @@ all_report_prg (FILE *textf, struct CEGT *p)
 					}	
 				}
 
-				qsort (Temp_enc, (size_t)t, sizeof(struct ENC), compare_ENC2);
+				qsort (Temp_enc, t, sizeof(struct ENC), compare_ENC2);
 	
 				won = 0;
 				dra = 0;
@@ -479,7 +481,7 @@ head2head_idx_sdev (long x, long y)
 }
 
 static size_t
-calclen (long int x)
+calclen (long x)
 {
 	char s[80];
 	sprintf(s, "%ld", x);
@@ -490,7 +492,8 @@ static void
 all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate)
 {
 	FILE *f;
-	long i, j;
+	size_t i;
+	int32_t j;
 	size_t ml;
 	size_t gl = 7;
 
@@ -504,8 +507,8 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate)
 
 	// Interface p with internal variables or pointers
 	struct ENC 	*Enc = p->enc;
-	long int 	N_enc = p->n_enc ;
-	long int 	N_players = p->n_players ;
+	size_t	 	N_enc = p->n_enc ;
+	size_t	 	N_players = p->n_players ;
 	int			*Sorted = p->sorted ;
 	double		*Ratingof_results = p->ratingof_results ;
 	bool_t		*Flagged = p->flagged ;
@@ -514,7 +517,7 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate)
 	struct ENC *Temp_enc = NULL;
 	size_t allocsize = sizeof(struct ENC) * (size_t)(N_enc+1);
 
-	indent = (int) calclen (N_players+1);
+	indent = (int) calclen ((long)N_players+1);
 
 	Temp_enc = malloc(allocsize);
 
@@ -533,14 +536,14 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate)
 			j = Sorted[i];
 
 			if (!Flagged[j]) {
-				long e;
-				long t;
+				size_t e;
+				size_t t;
 				long target = j;
 
 				long won; 
 				long dra; 
 				long los;
-				long nl;
+				size_t nl;
 
 				t = 0;
 				for (e = 0; e < N_enc; e++) {
@@ -562,12 +565,12 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate)
 					assert (Temp_enc[e].wh == target || Temp_enc[e].bl == target);
 				}
 
-				gl = 1 + calclen (won+dra+los);
+				gl = 1 + calclen ((long)(won+dra+los));
 				gl = gl < 6? 6: gl; //strlen("games");
 
-				gwlen = (int)calclen(won);
-				gdlen = (int)calclen(dra);
-				gllen = (int)calclen(los);
+				gwlen = (int)calclen((long)won);
+				gdlen = (int)calclen((long)dra);
+				gllen = (int)calclen((long)los);
 
 				fprintf(f, "%*ld) %-*s %5.0f : %*ld (+%*ld,=%*ld,-%*ld), %5.1f %s\n\n"
 					, indent, i+1
@@ -672,7 +675,7 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate)
 
 				fprintf(f,"\n");
 
-				qsort (oline, (size_t)nl, sizeof(struct OPP_LINE), compare_oline);
+				qsort (oline, nl, sizeof(struct OPP_LINE), compare_oline);
 
 				// output lines
 				for (e = 0; e < nl; e++) {
@@ -742,9 +745,9 @@ all_report_gen (FILE *textf, struct CEGT *p)
 {
 	// Interface p with internal variables or pointers
 	struct ENC 	*Enc = p->enc;
-	long int 	N_enc = p->n_enc ;
+	size_t 	N_enc = p->n_enc ;
 
-	long e;
+	size_t e;
 
 	long totalgames = 0;
 	long white_wins = 0;

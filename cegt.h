@@ -28,10 +28,10 @@
 
 struct CEGT {
 	struct ENC 			*enc;
-	long 				n_enc;
+	size_t 				n_enc;
 	long 				simulate;
 
-	long 				n_players;
+	size_t				n_players;
 	int					*sorted; /* sorted index by rating */
 	double				*ratingof_results;
 	double				*obtained_results;
