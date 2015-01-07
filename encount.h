@@ -31,7 +31,7 @@ enum SELECTIVITY {
 	ENCOUNTERS_NOFLAGGED = 1
 };
 
-long int
+size_t
 calc_encounters ( int selectivity
 				, const struct GAMES *g
 				, const bool_t *flagged
@@ -40,12 +40,12 @@ calc_encounters ( int selectivity
 
 // no globals
 extern void
-calc_obtained_playedby (const struct ENC *enc, long N_enc, int n_players, double *obtained, int *playedby);
+calc_obtained_playedby (const struct ENC *enc, size_t N_enc, size_t n_players, double *obtained, int *playedby);
 
 
 // no globals
 extern void
-calc_expected (const struct ENC *enc, long N_enc, double white_advantage, int n_players, const double *ratingof, double *expected, double beta);
+calc_expected (const struct ENC *enc, size_t N_enc, double white_advantage, size_t n_players, const double *ratingof, double *expected, double beta);
 
 
 

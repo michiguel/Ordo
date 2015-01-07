@@ -82,7 +82,7 @@ struct gamei {
 
 struct GAMES {
 	int32_t	 	n; //FIXME transform to size_t
-	int32_t		size;
+	size_t		size;
 	struct gamei *ga;
 };
 

@@ -31,7 +31,7 @@
 //Statics
 
 static struct ENC encounter_merge (const struct ENC *a, const struct ENC *b);
-static int shrink_ENC (struct ENC *enc, long N_enc);
+static size_t shrink_ENC (struct ENC *enc, size_t N_enc);
 static int compare_ENC (const void * a, const void * b);
 
 //=======================================================================
@@ -51,18 +51,18 @@ static int compare_ENC (const void * a, const void * b)
 
 
 // no globals
-long int
+size_t
 calc_encounters ( int selectivity
 				, const struct GAMES *g
 				, const bool_t *flagged
 				, struct ENC *enc // out
 )
 {
-	int n_games = g->n;
+	size_t n_games = g->n;
 	const struct gamei *gam = g->ga;
-
-	int i, e = 0;
-	long ne;
+	size_t i;
+	size_t e = 0;
+	size_t ne;
 	bool_t skip;
 
 	for (i = 0; i < n_games; i++) {
@@ -103,9 +103,10 @@ calc_encounters ( int selectivity
 
 // no globals
 void
-calc_obtained_playedby (const struct ENC *enc, long N_enc, int n_players, double *obtained, int *playedby)
+calc_obtained_playedby (const struct ENC *enc, size_t N_enc, size_t n_players, double *obtained, int *playedby)
 {
-	int e, j, w, b;
+	int w, b;
+	size_t e, j;
 
 	for (j = 0; j < n_players; j++) {
 		obtained[j] = 0.0;	
@@ -127,9 +128,10 @@ calc_obtained_playedby (const struct ENC *enc, long N_enc, int n_players, double
 
 // no globals
 void
-calc_expected (const struct ENC *enc, long N_enc, double white_advantage, int n_players, const double *ratingof, double *expected, double beta)
+calc_expected (const struct ENC *enc, size_t N_enc, double white_advantage, size_t n_players, const double *ratingof, double *expected, double beta)
 {
-	long e, w, b;
+	long w, b;
+	size_t e;
 	double wperf;
 	for (e = 0; e < n_players; e++) {
 		expected[e] = 0.0;	
@@ -160,10 +162,11 @@ encounter_merge (const struct ENC *a, const struct ENC *b)
 		return r;
 }
 
-static int
-shrink_ENC (struct ENC *enc, long N_enc)
+static size_t
+shrink_ENC (struct ENC *enc, size_t N_enc)
 {
-	int e, g;
+	size_t e;
+	size_t g;
 
 	if (N_enc == 0) return 0; 
 

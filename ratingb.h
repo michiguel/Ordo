@@ -27,13 +27,13 @@
 #include "mytypes.h"
 #include "ordolim.h"
 
-extern long
+extern size_t
 calc_rating_bayes2 	
 			( bool_t 		quiet
 			, struct ENC *	enc
-			, long 			N_enc
+			, size_t		N_enc
 
-			, int			n_players
+			, size_t		n_players
 			, double *		obtained
 			, int *			playedby
 			, double *		ratingof
@@ -58,7 +58,7 @@ calc_rating_bayes2
 			// different from non bayes calc
 
 			, double *			changing
-			, long int 			n_relative_anchors
+			, size_t 			n_relative_anchors
 			, struct prior *	pp
 			, double 			probarray [MAXPLAYERS] [4]
 			, struct relprior *	ra

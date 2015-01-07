@@ -174,8 +174,7 @@ struct PLAYERS {
 };
 
 struct RATINGS {
-//	int32_t		n;
-	int32_t		size;
+	size_t		size;
 	int32_t		*sorted; 	/* sorted index by rating */
 	double		*obtained;
 	int32_t		*playedby; 	/* N games played by player "i" */
@@ -188,8 +187,8 @@ struct RATINGS {
 };
 
 struct ENCOUNTERS {
-	int32_t		n;		//FIXME transform to size_t
-	int32_t		size;
+	size_t		n;		//FIXME transform to size_t
+	size_t		size;
 	struct ENC *enc;
 };
 
@@ -217,7 +216,7 @@ static int compare_GAME (const void * a, const void * b)
 
 #ifdef NEWFUNC
 static bool_t 
-ratings_init (int32_t n, struct RATINGS *r) 
+ratings_init (size_t n, struct RATINGS *r) 
 {
 	enum {MAXU=3, MAXD=6};
 	int32_t 	*pu[MAXU];
@@ -250,7 +249,6 @@ ratings_init (int32_t n, struct RATINGS *r)
 	}
 	if (failed) return FALSE;
 
-//	r->n		 		= 0; /* empty for now */
 	r->size				= n;
 	r->sorted 			= pu[0];
 	r->playedby 		= pu[1];
@@ -268,7 +266,6 @@ ratings_init (int32_t n, struct RATINGS *r)
 static void 
 ratings_done (struct RATINGS *r)
 {
-//	r->n = 0;
 	r->size	= 0;
 
 	free(r->sorted);
@@ -284,7 +281,7 @@ ratings_done (struct RATINGS *r)
 
 
 static bool_t 
-games_init (int32_t n, struct GAMES *g)
+games_init (size_t n, struct GAMES *g)
 {
 	struct gamei *p;
 
@@ -316,7 +313,7 @@ games_done (struct GAMES *g)
 //
 
 static bool_t 
-encounters_init (int32_t n, struct ENCOUNTERS *e)
+encounters_init (size_t n, struct ENCOUNTERS *e)
 {
 	struct ENC 	*p;
 
@@ -346,7 +343,7 @@ encounters_done (struct ENCOUNTERS *e)
 
 
 static bool_t 
-players_init (int32_t n, struct PLAYERS *x)
+players_init (size_t n, struct PLAYERS *x)
 {
 	enum VARIAB {NV = 4};
 	bool_t failed;
@@ -469,7 +466,7 @@ static void		anchor_j (long int j, double x);
 static struct relprior Ra[MAX_RELPRIORS];
 static struct relprior Ra_store[MAX_RELPRIORS];
 
-static long int N_relative_anchors = 0;
+static size_t	N_relative_anchors = 0;
 static bool_t 	Hide_old_ver = FALSE;
 
 static void		relpriors_shuffle	(struct relprior *rp, size_t n);
@@ -871,10 +868,10 @@ int main (int argc, char *argv[])
 
 	/*==== memory initialization ====*/
 	{
-	int32_t mpr = pdaba->n_players; 
-	int32_t mpp = pdaba->n_players; 
-	int32_t mg  = pdaba->n_games;
-	int32_t me  = pdaba->n_games;
+	size_t mpr = (size_t) pdaba->n_players; //FIXME
+	size_t mpp = (size_t) pdaba->n_players; //FIXME
+	size_t mg  = (size_t) pdaba->n_games;//FIXME
+	size_t me  = (size_t) pdaba->n_games;//FIXME
 	if (!ratings_init (mpr, &RA)) {
 		fprintf (stderr, "Could not initialize rating memory\n"); exit(0);	
 	} else 
@@ -957,7 +954,7 @@ int main (int argc, char *argv[])
 	init_rating();
 
 	// PRIORS
-	priors_reset(PP, Players.n);
+	priors_reset(PP, (size_t) Players.n); //FIXME
 
 	if (priorsstr != NULL) {
 		priors_load(priorsstr);
@@ -976,7 +973,7 @@ int main (int argc, char *argv[])
 		relpriors_load(relstr); 
 	}
 	if (!QUIET_MODE) {
-		priors_show(PP, Players.n);
+		priors_show(PP, (size_t)Players.n); //FIXME
 		relpriors_show();
 	//FIXME do not allow relpriors to be purged
 	}
@@ -1179,10 +1176,10 @@ int main (int argc, char *argv[])
 									, RA.ratingof_results
 					);
 
-					relpriors_copy(Ra, N_relative_anchors, Ra_store);
-					priors_copy(PP, Players.n, PP_store);
+					relpriors_copy(Ra, N_relative_anchors, Ra_store); 
+					priors_copy(PP, (size_t)Players.n, PP_store);//FIXME
 					relpriors_shuffle(Ra, N_relative_anchors);
-					priors_shuffle(PP, Players.n);
+					priors_shuffle(PP, (size_t)Players.n);//FIXME
 					//priors_show (PP, Players.n);
 
 					#if defined(SAVE_SIMULATION)
@@ -1204,7 +1201,7 @@ int main (int argc, char *argv[])
 					ratings_for_purged ();
 
 					relpriors_copy(Ra_store, N_relative_anchors, Ra);
-					priors_copy(PP_store, Players.n, PP);
+					priors_copy(PP_store, (size_t)Players.n, PP);//FIXME
 
 					if (SIM_UPDATES && z == 0) {
 						int x = 51-astcount;
@@ -1602,7 +1599,7 @@ rating_round(double x, int d)
 static bool_t
 is_old_version(int j)
 {
-	int i;
+	size_t i;
 	bool_t found;
 	for (i = 0, found = FALSE; !found && i < N_relative_anchors; i++) {
 		found = j == Ra[i].player_b;
@@ -1973,7 +1970,7 @@ set_relprior (const char *player_a, const char *player_b, double x, double sigma
 	int j;
 	int p_a = -1; 
 	int p_b = -1;
-	long int n;
+	size_t n;
 	bool_t found;
 
 	assert(sigma > PRIOR_SMALLEST_SIGMA);
@@ -2036,7 +2033,7 @@ relpriors_copy(const struct relprior *r, size_t n, struct relprior *s)
 static void
 relpriors_show (void)
 { 
-	int i;
+	size_t i;
 	if (N_relative_anchors > 0) {
 		printf ("Relative Anchors {\n");
 		for (i = 0; i < N_relative_anchors; i++) {

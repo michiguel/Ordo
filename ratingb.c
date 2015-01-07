@@ -49,9 +49,10 @@ static double adjust_drawrate (double start_wadv, double *ratingof, int N_enc, c
 
 // no globals
 static double
-relative_anchors_unfitness_full(long int n_relative_anchors, const struct relprior *ra, const double *ratingof)
+relative_anchors_unfitness_full(size_t n_relative_anchors, const struct relprior *ra, const double *ratingof)
 {
-	int a, b, i;
+	int a, b;
+	size_t i;
 	double d, x;
 	double accum = 0;
 	for (i = 0; i < n_relative_anchors; i++) {
@@ -67,9 +68,10 @@ relative_anchors_unfitness_full(long int n_relative_anchors, const struct relpri
 
 // no globals
 static double
-relative_anchors_unfitness_j(double R, int j, double *ratingof, long int n_relative_anchors, struct relprior *ra)
+relative_anchors_unfitness_j(double R, int j, double *ratingof, size_t n_relative_anchors, struct relprior *ra)
 {
-	int a, b, i;
+	int a, b;
+	size_t i;
 	double d, x;
 	double accum = 0;
 	double rem;
@@ -142,13 +144,13 @@ super_players_present(int n_players, int *performance_type)
 
 static double
 adjust_wadv_bayes 
-				( long n_enc
+				( size_t n_enc
 				, const struct ENC *enc
 				, int n_players
 				, const struct prior *p
 				, double start_wadv
 				, struct prior wa_prior
-				, long int n_relative_anchors
+				, size_t n_relative_anchors
 				, const struct relprior *ra
 				, const double *ratingof
 				, double resol
@@ -160,13 +162,13 @@ adjust_wadv_bayes
 
 static double
 adjust_drawrate_bayes 
-				( long n_enc
+				( size_t n_enc
 				, const struct ENC *enc
 				, int n_players
 				, const struct prior *p
 				, double start_wadv
 				, struct prior wa_prior
-				, long int n_relative_anchors
+				, size_t n_relative_anchors
 				, const struct relprior *ra
 				, const double *ratingof
 				, double resol
@@ -179,7 +181,7 @@ adjust_drawrate_bayes
 // no globals
 static void
 derivative_vector_calc 	( double delta
-						, long n_encounters
+						, size_t n_encounters
 						, const struct ENC *enc
 						, double deq
 						, double beta
@@ -189,7 +191,7 @@ derivative_vector_calc 	( double delta
 						, bool_t *prefed
 						, double white_advantage
 		 				, const struct prior *pp
-						, long int n_relative_anchors
+						, size_t n_relative_anchors
 						, struct relprior *ra
 						, double probarray[MAXPLAYERS][4]
 						, double *vector 
@@ -198,13 +200,13 @@ derivative_vector_calc 	( double delta
 // no globals
 static double
 calc_bayes_unfitness_full	
-				( long n_enc
+				( size_t n_enc
 				, const struct ENC *enc
-				, int n_players
+				, size_t n_players
 				, const struct prior *p
 				, double wadv
 				, struct prior wa_prior
-				, long int n_relative_anchors
+				, size_t n_relative_anchors
 				, const struct relprior *ra
 				, const double *ratingof
 				, double deq
@@ -227,7 +229,7 @@ adjust_rating_bayes
 				, struct prior wa_prior
 				, double deq
 				, struct prior dr_prior
-				, long int n_relative_anchors
+				, size_t n_relative_anchors
 				, const struct relprior *ra
 				, const double *change_vector
 				, const bool_t *flagged
@@ -238,13 +240,13 @@ adjust_rating_bayes
 ;
 
 // no globals
-long
+size_t
 calc_rating_bayes2 	
 			( bool_t 		quiet
 			, struct ENC *	enc
-			, long			N_enc
+			, size_t		N_enc
 
-			, int			n_players
+			, size_t		n_players
 			, double *		obtained
 
 			, int *			playedby
@@ -270,7 +272,7 @@ calc_rating_bayes2
 			// different from non bayes calc
 
 			, double 			*changing
-			, long int 			n_relative_anchors
+			, size_t 			n_relative_anchors
 			, struct prior 		*pp
 			, double 			probarray [MAXPLAYERS] [4]
 			, struct relprior 	*ra
@@ -481,13 +483,13 @@ calc_rating_bayes2
 // no globals
 static double
 adjust_wadv_bayes 
-				( long n_enc
+				( size_t n_enc
 				, const struct ENC *enc
 				, int n_players
 				, const struct prior *p
 				, double start_wadv
 				, struct prior wa_prior
-				, long int n_relative_anchors
+				, size_t n_relative_anchors
 				, const struct relprior *ra
 				, const double *ratingof
 				, double resol
@@ -563,13 +565,13 @@ adjust_wadv_bayes
 // no globals
 static double
 adjust_drawrate_bayes 
-				( long n_enc
+				( size_t n_enc
 				, const struct ENC *enc
 				, int n_players
 				, const struct prior *p
 				, double start_wadv
 				, struct prior wa_prior
-				, long int n_relative_anchors
+				, size_t n_relative_anchors
 				, const struct relprior *ra
 				, const double *ratingof
 				, double resol
@@ -674,18 +676,18 @@ wdl_probabilities (int ww, int dd, int ll, double pw, double pd, double pl)
 
 // no globals
 static double
-prior_unfitness	( int n_players
+prior_unfitness	( size_t n_players
 				, const struct prior *p
 				, double wadv
 				, struct prior wa_prior
-				, long int n_relative_anchors
+				, size_t n_relative_anchors
 				, const struct relprior *ra
 				, const double *ratingof
 				, double deq
 				, struct prior dr_prior
 )
 {
-	int j;
+	size_t j;
 	double x;
 	double accum = 0;
 	for (j = 0; j < n_players; j++) {
@@ -714,13 +716,13 @@ prior_unfitness	( int n_players
 // no globals
 static double
 calc_bayes_unfitness_full	
-				( long n_enc
+				( size_t n_enc
 				, const struct ENC *enc
-				, int n_players
+				, size_t n_players
 				, const struct prior *p
 				, double wadv
 				, struct prior wa_prior
-				, long int n_relative_anchors
+				, size_t n_relative_anchors
 				, const struct relprior *ra
 				, const double *ratingof
 				, double deq
@@ -729,7 +731,8 @@ calc_bayes_unfitness_full
 )
 {
 	double pw, pd, pl, accum;
-	int e,w,b, ww,dd,ll;
+	int w,b, ww,dd,ll;
+	size_t e;
 
 	for (accum = 0, e = 0; e < n_enc; e++) {
 	
@@ -766,7 +769,7 @@ calc_bayes_unfitness_full
 
 // no globals
 static double
-get_extra_unfitness_j (double R, int j, const struct prior *p, double *ratingof, long int n_relative_anchors, struct relprior *ra)
+get_extra_unfitness_j (double R, int j, const struct prior *p, double *ratingof, size_t n_relative_anchors, struct relprior *ra)
 {
 	double x;
 	double u = 0;
@@ -795,7 +798,7 @@ probarray_reset(int n_players, double probarray[MAXPLAYERS][4])
 
 // no globals
 static void
-probarray_build	( long n_enc
+probarray_build	( size_t n_enc
 				, const struct ENC *enc
 				, double inputdelta
 				, double deq
@@ -806,7 +809,8 @@ probarray_build	( long n_enc
 {
 	double pw, pd, pl, delta;
 	double p;
-	int e,w,b;
+	int w,b;
+	size_t e;
 
 	for (e = 0; e < n_enc; e++) {
 		w = enc[e].wh;	b = enc[e].bl;
@@ -841,7 +845,7 @@ derivative_single 	( int j
 					, double delta
 					, double *ratingof
 					, const struct prior *pp
-					, long int n_relative_anchors
+					, size_t n_relative_anchors
 					, struct relprior *ra
 					, double probarray[MAXPLAYERS][4])
 {
@@ -863,7 +867,7 @@ derivative_single 	( int j
 // no globals
 static void
 derivative_vector_calc 	( double delta
-						, long n_encounters
+						, size_t n_encounters
 						, const struct ENC *enc
 						, double deq
 						, double beta
@@ -873,7 +877,7 @@ derivative_vector_calc 	( double delta
 						, bool_t *prefed
 						, double white_advantage
 		 				, const struct prior *pp
-						, long int n_relative_anchors
+						, size_t n_relative_anchors
 						, struct relprior *ra
 						, double probarray[MAXPLAYERS][4]
 						, double *vector 
@@ -896,7 +900,7 @@ static double fitexcess ( int n_players
 						, const struct prior *p
 						, double wadv
 						, struct prior wa_prior
-						, long int n_relative_anchors
+						, size_t n_relative_anchors
 						, const struct relprior *ra
 						, double *ratingof
 						, double *ratingbk
@@ -925,7 +929,7 @@ adjust_rating_bayes
 				, struct prior wa_prior
 				, double deq
 				, struct prior dr_prior
-				, long int n_relative_anchors
+				, size_t n_relative_anchors
 				, const struct relprior *ra
 				, const double *change_vector
 				, const bool_t *flagged
@@ -1020,7 +1024,7 @@ ufex
 				, const struct prior 	*p
 				, double				wadv
 				, struct prior 			wa_prior
-				, long int 				n_relative_anchors
+				, size_t 				n_relative_anchors
 				, const struct relprior *ra
 				, double 				*ratingof
 				, double 				*ratingbk
@@ -1056,7 +1060,7 @@ fitexcess 		( int n_players
 				, const struct prior *p
 				, double wadv
 				, struct prior wa_prior
-				, long int n_relative_anchors
+				, size_t n_relative_anchors
 				, const struct relprior *ra
 				, double *ratingof
 				, double *ratingbk
