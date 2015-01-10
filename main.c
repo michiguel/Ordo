@@ -868,8 +868,8 @@ int main (int argc, char *argv[])
 
 	/*==== memory initialization ====*/
 	{
-	size_t mpr = (size_t)pdaba->n_players;//FIXME size_t
-	size_t mpp = (size_t)pdaba->n_players;
+	size_t mpr = (size_t)pdaba->n_players; //FIXME size_t
+	size_t mpp = (size_t)pdaba->n_players; //FIXME size_t
 	size_t mg  = pdaba->n_games;
 	size_t me  = pdaba->n_games;
 
