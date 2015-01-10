@@ -30,8 +30,8 @@
 
 //#define MAXENCOUNTERS 3000000
 
-#define MAXGAMESxBLOCK (1024*1024)
-#define MAXBLOCKS (2*1024)
+#define MAXGAMESxBLOCK ((size_t)1024*(size_t)1024)
+#define MAXBLOCKS ((size_t)2*(size_t)1024)
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

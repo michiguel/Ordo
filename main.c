@@ -1357,10 +1357,10 @@ DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct G
 	}
 
 {
-	int	blk_filled = db->gb_filled;
-	int	idx_last   = db->gb_idx;
-	int blk;
-	int idx;
+	size_t blk_filled  = db->gb_filled;
+	size_t blk;
+	size_t idx_last = db->gb_idx;
+	size_t idx;
 
 	i = 0;
 
@@ -1407,10 +1407,10 @@ DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct G
 static void 
 DB_ignore_draws (struct DATA *db)
 {
-	int	blk_filled = db->gb_filled;
-	int	idx_last   = db->gb_idx;
-	int blk;
-	int idx;
+	size_t blk_filled = db->gb_filled;
+	size_t idx_last   = db->gb_idx;
+	size_t blk;
+	size_t idx;
 
 	blk_filled = db->gb_filled;
 	idx_last   = db->gb_idx;

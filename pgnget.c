@@ -143,7 +143,7 @@ data_init (struct DATA *d)
 static void
 data_done (struct DATA *d)
 {
-	int n;
+	size_t n;
 
 	d->labels[0] = '\0';
 	d->labels_end_idx = 0;
@@ -353,7 +353,7 @@ pgn_result_collect (struct pgn_result *p)
 	}
 #else
 {
-	player_t idx;
+	player_t 	idx;
 	const char *tagstr;
 	uint32_t 	taghsh;
 
@@ -379,8 +379,8 @@ pgn_result_collect (struct pgn_result *p)
 
 		struct GAMEBLOCK *g;
 
-		int idx = DaBa.gb_idx;
-		int blk = DaBa.gb_filled;
+		size_t idx = DaBa.gb_idx;
+		size_t blk = DaBa.gb_filled;
 
 		DaBa.gb[blk]->white [idx] = i;
 		DaBa.gb[blk]->black [idx] = j;

@@ -40,9 +40,9 @@ struct DATA {
 	ptrdiff_t	labels_end_idx;
 	ptrdiff_t	name	[MAXPLAYERS];
 
-	int 		gb_filled;
-	int 		gb_idx;
-	int			gb_allocated;
+	size_t 		gb_filled;
+	size_t 		gb_idx;
+	size_t		gb_allocated;
 
 	struct GAMEBLOCK *gb[MAXBLOCKS];
 };
