@@ -66,7 +66,7 @@ static bool_t	data_init (struct DATA *d);
 static bool_t	playeridx_from_str (const char *s, int *idx);
 #endif
 
-static bool_t	addplayer (const char *s, int32_t *i);
+static bool_t	addplayer (const char *s, player_t *i);
 static void		report_error 	(long int n);
 static int		res2int 		(const char *s);
 static bool_t 	fpgnscan (FILE *fpgn, bool_t quiet);
@@ -179,16 +179,16 @@ playeridx_from_str (const char *s, int *idx)
 #endif
 
 static bool_t
-addplayer (const char *s, int32_t *idx)
+addplayer (const char *s, player_t *idx)
 {
 	long int i;
 	char *b = DaBa.labels + DaBa.labels_end_idx;
-	long int remaining = (long int) (&DaBa.labels[LABELBUFFERSIZE] - b - 1);
-	long int len = (long int) strlen(s);
+	ptrdiff_t remaining = (&DaBa.labels[LABELBUFFERSIZE] - b - 1);
+	ptrdiff_t len = (ptrdiff_t)strlen(s);
 	bool_t success = len < remaining && DaBa.n_players < MAXPLAYERS;
 
 	if (success) {
-		int32_t x = (int32_t) DaBa.n_players++;
+		player_t x = DaBa.n_players++;
 		*idx = x;
 		DaBa.name[x] = b - DaBa.labels;
 		for (i = 0; i < len; i++)  {
@@ -215,7 +215,7 @@ static void report_error (long int n)
 #define PEA_REM_MAX (256*256)
 
 struct NAMEPEA {
-	int itos;
+	player_t itos;
 	uint32_t hash;
 };
 
@@ -249,7 +249,7 @@ hashstat(void)
 #endif
 
 static bool_t
-name_ispresent (const char *s, uint32_t hash, /*out*/ int32_t *out_index)
+name_ispresent (const char *s, uint32_t hash, /*out*/ player_t *out_index)
 {
 	struct NAMEPOD *ppod = &namehashtab[hash & PODMASK];
 	struct NAMEPEA *ppea;
@@ -339,8 +339,8 @@ pgn_result_reset (struct pgn_result *p)
 static bool_t
 pgn_result_collect (struct pgn_result *p)
 {
-	int32_t i;
-	int32_t j;
+	player_t i;
+	player_t j;
 	bool_t ok = TRUE;
 
 #ifndef TESTHASH
@@ -353,7 +353,7 @@ pgn_result_collect (struct pgn_result *p)
 	}
 #else
 {
-	int32_t idx;
+	player_t idx;
 	const char *tagstr;
 	uint32_t 	taghsh;
 

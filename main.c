@@ -868,8 +868,8 @@ int main (int argc, char *argv[])
 
 	/*==== memory initialization ====*/
 	{
-	size_t mpr = pdaba->n_players;
-	size_t mpp = pdaba->n_players;
+	size_t mpr = (size_t)pdaba->n_players;//FIXME size_t
+	size_t mpp = (size_t)pdaba->n_players;
 	size_t mg  = pdaba->n_games;
 	size_t me  = pdaba->n_games;
 
@@ -1347,10 +1347,10 @@ DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct G
 		Labelbuffer[x] = db->labels[x];
 	}
 	Labelbuffer_end = Labelbuffer + db->labels_end_idx;
-	p->n = db->n_players; 
+	p->n = (size_t)db->n_players; //FIXME size_t
 	g->n = db->n_games; 
 
-	topn = db->n_players;
+	topn = (size_t)db->n_players; //FIXME size_t
 	for (i = 0; i < topn; i++) {
 		p->name[i] = Labelbuffer + db->name[i];
 		p->flagged[i] = FALSE;

@@ -74,6 +74,8 @@
 
 #include "boolean.h"
 
+typedef int32_t player_t;
+
 struct gamei {
 	int32_t 	whiteplayer;
 	int32_t 	blackplayer;
