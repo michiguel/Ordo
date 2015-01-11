@@ -39,7 +39,7 @@ rate_super_players 	( bool_t quiet
 					, double *ratingof
 					, double white_advantage
 					, bool_t *flagged
-					, char *Name[]
+					, const char *Name[]
 					, double deq
 					, double beta
 );

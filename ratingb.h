@@ -52,7 +52,7 @@ calc_rating_bayes2
 				
 			, struct GAMES *g
 
-			, char *		name[]
+			, const char *	name[]
 			, double		beta
 
 			// different from non bayes calc

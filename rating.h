@@ -51,7 +51,7 @@ calc_rating2 	( bool_t 		quiet
 				
 				, struct GAMES *g
 
-				, char *		Name[]
+				, const char *	Name[]
 				, double		BETA
 //
 				, bool_t 		adjust_white_advantage

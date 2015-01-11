@@ -31,7 +31,7 @@ struct BITARRAY {
 
 //---------------------------------------------------------------------
 
-static char 		**Namelist = NULL;
+static const char 		**Namelist = NULL;
 
 //---------------------------------------------------------------------
 
@@ -305,7 +305,7 @@ convert_general_init(size_t N_plyrs)
 }
 
 void
-convert_to_groups(FILE *f, size_t N_plyrs, char **name)
+convert_to_groups(FILE *f, size_t N_plyrs, const char **name)
 {
 	size_t i;
 	size_t e;

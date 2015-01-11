@@ -36,7 +36,7 @@ enum RESULTS {
 
 extern struct DATA * 	database_init_frompgn (const char *pgn, bool_t quiet);
 extern void 			database_done (struct DATA *p);
-extern const char *		database_ptr2name (struct DATA *db, player_t i);
+extern const char *		database_ptr2name (const struct DATA *db, player_t i);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

@@ -41,7 +41,7 @@ struct OPP_LINE {
 static struct OPP_LINE oline[MAXPLAYERS];
 
 // STATICS
-static size_t find_maxlen (char *nm[], size_t n);
+static size_t find_maxlen (const char *nm[], size_t n);
 static const char *SP_symbolstr[3] = {"<",">"," "};
 static const char *get_super_player_symbolstr(int j, struct CEGT *p);
 static void all_report_rat (FILE *textf, struct CEGT *p);
@@ -143,7 +143,7 @@ output_report_individual_f (FILE *indf, struct CEGT *p, int simulate)
 //
 
 static size_t
-find_maxlen (char *nm[], size_t n)
+find_maxlen (const char *nm[], size_t n)
 {
 	size_t maxl = 0;
 	size_t length;
@@ -227,7 +227,7 @@ all_report_rat (FILE *textf, struct CEGT *p)
 	int			*Playedby_results = p->playedby_results ;
 	double		*Sdev = p->sdev; 
 	bool_t		*Flagged = p->flagged ;
-	char 		**Name = p->name ;
+	const char	**Name = p->name ;
 	double		confidence = p->confidence_factor;
 
 	/* output in text format */
@@ -326,7 +326,7 @@ all_report_prg (FILE *textf, struct CEGT *p)
 	int			*Sorted = p->sorted ;
 	double		*Ratingof_results = p->ratingof_results ;
 	bool_t		*Flagged = p->flagged ;
-	char 		**Name = p->name ;
+	const char	**Name = p->name ;
 
 	struct ENC *Temp_enc = NULL;
 	size_t allocsize = sizeof(struct ENC) * (size_t)(N_enc+1);
@@ -512,7 +512,7 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate)
 	int			*Sorted = p->sorted ;
 	double		*Ratingof_results = p->ratingof_results ;
 	bool_t		*Flagged = p->flagged ;
-	char 		**Name = p->name ;
+	const char	**Name = p->name ;
 
 	struct ENC *Temp_enc = NULL;
 	size_t allocsize = sizeof(struct ENC) * (size_t)(N_enc+1);

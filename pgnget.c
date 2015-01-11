@@ -113,7 +113,7 @@ database_done (struct DATA *p)
 
 
 const char *
-database_ptr2name (struct DATA *db, player_t i)
+database_ptr2name (const struct DATA *db, player_t i)
 {
 	const char *r;
 	r = db->labels + db->name[i];

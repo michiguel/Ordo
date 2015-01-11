@@ -58,7 +58,7 @@ struct NODE {
 
 struct PARTICIPANT {
 	participant_t 	*next;
-	char 			*name;
+	const char		*name;
 	int				id;
 };
 
@@ -82,7 +82,7 @@ struct CONNECT_BUFFER {
 //
 
 extern void scan_encounters(const struct ENC Encounter[], size_t N_encounters, size_t N_players);
-extern void	convert_to_groups(FILE *f, size_t N_plyers, char **name);
+extern void	convert_to_groups(FILE *f, size_t N_plyers, const char **name);
 extern void	sieve_encounters(const struct ENC *enc, size_t N_enc, struct ENC *enca, size_t *N_enca, struct ENC *encb, size_t *N_encb);
 
 extern bool_t 	supporting_encmem_init (size_t nenc);

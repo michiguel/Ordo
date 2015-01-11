@@ -38,7 +38,7 @@ struct CEGT {
 	int					*playedby_results;
 	double				*sdev; 
 	bool_t				*flagged;
-	char 				**name;
+	const char			**name;
 
 	double				confidence_factor;
 

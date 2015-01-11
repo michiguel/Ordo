@@ -167,7 +167,7 @@ const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:XN:
 struct PLAYERS {
 	size_t		n; 
 	size_t		size;
-	char 		**name;
+	const char  **name;
 	bool_t		*flagged;
 	bool_t		*prefed;
 	int			*performance_type; 
@@ -393,9 +393,6 @@ players_done (struct PLAYERS *x)
 #endif
 
 //=====================================================
-
-static char		Labelbuffer[LABELBUFFERSIZE] = {'\0'};
-static char		*Labelbuffer_end = Labelbuffer;
 
 enum 			AnchorSZ	{MAX_ANCHORSIZE=256};
 static bool_t	Anchor_use = FALSE;
@@ -1338,22 +1335,17 @@ usage (void)
 static void 
 DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct GAMESTATS *gs)
 {
-	size_t i;
-	size_t topn;
-	ptrdiff_t x;
+	player_t j;
+	player_t topn;
 	long int gamestat[4] = {0,0,0,0};
 
-	for (x = 0; x < db->labels_end_idx; x++) {
-		Labelbuffer[x] = db->labels[x];
-	}
-	Labelbuffer_end = Labelbuffer + db->labels_end_idx;
 	p->n = (size_t)db->n_players; //FIXME size_t
 	g->n = db->n_games; 
 
-	topn = (size_t)db->n_players; //FIXME size_t
-	for (i = 0; i < topn; i++) {
-		p->name[i] = Labelbuffer + db->name[i];
-		p->flagged[i] = FALSE;
+	topn = db->n_players; 
+	for (j = 0; j < topn; j++) {
+		p->name[j] = database_ptr2name(db,j);
+		p->flagged[j] = FALSE;
 	}
 
 {
@@ -1361,8 +1353,7 @@ DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct G
 	size_t blk;
 	size_t idx_last = db->gb_idx;
 	size_t idx;
-
-	i = 0;
+	size_t i = 0;
 
 	for (blk = 0; blk < blk_filled; blk++) {
 
@@ -1556,7 +1547,7 @@ ctsout(const char *out)
 
 
 static size_t
-find_maxlen (char *nm[], size_t n)
+find_maxlen (const char *nm[], size_t n)
 {
 	size_t maxl = 0;
 	size_t length;
@@ -2358,7 +2349,7 @@ purge_players (bool_t quiet, struct PLAYERS *pl)
 	// Players
 	size_t n_players = pl->n;
 	const int *performance_type = pl->performance_type;
-	char **name = pl->name;
+	const char **name = pl->name;
 	bool_t *flagged = pl->flagged;
 
 	size_t j;
@@ -2646,7 +2637,7 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl,
 	//Players
 	size_t n_players = pl->n;
 	int *perftype  = pl->performance_type;
-	char **name    = pl->name;
+	const char **name    = pl->name;
 
 	double 	*obt;
 	int		*pla;
