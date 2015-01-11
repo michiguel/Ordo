@@ -30,9 +30,6 @@
 #include "ordolim.h"
 #include "mytypes.h"
 
-#if 1
-#define TESTHASH
-#endif
 
 #if 0
 static void	hashstat(void);
@@ -61,10 +58,6 @@ static struct DATA DaBa;
 static bool_t	data_init (struct DATA *d);
 
 /*------------------------------------------------------------------------*/
-
-#ifndef TESTHASH
-static bool_t	playeridx_from_str (const char *s, int *idx);
-#endif
 
 static bool_t	addplayer (const char *s, player_t *i);
 static void		report_error 	(long int n);
@@ -172,22 +165,6 @@ data_done (struct DATA *d)
 }
 
 
-#ifndef TESTHASH
-static bool_t
-playeridx_from_str (const char *s, int *idx)
-{
-	int i;
-	bool_t found;
-	for (i = 0, found = FALSE; !found && i < DaBa.n_players; i++) {
-		ptrdiff_t x = DaBa.name[i];
-		char * l = DaBa.labels + x;	
-		found = (0 == strcmp (s, l) );
-		if (found) *idx = i;
-	}
-	return found;
-}
-#endif
-
 static bool_t
 addplayer (const char *s, player_t *idx)
 {
@@ -215,8 +192,6 @@ static void report_error (long int n)
 {
 	fprintf(stderr, "\nParsing error in line: %ld\n", n+1);
 }
-
-#ifdef TESTHASH
 
 #define PEAXPOD 8
 #define PODBITS 12
@@ -333,7 +308,6 @@ namehash(const char *str)
 	}
 	return hash;
 }
-#endif
 
 static void
 pgn_result_reset (struct pgn_result *p)
@@ -353,15 +327,6 @@ pgn_result_collect (struct pgn_result *p)
 	player_t j;
 	bool_t ok = TRUE;
 
-#ifndef TESTHASH
-	if (ok && !playeridx_from_str (p->wtag, &i)) {
-		ok = addplayer (p->wtag, &i);
-	}
-
-	if (ok && !playeridx_from_str (p->btag, &j)) {
-		ok = addplayer (p->btag, &j);
-	}
-#else
 {
 	player_t 	idx;
 	const char *tagstr;
@@ -381,8 +346,6 @@ pgn_result_collect (struct pgn_result *p)
 	}
 	j = idx;
 }
-#endif
-
 	ok = ok && (uint64_t)DaBa.n_games < ((uint64_t)MAXGAMESxBLOCK*(uint64_t)MAXBLOCKS);
 
 	if (ok) {
