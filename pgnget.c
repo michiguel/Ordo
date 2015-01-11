@@ -59,7 +59,7 @@ static bool_t	data_init (struct DATA *d);
 
 /*------------------------------------------------------------------------*/
 
-static bool_t	addplayer (const char *s, player_t *i);
+static bool_t	addplayer (struct DATA *d, const char *s, player_t *i);
 static void		report_error 	(long int n);
 static int		res2int 		(const char *s);
 static bool_t 	fpgnscan (FILE *fpgn, bool_t quiet);
@@ -166,25 +166,25 @@ data_done (struct DATA *d)
 
 
 static bool_t
-addplayer (const char *s, player_t *idx)
+addplayer (struct DATA *d, const char *s, player_t *idx)
 {
-	char *b = DaBa.labels + DaBa.labels_end_idx;
-	ptrdiff_t remaining = (&DaBa.labels[LABELBUFFERSIZE] - b - 1);
+	char *b = d->labels + d->labels_end_idx;
+	ptrdiff_t remaining = (&d->labels[LABELBUFFERSIZE] - b - 1);
 	ptrdiff_t len = (ptrdiff_t)strlen(s);
 	ptrdiff_t i;
-	bool_t success = len < remaining && DaBa.n_players < MAXPLAYERS;
+	bool_t success = len < remaining && d->n_players < MAXPLAYERS;
 
 	if (success) {
-		player_t x = DaBa.n_players++;
+		player_t x = d->n_players++;
 		*idx = x;
-		DaBa.name[x] = b - DaBa.labels;
+		d->name[x] = b - d->labels;
 		for (i = 0; i < len; i++)  {
 			*b++ = *s++;
 		}
 		*b++ = '\0';
 	}
 
-	DaBa.labels_end_idx = b - DaBa.labels;
+	d->labels_end_idx = b - d->labels;
 	return success;
 }
 
@@ -335,14 +335,14 @@ pgn_result_collect (struct pgn_result *p)
 	tagstr = p->wtag;
 	taghsh = namehash(tagstr);
 	if (ok && !name_ispresent (tagstr, taghsh, &idx)) {
-		ok = addplayer (tagstr, &idx) && name_register(taghsh,idx);
+		ok = addplayer (&DaBa, tagstr, &idx) && name_register(taghsh,idx);
 	}
 	i = idx;
 
 	tagstr = p->btag;
 	taghsh = namehash(tagstr);
 	if (ok && !name_ispresent (tagstr, taghsh, &idx)) {
-		ok = addplayer (tagstr, &idx) && name_register(taghsh,idx);
+		ok = addplayer (&DaBa, tagstr, &idx) && name_register(taghsh,idx);
 	}
 	j = idx;
 }
