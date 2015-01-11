@@ -111,6 +111,16 @@ database_done (struct DATA *p)
 	return;
 }
 
+
+const char *
+database_ptr2name (struct DATA *db, player_t i)
+{
+	const char *r;
+	r = db->labels + db->name[i];
+	return r;	
+}
+
+
 /*--------------------------------------------------------------*\
 |
 |
@@ -181,10 +191,10 @@ playeridx_from_str (const char *s, int *idx)
 static bool_t
 addplayer (const char *s, player_t *idx)
 {
-	long int i;
 	char *b = DaBa.labels + DaBa.labels_end_idx;
 	ptrdiff_t remaining = (&DaBa.labels[LABELBUFFERSIZE] - b - 1);
 	ptrdiff_t len = (ptrdiff_t)strlen(s);
+	ptrdiff_t i;
 	bool_t success = len < remaining && DaBa.n_players < MAXPLAYERS;
 
 	if (success) {
