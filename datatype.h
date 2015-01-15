@@ -44,8 +44,6 @@ struct DATA {
 	char		labels[LABELBUFFERSIZE];
 	ptrdiff_t	labels_end_idx;
 
-	ptrdiff_t	name	[MAXPLAYERS];
-
 	size_t 		nm_filled;
 	size_t 		nm_idx;
 	size_t		nm_allocated;

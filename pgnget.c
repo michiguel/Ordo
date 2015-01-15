@@ -109,8 +109,6 @@ const char *
 database_ptr2name (const struct DATA *db, player_t i)
 {
 	const char *r;
-	r = db->labels + db->name[i];
-
 	r = db->nm[db->nm_filled]->p[i];
 	return r;	
 }
