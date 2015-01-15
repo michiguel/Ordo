@@ -65,7 +65,7 @@ static int		res2int 		(const char *s);
 static bool_t 	fpgnscan (FILE *fpgn, bool_t quiet);
 static bool_t 	is_complete (struct pgn_result *p);
 static void 	pgn_result_reset (struct pgn_result *p);
-static bool_t 	pgn_result_collect (struct pgn_result *p);
+static bool_t 	pgn_result_collect (struct pgn_result *p, struct DATA *d);
 
 /*
 |
@@ -110,6 +110,8 @@ database_ptr2name (const struct DATA *db, player_t i)
 {
 	const char *r;
 	r = db->labels + db->name[i];
+
+	r = db->nm[db->nm_filled]->p[i];
 	return r;	
 }
 
@@ -123,6 +125,8 @@ static bool_t
 data_init (struct DATA *d)
 {
 	struct GAMEBLOCK *p;
+	struct NAMEBLOCK *t;
+	bool_t ok = TRUE;
 
 	d->labels[0] = '\0';
 	d->labels_end_idx = 0;
@@ -131,16 +135,23 @@ data_init (struct DATA *d)
 
 	d->gb_filled = 0;;
 	d->gb_idx = 0;
-		
 	d->gb_allocated = 0;
-	if (NULL == (p = malloc (sizeof(struct GAMEBLOCK) * (size_t)1))) {
-		d->gb[0] = NULL;
-		return FALSE; // failed
-	} else {
-		d->gb[0] = p;
-		d->gb_allocated++;
-		return TRUE;
-	}
+
+	d->nm_filled = 0;;
+	d->nm_idx = 0;
+	d->nm_allocated = 0;
+
+	ok = ok && NULL != (p = malloc (sizeof(struct GAMEBLOCK)));
+	if (ok)	d->gb_allocated++;
+	d->gb[0] = p;
+
+	ok = ok && NULL != (t = malloc (sizeof(struct NAMEBLOCK)));
+	if (ok)	d->nm_allocated++;
+	d->nm[0] = t;
+
+	if (!ok) data_done(d);
+
+	return ok;
 }
 
 static void
@@ -153,15 +164,29 @@ data_done (struct DATA *d)
 	d->n_players = 0;
 	d->n_games = 0;
 
+//
 	n = d->gb_allocated;
 
 	while (n-->0) {
 		free(d->gb[n]);
+		d->gb[n] = NULL;
 	}
 
 	d->gb_filled = 0;;
 	d->gb_idx = 0;
 	d->gb_allocated = 0;
+
+//
+	n = d->nm_allocated;
+
+	while (n-->0) {
+		free(d->nm[n]);
+		d->nm[n] = NULL;
+	}
+
+	d->nm_filled = 0;;
+	d->nm_idx = 0;
+	d->nm_allocated = 0;
 }
 
 
@@ -169,6 +194,8 @@ static bool_t
 addplayer (struct DATA *d, const char *s, player_t *idx)
 {
 	char *b = d->labels + d->labels_end_idx;
+	char *nameptr = b;
+
 	ptrdiff_t remaining = (&d->labels[LABELBUFFERSIZE] - b - 1);
 	ptrdiff_t len = (ptrdiff_t)strlen(s);
 	ptrdiff_t i;
@@ -177,11 +204,25 @@ addplayer (struct DATA *d, const char *s, player_t *idx)
 	if (success) {
 		player_t x = d->n_players++;
 		*idx = x;
-		d->name[x] = b - d->labels;
+//		d->name[x] = b - d->labels;
 		for (i = 0; i < len; i++)  {
 			*b++ = *s++;
 		}
 		*b++ = '\0';
+//
+{
+//		struct NAMEBLOCK *nm;
+
+		d->nm[d->nm_filled]->p[d->nm_idx] = nameptr;
+		d->nm_idx++;
+
+		if (d->nm_idx == MAXNAMESxBLOCK) { // hit new block
+			success = FALSE;
+		}
+}
+//
+
+
 	}
 
 	d->labels_end_idx = b - d->labels;
@@ -214,7 +255,10 @@ struct NAMEPOD namehashtab[PODMAX];
 struct NAMEPEA nameremains[PEA_REM_MAX];
 int nameremains_n;
 
-static const char *get_DB_name(int i) {return DaBa.labels + DaBa.name[i];}
+static const char *get_DB_name(int i) {
+	return DaBa.nm[DaBa.nm_filled]->p[i];
+//	return DaBa.labels + DaBa.name[i];
+}
 
 #if 0
 static void
@@ -321,56 +365,56 @@ pgn_result_reset (struct pgn_result *p)
 }
 
 static bool_t
-pgn_result_collect (struct pgn_result *p)
+pgn_result_collect (struct pgn_result *p, struct DATA *d)
 {
 	player_t 	i;
 	player_t 	j;
 	bool_t 		ok = TRUE;
-	player_t 	idx;
+	player_t 	plyr;
 	const char *tagstr;
 	uint32_t 	taghsh;
 
 	tagstr = p->wtag;
 	taghsh = namehash(tagstr);
-	if (ok && !name_ispresent (tagstr, taghsh, &idx)) {
-		ok = addplayer (&DaBa, tagstr, &idx) && name_register(taghsh,idx);
+	if (ok && !name_ispresent (tagstr, taghsh, &plyr)) {
+		ok = addplayer (d, tagstr, &plyr) && name_register(taghsh,plyr);
 	}
-	i = idx;
+	i = plyr;
 
 	tagstr = p->btag;
 	taghsh = namehash(tagstr);
-	if (ok && !name_ispresent (tagstr, taghsh, &idx)) {
-		ok = addplayer (&DaBa, tagstr, &idx) && name_register(taghsh,idx);
+	if (ok && !name_ispresent (tagstr, taghsh, &plyr)) {
+		ok = addplayer (d, tagstr, &plyr) && name_register(taghsh,plyr);
 	}
-	j = idx;
+	j = plyr;
 
-	ok = ok && (uint64_t)DaBa.n_games < ((uint64_t)MAXGAMESxBLOCK*(uint64_t)MAXBLOCKS);
+	ok = ok && (uint64_t)d->n_games < ((uint64_t)MAXGAMESxBLOCK*(uint64_t)MAXBLOCKS);
 
 	if (ok) {
 
 		struct GAMEBLOCK *g;
 
-		size_t idx = DaBa.gb_idx;
-		size_t blk = DaBa.gb_filled;
+		size_t idx = d->gb_idx;
+		size_t blk = d->gb_filled;
 
-		DaBa.gb[blk]->white [idx] = i;
-		DaBa.gb[blk]->black [idx] = j;
-		DaBa.gb[blk]->score [idx] = p->result;
-		DaBa.n_games++;
-		DaBa.gb_idx++;
+		d->gb[blk]->white [idx] = i;
+		d->gb[blk]->black [idx] = j;
+		d->gb[blk]->score [idx] = p->result;
+		d->n_games++;
+		d->gb_idx++;
 
-		if (DaBa.gb_idx == MAXGAMESxBLOCK) { // hit new block
+		if (d->gb_idx == MAXGAMESxBLOCK) { // hit new block
 
-			DaBa.gb_idx = 0;
-			DaBa.gb_filled++;
+			d->gb_idx = 0;
+			d->gb_filled++;
 
-			blk = DaBa.gb_filled;
+			blk = d->gb_filled;
 			if (NULL == (g = malloc (sizeof(struct GAMEBLOCK) * (size_t)1))) {
-				DaBa.gb[blk] = NULL;
+				d->gb[blk] = NULL;
 				ok = FALSE; // failed
 			} else {
-				DaBa.gb[blk] = g;
-				DaBa.gb_allocated++;
+				d->gb[blk] = g;
+				d->gb_allocated++;
 				ok = TRUE;
 			}
 		}
@@ -468,7 +512,7 @@ fpgnscan (FILE *fpgn, bool_t quiet)
 		}
 
 		if (is_complete (&result)) {
-			if (!pgn_result_collect (&result)) {
+			if (!pgn_result_collect (&result, &DaBa)) {
 				fprintf (stderr, "\nCould not collect more games: Limits reached\n");
 				exit(EXIT_FAILURE);
 			}

@@ -27,6 +27,10 @@
 #include "ordolim.h"
 #include "mytypes.h"
 
+struct NAMEBLOCK {
+	char *p	[MAXNAMESxBLOCK];
+};
+
 struct GAMEBLOCK {
 	int32_t		white	[MAXGAMESxBLOCK];
 	int32_t		black	[MAXGAMESxBLOCK];
@@ -36,9 +40,17 @@ struct GAMEBLOCK {
 struct DATA {	
 	player_t	n_players;
 	size_t 		n_games;
+
 	char		labels[LABELBUFFERSIZE];
 	ptrdiff_t	labels_end_idx;
+
 	ptrdiff_t	name	[MAXPLAYERS];
+
+	size_t 		nm_filled;
+	size_t 		nm_idx;
+	size_t		nm_allocated;
+
+	struct NAMEBLOCK *nm[MAXBLOCKS];
 
 	size_t 		gb_filled;
 	size_t 		gb_idx;

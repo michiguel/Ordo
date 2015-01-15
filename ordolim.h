@@ -33,5 +33,7 @@
 #define MAXGAMESxBLOCK ((size_t)1024*(size_t)1024)
 #define MAXBLOCKS ((size_t)2*(size_t)1024)
 
+#define MAXNAMESxBLOCK ((size_t)1024*(size_t)1024)
+
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif
