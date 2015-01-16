@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include <assert.h>
 
 #include "mystr.h"
 #include "pgnget.h"
@@ -109,7 +110,9 @@ const char *
 database_ptr2name (const struct DATA *db, player_t i)
 {
 	const char *r;
-	r = db->nm[db->nm_filled]->p[i];
+	size_t j = (size_t)i / MAXNAMESxBLOCK;
+	size_t k = (size_t)i % MAXNAMESxBLOCK;
+	r = db->nm[j]->p[k];
 	return r;	
 }
 
@@ -200,26 +203,32 @@ addplayer (struct DATA *d, const char *s, player_t *idx)
 	bool_t success = len < remaining && d->n_players < MAXPLAYERS;
 
 	if (success) {
-		player_t x = d->n_players++;
-		*idx = x;
-//		d->name[x] = b - d->labels;
+
+		*idx = d->n_players++;
+
 		for (i = 0; i < len; i++)  {
 			*b++ = *s++;
 		}
 		*b++ = '\0';
-//
-{
-//		struct NAMEBLOCK *nm;
 
 		d->nm[d->nm_filled]->p[d->nm_idx] = nameptr;
 		d->nm_idx++;
 
 		if (d->nm_idx == MAXNAMESxBLOCK) { // hit new block
-			success = FALSE;
-		}
-}
-//
 
+			struct NAMEBLOCK *nm;
+			size_t blknew;
+
+			d->nm_idx = 0;
+			blknew = ++d->nm_filled;
+
+			success = NULL != (nm = malloc (sizeof(struct NAMEBLOCK)));
+			if (success) {
+				d->nm_allocated++;
+			}
+			d->nm[blknew] = nm;
+
+		}
 
 	}
 
@@ -253,9 +262,11 @@ struct NAMEPOD namehashtab[PODMAX];
 struct NAMEPEA nameremains[PEA_REM_MAX];
 int nameremains_n;
 
-static const char *get_DB_name(int i) {
-	return DaBa.nm[DaBa.nm_filled]->p[i];
-//	return DaBa.labels + DaBa.name[i];
+static const char *get_DB_name(int i) 
+{
+	size_t j = (size_t)i / MAXNAMESxBLOCK;
+	size_t k = (size_t)i % MAXNAMESxBLOCK;
+	return DaBa.nm[j]->p[k];
 }
 
 #if 0
@@ -284,13 +295,18 @@ name_ispresent (const char *s, uint32_t hash, /*out*/ player_t *out_index)
 	bool_t 			found= FALSE;
 	int i;
 
+
 	ppea = ppod->pea;
 	n = ppod->n;
 	for (i = 0; i < n; i++) {
-		if (ppea[i].hash == hash && !strcmp(s, get_DB_name(ppea[i].itos))) {
-			found = TRUE;
-			*out_index = ppea[i].itos;
-			break;
+		if (ppea[i].hash == hash) {
+			const char *name_str = get_DB_name(ppea[i].itos);
+			assert(name_str);
+			if (!strcmp(s, name_str)) {
+				found = TRUE;
+				*out_index = ppea[i].itos;
+				break;
+			}
 		}
 	}
 	if (found) return found;
@@ -374,6 +390,7 @@ pgn_result_collect (struct pgn_result *p, struct DATA *d)
 
 	tagstr = p->wtag;
 	taghsh = namehash(tagstr);
+
 	if (ok && !name_ispresent (tagstr, taghsh, &plyr)) {
 		ok = addplayer (d, tagstr, &plyr) && name_register(taghsh,plyr);
 	}
@@ -381,6 +398,7 @@ pgn_result_collect (struct pgn_result *p, struct DATA *d)
 
 	tagstr = p->btag;
 	taghsh = namehash(tagstr);
+
 	if (ok && !name_ispresent (tagstr, taghsh, &plyr)) {
 		ok = addplayer (d, tagstr, &plyr) && name_register(taghsh,plyr);
 	}
