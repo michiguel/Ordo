@@ -1087,10 +1087,17 @@ int main (int argc, char *argv[])
 
 				Encounter2 = a;
 				Encounter3 = b;
-				scan_encounters(Encounters.enc, Encounters.n, Players.n); 
-				convert_to_groups(groupf, Players.n, Players.name);
-				sieve_encounters(Encounters.enc, Encounters.n, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
-				printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n",(long)Encounters.n, N_encounters2, N_encounters3);
+
+				if (supporting_groupmem_init (Players.n)) {
+
+					scan_encounters(Encounters.enc, Encounters.n, Players.n); 
+					convert_to_groups(groupf, Players.n, Players.name);
+					sieve_encounters(Encounters.enc, Encounters.n, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
+					printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n",(long)Encounters.n, N_encounters2, N_encounters3);
+
+					supporting_groupmem_done ();
+
+				} else {fprintf(stderr, "Not enough memory\n");}
 
 				free(a);
 				free(b);

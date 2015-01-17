@@ -88,5 +88,8 @@ extern void	sieve_encounters(const struct ENC *enc, size_t N_enc, struct ENC *en
 extern bool_t 	supporting_encmem_init (size_t nenc);
 extern void 	supporting_encmem_done (void);
 
+extern bool_t 	supporting_groupmem_init (size_t nplayers);
+extern void 	supporting_groupmem_done (void);
+
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

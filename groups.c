@@ -25,8 +25,8 @@
 #include "mytypes.h"
 
 struct BITARRAY {
-	uint64_t pod[MAXPLAYERS/64];
-	long int max;
+	uint64_t *pod;
+	player_t max;
 };
 
 //---------------------------------------------------------------------
@@ -36,22 +36,31 @@ static const char 		**Namelist = NULL;
 //---------------------------------------------------------------------
 
 // supporting memory
+
+	// enc
+
 static struct ENC *	SE   = NULL;
 static struct ENC *	SE2  = NULL;
 static size_t		N_se  = 0;
 static size_t		N_se2 = 0;
 
-static int32_t		group_belong[MAXPLAYERS];
+	// groups
+
+static player_t		N_players = 0;
+
+static int32_t		*Group_belong;
 static size_t		N_groups;
 
 struct BITARRAY 	BA;
 struct BITARRAY		BB;
-static int 			Get_new_id[MAXPLAYERS];
+static int 			*Get_new_id;
 
-static group_t *	Group_final_list[MAXPLAYERS];
+static group_t 		**Group_final_list;
 static long			Group_final_list_n = 0;
 
-static node_t		Gnode[MAXPLAYERS];
+static node_t		*Gnode;
+
+static int 			*CHAIN;
 
 //----------------------------------------------------------------------
 
@@ -236,11 +245,11 @@ enc2groups (struct ENC *pe)
 
 	if (Gnode[iwin].group == NULL) {
 
-		g = groupset_find (group_belong[iwin]);
+		g = groupset_find (Group_belong[iwin]);
 		if (g == NULL) {
 			// creation
 			g = group_reset(group_new());	
-			g->id = group_belong[iwin];
+			g->id = Group_belong[iwin];
 			groupset_add(g);
 			Gnode[iwin].group = g;
 		}
@@ -251,11 +260,11 @@ enc2groups (struct ENC *pe)
 
 	if (Gnode[ilos].group == NULL) {
 
-		g = groupset_find (group_belong[ilos]);
+		g = groupset_find (Group_belong[ilos]);
 		if (g == NULL) {
 			// creation
 			g = group_reset(group_new());	
-			g->id = group_belong[ilos];
+			g->id = Group_belong[ilos];
 			groupset_add(g);
 			Gnode[ilos].group = g;
 		}
@@ -279,11 +288,11 @@ ifisolated2group (size_t x)
 	group_t *g;
 
 	if (Gnode[x].group == NULL) {
-		g = groupset_find (group_belong[x]);
+		g = groupset_find (Group_belong[x]);
 		if (g == NULL) {
 			// creation
 			g = group_reset(group_new());	
-			g->id = group_belong[x];
+			g->id = Group_belong[x];
 			groupset_add(g);
 			Gnode[x].group = g;
 		}
@@ -325,7 +334,7 @@ convert_to_groups(FILE *f, size_t N_plyrs, const char **name)
 	for (i = 0; i < N_plyrs; i++) {
 		int gb; 
 		group_t *g;
-		gb = group_belong[i];
+		gb = Group_belong[i];
 		g = groupset_find(gb);
 		assert(g);
 		add_participant(g, i);	
@@ -418,7 +427,7 @@ if (h->combined == g) {
 
 
 static void
-ba_put(struct BITARRAY *ba, long int x)
+ba_put(struct BITARRAY *ba, player_t x)
 {
 	if (x < ba->max) {
 		ba->pod[x/64] |= (uint64_t)1 << (x & 63);
@@ -426,7 +435,7 @@ ba_put(struct BITARRAY *ba, long int x)
 }
 
 static bool_t
-ba_ison(struct BITARRAY *ba, long int x)
+ba_ison(struct BITARRAY *ba, player_t x)
 {
 	uint64_t y;
 	bool_t ret;
@@ -435,21 +444,29 @@ ba_ison(struct BITARRAY *ba, long int x)
 	return ret;
 }
 
-static void
-ba_init(struct BITARRAY *ba, long int max)
+static bool_t
+ba_init(struct BITARRAY *ba, player_t max)
 {
-	long int i;
-	long int max_p = max/64;
-	ba->max = max;
-	for (i = 0; i < max_p; i++) ba->pod[i] = 0;
+	bool_t ok;
+	uint64_t *ptr;
+	size_t i;
+	size_t max_p = (size_t)max/64 + (max % 64 > 0?1:0);
+
+	ok = NULL != (ptr = malloc (sizeof(uint64_t)*max_p));
+	if (ok) {
+		ba->max = max;
+		ba->pod = ptr;
+		for (i = 0; i < max_p; i++) ba->pod[i] = 0;
+	} 
+	return ok;
 }
 
 static void
 ba_done(struct BITARRAY *ba)
 {
-	long int i;
-	long int max_p = ba->max/64;
-	for (i = 0; i < max_p; i++) ba->pod[i] = 0;
+	assert(ba->pod);
+	if (ba->pod) free (ba->pod);
+	ba->pod = NULL;
 	ba->max = 0;
 }
 
@@ -551,8 +568,8 @@ simplify_shrink (group_t *g)
 
 	id=-1;
 
-		ba_init(&BA, MAXPLAYERS-1);
-		ba_init(&BB, MAXPLAYERS-2);
+		ba_init(&BA, N_players); // it was -1
+		ba_init(&BB, N_players); // it was -2
 
 		oid = g->id; // own id
 
@@ -663,8 +680,8 @@ simplify_shrink (g);
 
 assert(groupset_sanity_check());
 
-		ba_init(&BA, MAXPLAYERS-1);
-		ba_init(&BB, MAXPLAYERS-2);
+		ba_init(&BA, N_players); // was - 1
+		ba_init(&BB, N_players); // was - 2 
 
 		oid = g->id; // own id
 
@@ -852,7 +869,6 @@ finish_it(void)
 	group_t *g, *h, *gp;
 	connection_t *b;
 	int own_id, bi;
-	static int CHAIN[MAXPLAYERS];
 	int *chain;
 	bool_t startover;
 	bool_t combined;
@@ -863,7 +879,7 @@ finish_it(void)
 
 		chain = CHAIN;
 
-		ba_init(&BA, MAXPLAYERS);
+		ba_init(&BA, N_players);
 
 		g = groupset_head();
 		if (g == NULL) break;
@@ -930,7 +946,7 @@ final_list_output(FILE *f)
 	int i;
 	int new_id;
 	
-	for (i = 0; i < MAXPLAYERS; i++) {
+	for (i = 0; i < N_players; i++) {
 		Get_new_id[i] = -1;
 	}
 
@@ -1013,7 +1029,7 @@ scan_encounters(const struct ENC *enc, size_t N_enc, size_t N_plyrs)
 
 	N_groups = N_plyrs;
 	for (i = 0; i < N_plyrs; i++) {
-		group_belong[i] = (int32_t)i;
+		Group_belong[i] = (int32_t)i;
 	}
 
 	for (e = 0; e < N_enc; e++) {
@@ -1022,15 +1038,15 @@ scan_encounters(const struct ENC *enc, size_t N_enc, size_t N_plyrs)
 		if (encounter_is_SL(pe) || encounter_is_SW(pe)) {
 			SE[N_se++] = *pe;
 		} else {
-			gw = group_belong[pe->wh];
-			gb = group_belong[pe->bl];
+			gw = Group_belong[pe->wh];
+			gb = Group_belong[pe->bl];
 			if (gw != gb) {
 				lowerg   = gw < gb? gw : gb;
 				higherg  = gw > gb? gw : gb;
 				// join
 				for (i = 0; i < N_plyrs; i++) {
-					if (group_belong[i] == higherg) {
-						group_belong[i] = lowerg;
+					if (Group_belong[i] == higherg) {
+						Group_belong[i] = lowerg;
 					}
 				}
 				N_groups--;
@@ -1042,7 +1058,7 @@ scan_encounters(const struct ENC *enc, size_t N_enc, size_t N_plyrs)
 		int x,y;
 		x = SE[e].wh;
 		y = SE[e].bl;	
-		if (group_belong[x] != group_belong[y]) {
+		if (Group_belong[x] != Group_belong[y]) {
 			SE2[N_se2++] = SE[e];
 		}
 	}
@@ -1081,4 +1097,75 @@ supporting_encmem_done (void)
 	return;
 }
 
+
+
+bool_t
+supporting_groupmem_init (size_t nplayers)
+{
+	int32_t 	*a;
+	int 		*b;
+	group_t *	*c;
+	node_t 		*d;
+	int			*e;
+
+	size_t		sa = sizeof(int32_t );
+	size_t		sb = sizeof(int);
+	size_t		sc = sizeof(group_t *);
+	size_t		sd = sizeof(node_t);
+	size_t		se = sizeof(int);
+
+	if (NULL == (a = malloc (sa * nplayers))) {
+		return FALSE;
+	} else 
+	if (NULL == (b = malloc (sb * nplayers))) {
+		free(a);
+		return FALSE;
+	} else 
+	if (NULL == (c = malloc (sc * nplayers))) {
+		free(a);
+		free(b);
+		return FALSE;
+	} else 
+	if (NULL == (d = malloc (sd * nplayers))) {
+		free(a);
+		free(b);
+		free(c);
+		return FALSE;
+	} else 
+	if (NULL == (e = malloc (se * nplayers))) {
+		free(a);
+		free(b);
+		free(c);
+		free(d);
+		return FALSE;
+	}
+
+	Group_belong = a;
+	Get_new_id = b;
+	Group_final_list = c;
+	Gnode = d;
+	CHAIN = e;
+
+	N_players = (player_t) nplayers;
+
+	return TRUE;
+}
+
+void
+supporting_groupmem_done (void)
+{
+	if (Group_belong)	 	free (Group_belong );
+	if (Get_new_id) 		free (Get_new_id);
+	if (Group_final_list) 	free (Group_final_list);
+	if (Gnode) 				free (Gnode);
+	N_groups = 0;
+	Group_final_list_n = 0;
+	Group_belong = NULL;
+	Get_new_id = NULL;
+	Group_final_list = NULL;
+	Gnode = NULL;
+
+	N_players = 0;
+	return;
+}
 
