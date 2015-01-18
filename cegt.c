@@ -44,7 +44,7 @@ static size_t find_maxlen (const char *nm[], size_t n);
 static const char *SP_symbolstr[3] = {"<",">"," "};
 static const char *get_super_player_symbolstr(int j, struct CEGT *p);
 static void all_report_rat (FILE *textf, struct CEGT *p);
-static void all_report_prg (FILE *textf, struct CEGT *p);
+static void all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc);
 static void all_report_gen (FILE *textf, struct CEGT *p);
 
 static void
@@ -104,16 +104,25 @@ output_cegt_style (const char *general_name, const char *rating_name, const char
 static bool_t 
 output_cegt_style_f (FILE *genf, FILE *ratf, FILE *prgf, struct CEGT *p)
 {
-	if (ratf)
-		all_report_rat (ratf, p);
+	struct ENC *Temp_enc = NULL;
+	size_t	 	N_enc = p->n_enc ;
+	bool_t		ok;
 
-	if (prgf)
-		all_report_prg (prgf, p);
+	if (ratf) all_report_rat (ratf, p);
+	if (genf) all_report_gen (genf, p);
 
-	if (genf)
-		all_report_gen (genf, p);
+	if (NULL != (Temp_enc = malloc(sizeof(struct ENC) * (N_enc+1)))) {
+		if (prgf) all_report_prg (prgf, p, Temp_enc); 
+		free(Temp_enc);
+	}
+	ok = Temp_enc != NULL;
 
-	return ratf != NULL && prgf != NULL && genf != NULL;
+	if (!ok) {
+		fprintf(stderr,"Not enough memory to calculate and output program data.");
+	}
+	ok = ok && ratf != NULL && prgf != NULL && genf != NULL;
+
+	return ok;
 }
 
 
@@ -338,7 +347,7 @@ static int compare_ENC2 (const void * a, const void * b)
 }
 
 static void
-all_report_prg (FILE *textf, struct CEGT *p)
+all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 {
 	FILE *f;
 	size_t i;
@@ -354,14 +363,11 @@ all_report_prg (FILE *textf, struct CEGT *p)
 	bool_t		*Flagged = p->flagged ;
 	const char	**Name = p->name ;
 
-	struct ENC *Temp_enc = NULL;
-	size_t allocsize = sizeof(struct ENC) * (size_t)(N_enc+1);
+	assert (Temp_enc);
+	assert (textf);
 
-	Temp_enc = malloc(allocsize);
-
-	/* output in text format */
-	f = textf;
-	if (f != NULL && Temp_enc != NULL) {
+		/* output in text format */
+		f = textf;
 
 		ml = find_maxlen (Name, N_players);
 
@@ -461,13 +467,6 @@ all_report_prg (FILE *textf, struct CEGT *p)
 			}
 		}
 
-	} /*if*/
-
-	if (Temp_enc != NULL) {
-		free(Temp_enc);
-	} else {
-		fprintf(stderr,"Not enough memory to calculate and output program data.");
-	}
 	return;
 }
 
