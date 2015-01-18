@@ -60,7 +60,7 @@ calc_rating_bayes2
 			, double *			changing
 			, size_t 			n_relative_anchors
 			, struct prior *	pp
-			, double 			probarray [MAXPLAYERS] [4]
+//			, double 			probarray [MAXPLAYERS] [4]
 			, struct relprior *	ra
 			, bool_t 			some_prior_set
 			, struct prior 		wa_prior

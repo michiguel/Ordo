@@ -40,6 +40,9 @@
 #define MIN_RESOLUTION 0.000001
 #define PRIOR_SMALLEST_SIGMA 0.0000001
 
+
+static double Probarray_ [MAXPLAYERS] [4];
+
 #if 0
 static double overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv, double dr0);
 static double adjust_drawrate (double start_wadv, double *ratingof, int N_enc, const struct ENC *enc, double beta);
@@ -274,7 +277,7 @@ calc_rating_bayes2
 			, double 			*changing
 			, size_t 			n_relative_anchors
 			, struct prior 		*pp
-			, double 			probarray [MAXPLAYERS] [4]
+//			, double 			probarray [MAXPLAYERS] [4]
 			, struct relprior 	*ra
 			, bool_t 			some_prior_set
 			, struct prior 		wa_prior
@@ -345,7 +348,7 @@ calc_rating_bayes2
 						, pp
 						, n_relative_anchors
 						, ra
-						, probarray
+						, Probarray_
 						, changing );
 
 			resol = adjust_rating_bayes 

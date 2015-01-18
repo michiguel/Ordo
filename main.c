@@ -437,8 +437,6 @@ static double 	Drawrate_evenmatch_percent_SD = 0;
 
 /*------------------------------------------------------------------------*/
 
-static double Probarray [MAXPLAYERS] [4];
-
 static struct prior Wa_prior = {40.0,20.0,FALSE};
 static struct prior Dr_prior = { 0.5, 0.1,FALSE};
 
@@ -2508,7 +2506,7 @@ calc_rating (bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advanta
 				, RA.changing
 				, N_relative_anchors
 				, PP
-				, Probarray 
+
 				, Ra
 				, Some_prior_set
 				, Wa_prior
