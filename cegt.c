@@ -47,7 +47,13 @@ static void all_report_rat (FILE *textf, struct CEGT *p);
 static void all_report_prg (FILE *textf, struct CEGT *p);
 static void all_report_gen (FILE *textf, struct CEGT *p);
 
-static void	all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate);
+static void
+all_report_indiv_stats 	( FILE *textf
+						, struct CEGT *p
+						, int simulate
+						, struct OPP_LINE *oline
+						, struct ENC *Temp_enc
+);
 
 static bool_t 
 output_report_individual_f (FILE *indf, struct CEGT *p, int simulate);
@@ -117,14 +123,14 @@ output_report_individual (const char *outindiv_name, struct CEGT *p, int simulat
 	bool_t success;
 	FILE *indivf;
 
-	if (NULL ==	(indivf = fopen (outindiv_name, "w"))) {
-			fprintf(stderr, "Error trying to write on file: %s\n", outindiv_name);		
-			return FALSE;	
+	if (NULL !=	(indivf = fopen (outindiv_name, "w"))) {
+		success = output_report_individual_f (indivf, p, simulate);
+		fclose(indivf);
+	} else {
+		success = FALSE;
+		fprintf(stderr, "Error trying to write on file: %s\n", outindiv_name);		
 	}
 
-	success = output_report_individual_f (indivf, p, simulate);
-
-	fclose(indivf);
 	return success;
 } 
 
@@ -132,10 +138,31 @@ output_report_individual (const char *outindiv_name, struct CEGT *p, int simulat
 static bool_t 
 output_report_individual_f (FILE *indf, struct CEGT *p, int simulate)
 {
-	if (indf)
-		all_report_indiv_stats (indf, p, simulate);
+	struct OPP_LINE 	*oline = NULL;
+	struct ENC 			*Temp_enc = NULL;
+	size_t	 			N_enc = p->n_enc ;
+	size_t	 			N_players = p->n_players ;
+	bool_t				ok;
 
-	return indf != NULL;
+	assert (indf);
+
+	if (NULL != (oline = malloc(sizeof(struct OPP_LINE) * N_players))) {
+		if (NULL != (Temp_enc = malloc(sizeof(struct ENC) * (N_enc+1)))) {
+
+			all_report_indiv_stats (indf, p, simulate, oline, Temp_enc); 
+
+			free(Temp_enc);
+		}
+		free(oline);
+	} 
+
+	ok = Temp_enc != NULL && oline != NULL;
+
+	if (!ok) {
+		fprintf(stderr,"Not enough memory to calculate and output program data.");
+	}
+
+	return ok;
 }
 
 
@@ -488,7 +515,12 @@ calclen (long x)
 }
 
 static void
-all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate)
+all_report_indiv_stats 	( FILE *textf
+						, struct CEGT *p
+						, int simulate
+						, struct OPP_LINE *oline
+						, struct ENC *Temp_enc
+)
 {
 	FILE *f;
 	size_t i;
@@ -504,9 +536,6 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate)
 
 	int	indent = 0;
 
-	struct OPP_LINE 	*oline = NULL;
-	struct ENC 			*Temp_enc = NULL;
-
 	// Interface p with internal variables or pointers
 	struct ENC 	*Enc = p->enc;
 	size_t	 	N_enc = p->n_enc ;
@@ -518,13 +547,14 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate)
 
 	indent = (int) calclen ((long)N_players+1);
 	
+	assert(textf);
+#if 0
 if (NULL != (oline = malloc(sizeof(struct OPP_LINE) * N_players))) {
 
-	Temp_enc = malloc(sizeof(struct ENC) * (N_enc+1));
-
-	/* output in text format */
-	f = textf;
-	if (f != NULL && Temp_enc != NULL) {
+	if (NULL != (Temp_enc = malloc(sizeof(struct ENC) * (N_enc+1)))) {
+#endif
+		/* output in text format */
+		f = textf;
 
 		ml = find_maxlen (Name, N_players);
 
@@ -728,19 +758,17 @@ if (NULL != (oline = malloc(sizeof(struct OPP_LINE) * N_players))) {
 				);
 			}
 		}
-
-	} /*if*/
-
-	if (Temp_enc != NULL) {
+#if 0
 		free(Temp_enc);
-	} else {
+	}
+	free(oline);
+} 
+
+
+	if (Temp_enc == NULL || oline == NULL ) {
 		fprintf(stderr,"Not enough memory to calculate and output program data.");
 	}
-
-	free(oline);
-} else {
-		fprintf(stderr,"Not enough memory to calculate and output program data.");
-}
+#endif
 
 	return;
 }
