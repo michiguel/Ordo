@@ -38,7 +38,6 @@ struct OPP_LINE {
 	double R;
 };
 
-static struct OPP_LINE oline[MAXPLAYERS];
 
 // STATICS
 static size_t find_maxlen (const char *nm[], size_t n);
@@ -505,6 +504,9 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate)
 
 	int	indent = 0;
 
+	struct OPP_LINE 	*oline = NULL;
+	struct ENC 			*Temp_enc = NULL;
+
 	// Interface p with internal variables or pointers
 	struct ENC 	*Enc = p->enc;
 	size_t	 	N_enc = p->n_enc ;
@@ -514,12 +516,11 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate)
 	bool_t		*Flagged = p->flagged ;
 	const char	**Name = p->name ;
 
-	struct ENC *Temp_enc = NULL;
-	size_t allocsize = sizeof(struct ENC) * (size_t)(N_enc+1);
-
 	indent = (int) calclen ((long)N_players+1);
+	
+if (NULL != (oline = malloc(sizeof(struct OPP_LINE) * N_players))) {
 
-	Temp_enc = malloc(allocsize);
+	Temp_enc = malloc(sizeof(struct ENC) * (N_enc+1));
 
 	/* output in text format */
 	f = textf;
@@ -735,6 +736,11 @@ all_report_indiv_stats (FILE *textf, struct CEGT *p, int simulate)
 	} else {
 		fprintf(stderr,"Not enough memory to calculate and output program data.");
 	}
+
+	free(oline);
+} else {
+		fprintf(stderr,"Not enough memory to calculate and output program data.");
+}
 
 	return;
 }
