@@ -465,9 +465,9 @@ calc_rating_bayes2
 
 	N_enc = calc_encounters(ENCOUNTERS_FULL, g, flagged, enc);
 	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby);
-	rate_super_players(quiet, enc, N_enc, performance_type, n_players, ratingof, white_advantage, flagged, name, deq, beta);
+	rate_super_players(quiet, enc, N_enc, performance_type, (player_t)n_players, ratingof, white_advantage, flagged, name, deq, beta); //FIXME player_t
 	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, flagged, enc);
-	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby);
+	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby); 
 	#endif
 
 	if (!multiple_anchors_present && !some_prior_set)

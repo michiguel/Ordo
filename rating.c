@@ -605,7 +605,7 @@ calc_rating2 	( bool_t 		quiet
 
 		N_enc = calc_encounters(ENCOUNTERS_FULL, g, Flagged, enc);
 		calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
-		rate_super_players(quiet, enc, N_enc, Performance_type, N_players, Ratingof, white_adv, Flagged, Name, draw_rate, BETA);
+		rate_super_players(quiet, enc, N_enc, Performance_type, (player_t)N_players, Ratingof, white_adv, Flagged, Name, draw_rate, BETA); //FIXME player_t
 		N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, Flagged, enc);;
 		calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
 

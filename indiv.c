@@ -205,26 +205,29 @@ calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, do
 static double calc_ind_rating(double cume_score, double *rtng, double *weig, int r, double beta);
 static double calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, double *weig, int r, double deq, double beta);
 
-void
-rate_super_players 	( bool_t quiet
+static void
+rate_super_players_internal
+					( bool_t quiet
 					, struct ENC *enc
 					, size_t N_enc
 					, int *performance_type
-					, size_t n_players
+					, player_t n_players
 					, double *ratingof
 					, double white_advantage
 					, bool_t *flagged
 					, const char *Name[]
 					, double deq
 					, double beta
+					, struct ENC *myenc
+					, double weig[]
+					, double rtng[]
 )
 {
 	size_t e;
-	size_t j;
+	player_t j;
 	size_t myenc_n = 0;
-	static struct ENC *myenc;
 
-	if (NULL != (myenc = malloc (sizeof(struct ENC) * N_enc))) {
+	assert(myenc);
 
 		for (j = 0; j < n_players; j++) {
 
@@ -240,12 +243,12 @@ rate_super_players 	( bool_t quiet
 				if (!quiet) printf ("  all losses --> %s\n", Name[j]);
 
 			for (e = 0; e < N_enc; e++) {
-				int w = enc[e].wh;
-				int b = enc[e].bl;
-				if (j == (size_t) w /*&& performance_type[b] == PERF_NORMAL*/) { //FIXME size_t
+				player_t w = enc[e].wh;
+				player_t b = enc[e].bl;
+				if (j == w) { 
 					myenc[myenc_n++] = enc[e];
 				} else
-				if (j == (size_t) b /*&& performance_type[w] == PERF_NORMAL*/) { //FIXME size_t
+				if (j == b) { 
 					myenc[myenc_n++] = enc[e];
 				}
 			}
@@ -253,20 +256,18 @@ rate_super_players 	( bool_t quiet
 			{
 				double	cume_score = 0; 
 				double	cume_total = 0;
-				static double weig[MAXPLAYERS];
-				static double rtng[MAXPLAYERS];
 				int		r = 0;
  	
 				while (myenc_n-->0) {
 					size_t n = myenc_n;
-					if ((size_t)myenc[n].wh == j) { //FIXME size_t
+					if (myenc[n].wh == j) { 
 						int opp = myenc[n].bl;
 						weig[r	] = myenc[n].played;
 						rtng[r++] = ratingof[opp] - white_advantage;
 						cume_score += myenc[n].wscore;
 						cume_total += myenc[n].played;
 				 	} else 
-					if ((size_t)myenc[myenc_n].bl == j) { //FIXME size_t
+					if (myenc[myenc_n].bl == j) { 
 						int opp = myenc[n].wh;
 						weig[r	] = myenc[n].played;
 						rtng[r++] = ratingof[opp] + white_advantage;
@@ -292,14 +293,65 @@ rate_super_players 	( bool_t quiet
 			}
 		}
 
-		free(myenc);
-	} else {
-		fprintf (stderr, "not enough memory for encounters allocation in rate_super_players\n");
+	return;
+}
+
+//
+void
+rate_super_players	( bool_t quiet
+					, struct ENC *enc
+					, size_t N_enc
+					, int *performance_type
+					, player_t n_players
+					, double *ratingof
+					, double white_advantage
+					, bool_t *flagged
+					, const char *Name[]
+					, double deq
+					, double beta
+)
+{
+	static struct ENC 	*myenc;
+	static double 		*weig;
+	static double 		*rtng;
+	bool_t				ok;
+	size_t				np = (size_t) n_players;
+
+	if (NULL != (weig = malloc(sizeof(double) * np))) {
+		if (NULL != (rtng = malloc(sizeof(double) * np))) {
+			if (NULL != (myenc = malloc (sizeof(struct ENC) * N_enc))) {
+
+				rate_super_players_internal
+					( quiet
+					, enc
+					, N_enc
+					, performance_type
+					, n_players
+					, ratingof
+					, white_advantage
+					, flagged
+					, Name
+					, deq
+					, beta
+					, myenc
+					, weig
+					, rtng
+					);
+
+				free(myenc);
+			}
+			free(rtng);
+		}
+		free(weig);
+	} 
+
+	ok = myenc != NULL && rtng != NULL && weig != NULL;
+
+	if (!ok) {
+		fprintf(stderr,"not enough memory for allocation in rate_super_players.");
 		exit(EXIT_FAILURE);
 	}
 
 	return;
 }
-
-
 
