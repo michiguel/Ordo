@@ -1158,14 +1158,18 @@ supporting_groupmem_done (void)
 	if (Get_new_id) 		free (Get_new_id);
 	if (Group_final_list) 	free (Group_final_list);
 	if (Gnode) 				free (Gnode);
-	N_groups = 0;
-	Group_final_list_n = 0;
+	if (CHAIN) 				free (CHAIN);
+
 	Group_belong = NULL;
 	Get_new_id = NULL;
 	Group_final_list = NULL;
 	Gnode = NULL;
+	CHAIN = NULL;
 
+	N_groups = 0;
+	Group_final_list_n = 0;
 	N_players = 0;
+
 	return;
 }
 

@@ -94,6 +94,7 @@ calc_encounters ( int selectivity
 	ne = e;
 
 	ne = shrink_ENC (enc, ne);
+	assert(ne > 0);
 	qsort (enc, (size_t)ne, sizeof(struct ENC), compare_ENC);
 	ne = shrink_ENC (enc, ne);
 

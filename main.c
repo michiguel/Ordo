@@ -392,6 +392,9 @@ players_done (struct PLAYERS *x)
 } 
 #endif
 
+static bool_t supporting_auxmem_init (size_t nplayers);
+static void	  supporting_auxmem_done (void);
+
 //=====================================================
 
 enum 			AnchorSZ	{MAX_ANCHORSIZE=256};
@@ -410,9 +413,9 @@ static bool_t	Performance_type_set = FALSE;
 static double	Confidence = 95;
 static double	General_average = 2300.0;
 
-static double	Sum1[MAXPLAYERS]; 
-static double	Sum2[MAXPLAYERS]; 
-static double	Sdev[MAXPLAYERS]; 
+static double	*Sum1; // to be dynamically assigned
+static double	*Sum2; // to be dynamically assigned
+static double	*Sdev; // to be dynamically assigned 
 
 static long 	Simulate = 0;
 
@@ -440,9 +443,9 @@ static double 	Drawrate_evenmatch_percent_SD = 0;
 static struct prior Wa_prior = {40.0,20.0,FALSE};
 static struct prior Dr_prior = { 0.5, 0.1,FALSE};
 
-static struct prior PP[MAXPLAYERS];
-static struct prior PP_store[MAXPLAYERS];
-
+static struct prior *PP;		// to be dynamically assigned
+static struct prior *PP_store; 	// to be dynamically assigned
+	
 static bool_t 	Some_prior_set = FALSE;
 
 static int 		Priored_n = 0;
@@ -885,12 +888,21 @@ int main (int argc, char *argv[])
 		games_done (&Games);
 		encounters_done (&Encounters);
 		fprintf (stderr, "Could not initialize Players memory\n"); exit(0);
-	}
+	} 
+
 	}
 	/**/
 
 	DB_transform(pdaba, &Games, &Players, &Game_stats); /* convert DB to global variables */
 	qsort (Games.ga, (size_t)Games.n, sizeof(struct gamei), compare_GAME);
+
+	if (!supporting_auxmem_init (Players.n)) {
+		ratings_done (&RA);
+		games_done (&Games);
+		encounters_done (&Encounters);
+		players_done(&Players);
+		fprintf (stderr, "Could not initialize auxiliary Players memory\n"); exit(0);
+	}
 
 	if (Anchor_use) {
 		if (find_anchor_player(&Anchor)) {
@@ -1074,6 +1086,7 @@ int main (int argc, char *argv[])
 			size_t 			N_encounters3 = 0;
 			size_t 			nenc = (size_t)Encounters.n;
 	
+			assert (nenc > 0);
 			if (NULL == (a = malloc (sizeof(struct ENC) * nenc))) {
 				ok = FALSE;
 			} else 
@@ -1139,6 +1152,7 @@ int main (int argc, char *argv[])
 		double diff;
 		double sim_draw_rate = Drawrate_evenmatch; // temporarily used and modified
 
+		assert(allocsize > 0);
 		sim = malloc(allocsize);
 
 		if (sim != NULL) {
@@ -1293,6 +1307,7 @@ int main (int argc, char *argv[])
 	games_done (&Games);
 	encounters_done (&Encounters);
 	players_done (&Players);
+	supporting_auxmem_done();
 
 	return EXIT_SUCCESS;
 }
@@ -2522,6 +2537,8 @@ calc_rating (bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advanta
 
 		double *ratingtmp_memory;
 		size_t bufsize = (size_t)Players.n; 
+
+		assert(bufsize > 0);
 		if (NULL != (ratingtmp_memory = malloc (sizeof(double) * bufsize))) {
 
 			ret = calc_rating2 	
@@ -2763,5 +2780,77 @@ static void head2head_output(const char *head2head_str)
 	cegt.sim = sim;
 
 	output_report_individual (head2head_str, &cegt, (int)Simulate);
+}
+
+//
+
+static bool_t
+supporting_auxmem_init (size_t nplayers)
+{
+	double			*a;
+	double 			*b;
+	double 			*c;
+	struct prior	*d;
+	struct prior	*e;
+
+	size_t		sa = sizeof(double);
+	size_t		sb = sizeof(double);
+	size_t		sc = sizeof(double);
+	size_t		sd = sizeof(struct prior);
+	size_t		se = sizeof(struct prior);
+
+	assert(nplayers > 0);
+
+	if (NULL == (a = malloc (sa * nplayers))) {
+		return FALSE;
+	} else 
+	if (NULL == (b = malloc (sb * nplayers))) {
+		free(a);
+		return FALSE;
+	} else 
+	if (NULL == (c = malloc (sc * nplayers))) {
+		free(a);
+		free(b);
+		return FALSE;
+	} else 
+	if (NULL == (d = malloc (sd * nplayers))) {
+		free(a);
+		free(b);
+		free(c);
+		return FALSE;
+	} else 
+	if (NULL == (e = malloc (se * nplayers))) {
+		free(a);
+		free(b);
+		free(c);
+		free(d);
+		return FALSE;
+	}
+
+	Sum1 = a; 
+	Sum2 = b; 
+	Sdev = c; 
+	PP 	 = d;
+	PP_store = e;
+
+	return TRUE;
+}
+
+static void
+supporting_auxmem_done (void)
+{
+	if (Sum1) 		free (Sum1 );
+	if (Sum2) 		free (Sum2);
+	if (Sdev)	 	free (Sdev);
+	if (PP) 		free (PP);
+	if (PP_store)	free (PP_store);
+
+	Sum1 	= NULL;
+	Sum2 	= NULL;
+	Sdev 	= NULL;
+	PP 	 	= NULL;
+	PP_store= NULL;
+
+	return;
 }
 
