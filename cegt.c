@@ -548,11 +548,7 @@ all_report_indiv_stats 	( FILE *textf
 	indent = (int) calclen ((long)N_players+1);
 	
 	assert(textf);
-#if 0
-if (NULL != (oline = malloc(sizeof(struct OPP_LINE) * N_players))) {
 
-	if (NULL != (Temp_enc = malloc(sizeof(struct ENC) * (N_enc+1)))) {
-#endif
 		/* output in text format */
 		f = textf;
 
@@ -758,17 +754,6 @@ if (NULL != (oline = malloc(sizeof(struct OPP_LINE) * N_players))) {
 				);
 			}
 		}
-#if 0
-		free(Temp_enc);
-	}
-	free(oline);
-} 
-
-
-	if (Temp_enc == NULL || oline == NULL ) {
-		fprintf(stderr,"Not enough memory to calculate and output program data.");
-	}
-#endif
 
 	return;
 }
