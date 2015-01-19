@@ -200,7 +200,7 @@ addplayer (struct DATA *d, const char *s, player_t *idx)
 	ptrdiff_t remaining = (&d->labels[LABELBUFFERSIZE] - b - 1);
 	ptrdiff_t len = (ptrdiff_t)strlen(s);
 	ptrdiff_t i;
-	bool_t success = len < remaining && d->n_players < MAXPLAYERS;
+	bool_t success = len < remaining;
 
 	if (success) {
 
