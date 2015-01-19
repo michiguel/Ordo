@@ -41,7 +41,7 @@
 #define PRIOR_SMALLEST_SIGMA 0.0000001
 
 
-static double Probarray_ [MAXPLAYERS] [4];
+static double Probarray_ [MAXPLAYERS*4];
 
 #if 0
 static double overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv, double dr0);
@@ -196,7 +196,7 @@ derivative_vector_calc 	( double delta
 		 				, const struct prior *pp
 						, size_t n_relative_anchors
 						, struct relprior *ra
-						, double probarray[MAXPLAYERS][4]
+						, double *probarray
 						, double *vector 
 );
 
@@ -277,7 +277,7 @@ calc_rating_bayes2
 			, double 			*changing
 			, size_t 			n_relative_anchors
 			, struct prior 		*pp
-//			, double 			probarray [MAXPLAYERS] [4]
+
 			, struct relprior 	*ra
 			, bool_t 			some_prior_set
 			, struct prior 		wa_prior
@@ -789,12 +789,12 @@ get_extra_unfitness_j (double R, size_t j, const struct prior *p, double *rating
 
 // no globals
 static void
-probarray_reset(size_t n_players, double probarray[MAXPLAYERS][4])
+probarray_reset(size_t n_players, double *probarray)
 {
 	size_t j, k;
 	for (j = 0; j < n_players; j++) {
 		for (k = 0; k < 4; k++) {
-			probarray[j][k] = 0;
+			probarray[(j<<2)|k] = 0;
 		}	
 	}
 }
@@ -808,7 +808,7 @@ probarray_build	( size_t n_enc
 				, double beta
 				, double *ratingof
 				, double white_advantage
-				, double probarray [MAXPLAYERS] [4])
+				, double *probarray)
 {
 	double pw, pd, pl, delta;
 	double p;
@@ -822,22 +822,22 @@ probarray_build	( size_t n_enc
 		get_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, deq, beta);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
-		probarray [w] [1] -= p;			
-		probarray [b] [1] -= p;	
+		probarray [(w<<2)|1] -= p;			
+		probarray [(b<<2)|1] -= p;	
 
 		delta = +inputdelta;
 		get_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, deq, beta);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
-		probarray [w] [2] -= p;			
-		probarray [b] [0] -= p;	
+		probarray [(w<<2)|2] -= p;			
+		probarray [(b<<2)|0] -= p;	
 
 		delta = -inputdelta;
 		get_pWDL(ratingof[w] + delta + white_advantage - ratingof[b], &pw, &pd, &pl, deq, beta);
 		p = wdl_probabilities (enc[e].W, enc[e].D, enc[e].L, pw, pd, pl);
 
-		probarray [w] [0] -= p;			
-		probarray [b] [2] -= p;	
+		probarray [(w<<2)|0] -= p;			
+		probarray [(b<<2)|2] -= p;	
 
 	}
 }
@@ -850,14 +850,14 @@ derivative_single 	( size_t j
 					, const struct prior *pp
 					, size_t n_relative_anchors
 					, struct relprior *ra
-					, double probarray[MAXPLAYERS][4])
+					, double *probarray)
 {
 	double decrem, increm, center;
 	double change;
 
-	decrem = probarray [j] [0] + get_extra_unfitness_j (ratingof[j] - delta, j, pp, ratingof, n_relative_anchors, ra);
-	center = probarray [j] [1] + get_extra_unfitness_j (ratingof[j]        , j, pp, ratingof, n_relative_anchors, ra);
-	increm = probarray [j] [2] + get_extra_unfitness_j (ratingof[j] + delta, j, pp, ratingof, n_relative_anchors, ra);
+	decrem = probarray [(j<<2)|0] + get_extra_unfitness_j (ratingof[j] - delta, j, pp, ratingof, n_relative_anchors, ra);
+	center = probarray [(j<<2)|1] + get_extra_unfitness_j (ratingof[j]        , j, pp, ratingof, n_relative_anchors, ra);
+	increm = probarray [(j<<2)|2] + get_extra_unfitness_j (ratingof[j] + delta, j, pp, ratingof, n_relative_anchors, ra);
 
 	if (center < decrem && center < increm) {
 		change = decrem > increm? 0.5: -0.5; 
@@ -882,7 +882,7 @@ derivative_vector_calc 	( double delta
 		 				, const struct prior *pp
 						, size_t n_relative_anchors
 						, struct relprior *ra
-						, double probarray[MAXPLAYERS][4]
+						, double *probarray
 						, double *vector 
 )
 {
