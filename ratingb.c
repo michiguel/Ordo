@@ -20,6 +20,7 @@
 
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 #include <assert.h>
 
@@ -39,9 +40,6 @@
 
 #define MIN_RESOLUTION 0.000001
 #define PRIOR_SMALLEST_SIGMA 0.0000001
-
-
-static double Probarray_ [MAXPLAYERS*4];
 
 #if 0
 static double overallerrorE_fdrawrate (int N_enc, const struct ENC *enc, double *ratingof, double beta, double wadv, double dr0);
@@ -308,6 +306,15 @@ calc_rating_bayes2
 
 	double white_advantage = *pwadv;
 
+	double *probarr;
+
+	probarr = malloc (sizeof(double) * n_players * 4);
+
+	if (NULL == probarr) {
+		fprintf(stderr,"Not enough memory to initialize probability arrays\n");
+		exit(EXIT_FAILURE);
+	}
+
 	// initial deviation
 	olddev = curdev = calc_bayes_unfitness_full	
 							( N_enc
@@ -348,7 +355,7 @@ calc_rating_bayes2
 						, pp
 						, n_relative_anchors
 						, ra
-						, Probarray_
+						, probarr
 						, changing );
 
 			resol = adjust_rating_bayes 
@@ -478,6 +485,8 @@ calc_rating_bayes2
 
 	*pDraw_date = deq;
 	*pwadv = white_advantage;
+
+	free(probarr);
 
 	return N_enc;
 }
