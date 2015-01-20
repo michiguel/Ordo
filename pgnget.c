@@ -191,48 +191,60 @@ data_done (struct DATA *d)
 }
 
 
-static bool_t
-addplayer (struct DATA *d, const char *s, player_t *idx)
+static const char *
+addname (struct DATA *d, const char *s)
 {
 	char *b = d->labels + d->labels_end_idx;
-	char *nameptr = b;
-
 	ptrdiff_t remaining = (&d->labels[LABELBUFFERSIZE] - b - 1);
 	ptrdiff_t len = (ptrdiff_t)strlen(s);
-	ptrdiff_t i;
+	char *nameptr = b;
+
 	bool_t success = len < remaining;
 
 	if (success) {
-
-		*idx = d->n_players++;
+		ptrdiff_t i;
 
 		for (i = 0; i < len; i++)  {
 			*b++ = *s++;
 		}
 		*b++ = '\0';
+		d->labels_end_idx = b - d->labels;
 
-		d->nm[d->nm_filled]->p[d->nm_idx] = nameptr;
-		d->nm_idx++;
+	} else {
+		nameptr = NULL;
+	}
+
+	return nameptr;
+
+} 
+
+static bool_t
+addplayer (struct DATA *d, const char *s, player_t *idx)
+{
+	const char *nameptr;
+	bool_t success = NULL != (nameptr = addname(d,s));
+
+	if (success) {
+
+		*idx = d->n_players++;
+
+		d->nm[d->nm_filled]->p[d->nm_idx++] = nameptr;
 
 		if (d->nm_idx == MAXNAMESxBLOCK) { // hit new block
 
 			struct NAMEBLOCK *nm;
-			size_t blknew;
 
 			d->nm_idx = 0;
-			blknew = ++d->nm_filled;
+			d->nm_filled++;
 
 			success = NULL != (nm = malloc (sizeof(struct NAMEBLOCK)));
 			if (success) {
 				d->nm_allocated++;
 			}
-			d->nm[blknew] = nm;
-
+			d->nm[d->nm_filled] = nm;
 		}
-
 	}
 
-	d->labels_end_idx = b - d->labels;
 	return success;
 }
 

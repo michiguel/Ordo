@@ -28,7 +28,7 @@
 #include "mytypes.h"
 
 struct NAMEBLOCK {
-	char *p	[MAXNAMESxBLOCK];
+	const char *p[MAXNAMESxBLOCK];
 };
 
 struct GAMEBLOCK {
