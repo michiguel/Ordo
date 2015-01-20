@@ -127,9 +127,13 @@ data_init (struct DATA *d)
 {
 	struct GAMEBLOCK *p;
 	struct NAMEBLOCK *t;
+	char			 *l;
 	bool_t ok = TRUE;
 
-	d->labels[0] = '\0';
+	ok = ok && NULL != (l = malloc (LABELBUFFERSIZE));
+	if (ok)	l[0] = '\0';
+	d->labels = l;
+
 	d->labels_end_idx = 0;
 	d->n_players = 0;
 	d->n_games = 0;
@@ -160,7 +164,11 @@ data_done (struct DATA *d)
 {
 	size_t n;
 
-	d->labels[0] = '\0';
+	if (d->labels != NULL) {
+		d->labels[0] = '\0';
+		free(d->labels);
+	}
+
 	d->labels_end_idx = 0;
 	d->n_players = 0;
 	d->n_games = 0;
@@ -204,9 +212,7 @@ addname (struct DATA *d, const char *s)
 	if (success) {
 		ptrdiff_t i;
 
-		for (i = 0; i < len; i++)  {
-			*b++ = *s++;
-		}
+		for (i = 0; i < len; i++) {*b++ = *s++;}
 		*b++ = '\0';
 		d->labels_end_idx = b - d->labels;
 
@@ -215,7 +221,6 @@ addname (struct DATA *d, const char *s)
 	}
 
 	return nameptr;
-
 } 
 
 static bool_t

@@ -41,7 +41,7 @@ struct DATA {
 	player_t	n_players;
 	size_t 		n_games;
 
-	char		labels[LABELBUFFERSIZE];
+	char		*labels; // buffer
 	ptrdiff_t	labels_end_idx;
 
 	size_t 		nm_filled;
