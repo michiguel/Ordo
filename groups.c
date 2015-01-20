@@ -33,6 +33,17 @@ struct BITARRAY {
 
 static const char 		**Namelist = NULL;
 
+static struct GROUP_BUFFER 			group_buffer;
+static struct PARTICIPANT_BUFFER	participant_buffer;
+static struct CONNECT_BUFFER		connection_buffer;
+
+static bool_t	group_buffer_init(struct GROUP_BUFFER *g, size_t n);
+static void		group_buffer_done(struct GROUP_BUFFER *g);
+static bool_t	participant_buffer_init(struct PARTICIPANT_BUFFER *x, size_t n);
+static void		participant_buffer_done(struct PARTICIPANT_BUFFER *x);
+static bool_t	connection_buffer_init(struct CONNECT_BUFFER *x, size_t n);
+static void		connection_buffer_done(struct CONNECT_BUFFER *x);
+
 //---------------------------------------------------------------------
 
 // supporting memory
@@ -1148,6 +1159,19 @@ supporting_groupmem_init (size_t nplayers)
 
 	N_players = (player_t) nplayers;
 
+	if (!group_buffer_init (&group_buffer, nplayers)) {
+		return FALSE;
+	}
+	if (!participant_buffer_init (&participant_buffer, nplayers)) {
+		 group_buffer_done (&group_buffer);
+		return FALSE;
+	}
+	if (!connection_buffer_init (&connection_buffer, nplayers)) {
+		 group_buffer_done (&group_buffer);
+		 participant_buffer_done (&participant_buffer);
+		return FALSE;
+	}
+
 	return TRUE;
 }
 
@@ -1170,6 +1194,88 @@ supporting_groupmem_done (void)
 	Group_final_list_n = 0;
 	N_players = 0;
 
+	group_buffer_done (&group_buffer);
+	participant_buffer_done (&participant_buffer);
+	connection_buffer_done (&connection_buffer);
+
 	return;
 }
+
+//==
+
+
+static bool_t
+group_buffer_init(struct GROUP_BUFFER *g, size_t n)
+{
+	group_t *p;
+	if (NULL != (p = malloc (sizeof(group_t) * n))) {
+		g->list = p;		
+		g->tail = NULL;
+		g->prehead = NULL;
+		g->n = 0;
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
+
+static void
+group_buffer_done(struct GROUP_BUFFER *g)
+{
+	if (g->list != NULL) {
+		free(g->list);
+		g->list = NULL;
+	}
+	g->tail = NULL;
+	g->prehead = NULL;
+	g->n = 0;
+}
+
+
+static bool_t
+participant_buffer_init(struct PARTICIPANT_BUFFER *x, size_t n)
+{
+	participant_t *p;
+	if (NULL != (p = malloc (sizeof(participant_t) * n))) {
+		x->list = p;		
+		x->n = 0;
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
+
+static void
+participant_buffer_done(struct PARTICIPANT_BUFFER *x)
+{
+	if (x->list != NULL) {
+		free(x->list);
+		x->list = NULL;
+	}
+	x->n = 0;
+}
+
+static bool_t
+connection_buffer_init(struct CONNECT_BUFFER *x, size_t n)
+{
+	connection_t *p;
+	if (NULL != (p = malloc (sizeof(connection_t) * n))) {
+		x->list = p;		
+		x->n = 0;
+		return TRUE;
+	} else {
+		return FALSE;
+	}
+}
+
+static void
+connection_buffer_done(struct CONNECT_BUFFER *x)
+{
+	if (x->list != NULL) {
+		free(x->list);
+		x->list = NULL;
+	}
+	x->n = 0;
+}
+
 

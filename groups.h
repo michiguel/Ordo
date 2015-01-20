@@ -63,21 +63,21 @@ struct PARTICIPANT {
 };
 
 struct GROUP_BUFFER {
-	group_t		list[MAXPLAYERS];
+	group_t		*list; //buffer
 	group_t		*tail;
 	group_t		*prehead;
 	size_t		n;
-} group_buffer;
+};
 
 struct PARTICIPANT_BUFFER {
-	participant_t		list[MAXPLAYERS];
+	participant_t		*list; //buffer
 	size_t				n;
-} participant_buffer;
+};
 
 struct CONNECT_BUFFER {
-	connection_t		list[MAXPLAYERS];
+	connection_t		*list; //buffer
 	size_t				n;
-} connection_buffer;
+};
 
 //
 
