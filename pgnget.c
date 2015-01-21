@@ -209,6 +209,22 @@ addname (struct DATA *d, const char *s)
 
 	bool_t success = len < remaining;
 
+if (!success) {
+
+	char *p;
+
+	if (NULL != (p = malloc(len+1))) {
+		ptrdiff_t i;
+		b = p;
+		for (i = 0; i < len; i++) {*b++ = *s++;}
+		*b++ = '\0';
+		return p;		
+	} 
+
+}
+
+
+
 	if (success) {
 		ptrdiff_t i;
 
