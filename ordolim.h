@@ -23,17 +23,15 @@
 #define H_OLIM
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
-
 //#define MAXGAMES 3000000
 //#define LABELBUFFERSIZE 1000000
-#define LABELBUFFERSIZE 1000000
 //#define MAXPLAYERS 50000
-
 //#define MAXENCOUNTERS 3000000
 
-#define MAXGAMESxBLOCK ((size_t)1024*(size_t)1024)
-#define MAXBLOCKS ((size_t)2*(size_t)1024)
+#define LABELBUFFERSIZE 100
+#define MAXBLOCKS ((size_t)2048)
 
+#define MAXGAMESxBLOCK ((size_t)1024*(size_t)1024)
 #define MAXNAMESxBLOCK ((size_t)1024*(size_t)1024)
 
 

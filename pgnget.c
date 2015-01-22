@@ -127,14 +127,13 @@ data_init (struct DATA *d)
 {
 	struct GAMEBLOCK *p;
 	struct NAMEBLOCK *t;
-	char			 *l;
 	bool_t ok = TRUE;
 
-	ok = ok && NULL != (l = malloc (LABELBUFFERSIZE));
-	if (ok)	l[0] = '\0';
-	d->labels = l;
+	d->labels_head.buf = NULL;
+	d->labels_head.nxt = NULL;
+	d->labels_head.idx = 0;
+	d->curr = &d->labels_head;
 
-	d->labels_end_idx = 0;
 	d->n_players = 0;
 	d->n_games = 0;
 
@@ -163,13 +162,9 @@ static void
 data_done (struct DATA *d)
 {
 	size_t n;
+	namenode_t *p;
+	namenode_t *q;
 
-	if (d->labels != NULL) {
-		d->labels[0] = '\0';
-		free(d->labels);
-	}
-
-	d->labels_end_idx = 0;
 	d->n_players = 0;
 	d->n_games = 0;
 
@@ -196,48 +191,86 @@ data_done (struct DATA *d)
 	d->nm_filled = 0;;
 	d->nm_idx = 0;
 	d->nm_allocated = 0;
+
+//
+	p = d->labels_head.nxt;
+
+	while (p) {
+		if (p->buf) {free(p->buf); p->buf = NULL; p->idx = 0;}
+		q = p->nxt;	
+		free(p);
+		p = q;
+	}
+
+	p = &d->labels_head;
+		if (p->buf) {free(p->buf); p->buf = NULL; p->idx = 0;}
+
 }
 
 
 static const char *
 addname (struct DATA *d, const char *s)
 {
-	char *b = d->labels + d->labels_end_idx;
-	ptrdiff_t remaining = (&d->labels[LABELBUFFERSIZE] - b - 1);
-	ptrdiff_t len = (ptrdiff_t)strlen(s);
-	char *nameptr = b;
+	char *b;
+	char *nameptr;
+	char *bf;
+	namenode_t *nd;
+	size_t sz = strlen(s) + 1;
+	bool_t ok;
 
-	bool_t success = len < remaining;
+	assert (d->curr != NULL);
 
-if (!success) {
+	ok = d->curr->buf != NULL;
 
-	char *p;
+	if (!ok) {
+		assert (d->curr->nxt == NULL);
+		assert (d->curr->idx == 0);
+		ok = NULL != (bf = malloc (LABELBUFFERSIZE));
+		if (ok) {
+			bf[0] = '\0';
+			d->curr->buf = bf;
+			d->curr->nxt = NULL;
+			d->curr->idx = 0;
+		}
+	}
 
-	if (NULL != (p = malloc(len+1))) {
-		ptrdiff_t i;
-		b = p;
-		for (i = 0; i < len; i++) {*b++ = *s++;}
-		*b++ = '\0';
-		return p;		
-	} 
+	if (!ok) return NULL;	
 
-}
+	ok = ok && (LABELBUFFERSIZE > d->curr->idx + sz);
 
+	if (!ok) {
+		ok = NULL != (nd = malloc (sizeof(namenode_t)));
+		if (ok) {
+			ok = NULL != (bf = malloc (LABELBUFFERSIZE));
+			if (ok) bf[0] = '\0'; else free(nd);
+		}
 
+		if (ok) {
+	
+			nd->nxt = NULL;
+			nd->buf = bf;
+			nd->idx = 0;
 
-	if (success) {
-		ptrdiff_t i;
+			d->curr->nxt = nd;
+			d->curr = nd;
 
-		for (i = 0; i < len; i++) {*b++ = *s++;}
-		*b++ = '\0';
-		d->labels_end_idx = b - d->labels;
+			ok = LABELBUFFERSIZE > d->curr->idx + sz;
+		}
+	}
+
+	if (ok) {
+		size_t i;
+		nameptr = b = &d->curr->buf[d->curr->idx];
+		for (i = 0; i < sz; i++) {*b++ = *s++;}
+		d->curr->idx += sz;
 
 	} else {
 		nameptr = NULL;
 	}
 
 	return nameptr;
-} 
+}
+ 
 
 static bool_t
 addplayer (struct DATA *d, const char *s, player_t *idx)

@@ -37,12 +37,20 @@ struct GAMEBLOCK {
 	int32_t		score	[MAXGAMESxBLOCK];
 };
 
+struct NAMENODE {
+	char *			buf;
+	struct NAMENODE *nxt;
+	size_t			idx;
+};
+
+typedef struct NAMENODE namenode_t;
+
 struct DATA {	
 	player_t	n_players;
 	size_t 		n_games;
 
-	char		*labels; // buffer
-	ptrdiff_t	labels_end_idx;
+	namenode_t 	labels_head;
+	namenode_t 	*curr;
 
 	size_t 		nm_filled;
 	size_t 		nm_idx;
