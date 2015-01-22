@@ -29,10 +29,10 @@
 //#define MAXENCOUNTERS 3000000
 
 #define LABELBUFFERSIZE 100
-#define MAXBLOCKS ((size_t)2048)
+#define MAXBLOCKS ((size_t)2048*(size_t)1024)
 
-#define MAXGAMESxBLOCK ((size_t)1024*(size_t)1024)
-#define MAXNAMESxBLOCK ((size_t)1024*(size_t)1024)
+#define MAXGAMESxBLOCK ((size_t)16)
+#define MAXNAMESxBLOCK ((size_t)16)
 
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
