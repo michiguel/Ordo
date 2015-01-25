@@ -1366,6 +1366,8 @@ DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct G
 	for (j = 0; j < topn; j++) {
 		p->name[j] = database_ptr2name(db,j);
 		p->flagged[j] = FALSE;
+		p->prefed [j] = FALSE;
+		p->performance_type[j] = PERF_NORMAL;
 	}
 
 {

@@ -133,6 +133,8 @@ adjust_rating 	( double delta
 	*/
 
 	for (j = 0; j < n_players; j++) {
+		assert(flagged[j] == TRUE || flagged[j] == FALSE);
+		assert(prefed [j] == TRUE || prefed [j] == FALSE);
 		if (	flagged[j]	// player previously removed
 			|| 	prefed[j]	// already set, one of the multiple anchors
 		) continue; 
@@ -167,7 +169,6 @@ adjust_rating 	( double delta
 	}	
 
 	// Return maximum increase/decrease ==> "resolution"
-
 	return ymax * delta;
 }
 
