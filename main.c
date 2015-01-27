@@ -483,7 +483,7 @@ static void		purge_players (bool_t quiet, struct PLAYERS *pl);
 
 static long 	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl, bool_t *perftype_set);
 
-static void		clear_flagged (size_t n_players, bool_t *flagged);
+static void		players_clear_flagged (struct PLAYERS *p);
 
 static void		all_report (FILE *csvf, FILE *textf);
 static void		init_rating (void);
@@ -494,18 +494,22 @@ static void		init_manchors(const char *fpins_name);
 static size_t	calc_rating (bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advantage, bool_t adjust_wadv, double *pDraw_rate);
 
 static void 	ratings_results (void);
-static void 	ratings_for_purged (void);
+static void		ratings_for_purged (const struct PLAYERS *p, struct RATINGS *r /*@out@*/);
 
 static void
-simulate_scores ( double 		deq
+simulate_scores ( const double 	*ratingof_results
+				, double 		deq
 				, double 		wadv
 				, double 		beta
 				, struct GAMES *g
-				, const double 	*ratingof_results
 );
 
-static void		errorsout(const char *out);
-static void		ctsout(const char *out);
+//static void		errorsout(const char *out);
+
+static void		errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out);
+
+static void		ctsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out);
+
 
 /*------------------------------------------------------------------------*/
 
@@ -1189,13 +1193,13 @@ int main (int argc, char *argv[])
 							printf ("*"); fflush(stdout);
 						}
 					}
-					clear_flagged (Players.n, Players.flagged);
+					players_clear_flagged (&Players);
 
-					simulate_scores ( Drawrate_evenmatch
+					simulate_scores ( RA.ratingof_results
+									, Drawrate_evenmatch
 									, White_advantage
 									, BETA
 									, &Games //out
-									, RA.ratingof_results
 					);
 
 					relpriors_copy(Ra, N_relative_anchors, Ra_store); 
@@ -1220,7 +1224,7 @@ int main (int argc, char *argv[])
 						calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 					}
 					Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, FALSE, &sim_draw_rate);
-					ratings_for_purged ();
+					ratings_for_purged (&Players, &RA);
 
 					relpriors_copy(Ra_store, N_relative_anchors, Ra);
 					priors_copy(PP_store, Players.n, PP);
@@ -1279,11 +1283,12 @@ int main (int argc, char *argv[])
 
 	// Reports
 	all_report (csvf, textf);
+
 	if (Simulate > 1 && NULL != ematstr) {
-		errorsout (ematstr);
+		errorsout(&Players, &RA, sim, ematstr);
 	}
 	if (Simulate > 1 && NULL != ctsmatstr) {
-		ctsout (ctsmatstr);
+		ctsout (&Players, &RA, sim, ctsmatstr);
 	}
 
 	//
@@ -1489,7 +1494,7 @@ head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y)
 }
 
 static void
-errorsout(const char *out)
+errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out)
 {
 	FILE *f;
 	ptrdiff_t idx;
@@ -1499,22 +1504,22 @@ errorsout(const char *out)
 	if (NULL != (f = fopen (out, "w"))) {
 
 		fprintf(f, "\"N\",\"NAME\"");	
-		for (i = 0; i < Players.n; i++) {
+		for (i = 0; i < p->n; i++) {
 			fprintf(f, ",%ld",i);		
 		}
 		fprintf(f, "\n");	
 
-		for (i = 0; i < Players.n; i++) {
-			y = RA.sorted[i];
+		for (i = 0; i < p->n; i++) {
+			y = r->sorted[i];
 
-			fprintf(f, "%ld,\"%21s\"", i, Players.name[y]);
+			fprintf(f, "%ld,\"%21s\"", i, p->name[y]);
 
 			for (j = 0; j < i; j++) {
-				x = RA.sorted[j];
+				x = r->sorted[j];
 
 				idx = head2head_idx_sdev ((ptrdiff_t)x, (ptrdiff_t)y);
 
-				fprintf(f,",%.1f", sim[idx].sdev * Confidence_factor);
+				fprintf(f,",%.1f", s[idx].sdev * Confidence_factor);
 			}
 
 			fprintf(f, "\n");
@@ -1530,7 +1535,7 @@ errorsout(const char *out)
 }
 
 static void
-ctsout(const char *out)
+ctsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out)
 {
 	FILE *f;
 	ptrdiff_t idx;
@@ -1540,22 +1545,22 @@ ctsout(const char *out)
 	if (NULL != (f = fopen (out, "w"))) {
 
 		fprintf(f, "\"N\",\"NAME\"");	
-		for (i = 0; i < Players.n; i++) {
+		for (i = 0; i < p->n; i++) {
 			fprintf(f, ",%ld",i);		
 		}
 		fprintf(f, "\n");	
 
-		for (i = 0; i < Players.n; i++) {
-			y = RA.sorted[i];
-			fprintf(f, "%ld,\"%21s\"", i, Players.name[y]);
+		for (i = 0; i < p->n; i++) {
+			y = r->sorted[i];
+			fprintf(f, "%ld,\"%21s\"", i, p->name[y]);
 
-			for (j = 0; j < Players.n; j++) {
+			for (j = 0; j < p->n; j++) {
 				double ctrs, sd, dr;
-				x = RA.sorted[j];
+				x = r->sorted[j];
 				if (x != y) {
-					dr = RA.ratingof_results[y] - RA.ratingof_results[x];
+					dr = r->ratingof_results[y] - r->ratingof_results[x];
 					idx = head2head_idx_sdev ((ptrdiff_t)x, (ptrdiff_t)y);
-					sd = sim[idx].sdev;
+					sd = s[idx].sdev;
 					ctrs = 100*gauss_integral(dr/sd);
 					fprintf(f,",%.1f", ctrs);
 				} else {
@@ -1642,6 +1647,22 @@ get_sdev_str (double sdev, double confidence_factor, char *str)
 	return str;
 }
 
+/*
+input:
+
+Games
+Players
+Encounters
+RA
+Sdev 
+
+Simulate variable
+Hide_old_ver
+Confidence_factor
+
+compareit function
+
+*/
 static void
 all_report (FILE *csvf, FILE *textf)
 {
@@ -2045,7 +2066,7 @@ relpriors_shuffle(struct relprior *rp, size_t n)
 }
 
 static void
-relpriors_copy(const struct relprior *r, size_t n, struct relprior *s)
+relpriors_copy(const struct relprior *r, size_t n, struct relprior *s /*@out@*/)
 {	size_t i;
 	for (i = 0; i < n; i++) {
 		s[i] = r[i];
@@ -2395,7 +2416,7 @@ ratings_results (void)
 	double excess;
 
 	size_t j;
-	ratings_for_purged();
+	ratings_for_purged(&Players, &RA);
 	for (j = 0; j < Players.n; j++) {
 		RA.ratingof_results[j] = RA.ratingof[j];
 		RA.obtained_results[j] = RA.obtained[j];
@@ -2417,21 +2438,23 @@ ratings_results (void)
 }
 
 static void
-clear_flagged (size_t n_players, bool_t *flagged)
+players_clear_flagged (struct PLAYERS *p)
 {
 	size_t j;
-	for (j = 0; j < n_players; j++) {
-		flagged[j] = FALSE;
+	size_t n = p->n;
+	for (j = 0; j < n; j++) {
+		p->flagged[j] = FALSE;
 	}	
 }
 
 static void
-ratings_for_purged (void)
+ratings_for_purged (const struct PLAYERS *p, struct RATINGS *r /*@out@*/)
 {
 	size_t j;
-	for (j = 0; j < Players.n; j++) {
-		if (Players.flagged[j]) {
-			RA.ratingof[j] = 0;
+	size_t n = p->n;
+	for (j = 0; j < n; j++) {
+		if (p->flagged[j]) {
+			r->ratingof[j] = 0;
 		}
 	}	
 }
@@ -2456,11 +2479,11 @@ rand_threeway_wscore(double pwin, double pdraw)
 
 // no globals
 static void
-simulate_scores ( double 		deq
+simulate_scores ( const double 	*ratingof_results
+				, double 		deq
 				, double 		wadv
 				, double 		beta
-				, struct GAMES *g
-				, const double 	*ratingof_results
+				, struct GAMES *g	// output
 )
 {
 	size_t n_games = g->n;
@@ -2472,14 +2495,9 @@ simulate_scores ( double 		deq
 	double pwin, pdraw, plos;
 
 	for (i = 0; i < n_games; i++) {
-
-		int32_t score_i = gam[i].score;
-		int32_t wp_i = gam[i].whiteplayer;
-		int32_t bp_i = gam[i].blackplayer;
-
-		if (score_i != DISCARD) {
-			w = wp_i;
-			b = bp_i;
+		if (gam[i].score != DISCARD) {
+			w = gam[i].whiteplayer;
+			b = gam[i].blackplayer;
 			get_pWDL(rating[w] + wadv - rating[b], &pwin, &pdraw, &plos, deq, beta);
 			gam[i].score = rand_threeway_wscore(pwin,pdraw);
 		}
