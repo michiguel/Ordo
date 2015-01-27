@@ -1143,6 +1143,7 @@ int main (int argc, char *argv[])
 	ratings_results();
 
 	/* Simulation block, begin */
+	if (Simulate > 1)
 	{	
 		ptrdiff_t i,j;
 		ptrdiff_t topn = (ptrdiff_t)Players.n;
