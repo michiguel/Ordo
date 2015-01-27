@@ -1106,7 +1106,8 @@ int main (int argc, char *argv[])
 					scan_encounters(Encounters.enc, Encounters.n, Players.n); 
 					convert_to_groups(groupf, Players.n, Players.name);
 					sieve_encounters(Encounters.enc, Encounters.n, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
-					printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n",(long)Encounters.n, N_encounters2, N_encounters3);
+					if (!QUIET_MODE)
+						printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n",(long)Encounters.n, N_encounters2, N_encounters3);
 
 					supporting_groupmem_done ();
 
