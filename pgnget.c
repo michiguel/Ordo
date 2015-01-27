@@ -31,6 +31,7 @@
 #include "ordolim.h"
 #include "mytypes.h"
 
+#include "mymem.h"
 
 #if 0
 static void	hashstat(void);
@@ -145,11 +146,11 @@ data_init (struct DATA *d)
 	d->nm_idx = 0;
 	d->nm_allocated = 0;
 
-	ok = ok && NULL != (p = malloc (sizeof(struct GAMEBLOCK)));
+	ok = ok && NULL != (p = memnew (sizeof(struct GAMEBLOCK)));
 	if (ok)	d->gb_allocated++;
 	d->gb[0] = p;
 
-	ok = ok && NULL != (t = malloc (sizeof(struct NAMEBLOCK)));
+	ok = ok && NULL != (t = memnew (sizeof(struct NAMEBLOCK)));
 	if (ok)	d->nm_allocated++;
 	d->nm[0] = t;
 
@@ -172,7 +173,7 @@ data_done (struct DATA *d)
 	n = d->gb_allocated;
 
 	while (n-->0) {
-		free(d->gb[n]);
+		memrel(d->gb[n]);
 		d->gb[n] = NULL;
 	}
 
@@ -184,7 +185,7 @@ data_done (struct DATA *d)
 	n = d->nm_allocated;
 
 	while (n-->0) {
-		free(d->nm[n]);
+		memrel(d->nm[n]);
 		d->nm[n] = NULL;
 	}
 
@@ -196,14 +197,14 @@ data_done (struct DATA *d)
 	p = d->labels_head.nxt;
 
 	while (p) {
-		if (p->buf) {free(p->buf); p->buf = NULL; p->idx = 0;}
+		if (p->buf) {memrel(p->buf); p->buf = NULL; p->idx = 0;}
 		q = p->nxt;	
-		free(p);
+		memrel(p);
 		p = q;
 	}
 
 	p = &d->labels_head;
-		if (p->buf) {free(p->buf); p->buf = NULL; p->idx = 0;}
+		if (p->buf) {memrel(p->buf); p->buf = NULL; p->idx = 0;}
 
 }
 
@@ -225,7 +226,7 @@ addname (struct DATA *d, const char *s)
 	if (!ok) {
 		assert (d->curr->nxt == NULL);
 		assert (d->curr->idx == 0);
-		ok = NULL != (bf = malloc (LABELBUFFERSIZE));
+		ok = NULL != (bf = memnew (LABELBUFFERSIZE));
 		if (ok) {
 			bf[0] = '\0';
 			d->curr->buf = bf;
@@ -239,10 +240,10 @@ addname (struct DATA *d, const char *s)
 	ok = ok && (LABELBUFFERSIZE > d->curr->idx + sz);
 
 	if (!ok) {
-		ok = NULL != (nd = malloc (sizeof(namenode_t)));
+		ok = NULL != (nd = memnew (sizeof(namenode_t)));
 		if (ok) {
-			ok = NULL != (bf = malloc (LABELBUFFERSIZE));
-			if (ok) bf[0] = '\0'; else free(nd);
+			ok = NULL != (bf = memnew (LABELBUFFERSIZE));
+			if (ok) bf[0] = '\0'; else memrel(nd);
 		}
 
 		if (ok) {
@@ -291,7 +292,7 @@ addplayer (struct DATA *d, const char *s, player_t *idx)
 			d->nm_idx = 0;
 			d->nm_filled++;
 
-			success = NULL != (nm = malloc (sizeof(struct NAMEBLOCK)));
+			success = NULL != (nm = memnew (sizeof(struct NAMEBLOCK)));
 			if (success) {
 				d->nm_allocated++;
 			}
@@ -491,7 +492,7 @@ pgn_result_collect (struct pgn_result *p, struct DATA *d)
 			d->gb_filled++;
 
 			blk = d->gb_filled;
-			if (NULL == (g = malloc (sizeof(struct GAMEBLOCK) * (size_t)1))) {
+			if (NULL == (g = memnew (sizeof(struct GAMEBLOCK) * (size_t)1))) {
 				d->gb[blk] = NULL;
 				ok = FALSE; // failed
 			} else {

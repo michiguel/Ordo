@@ -24,6 +24,8 @@
 #include "groups.h"
 #include "mytypes.h"
 
+#include "mymem.h"
+
 struct BITARRAY {
 	uint64_t *pod;
 	player_t max;
@@ -463,7 +465,7 @@ ba_init(struct BITARRAY *ba, player_t max)
 	size_t i;
 	size_t max_p = (size_t)max/64 + (max % 64 > 0?1:0);
 
-	ok = NULL != (ptr = malloc (sizeof(uint64_t)*max_p));
+	ok = NULL != (ptr = memnew (sizeof(uint64_t)*max_p));
 	if (ok) {
 		ba->max = max;
 		ba->pod = ptr;
@@ -476,7 +478,7 @@ static void
 ba_done(struct BITARRAY *ba)
 {
 	assert(ba->pod);
-	if (ba->pod) free (ba->pod);
+	if (ba->pod) memrel (ba->pod);
 	ba->pod = NULL;
 	ba->max = 0;
 }
@@ -592,7 +594,7 @@ simplify_shrink (group_t *g)
 				id = beat_to->id;
 				if (id == oid) { 
 					// remove connection
-					g->cstart = c->next; //FIXME mem leak? free(c)
+					g->cstart = c->next; //FIXME mem leak? memrel(c)
 				}
 			}
 		} while (c && beat_to && id == oid);
@@ -609,7 +611,7 @@ simplify_shrink (group_t *g)
 				id = beat_to->id;
 				if (id == oid || ba_ison(&BA, id)) {
 					// remove connection and advance
-					c = c->next; //FIXME mem leak? free(c)
+					c = c->next; //FIXME mem leak? memrel(c)
 					p->next = c; 
 				}
 				else {
@@ -706,7 +708,7 @@ gotta_combine = FALSE;
 				id = beat_to->id;
 				if (id == oid) { 
 					// remove connection
-					g->cstart = c->next; //FIXME mem leak? free(c)
+					g->cstart = c->next; //FIXME mem leak? memrel(c)
 				}
 			}
 		} while (c && beat_to && id == oid);
@@ -723,7 +725,7 @@ gotta_combine = FALSE;
 				id = beat_to->id;
 				if (id == oid || ba_ison(&BA, id)) {
 					// remove connection and advance
-					c = c->next; //FIXME mem leak? free(c)
+					c = c->next; //FIXME mem leak? memrel(c)
 					p->next = c; 
 				}
 				else {
@@ -1084,11 +1086,11 @@ supporting_encmem_init (size_t nenc)
 	struct ENC *a;
 	struct ENC *b;
 
-	if (NULL == (a = malloc (sizeof(struct ENC) * nenc))) {
+	if (NULL == (a = memnew (sizeof(struct ENC) * nenc))) {
 		return FALSE;
 	} else 
-	if (NULL == (b = malloc (sizeof(struct ENC) * nenc))) {
-		free(a);
+	if (NULL == (b = memnew (sizeof(struct ENC) * nenc))) {
+		memrel(a);
 		return FALSE;
 	}
 
@@ -1101,8 +1103,8 @@ supporting_encmem_init (size_t nenc)
 void
 supporting_encmem_done (void)
 {
-	if (SE ) free (SE );
-	if (SE2) free (SE2);
+	if (SE ) memrel (SE );
+	if (SE2) memrel (SE2);
 	N_se  = 0;
 	N_se2 = 0;
 	return;
@@ -1125,29 +1127,29 @@ supporting_groupmem_init (size_t nplayers)
 	size_t		sd = sizeof(node_t);
 	size_t		se = sizeof(int);
 
-	if (NULL == (a = malloc (sa * nplayers))) {
+	if (NULL == (a = memnew (sa * nplayers))) {
 		return FALSE;
 	} else 
-	if (NULL == (b = malloc (sb * nplayers))) {
-		free(a);
+	if (NULL == (b = memnew (sb * nplayers))) {
+		memrel(a);
 		return FALSE;
 	} else 
-	if (NULL == (c = malloc (sc * nplayers))) {
-		free(a);
-		free(b);
+	if (NULL == (c = memnew (sc * nplayers))) {
+		memrel(a);
+		memrel(b);
 		return FALSE;
 	} else 
-	if (NULL == (d = malloc (sd * nplayers))) {
-		free(a);
-		free(b);
-		free(c);
+	if (NULL == (d = memnew (sd * nplayers))) {
+		memrel(a);
+		memrel(b);
+		memrel(c);
 		return FALSE;
 	} else 
-	if (NULL == (e = malloc (se * nplayers))) {
-		free(a);
-		free(b);
-		free(c);
-		free(d);
+	if (NULL == (e = memnew (se * nplayers))) {
+		memrel(a);
+		memrel(b);
+		memrel(c);
+		memrel(d);
 		return FALSE;
 	}
 
@@ -1178,11 +1180,11 @@ supporting_groupmem_init (size_t nplayers)
 void
 supporting_groupmem_done (void)
 {
-	if (Group_belong)	 	free (Group_belong );
-	if (Get_new_id) 		free (Get_new_id);
-	if (Group_final_list) 	free (Group_final_list);
-	if (Gnode) 				free (Gnode);
-	if (CHAIN) 				free (CHAIN);
+	if (Group_belong)	 	memrel (Group_belong );
+	if (Get_new_id) 		memrel (Get_new_id);
+	if (Group_final_list) 	memrel (Group_final_list);
+	if (Gnode) 				memrel (Gnode);
+	if (CHAIN) 				memrel (CHAIN);
 
 	Group_belong = NULL;
 	Get_new_id = NULL;
@@ -1208,7 +1210,7 @@ static bool_t
 group_buffer_init(struct GROUP_BUFFER *g, size_t n)
 {
 	group_t *p;
-	if (NULL != (p = malloc (sizeof(group_t) * n))) {
+	if (NULL != (p = memnew (sizeof(group_t) * n))) {
 		g->list = p;		
 		g->tail = NULL;
 		g->prehead = NULL;
@@ -1223,7 +1225,7 @@ static void
 group_buffer_done(struct GROUP_BUFFER *g)
 {
 	if (g->list != NULL) {
-		free(g->list);
+		memrel(g->list);
 		g->list = NULL;
 	}
 	g->tail = NULL;
@@ -1236,7 +1238,7 @@ static bool_t
 participant_buffer_init(struct PARTICIPANT_BUFFER *x, size_t n)
 {
 	participant_t *p;
-	if (NULL != (p = malloc (sizeof(participant_t) * n))) {
+	if (NULL != (p = memnew (sizeof(participant_t) * n))) {
 		x->list = p;		
 		x->n = 0;
 		return TRUE;
@@ -1249,7 +1251,7 @@ static void
 participant_buffer_done(struct PARTICIPANT_BUFFER *x)
 {
 	if (x->list != NULL) {
-		free(x->list);
+		memrel(x->list);
 		x->list = NULL;
 	}
 	x->n = 0;
@@ -1259,7 +1261,7 @@ static bool_t
 connection_buffer_init(struct CONNECT_BUFFER *x, size_t n)
 {
 	connection_t *p;
-	if (NULL != (p = malloc (sizeof(connection_t) * n))) {
+	if (NULL != (p = memnew (sizeof(connection_t) * n))) {
 		x->list = p;		
 		x->n = 0;
 		return TRUE;
@@ -1272,7 +1274,7 @@ static void
 connection_buffer_done(struct CONNECT_BUFFER *x)
 {
 	if (x->list != NULL) {
-		free(x->list);
+		memrel(x->list);
 		x->list = NULL;
 	}
 	x->n = 0;

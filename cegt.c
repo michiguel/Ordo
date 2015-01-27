@@ -30,6 +30,8 @@
 #include "ordolim.h"
 #include "gauss.h"
 
+#include "mymem.h"
+
 struct OPP_LINE {
 	long i;
 	long w;
@@ -111,9 +113,9 @@ output_cegt_style_f (FILE *genf, FILE *ratf, FILE *prgf, struct CEGT *p)
 	if (ratf) all_report_rat (ratf, p);
 	if (genf) all_report_gen (genf, p);
 
-	if (NULL != (Temp_enc = malloc(sizeof(struct ENC) * (N_enc+1)))) {
+	if (NULL != (Temp_enc = memnew(sizeof(struct ENC) * (N_enc+1)))) {
 		if (prgf) all_report_prg (prgf, p, Temp_enc); 
-		free(Temp_enc);
+		memrel(Temp_enc);
 	}
 	ok = Temp_enc != NULL;
 
@@ -155,14 +157,14 @@ output_report_individual_f (FILE *indf, struct CEGT *p, int simulate)
 
 	assert (indf);
 
-	if (NULL != (oline = malloc(sizeof(struct OPP_LINE) * N_players))) {
-		if (NULL != (Temp_enc = malloc(sizeof(struct ENC) * (N_enc+1)))) {
+	if (NULL != (oline = memnew(sizeof(struct OPP_LINE) * N_players))) {
+		if (NULL != (Temp_enc = memnew(sizeof(struct ENC) * (N_enc+1)))) {
 
 			all_report_indiv_stats (indf, p, simulate, oline, Temp_enc); 
 
-			free(Temp_enc);
+			memrel(Temp_enc);
 		}
-		free(oline);
+		memrel(oline);
 	} 
 
 	ok = Temp_enc != NULL && oline != NULL;

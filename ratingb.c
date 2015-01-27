@@ -30,6 +30,8 @@
 
 #include "xpect.h"
 
+#include "mymem.h"
+
 #if 1
 #define CALCIND_SWSL
 #endif
@@ -308,7 +310,7 @@ calc_rating_bayes2
 
 	double *probarr;
 
-	probarr = malloc (sizeof(double) * n_players * 4);
+	probarr = memnew (sizeof(double) * n_players * 4);
 
 	if (NULL == probarr) {
 		fprintf(stderr,"Not enough memory to initialize probability arrays\n");
@@ -486,7 +488,7 @@ calc_rating_bayes2
 	*pDraw_date = deq;
 	*pwadv = white_advantage;
 
-	free(probarr);
+	memrel(probarr);
 
 	return N_enc;
 }

@@ -25,8 +25,8 @@
 #include <math.h>
 #include "indiv.h"
 #include "ordolim.h"
-
 #include "xpect.h"
+#include "mymem.h"
 
 //===============================================================
 
@@ -317,9 +317,9 @@ rate_super_players	( bool_t quiet
 	bool_t				ok;
 	size_t				np = (size_t) n_players;
 
-	if (NULL != (weig = malloc(sizeof(double) * np))) {
-		if (NULL != (rtng = malloc(sizeof(double) * np))) {
-			if (NULL != (myenc = malloc (sizeof(struct ENC) * N_enc))) {
+	if (NULL != (weig = memnew(sizeof(double) * np))) {
+		if (NULL != (rtng = memnew(sizeof(double) * np))) {
+			if (NULL != (myenc = memnew (sizeof(struct ENC) * N_enc))) {
 
 				rate_super_players_internal
 					( quiet
@@ -338,11 +338,11 @@ rate_super_players	( bool_t quiet
 					, rtng
 					);
 
-				free(myenc);
+				memrel(myenc);
 			}
-			free(rtng);
+			memrel(rtng);
 		}
-		free(weig);
+		memrel(weig);
 	} 
 
 	ok = myenc != NULL && rtng != NULL && weig != NULL;

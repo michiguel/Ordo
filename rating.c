@@ -27,8 +27,8 @@
 #include "encount.h"
 #include "indiv.h"
 #include "xpect.h"
-
 #include "datatype.h"
+#include "mymem.h"
 
 #if !defined(NDEBUG)
 static bool_t is_nan (double x) {if (x != x) return TRUE; else return FALSE;}
@@ -457,7 +457,7 @@ calc_rating2 	( bool_t 		quiet
 	size_t allocsize;
 
 	allocsize = sizeof(double) * (N_players+1);
-	expected = malloc(allocsize);
+	expected = memnew(allocsize);
 	if (expected == NULL) {
 		fprintf(stderr, "Not enough memory to allocate all players\n");
 		exit(EXIT_FAILURE);
@@ -623,7 +623,7 @@ calc_rating2 	( bool_t 		quiet
 	*pWhite_advantage = white_adv;
 	*pDraw_date = draw_rate;
 
-	free(expected);
+	memrel(expected);
 	return N_enc;
 }
 

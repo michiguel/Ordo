@@ -57,6 +57,8 @@
 #include "xpect.h"
 #include "csv.h"
 
+#include "mymem.h"
+
 /*
 |
 |	GENERAL OPTIONS
@@ -229,21 +231,21 @@ ratings_init (size_t n, struct RATINGS *r)
 	r->size = n;
 
 	for (failed = FALSE, u = 0, i = 0; i < MAXU && !failed; i++) {
-		if (NULL != (pu[i] = malloc (sizeof(uint32_t) * (size_t)n))) { 
+		if (NULL != (pu[i] = memnew (sizeof(uint32_t) * (size_t)n))) { 
 			u++;
 		} else {
-			while (u-->0) free(pu[u]);
+			while (u-->0) memrel(pu[u]);
 			failed = TRUE;
 		}
 	}
 	if (failed) return FALSE;
 
 	for (failed = FALSE, d = 0, i = 0; i < MAXD && !failed; i++) {
-		if (NULL != (pd[d] = malloc (sizeof(double) * (size_t)n))) { 
+		if (NULL != (pd[d] = memnew (sizeof(double) * (size_t)n))) { 
 			d++;
 		} else {
-			while (d-->0) free(pd[d]);
-			while (u-->0) free(pu[u]);
+			while (d-->0) memrel(pd[d]);
+			while (u-->0) memrel(pu[u]);
 			failed = TRUE;
 		}
 	}
@@ -268,15 +270,15 @@ ratings_done (struct RATINGS *r)
 {
 	r->size	= 0;
 
-	free(r->sorted);
-	free(r->playedby);
-	free(r->playedby_results);
-	free(r->obtained);
- 	free(r->ratingof);
- 	free(r->ratingbk);
- 	free(r->changing);
-	free(r->ratingof_results);
-	free(r->obtained_results);
+	memrel(r->sorted);
+	memrel(r->playedby);
+	memrel(r->playedby_results);
+	memrel(r->obtained);
+ 	memrel(r->ratingof);
+ 	memrel(r->ratingbk);
+ 	memrel(r->changing);
+	memrel(r->ratingof_results);
+	memrel(r->obtained_results);
 } 
 
 
@@ -287,7 +289,7 @@ games_init (size_t n, struct GAMES *g)
 
 	assert (n > 0);
 
-	if (NULL == (p = malloc (sizeof(struct gamei) * (size_t)n))) {
+	if (NULL == (p = memnew (sizeof(struct gamei) * (size_t)n))) {
 		g->n	 	= 0; 
 		g->size 	= 0;
 		g->ga		= NULL;
@@ -304,7 +306,7 @@ games_init (size_t n, struct GAMES *g)
 static void 
 games_done (struct GAMES *g)
 {
-	free(g->ga);
+	memrel(g->ga);
 	g->n	 		= 0;
 	g->size			= 0;
 	g->ga		 	= NULL;
@@ -319,7 +321,7 @@ encounters_init (size_t n, struct ENCOUNTERS *e)
 
 	assert (n > 0);
 
-	if (NULL == (p = malloc (sizeof(struct ENC) * (size_t)n))) {
+	if (NULL == (p = memnew (sizeof(struct ENC) * (size_t)n))) {
 		e->n	 	= 0; 
 		e->size 	= 0;
 		e->enc		= NULL;
@@ -335,7 +337,7 @@ encounters_init (size_t n, struct ENCOUNTERS *e)
 static void 
 encounters_done (struct ENCOUNTERS *e)
 {
-	free(e->enc);
+	memrel(e->enc);
 	e->n	 = 0;
 	e->size	 = 0;
 	e->enc	 = NULL;
@@ -360,8 +362,8 @@ players_init (size_t n, struct PLAYERS *x)
 	sz[3] = sizeof(int);
 
 	for (failed = FALSE, i = 0; !failed && i < NV; i++) {
-		if (NULL == (pv[i] = malloc (sz[i] * (size_t)n))) {
-			for (j = 0; j < i; j++) free(pv[j]);
+		if (NULL == (pv[i] = memnew (sz[i] * (size_t)n))) {
+			for (j = 0; j < i; j++) memrel(pv[j]);
 			failed = TRUE;
 		}
 	}
@@ -379,10 +381,10 @@ players_init (size_t n, struct PLAYERS *x)
 static void 
 players_done (struct PLAYERS *x)
 {
-	free(x->name);
-	free(x->flagged);
-	free(x->prefed);
-	free(x->performance_type);
+	memrel(x->name);
+	memrel(x->flagged);
+	memrel(x->prefed);
+	memrel(x->performance_type);
 	x->n = 0;
 	x->size	= 0;
 	x->name = NULL;
@@ -1087,12 +1089,12 @@ int main (int argc, char *argv[])
 			size_t 			nenc = (size_t)Encounters.n;
 	
 			assert (nenc > 0);
-			if (NULL == (a = malloc (sizeof(struct ENC) * nenc))) {
+			if (NULL == (a = memnew (sizeof(struct ENC) * nenc))) {
 				ok = FALSE;
 			} else 
-			if (NULL == (b = malloc (sizeof(struct ENC) * nenc))) {
+			if (NULL == (b = memnew (sizeof(struct ENC) * nenc))) {
 				ok = FALSE;
-				free(a);
+				memrel(a);
 			} else {
 				ok = TRUE;
 
@@ -1110,8 +1112,8 @@ int main (int argc, char *argv[])
 
 				} else {fprintf(stderr, "Not enough memory\n");}
 
-				free(a);
-				free(b);
+				memrel(a);
+				memrel(b);
 			}
 	
 			supporting_encmem_done ();
@@ -1153,7 +1155,7 @@ int main (int argc, char *argv[])
 		double sim_draw_rate = Drawrate_evenmatch; // temporarily used and modified
 
 		assert(allocsize > 0);
-		sim = malloc(allocsize);
+		sim = memnew(allocsize);
 
 		if (sim != NULL) {
 			double fraction = 0.0;
@@ -1295,7 +1297,7 @@ int main (int argc, char *argv[])
 	if (csvf_opened)  	fclose (csvf); 
 	if (groupf_opened) 	fclose(groupf);
 
-	if (sim != NULL) free(sim);
+	if (sim != NULL) memrel(sim);
 
 	if (pdaba != NULL)
 	database_done (pdaba);
@@ -2541,7 +2543,7 @@ calc_rating (bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advanta
 		size_t bufsize = (size_t)Players.n; 
 
 		assert(bufsize > 0);
-		if (NULL != (ratingtmp_memory = malloc (sizeof(double) * bufsize))) {
+		if (NULL != (ratingtmp_memory = memnew (sizeof(double) * bufsize))) {
 
 			ret = calc_rating2 	
 					( quiet
@@ -2577,7 +2579,7 @@ calc_rating (bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advanta
 					, ratingtmp_memory
 			);
 
-			free(ratingtmp_memory);
+			memrel(ratingtmp_memory);
 
 		} else {
 			fprintf(stderr, "Not enough memory available\n");
@@ -2669,8 +2671,8 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl,
 	int32_t w, b;
 	long super = 0;
 
-	obt = malloc (sizeof(double) * n_players);
-	pla = malloc (sizeof(int) * n_players);
+	obt = memnew (sizeof(double) * n_players);
+	pla = memnew (sizeof(int) * n_players);
 	if (NULL==obt || NULL==pla) {
 		fprintf(stderr, "Not enough memory\n");
 		exit(EXIT_FAILURE);
@@ -2708,8 +2710,8 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl,
 	}	
 	*perftype_set = TRUE;
 
-	free(obt);
-	free(pla);
+	memrel(obt);
+	memrel(pla);
 	return super;
 }
 
@@ -2803,29 +2805,29 @@ supporting_auxmem_init (size_t nplayers)
 
 	assert(nplayers > 0);
 
-	if (NULL == (a = malloc (sa * nplayers))) {
+	if (NULL == (a = memnew (sa * nplayers))) {
 		return FALSE;
 	} else 
-	if (NULL == (b = malloc (sb * nplayers))) {
-		free(a);
+	if (NULL == (b = memnew (sb * nplayers))) {
+		memrel(a);
 		return FALSE;
 	} else 
-	if (NULL == (c = malloc (sc * nplayers))) {
-		free(a);
-		free(b);
+	if (NULL == (c = memnew (sc * nplayers))) {
+		memrel(a);
+		memrel(b);
 		return FALSE;
 	} else 
-	if (NULL == (d = malloc (sd * nplayers))) {
-		free(a);
-		free(b);
-		free(c);
+	if (NULL == (d = memnew (sd * nplayers))) {
+		memrel(a);
+		memrel(b);
+		memrel(c);
 		return FALSE;
 	} else 
-	if (NULL == (e = malloc (se * nplayers))) {
-		free(a);
-		free(b);
-		free(c);
-		free(d);
+	if (NULL == (e = memnew (se * nplayers))) {
+		memrel(a);
+		memrel(b);
+		memrel(c);
+		memrel(d);
 		return FALSE;
 	}
 
@@ -2841,11 +2843,11 @@ supporting_auxmem_init (size_t nplayers)
 static void
 supporting_auxmem_done (void)
 {
-	if (Sum1) 		free (Sum1 );
-	if (Sum2) 		free (Sum2);
-	if (Sdev)	 	free (Sdev);
-	if (PP) 		free (PP);
-	if (PP_store)	free (PP_store);
+	if (Sum1) 		memrel (Sum1 );
+	if (Sum2) 		memrel (Sum2);
+	if (Sdev)	 	memrel (Sdev);
+	if (PP) 		memrel (PP);
+	if (PP_store)	memrel (PP_store);
 
 	Sum1 	= NULL;
 	Sum2 	= NULL;

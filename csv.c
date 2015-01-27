@@ -5,7 +5,10 @@
 #include "boolean.h"
 #include "csv.h"
 
+#include "mymem.h"
+
 #define MAXSIZETOKEN 1024
+#define MAXSIZE_CSVLINE 4096
 
 static bool_t issep(int c) { return c == ',';}
 static bool_t isquote(int c) { return c == '"';}
@@ -59,6 +62,7 @@ csv_gettoken(char *p, char *s, size_t max)
 
 //================================
 
+
 bool_t
 csv_line_init(csv_line_t *c, char *p)
 {
@@ -69,23 +73,20 @@ csv_line_init(csv_line_t *c, char *p)
 
 	c->n = 0;	
 	c->s[0] = NULL;
-	c->mem = malloc(4096);
-	if (c->mem == NULL) return FALSE;
+	c->mem = memnew(MAXSIZE_CSVLINE);
 
-	s = c->mem;
-	p = skipblanks(p);
+	if (NULL != c->mem) {
 
-	success = (NULL != (p = csv_gettoken(p, s, MAXSIZETOKEN)));
-
-	while (success) {
-
+		s = c->mem;
 		p = skipblanks(p);
-
-		c->s[c->n++] = s;
-
-		s += strlen(s) + 1;
-
 		success = (NULL != (p = csv_gettoken(p, s, MAXSIZETOKEN)));
+
+		while (success) {
+			p = skipblanks(p);
+			c->s[c->n++] = s;
+			s += strlen(s) + 1;
+			success = (NULL != (p = csv_gettoken(p, s, MAXSIZETOKEN)));
+		}
 	}
 	return c->mem != NULL;
 }
@@ -94,7 +95,9 @@ void
 csv_line_done(csv_line_t *c)
 {
 	assert(c != NULL);
-	if (c->mem)	free(c->mem);
+	assert(c->mem != NULL);
+
+	if (c->mem)	memrel(c->mem);
 	c->n = 0;
 	c->mem = NULL;
 	c->s[0] = NULL;
