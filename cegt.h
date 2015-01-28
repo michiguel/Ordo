@@ -42,9 +42,9 @@ struct CEGT {
 
 	double				confidence_factor;
 
-	struct GAMESTATS 	*gstat;
+	const struct GAMESTATS 	*gstat;
 
-	struct DEVIATION_ACC *sim;
+	const struct DEVIATION_ACC *sim;
  
 };
 

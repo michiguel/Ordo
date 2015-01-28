@@ -485,7 +485,18 @@ static long 	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct
 
 static void		players_clear_flagged (struct PLAYERS *p);
 
-static void		all_report (FILE *csvf, FILE *textf);
+static void
+all_report 	( const struct GAMES 	*g
+			, const struct PLAYERS 	*p
+			, const struct RATINGS 	*r
+			, struct ENCOUNTERS 	*e  // memory just provided for local calculations
+			, double 				*sdev
+			, long 					simulate
+			, bool_t				hide_old_ver
+			, double				confidence_factor
+			, FILE 					*csvf
+			, FILE 					*textf);
+
 static void		init_rating (void);
 static void		reset_rating (double general_average, size_t n_players, const bool_t *prefed, const bool_t *flagged, double *rating);
 static void		ratings_copy (const double *r, size_t n, double *t);
@@ -528,8 +539,26 @@ static void 	table_output(double Rtng_76);
 
 /*------------------------------------------------------------------------*/
 
-static void		cegt_output(void);
-static void 	head2head_output(const char *head2head_str);
+static void cegt_output	( const struct GAMES 	*g
+						, const struct PLAYERS 	*p
+						, const struct RATINGS 	*r
+						, struct ENCOUNTERS 	*e  // memory just provided for local calculations
+						, double 				*sdev
+						, long 					simulate
+						, double				confidence_factor
+						, const struct GAMESTATS *pgame_stats
+						, const struct DEVIATION_ACC *s);
+
+static void head2head_output( const struct GAMES 	*g
+							, const struct PLAYERS 	*p
+							, const struct RATINGS 	*r
+							, struct ENCOUNTERS 	*e  // memory just provided for local calculations
+							, double 				*sdev
+							, long 					simulate
+							, double				confidence_factor
+							, const struct GAMESTATS *pgame_stats
+							, const struct DEVIATION_ACC *s
+							, const char *head2head_str);
 
 /*------------------------------------------------------------------------*/
 
@@ -594,7 +623,7 @@ save_simulated(int num)
 static void
 calc_encounters__
 				( int selectivity
-				, struct GAMES *g
+				, const struct GAMES *g
 				, const bool_t *flagged
 				, struct ENCOUNTERS	*e
 ) 
@@ -1282,7 +1311,17 @@ int main (int argc, char *argv[])
 	/* Simulation block, end */
 
 	// Reports
-	all_report (csvf, textf);
+
+	all_report 	( &Games
+				, &Players
+				, &RA
+				, &Encounters
+				, Sdev
+				, Simulate
+				, Hide_old_ver
+				, Confidence_factor
+				, csvf
+				, textf);
 
 	if (Simulate > 1 && NULL != ematstr) {
 		errorsout(&Players, &RA, sim, ematstr);
@@ -1292,12 +1331,34 @@ int main (int argc, char *argv[])
 	}
 
 	//
-	if (head2head_str != NULL)
-		head2head_output(head2head_str);		
+	if (head2head_str != NULL) {
+		head2head_output
+					( &Games
+					, &Players
+					, &RA
+					, &Encounters
+					, Sdev
+					, Simulate
+					, Confidence_factor
+					, &Game_stats
+					, sim
+					, head2head_str
+					);
+	}
 
 	// CEGT output style
-	if (Elostat_output)
-		cegt_output();
+	if (Elostat_output) {
+		cegt_output( &Games
+					, &Players
+					, &RA
+					, &Encounters
+					, Sdev
+					, Simulate
+					, Confidence_factor
+					, &Game_stats
+					, sim);
+	}
+
 
 	// Cleanup
 	if (textf_opened) 	fclose (textf);
@@ -1647,24 +1708,19 @@ get_sdev_str (double sdev, double confidence_factor, char *str)
 	return str;
 }
 
-/*
-input:
 
-Games
-Players
-Encounters
-RA
-Sdev 
 
-Simulate variable
-Hide_old_ver
-Confidence_factor
-
-compareit function
-
-*/
 static void
-all_report (FILE *csvf, FILE *textf)
+all_report 	( const struct GAMES 	*g
+			, const struct PLAYERS 	*p
+			, const struct RATINGS 	*r
+			, struct ENCOUNTERS 	*e  // memory just provided for local calculations
+			, double 				*sdev
+			, long 					simulate
+			, bool_t				hide_old_ver
+			, double				confidence_factor
+			, FILE 					*csvf
+			, FILE 					*textf)
 {
 	FILE *f;
 	size_t i, j;
@@ -1675,33 +1731,33 @@ all_report (FILE *csvf, FILE *textf)
 	int rank = 0;
 	bool_t showrank = TRUE;
 
-	calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
+	calc_encounters__(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
 
-	calc_obtained_playedby(Encounters.enc, Encounters.n, Players.n, RA.obtained, RA.playedby);
+	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
 
-	for (j = 0; j < Players.n; j++) {
-		RA.sorted[j] = (int32_t)j; //FIXME size_t
+	for (j = 0; j < p->n; j++) {
+		r->sorted[j] = (int32_t)j; //FIXME size_t
 	}
 
-	qsort (RA.sorted, (size_t)Players.n, sizeof (RA.sorted[0]), compareit);
+	qsort (r->sorted, (size_t)p->n, sizeof (r->sorted[0]), compareit);
 
 	/* output in text format */
 	f = textf;
 	if (f != NULL) {
 
-		ml = find_maxlen (Players.name, Players.n);
+		ml = find_maxlen (p->name, p->n);
 		if (ml > 50) ml = 50;
 
-		if (Simulate < 2) {
+		if (simulate < 2) {
 			fprintf(f, "\n%s %-*s    :%7s %9s %7s %6s\n", 
 				"   #", 			
 				(int)ml,
 				"PLAYER", "RATING", "POINTS", "PLAYED", "(%)");
 	
-			for (i = 0; i < Players.n; i++) {
+			for (i = 0; i < p->n; i++) {
 
-				j = (size_t)RA.sorted[i]; //FIXME size_t
-				if (!Players.flagged[j]) {
+				j = (size_t)r->sorted[i]; //FIXME size_t
+				if (!p->flagged[j]) {
 
 					char rankbuf[80];
 					showrank = !is_old_version((int32_t)j); //FIXME size_t
@@ -1713,18 +1769,18 @@ all_report (FILE *csvf, FILE *textf)
 					}
 
 					if (showrank
-						|| !Hide_old_ver
+						|| !hide_old_ver
 					){
 						fprintf(f, "%4s %-*s %s :%7.*f %9.1f %7d %6.1f%s\n", 
 							rankbuf,
 							(int)ml+1,
-							Players.name[j],
+							p->name[j],
 							get_super_player_symbolstr(j),
 							OUTDECIMALS,
-							rating_round (RA.ratingof_results[j], OUTDECIMALS), 
-							RA.obtained_results[j], 
-							RA.playedby_results[j], 
-							RA.playedby_results[j]==0? 0: 100.0*RA.obtained_results[j]/RA.playedby_results[j], 
+							rating_round (r->ratingof_results[j], OUTDECIMALS), 
+							r->obtained_results[j], 
+							r->playedby_results[j], 
+							r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/r->playedby_results[j], 
 							"%"
 						);
 					}
@@ -1734,7 +1790,7 @@ all_report (FILE *csvf, FILE *textf)
 						fprintf(f, "%4lu %-*s   :%7s %9s %7s %6s%s\n", 
 							i+1,
 							(int)ml+1,
-							Players.name[j], 
+							p->name[j], 
 							"----", "----", "----", "----","%");
 				}
 			}
@@ -1744,12 +1800,12 @@ all_report (FILE *csvf, FILE *textf)
 				(int)ml, 
 				"PLAYER", "RATING", "ERROR", "POINTS", "PLAYED", "(%)");
 	
-			for (i = 0; i < Players.n; i++) {
-				j = (size_t) RA.sorted[i]; //FIXME size_t
+			for (i = 0; i < p->n; i++) {
+				j = (size_t) r->sorted[i]; //FIXME size_t
 
-				sdev_str = get_sdev_str (Sdev[j], Confidence_factor, sdev_str_buffer);
+				sdev_str = get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer);
 
-				if (!Players.flagged[j]) {
+				if (!p->flagged[j]) {
 
 					char rankbuf[80];
 					showrank = !is_old_version((int32_t)j);
@@ -1761,20 +1817,20 @@ all_report (FILE *csvf, FILE *textf)
 					}
 
 					if (showrank
-						|| !Hide_old_ver
+						|| !hide_old_ver
 					){
 
 						fprintf(f, "%4s %-*s %s :%7.*f %s %8.1f %7d %6.1f%s\n", 
 						rankbuf,
 						(int)ml+1, 
-						Players.name[j],
+						p->name[j],
  						get_super_player_symbolstr(j),
 						OUTDECIMALS,
-						rating_round(RA.ratingof_results[j], OUTDECIMALS), 
+						rating_round(r->ratingof_results[j], OUTDECIMALS), 
 						sdev_str, 
-						RA.obtained_results[j], 
-						RA.playedby_results[j], 
-						RA.playedby_results[j]==0?0:100.0*RA.obtained_results[j]/RA.playedby_results[j], 
+						r->obtained_results[j], 
+						r->playedby_results[j], 
+						r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/r->playedby_results[j], 
 						"%"
 						);
 					}
@@ -1783,34 +1839,30 @@ all_report (FILE *csvf, FILE *textf)
 					fprintf(f, "%4lu %-*s   :%7.*f %s %8.1f %7d %6.1f%s\n", 
 						i+1,
 						(int)ml+1, 
-						Players.name[j], 
+						p->name[j], 
 						OUTDECIMALS,
-						rating_round(RA.ratingof_results[j], OUTDECIMALS), 
+						rating_round(r->ratingof_results[j], OUTDECIMALS), 
 						"  ****", 
-						RA.obtained_results[j], 
-						RA.playedby_results[j], 
-						RA.playedby_results[j]==0?0:100.0*RA.obtained_results[j]/RA.playedby_results[j], 
+						r->obtained_results[j], 
+						r->playedby_results[j], 
+						r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/r->playedby_results[j], 
 						"%"
 					);
 				} else {
 					fprintf(f, "%4lu %-*s   :%7s %s %8s %7s %6s%s\n", 
 						i+1,
 						(int)ml+1,
-						Players.name[j], 
+						p->name[j], 
 						"----", "  ----", "----", "----", "----","%"
 					);
 				}
 			}
 		}
 
-
-//		if (!quiet) {
-			fprintf (f,"\n");
-			fprintf (f,"White advantage = %.2f\n",White_advantage);
-			fprintf (f,"Draw rate (equal opponents) = %.2f %s\n",100*Drawrate_evenmatch, "%");
-			fprintf (f,"\n");
-//		}
-
+		fprintf (f,"\n");
+		fprintf (f,"White advantage = %.2f\n",White_advantage);
+		fprintf (f,"Draw rate (equal opponents) = %.2f %s\n",100*Drawrate_evenmatch, "%");
+		fprintf (f,"\n");
 
 	} /*if*/
 
@@ -1831,11 +1883,11 @@ all_report (FILE *csvf, FILE *textf)
 			,"\"Games\""
 			,"\"(%)\"" 
 			);
-		for (i = 0; i < Players.n; i++) {
-			j = (size_t) RA.sorted[i]; //FIXME size_t
+		for (i = 0; i < p->n; i++) {
+			j = (size_t) r->sorted[i]; //FIXME size_t
 
-				if (Sdev[j] > 0.00000001) {
-					sprintf(sdev_str_buffer, "%.1f", Sdev[j] * Confidence_factor);
+				if (sdev[j] > 0.00000001) {
+					sprintf(sdev_str_buffer, "%.1f", sdev[j] * confidence_factor);
 					sdev_str = sdev_str_buffer;
 				} else {
 					sdev_str = "\"-\"";
@@ -1847,12 +1899,12 @@ all_report (FILE *csvf, FILE *textf)
 			",%d"
 			",%.2f"
 			"\n"		
-			,Players.name[j]
-			,RA.ratingof_results[j] 
+			,p->name[j]
+			,r->ratingof_results[j] 
 			,sdev_str
-			,RA.obtained_results[j]
-			,RA.playedby_results[j]
-			,RA.playedby_results[j]==0?0:100.0*RA.obtained_results[j]/RA.playedby_results[j] 
+			,r->obtained_results[j]
+			,r->playedby_results[j]
+			,r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/r->playedby_results[j] 
 			);
 		}
 	}
@@ -2737,36 +2789,42 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl,
 
 //**************************************************************
 
-// Function provided for a special out of CEGT organization. EloStat Format
-
-static void cegt_output(void)
+static void cegt_output	( const struct GAMES 	*g
+						, const struct PLAYERS 	*p
+						, const struct RATINGS 	*r
+						, struct ENCOUNTERS 	*e  // memory just provided for local calculations
+						, double 				*sdev
+						, long 					simulate
+						, double				confidence_factor
+						, const struct GAMESTATS *pgame_stats
+						, const struct DEVIATION_ACC *s)
 {
 	struct CEGT cegt;
 	size_t j;
 
-	calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
-	calc_obtained_playedby(Encounters.enc, Encounters.n, Players.n, RA.obtained, RA.playedby);
-	for (j = 0; j < Players.n; j++) {
-		RA.sorted[j] = (int32_t) j; //FIXME size_t
+	calc_encounters__(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
+	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
+	for (j = 0; j < p->n; j++) {
+		r->sorted[j] = (int32_t) j; //FIXME size_t
 	}
-	qsort (RA.sorted, (size_t)Players.n, sizeof (RA.sorted[0]), compareit);
+	qsort (r->sorted, (size_t)p->n, sizeof (r->sorted[0]), compareit);
 
-	cegt.n_enc = Encounters.n; 
-	cegt.enc = Encounters.enc;
-	cegt.simulate = Simulate;
-	cegt.n_players = Players.n;
-	cegt.sorted = RA.sorted;
-	cegt.ratingof_results = RA.ratingof_results;
-	cegt.obtained_results = RA.obtained_results;
-	cegt.playedby_results = RA.playedby_results;
-	cegt.sdev = Sdev; 
-	cegt.flagged = Players.flagged;
-	cegt.name = Players.name;
-	cegt.confidence_factor = Confidence_factor;
+	cegt.n_enc = e->n; 
+	cegt.enc = e->enc;
+	cegt.simulate = simulate;
+	cegt.n_players = p->n;
+	cegt.sorted = r->sorted;
+	cegt.ratingof_results = r->ratingof_results;
+	cegt.obtained_results = r->obtained_results;
+	cegt.playedby_results = r->playedby_results;
+	cegt.sdev = sdev; 
+	cegt.flagged = p->flagged;
+	cegt.name = p->name;
+	cegt.confidence_factor = confidence_factor;
 
-	cegt.gstat = &Game_stats;
+	cegt.gstat = pgame_stats;
 
-	cegt.sim = sim;
+	cegt.sim = s;
 
 	output_cegt_style ("general.dat", "rating.dat", "programs.dat", &cegt);
 }
@@ -2774,36 +2832,45 @@ static void cegt_output(void)
 
 // Function provided to have all head to head information
 
-static void head2head_output(const char *head2head_str)
+static void head2head_output( const struct GAMES 	*g
+							, const struct PLAYERS 	*p
+							, const struct RATINGS 	*r
+							, struct ENCOUNTERS 	*e  // memory just provided for local calculations
+							, double 				*sdev
+							, long 					simulate
+							, double				confidence_factor
+							, const struct GAMESTATS *pgame_stats
+							, const struct DEVIATION_ACC *s
+							, const char *head2head_str)
 {
 	struct CEGT cegt;
 	size_t j;
 
-	calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
-	calc_obtained_playedby(Encounters.enc, Encounters.n, Players.n, RA.obtained, RA.playedby);
-	for (j = 0; j < Players.n; j++) {
-		RA.sorted[j] = (int32_t)j; //FIXME size_t
+	calc_encounters__(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
+	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
+	for (j = 0; j < p->n; j++) {
+		r->sorted[j] = (int32_t)j; //FIXME size_t
 	}
-	qsort (RA.sorted, Players.n, sizeof (RA.sorted[0]), compareit);
+	qsort (r->sorted, p->n, sizeof (r->sorted[0]), compareit);
 
-	cegt.n_enc = Encounters.n;
-	cegt.enc = Encounters.enc;
-	cegt.simulate = Simulate;
-	cegt.n_players = Players.n;
-	cegt.sorted = RA.sorted;
-	cegt.ratingof_results = RA.ratingof_results;
-	cegt.obtained_results = RA.obtained_results;
-	cegt.playedby_results = RA.playedby_results;
-	cegt.sdev = Sdev; 
-	cegt.flagged = Players.flagged;
-	cegt.name = Players.name;
-	cegt.confidence_factor = Confidence_factor;
+	cegt.n_enc = e->n;
+	cegt.enc = e->enc;
+	cegt.simulate = simulate;
+	cegt.n_players = p->n;
+	cegt.sorted = r->sorted;
+	cegt.ratingof_results = r->ratingof_results;
+	cegt.obtained_results = r->obtained_results;
+	cegt.playedby_results = r->playedby_results;
+	cegt.sdev = sdev; 
+	cegt.flagged = p->flagged;
+	cegt.name = p->name;
+	cegt.confidence_factor = confidence_factor;
 
-	cegt.gstat = &Game_stats;
+	cegt.gstat = pgame_stats;
 
-	cegt.sim = sim;
+	cegt.sim = s;
 
-	output_report_individual (head2head_str, &cegt, (int)Simulate);
+	output_report_individual (head2head_str, &cegt, (int)simulate);
 }
 
 //
