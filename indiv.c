@@ -28,6 +28,11 @@
 #include "xpect.h"
 #include "mymem.h"
 
+#ifndef NDEBUG
+static double absol(double x) {return x >= 0? x: -x;}
+#endif
+
+
 //===============================================================
 
 #if 1
@@ -98,7 +103,7 @@ calc_ind_rating(double cume_score, double *rtng, double *weig, int r, double bet
 				x = oldx;
 				D = cume_score - ind_expected(x,rtng,weig,r,beta) ;
 				curdev = D*D;	
-				assert (curdev == olddev);
+				assert (absol(curdev-olddev) < 1E-16);
 				break;
 			};	
 
@@ -293,6 +298,7 @@ rate_super_players_internal
 			}
 		}
 
+printf ("leaving...\n");
 	return;
 }
 
@@ -317,6 +323,7 @@ rate_super_players	( bool_t quiet
 	bool_t				ok;
 	size_t				np = (size_t) n_players;
 
+printf("go...\n");
 	if (NULL != (weig = memnew(sizeof(double) * np))) {
 		if (NULL != (rtng = memnew(sizeof(double) * np))) {
 			if (NULL != (myenc = memnew (sizeof(struct ENC) * N_enc))) {
@@ -337,14 +344,16 @@ rate_super_players	( bool_t quiet
 					, weig
 					, rtng
 					);
-
+printf("1...\n");
 				memrel(myenc);
 			}
+printf("2...\n");
 			memrel(rtng);
 		}
+printf("3...\n");
 		memrel(weig);
 	} 
-
+printf("go done.\n");
 	ok = myenc != NULL && rtng != NULL && weig != NULL;
 
 	if (!ok) {
