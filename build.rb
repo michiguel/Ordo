@@ -18,7 +18,15 @@ elsif ARGV[0] == 'debug'
 	$ADDPATH=''
 	$CC='gcc'
 	$NAME=$BASENAME
-	$SWITCHES=''
+	$SWITCHES='-g'
+
+elsif ARGV[0] == 'debug32'
+
+	puts 'gcc debug 32'
+	$ADDPATH=''
+	$CC='gcc -m32'
+	$NAME=$BASENAME+'-linux32'
+	$SWITCHES='-g'
 
 elsif ARGV[0] == 'profile'
 
