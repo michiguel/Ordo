@@ -48,7 +48,8 @@ calc_rating2 	( bool_t 		quiet
 				, bool_t		Multiple_anchors_present
 				, bool_t		Anchor_use
 				, int			Anchor
-				
+				, int			anchored_n
+
 				, int			N_games
 				, int *			Score
 				, int *			Whiteplayer

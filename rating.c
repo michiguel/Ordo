@@ -177,17 +177,13 @@ adjust_rating 	( double delta
 
 // no globals
 static void
-adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, int n_players
-						, const bool_t *flagged, const bool_t *prefed, double *ratingof)
+adjust_rating_byanchor (int anchor, double general_average, int n_players, double *ratingof)
 {
-	double excess;
 	int j;
-	if (anchor_use) {
-		excess  = ratingof[anchor] - general_average;	
-		for (j = 0; j < n_players; j++) {
-			if (!flagged[j] && !prefed[j]) ratingof[j] -= excess;
-		}	
-	}
+	double excess = ratingof[anchor] - general_average;	
+	for (j = 0; j < n_players; j++) {
+			ratingof[j] -= excess;
+	}	
 }
 
 static double
@@ -418,6 +414,7 @@ calc_rating2 	( bool_t 		quiet
 				, bool_t		Multiple_anchors_present
 				, bool_t		Anchor_use
 				, int			Anchor
+				, int			anchored_n
 				
 				, int			N_games
 				, int *			Score
@@ -534,8 +531,8 @@ calc_rating2 	( bool_t 		quiet
 					failed = TRUE;
 				};	
 
-				if (Multiple_anchors_present || Anchor_use) {
-#if 1
+				if (Multiple_anchors_present && anchored_n > 1) {
+
 					cd = optimum_centerdelta	
 						( last_cd
 						, min_resol > 0.1? 0.1: min_resol
@@ -552,7 +549,9 @@ calc_rating2 	( bool_t 		quiet
 						, Playedby
 						, ratingtmp
 						);
-#endif
+
+				} else if (Anchor_use && anchored_n == 1) {
+					cd = 0;
 				} else {
 					cd = 0;
 				}
@@ -621,8 +620,8 @@ calc_rating2 	( bool_t 		quiet
 
 		// printf ("EXCESS =%lf\n", calc_excess	(N_players, Flagged, General_average, Ratingof));
 
-		if (!Multiple_anchors_present)
-			adjust_rating_byanchor (Anchor_use, Anchor, General_average, N_players, Flagged, Prefed, Ratingof);
+		if (anchored_n == 1 && Anchor_use)
+			adjust_rating_byanchor (Anchor, General_average, N_players, Ratingof);
 
 	} //end while 
 
