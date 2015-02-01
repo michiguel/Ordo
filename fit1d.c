@@ -242,6 +242,10 @@ quadfit1d_2 (double limit,
 
 	} while (absol(x[3]-x[1]) > limit);	
 
+assert (absol(x[3]-x[1]) <= limit);
+assert (x[2] <= x[3]);
+assert (x[1] <= x[2]);
+
 	return x[2];
 }
 

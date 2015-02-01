@@ -392,7 +392,7 @@ optimum_centerdelta	( double 			start_delta
 //============ center adjustment end
 
 
-
+#define PRECISIONERROR (1E-16)
 
 long
 calc_rating2 	( bool_t 		quiet
@@ -527,11 +527,13 @@ calc_rating2 	( bool_t 		quiet
 					ratings_restore(N_players, Ratingbk, Ratingof);
 					calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
 					curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
-					assert (absol(curdev-olddev) < 1E-32 || !fprintf(stderr, "curdev=%8lf, olddev=%lf\n", curdev, olddev));
+					assert (absol(curdev-olddev) < PRECISIONERROR || 
+								!fprintf(stderr, "curdev=%.10e, olddev=%.10e, diff=%.10e\n", curdev, olddev, olddev-curdev));
 					failed = TRUE;
 				};	
 
 				if (Multiple_anchors_present || Anchor_use) {
+
 					cd = optimum_centerdelta	
 						( last_cd
 						, min_resol 

@@ -96,9 +96,13 @@ calc_ind_rating(double cume_score, double *rtng, double *weig, int r, double bet
 
 			if (curdev >= olddev) {
 				x = oldx;
+#if 0
 				D = cume_score - ind_expected(x,rtng,weig,r,beta) ;
 				curdev = D*D;	
 				assert (curdev == olddev);
+#else
+				curdev = olddev;
+#endif	
 				break;
 			};	
 
