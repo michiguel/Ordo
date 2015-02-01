@@ -75,7 +75,7 @@ find_parabolic_min_x (const double *x, const double *y, double *result)
 	assert (x[3] > x[2]);
  	assert (x[2] > x[1]);
 
-	reference = (x[1]+x[3])/2;
+	reference = x[2]; // was reference = (x[1]+x[3])/2;
 	x1 = x[1] - reference;
 	x2 = x[2] - reference;
 	x3 = x[3] - reference;
@@ -115,6 +115,10 @@ optimum_center (double *x, double *y)
 	double result;
 	assert (x[3] > x[2]);
  	assert (x[2] > x[1]);
+
+	// is this too strict?
+	assert (y[3] >= y[2]);
+ 	assert (y[1] >= y[2]);
 
 	if (
 		(x[3]-x[1]) > Epsilon &&

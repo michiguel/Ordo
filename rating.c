@@ -368,7 +368,7 @@ optimum_centerdelta	( double 			start_delta
 					, double *			ratingtmp
 					)
 {
-	double d;
+	double lo_d, hi_d;
 	struct UNFITPAR p;
 	p.enc 		= enc;
 	p.n_enc		= n_enc;
@@ -383,11 +383,13 @@ optimum_centerdelta	( double 			start_delta
 	p.playedby	= playedby;
 	p.ratingtmp= ratingtmp;
 
-	d = absol (start_delta);
+	lo_d = start_delta - 1000;
+	hi_d = start_delta + 1000;
 
 	assert(!is_nan(resolution));
-	assert(!is_nan(d));
-	return quadfit1d (resolution, -d, d, unfitf, &p);
+	assert(!is_nan(lo_d));
+	assert(!is_nan(hi_d));
+	return quadfit1d (resolution, lo_d, hi_d, unfitf, &p);
 }
 //============ center adjustment end
 
@@ -533,10 +535,10 @@ calc_rating2 	( bool_t 		quiet
 				};	
 
 				if (Multiple_anchors_present || Anchor_use) {
-
+#if 1
 					cd = optimum_centerdelta	
 						( last_cd
-						, min_resol 
+						, min_resol > 0.1? 0.1: min_resol
 						, enc
 						, N_enc
 						, N_players
@@ -550,6 +552,7 @@ calc_rating2 	( bool_t 		quiet
 						, Playedby
 						, ratingtmp
 						);
+#endif
 				} else {
 					cd = 0;
 				}
