@@ -66,16 +66,14 @@ find_parabolic_min_x (const double *x, const double *y, double *result)
 
 #else
 static bool_t
-find_parabolic_min_x (const double *x, const double *y, double *result)
+find_parabolic_min_x_withreference (const double *x, const double *y, double reference, double *result)
 {
 	double y12, x12, y13, x13, s12, s13, d1, d2, den, res;
 	double x1, x2, x3;
-	double reference;
 
 	assert (x[3] > x[2]);
  	assert (x[2] > x[1]);
 
-	reference = x[2]; // was reference = (x[1]+x[3])/2;
 	x1 = x[1] - reference;
 	x2 = x[2] - reference;
 	x3 = x[3] - reference;
@@ -104,6 +102,28 @@ find_parabolic_min_x (const double *x, const double *y, double *result)
 
 	*result = res;
 	return TRUE;
+}
+
+static bool_t
+find_parabolic_min_x (const double *x, const double *y, double *result)
+{
+	double reference;
+	bool_t ok;
+	double res;
+
+	assert (x[3] > x[2]);
+ 	assert (x[2] > x[1]);
+
+	reference = x[2];
+	ok = find_parabolic_min_x_withreference (x, y, reference, &res);
+	if (!ok) return FALSE;
+
+	reference = res;
+	ok = find_parabolic_min_x_withreference (x, y, reference, &res);
+	if (!ok) return FALSE;
+
+	*result = res;
+	return ok;
 }
 #endif
 
