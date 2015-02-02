@@ -1161,7 +1161,7 @@ int main (int argc, char *argv[])
 						for (j = 0; j < i; j++) {
 							//idx = (i*i-i)/2+j;
 							idx = head2head_idx_sdev (i, j);
-							assert(idx < est || !printf("idx=%ld est=%ld\n",idx,est));
+							assert(idx < est || !printf("idx=%ld est=%ld\n",(long)idx,(long)est));
 							diff = Ratingof[i] - Ratingof[j];	
 							sim[idx].sum1 += diff; 
 							sim[idx].sum2 += diff * diff;
