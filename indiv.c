@@ -262,7 +262,7 @@ rate_super_players_internal
 				double	cume_score = 0; 
 				double	cume_total = 0;
 				int		r = 0;
- 	
+
 				while (myenc_n-->0) {
 					size_t n = myenc_n;
 					if (myenc[n].wh == j) { 
@@ -297,8 +297,6 @@ rate_super_players_internal
 
 			}
 		}
-
-printf ("leaving...\n");
 	return;
 }
 
@@ -322,18 +320,18 @@ rate_super_players	( bool_t quiet
 	static double 		*rtng;
 	bool_t				ok;
 	size_t				np = (size_t) n_players;
+	size_t				ne = (size_t) N_enc;
 
-printf("go...\n");
-	if (NULL != (weig = memnew(sizeof(double) * np))) {
-		if (NULL != (rtng = memnew(sizeof(double) * np))) {
-			if (NULL != (myenc = memnew (sizeof(struct ENC) * N_enc))) {
+	if (NULL != (weig = memnew(sizeof(double) * ne))) {
+		if (NULL != (rtng = memnew(sizeof(double) * ne))) {
+			if (NULL != (myenc = memnew (sizeof(struct ENC) * ne))) {
 
 				rate_super_players_internal
 					( quiet
 					, enc
-					, N_enc
+					, ne
 					, performance_type
-					, n_players
+					, np
 					, ratingof
 					, white_advantage
 					, flagged
@@ -344,16 +342,13 @@ printf("go...\n");
 					, weig
 					, rtng
 					);
-printf("1...\n");
+
 				memrel(myenc);
 			}
-printf("2...\n");
 			memrel(rtng);
 		}
-printf("3...\n");
 		memrel(weig);
 	} 
-printf("go done.\n");
 	ok = myenc != NULL && rtng != NULL && weig != NULL;
 
 	if (!ok) {

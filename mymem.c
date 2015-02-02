@@ -41,7 +41,7 @@ _Memnew(size_t x)
 	void *p;
 	assert(x > 0);
 	p = malloc(x);
-printf("new --> %lu size=%lu\n", (long unsigned)p, x);
+//printf("new --> %lu size=%lu\n", (long unsigned)p, x);
 	memset(p, GARBAGE, x);
 	return p;
 }
@@ -50,9 +50,9 @@ void
 _Memrel(void *p)
 {
 	assert(p != NULL);
-printf("free--> %lu\n", (long unsigned)p);
+//printf("free--> %lu\n", (long unsigned)p);
 	free(p);
-printf("freed\n");
+//printf("freed\n");
 }
 
 #endif
