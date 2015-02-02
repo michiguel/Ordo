@@ -174,17 +174,13 @@ adjust_rating 	( double delta
 
 // no globals
 static void
-adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, size_t n_players
-						, const bool_t *flagged, const bool_t *prefed, double *ratingof)
+adjust_rating_byanchor (int anchor, double general_average, int n_players, double *ratingof)
 {
-	double excess;
-	size_t j;
-	if (anchor_use) {
-		excess  = ratingof[anchor] - general_average;	
-		for (j = 0; j < n_players; j++) {
-			if (!flagged[j] && !prefed[j]) ratingof[j] -= excess;
-		}	
-	}
+	int j;
+	double excess = ratingof[anchor] - general_average;	
+	for (j = 0; j < n_players; j++) {
+			ratingof[j] -= excess;
+	}	
 }
 
 static double
@@ -366,7 +362,7 @@ optimum_centerdelta	( double 			start_delta
 					, double *			ratingtmp
 					)
 {
-	double d;
+	double lo_d, hi_d;
 	struct UNFITPAR p;
 	p.enc 		= enc;
 	p.n_enc		= n_enc;
@@ -381,16 +377,18 @@ optimum_centerdelta	( double 			start_delta
 	p.playedby	= playedby;
 	p.ratingtmp = ratingtmp;
 
-	d = absol (start_delta);
+	lo_d = start_delta - 1000;
+	hi_d = start_delta + 1000;
 
 	assert(!is_nan(resolution));
-	assert(!is_nan(d));
-	return quadfit1d (resolution, -d, d, unfitf, &p);
+	assert(!is_nan(lo_d));
+	assert(!is_nan(hi_d));
+	return quadfit1d (resolution, lo_d, hi_d, unfitf, &p);
 }
 //============ center adjustment end
 
 
-
+#define PRECISIONERROR (1E-16)
 
 size_t
 calc_rating2 	( bool_t 		quiet
@@ -414,6 +412,7 @@ calc_rating2 	( bool_t 		quiet
 				, bool_t		Multiple_anchors_present
 				, bool_t		Anchor_use
 				, int			Anchor
+				, int			anchored_n
 				
 				, struct GAMES *g
 
@@ -528,14 +527,16 @@ calc_rating2 	( bool_t 		quiet
 					ratings_restore(N_players, Ratingbk, Ratingof);
 					calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
 					curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
-					assert (absol(curdev-olddev) < 1E-16 || !fprintf(stderr, "curdev=%8lf, olddev=%lf, delta=%e\n", curdev, olddev, absol(curdev-olddev)));
+					assert (absol(curdev-olddev) < PRECISIONERROR || 
+								!fprintf(stderr, "curdev=%.10e, olddev=%.10e, diff=%.10e\n", curdev, olddev, olddev-curdev));
 					failed = TRUE;
 				};	
 
-				if (Multiple_anchors_present || Anchor_use) {
+				if (Multiple_anchors_present && anchored_n > 1) {
+
 					cd = optimum_centerdelta	
 						( last_cd
-						, min_resol 
+						, min_resol > 0.1? 0.1: min_resol
 						, enc
 						, N_enc
 						, N_players
@@ -549,6 +550,9 @@ calc_rating2 	( bool_t 		quiet
 						, Playedby
 						, ratingtmp
 						);
+
+				} else if (Anchor_use && anchored_n == 1) {
+					cd = 0;
 				} else {
 					cd = 0;
 				}
@@ -615,8 +619,8 @@ calc_rating2 	( bool_t 		quiet
 
 		// printf ("EXCESS =%lf\n", calc_excess	(N_players, Flagged, General_average, Ratingof));
 
-		if (!Multiple_anchors_present)
-			adjust_rating_byanchor (Anchor_use, Anchor, General_average, N_players, Flagged, Prefed, Ratingof);
+		if (anchored_n == 1 && Anchor_use)
+			adjust_rating_byanchor (Anchor, General_average, N_players, Ratingof);
 
 	} //end while 
 

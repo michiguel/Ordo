@@ -22,7 +22,7 @@ elsif ARGV[0] == 'debug'
 
 elsif ARGV[0] == 'debug32'
 
-	puts 'gcc32 selected'
+	puts 'gcc debug 32'
 	$ADDPATH=''
 	$CC='gcc -m32'
 	$NAME=$BASENAME+'-linux32'

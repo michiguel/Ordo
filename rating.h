@@ -26,7 +26,7 @@
 #include "boolean.h"
 #include "mytypes.h"
 
-extern size_t
+size_t
 calc_rating2 	( bool_t 		quiet
 				, struct ENC *	enc
 				, size_t		N_enc
@@ -48,6 +48,7 @@ calc_rating2 	( bool_t 		quiet
 				, bool_t		Multiple_anchors_present
 				, bool_t		Anchor_use
 				, int			Anchor
+				, int			anchored_n
 				
 				, struct GAMES *g
 
@@ -58,7 +59,7 @@ calc_rating2 	( bool_t 		quiet
 
 				, bool_t		adjust_draw_rate
 				, double		*pDraw_date
-				, double 		*ratingtmp_buffer
+				, double		*ratingtmp_buffer
 );
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/

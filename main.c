@@ -572,7 +572,7 @@ static void 	ratings_center_to_zero (size_t n_players, const bool_t *flagged, do
 
 #if 0
 #define SAVE_SIMULATION
-#define SAVE_SIMULATION_N 23
+#define SAVE_SIMULATION_N 29
 #endif
 
 #if defined(SAVE_SIMULATION)
@@ -1278,8 +1278,9 @@ int main (int argc, char *argv[])
 						for (j = 0; j < i; j++) {
 							//idx = (i*i-i)/2+j;
 							idx = head2head_idx_sdev ((ptrdiff_t)i, (ptrdiff_t)j);
-							assert(idx < est || !printf("idx=%ld est=%ld\n",idx,est));
+							assert(idx < est || !printf("idx=%ld est=%ld\n",(long)idx,(long)est));
 							diff = RA.ratingof[i] - RA.ratingof[j];	
+
 							sim[idx].sum1 += diff; 
 							sim[idx].sum2 += diff * diff;
 						}
@@ -2588,6 +2589,8 @@ calc_rating (bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advanta
 				, Multiple_anchors_present
 				, Anchor_use && !Anchor_err_rel2avg
 				, Anchor
+				, Anchored_n
+				, Priored_n
 				
 				, &Games
 
@@ -2638,6 +2641,7 @@ calc_rating (bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advanta
 					, Multiple_anchors_present
 					, Anchor_use && !Anchor_err_rel2avg
 					, Anchor
+					, Anchored_n
 					
 					, &Games
 	
