@@ -94,16 +94,13 @@ relative_anchors_unfitness_j(double R, int j, double *ratingof, long int n_relat
 
 // no globals
 static void
-adjust_rating_byanchor (bool_t anchor_use, int anchor, double general_average, int n_players, double *ratingof, bool_t *flagged)
+adjust_rating_byanchor (int anchor, double general_average, int n_players, double *ratingof)
 {
-	double excess;
 	int j;
-	if (anchor_use) {
-		excess  = ratingof[anchor] - general_average;	
-		for (j = 0; j < n_players; j++) {
-			if (!flagged[j]) ratingof[j] -= excess;
-		}	
-	}
+	double excess = ratingof[anchor] - general_average;	
+	for (j = 0; j < n_players; j++) {
+		ratingof[j] -= excess;
+	}	
 }
 
 // no globals
@@ -261,6 +258,8 @@ calc_rating_bayes2
 			, bool_t		multiple_anchors_present
 			, bool_t		anchor_use
 			, int			anchor
+			, int 			anchored_n
+			, int 			priored_n
 				
 			, int			n_games
 			, int *			score
@@ -495,8 +494,8 @@ calc_rating_bayes2
 	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby);
 	#endif
 
-	if (!multiple_anchors_present && !some_prior_set)
-		adjust_rating_byanchor (anchor_use, anchor, general_average, n_players, ratingof, flagged);
+	if (anchored_n == 1 && priored_n == 0)
+		adjust_rating_byanchor (anchor, general_average, n_players, ratingof);
 
 	*pDraw_date = deq;
 	*pwadv = white_advantage;

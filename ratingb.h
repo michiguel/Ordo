@@ -49,6 +49,8 @@ calc_rating_bayes2
 			, bool_t		multiple_anchors_present
 			, bool_t		anchor_use
 			, int			anchor
+			, int 			anchored_n
+			, int 			priored_n
 				
 			, int			n_games
 			, int *			score

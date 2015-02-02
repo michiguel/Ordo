@@ -551,7 +551,7 @@ static void 	ratings_center_to_zero (long int n_players, const bool_t *flagged, 
 
 /*------------------------------------------------------------------------*/
 
-#if 1
+#if 0
 #define SAVE_SIMULATION
 #define SAVE_SIMULATION_N 29
 #endif
@@ -2358,6 +2358,8 @@ calc_rating (bool_t quiet, struct ENC *enc, long N_enc, double *pWhite_advantage
 				, Multiple_anchors_present
 				, Anchor_use && !Anchor_err_rel2avg
 				, Anchor
+				, Anchored_n
+				, Priored_n
 				
 				, N_games
 				, Score
