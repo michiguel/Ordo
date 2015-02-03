@@ -109,6 +109,7 @@ adjust_rating 	( double delta
 				, bool_t anchor_use
 				, int anchor
 				, double *ratingof
+				, int anchored_n
 )
 {
 	size_t 	j;
@@ -135,9 +136,11 @@ adjust_rating 	( double delta
 	for (j = 0; j < n_players; j++) {
 		assert(flagged[j] == TRUE || flagged[j] == FALSE);
 		assert(prefed [j] == TRUE || prefed [j] == FALSE);
-		if (	flagged[j]	// player previously removed
-			|| 	prefed[j]	// already set, one of the multiple anchors
-		) continue; 
+		if (anchored_n > 1)	{
+			if (	flagged[j]	// player previously removed
+				|| 	prefed[j]	// already set, one of the multiple anchors
+			) continue; 
+		}
 
 		// find multiplier "y"
 		d = (expected[j] - obtained[j]) / playedby[j];
@@ -153,6 +156,7 @@ adjust_rating 	( double delta
 		}
 	}
 
+#if 0
 	// Normalization to a common reference (Global --> General_average)
 	// The average could be normalized, or the rating of an anchor.
 	// Skip in case of multiple anchors present
@@ -167,6 +171,7 @@ adjust_rating 	( double delta
 			if (!flagged[j] && !prefed[j]) ratingof[j] -= excess;
 		}	
 	}	
+#endif
 
 	// Return maximum increase/decrease ==> "resolution"
 	return ymax * delta;
@@ -518,6 +523,7 @@ calc_rating2 	( bool_t 		quiet
 					, Anchor_use
 					, Anchor
 					, Ratingof
+					, anchored_n
 				);
 
 				calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
