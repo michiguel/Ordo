@@ -67,16 +67,19 @@ struct GROUP_BUFFER {
 	group_t		*tail;
 	group_t		*prehead;
 	size_t		n;
+	size_t		max;
 };
 
 struct PARTICIPANT_BUFFER {
 	participant_t		*list; //buffer
 	size_t				n;
+	size_t				max;
 };
 
 struct CONNECT_BUFFER {
 	connection_t		*list; //buffer
 	size_t				n;
+	size_t				max;
 };
 
 //
@@ -88,7 +91,7 @@ extern void	sieve_encounters(const struct ENC *enc, size_t N_enc, struct ENC *en
 extern bool_t 	supporting_encmem_init (size_t nenc);
 extern void 	supporting_encmem_done (void);
 
-extern bool_t 	supporting_groupmem_init (size_t nplayers);
+extern bool_t 	supporting_groupmem_init (size_t nplayers, size_t nenc);
 extern void 	supporting_groupmem_done (void);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/

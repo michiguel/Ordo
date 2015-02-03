@@ -81,10 +81,18 @@ static void			simplify_all(void);
 static void			finish_it(void);
 static void 		connect_init (void) {connection_buffer.n = 0;}
 static connection_t * 
-					connection_new (void) {return &connection_buffer.list[connection_buffer.n++];}
+					connection_new (void) 
+{
+	assert (connection_buffer.n < connection_buffer.max);
+	return &connection_buffer.list[connection_buffer.n++];
+}
 static void 		participant_init (void) {participant_buffer.n = 0;}
 static participant_t * 
-					participant_new (void) {return &participant_buffer.list[participant_buffer.n++];}
+					participant_new (void) 
+{
+	assert (participant_buffer.n < participant_buffer.max);	
+	return &participant_buffer.list[participant_buffer.n++];
+}
 
 // prototypes
 static group_t * 	group_new(void);
@@ -958,7 +966,8 @@ final_list_output(FILE *f)
 	group_t *g;
 	int i;
 	int new_id;
-	
+size_t count = 0;
+
 	for (i = 0; i < N_players; i++) {
 		Get_new_id[i] = -1;
 	}
@@ -983,7 +992,11 @@ simplify_shrink (g);
 //printf("-------------\n");
 
 		group_output(f,g);
+
+		count++;
 	}
+
+printf ("groups=%d\n", count);
 	fprintf(f,"\n");
 }
 
@@ -1113,7 +1126,7 @@ supporting_encmem_done (void)
 
 
 bool_t
-supporting_groupmem_init (size_t nplayers)
+supporting_groupmem_init (size_t nplayers, size_t nenc)
 {
 	int32_t 	*a;
 	int 		*b;
@@ -1168,7 +1181,7 @@ supporting_groupmem_init (size_t nplayers)
 		 group_buffer_done (&group_buffer);
 		return FALSE;
 	}
-	if (!connection_buffer_init (&connection_buffer, nplayers)) {
+	if (!connection_buffer_init (&connection_buffer, nenc*2)) {
 		 group_buffer_done (&group_buffer);
 		 participant_buffer_done (&participant_buffer);
 		return FALSE;
@@ -1215,6 +1228,7 @@ group_buffer_init(struct GROUP_BUFFER *g, size_t n)
 		g->tail = NULL;
 		g->prehead = NULL;
 		g->n = 0;
+		g->max = n;
 		return TRUE;
 	} else {
 		return FALSE;
@@ -1241,6 +1255,7 @@ participant_buffer_init(struct PARTICIPANT_BUFFER *x, size_t n)
 	if (NULL != (p = memnew (sizeof(participant_t) * n))) {
 		x->list = p;		
 		x->n = 0;
+		x->max = n;
 		return TRUE;
 	} else {
 		return FALSE;
@@ -1264,6 +1279,7 @@ connection_buffer_init(struct CONNECT_BUFFER *x, size_t n)
 	if (NULL != (p = memnew (sizeof(connection_t) * n))) {
 		x->list = p;		
 		x->n = 0;
+		x->max = n;
 		return TRUE;
 	} else {
 		return FALSE;

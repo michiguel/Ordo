@@ -1134,7 +1134,7 @@ int main (int argc, char *argv[])
 				Encounter2 = a;
 				Encounter3 = b;
 
-				if (supporting_groupmem_init (Players.n)) {
+				if (supporting_groupmem_init (Players.n, Encounters.n)) {
 
 					scan_encounters(Encounters.enc, Encounters.n, Players.n); 
 					convert_to_groups(groupf, Players.n, Players.name);
