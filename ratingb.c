@@ -99,9 +99,9 @@ relative_anchors_unfitness_j(double R, size_t j, double *ratingof, size_t n_rela
 
 // no globals
 static void
-adjust_rating_byanchor (int anchor, double general_average, int n_players, double *ratingof)
+adjust_rating_byanchor (int anchor, double general_average, size_t n_players, double *ratingof)
 {
-	int j;
+	size_t j;
 	double excess = ratingof[anchor] - general_average;	
 	for (j = 0; j < n_players; j++) {
 		ratingof[j] -= excess;

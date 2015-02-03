@@ -73,6 +73,7 @@ deviation (size_t n_players, const bool_t *flagged, const double *expected, cons
 	return accum;
 }
 
+#if 0
 static double
 calc_excess		( size_t n_players
 				, const bool_t *flagged
@@ -93,6 +94,7 @@ calc_excess		( size_t n_players
 
 	return excess;
 }
+#endif
 
 // no globals
 static double
@@ -104,16 +106,12 @@ adjust_rating 	( double delta
 				, const double *expected 
 				, const double *obtained 
 				, int *playedby
-				, double general_average
-				, bool_t multiple_anchors_present
-				, bool_t anchor_use
-				, int anchor
 				, double *ratingof
 				, int anchored_n
 )
 {
 	size_t 	j;
-	double 	d, excess;
+	double 	d;
 	double 	y = 1.0;
 	double 	ymax = 0;
 
@@ -179,9 +177,9 @@ adjust_rating 	( double delta
 
 // no globals
 static void
-adjust_rating_byanchor (int anchor, double general_average, int n_players, double *ratingof)
+adjust_rating_byanchor (int anchor, double general_average, size_t n_players, double *ratingof)
 {
-	int j;
+	size_t j;
 	double excess = ratingof[anchor] - general_average;	
 	for (j = 0; j < n_players; j++) {
 			ratingof[j] -= excess;
@@ -518,10 +516,6 @@ calc_rating2 	( bool_t 		quiet
 					, expected 
 					, Obtained 
 					, Playedby
-					, General_average
-					, Multiple_anchors_present
-					, Anchor_use
-					, Anchor
 					, Ratingof
 					, anchored_n
 				);

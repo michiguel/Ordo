@@ -28,11 +28,6 @@
 #include "xpect.h"
 #include "mymem.h"
 
-#ifndef NDEBUG
-static double absol(double x) {return x >= 0? x: -x;}
-#endif
-
-
 //===============================================================
 
 #if 1
@@ -336,7 +331,7 @@ rate_super_players	( bool_t quiet
 					, enc
 					, ne
 					, performance_type
-					, np
+					, (player_t) np
 					, ratingof
 					, white_advantage
 					, flagged
