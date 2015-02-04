@@ -163,8 +163,9 @@ calc_ind_rating_superplayer (int perf_type, double x_estimated, double *rtng, do
 	double 	denom = 2;
 	double fdelta;
 	double  D, oldx;
-
 	double x = x_estimated;
+
+	assert(r);
 
 	if (perf_type == PERF_SUPERLOSER) 
 		D = - 0.5 + prob2absolute_result(perf_type, x, rtng, weig, r, deq, beta);		
@@ -287,10 +288,12 @@ rate_super_players_internal
 
 				if (performance_type[j] == PERF_SUPERWINNER) {
 					double ori_estimation = calc_ind_rating (cume_score-0.25, rtng, weig, r, beta); 
+					assert(r);
 					ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERWINNER, ori_estimation, rtng, weig, r, deq, beta);
 				}
 				if (performance_type[j] == PERF_SUPERLOSER) {
 					double ori_estimation = calc_ind_rating (cume_score+0.25, rtng, weig, r, beta); 
+					assert(r);
 					ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERLOSER,  ori_estimation, rtng, weig, r, deq, beta);
 				}
 				flagged[j] = FALSE;
