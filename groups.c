@@ -966,7 +966,7 @@ final_list_output(FILE *f)
 	group_t *g;
 	int i;
 	int new_id;
-size_t count = 0;
+	size_t count = 0;
 
 	for (i = 0; i < N_players; i++) {
 		Get_new_id[i] = -1;
@@ -996,7 +996,7 @@ simplify_shrink (g);
 		count++;
 	}
 
-printf ("groups=%d\n", count);
+	printf ("groups=%lu\n", (long unsigned) count);
 	fprintf(f,"\n");
 }
 

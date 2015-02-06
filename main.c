@@ -1489,7 +1489,7 @@ DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct G
 	gs->black_wins	= gamestat[BLACK_WIN];
 	gs->noresult	= gamestat[DISCARD];
 
-	assert (g->n == (gs->white_wins + gs->draws + gs->black_wins + gs->noresult));
+	assert ((long)g->n == (gs->white_wins + gs->draws + gs->black_wins + gs->noresult));
 
 	return;
 }
@@ -1659,6 +1659,7 @@ find_maxlen (const char *nm[], size_t n)
 	return maxl;
 }
 
+#ifndef NDEBUG
 static bool_t 
 is_empty_player(size_t j)
 {
@@ -1666,6 +1667,7 @@ is_empty_player(size_t j)
 	return Players.performance_type[j] == PERF_NOGAMES
 	;		
 }
+#endif
 
 static bool_t 
 is_super_player(size_t j)
