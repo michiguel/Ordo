@@ -233,20 +233,12 @@ rate_super_players_internal
 	player_t j;
 	size_t myenc_n = 0;
 
-	assert(myenc);
-
 		for (j = 0; j < n_players; j++) {
 
 			if (performance_type[j] != PERF_SUPERWINNER && performance_type[j] != PERF_SUPERLOSER) 
 				continue;
 
 			myenc_n = 0; // reset
-
-			if (performance_type[j] == PERF_SUPERWINNER)
-				if (!quiet) printf ("  all wins   --> %s\n", Name[j]);
-
-			if (performance_type[j] == PERF_SUPERLOSER) 
-				if (!quiet) printf ("  all losses --> %s\n", Name[j]);
 
 			for (e = 0; e < N_enc; e++) {
 				player_t w = enc[e].wh;
@@ -259,6 +251,19 @@ rate_super_players_internal
 				}
 			}
 
+			if (!quiet) {
+				if (0 == myenc_n) {
+					printf ("  no games   --> %s\n", Name[j]);
+				} else
+				if (performance_type[j] == PERF_SUPERWINNER) {
+					printf ("  all wins   --> %s\n", Name[j]);
+				} else
+				if (performance_type[j] == PERF_SUPERLOSER) {
+					printf ("  all losses --> %s\n", Name[j]);
+				}
+			}
+
+			if (0 != myenc_n)
 			{
 				double	cume_score = 0; 
 				double	cume_total = 0;
@@ -297,9 +302,13 @@ rate_super_players_internal
 					ratingof[j] = calc_ind_rating_superplayer (PERF_SUPERLOSER,  ori_estimation, rtng, weig, r, deq, beta);
 				}
 				flagged[j] = FALSE;
-
+			} else {
+				assert (performance_type[j] == PERF_NOGAMES);
+				flagged[j] = TRUE;
 			}
+
 		}
+
 	return;
 }
 

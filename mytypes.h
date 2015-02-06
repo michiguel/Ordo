@@ -110,7 +110,8 @@ struct GAMESTATS {
 enum 			Player_Performance_Type {
 				PERF_NORMAL = 0,
 				PERF_SUPERWINNER = 1,
-				PERF_SUPERLOSER = 2
+				PERF_SUPERLOSER = 2,
+				PERF_NOGAMES = 3
 };
 
 struct prior {

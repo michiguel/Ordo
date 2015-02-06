@@ -1308,6 +1308,11 @@ int main (int argc, char *argv[])
 
 		DB_transform(pdaba, &Games, &Players, &Game_stats); /* convert DB to global variables, to restore original data */
 		qsort (Games.ga, (size_t)Games.n, sizeof(struct gamei), compare_GAME);
+		calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
+		if (0 < set_super_players(QUIET_MODE, &Encounters, &Players, &Performance_type_set)) {
+			purge_players (QUIET_MODE, &Players);
+			calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
+		}
 	}
 	/* Simulation block, end */
 
@@ -1484,6 +1489,8 @@ DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct G
 	gs->black_wins	= gamestat[BLACK_WIN];
 	gs->noresult	= gamestat[DISCARD];
 
+	assert (g->n == (gs->white_wins + gs->draws + gs->black_wins + gs->noresult));
+
 	return;
 }
 
@@ -1653,13 +1660,24 @@ find_maxlen (const char *nm[], size_t n)
 }
 
 static bool_t 
+is_empty_player(size_t j)
+{
+	assert(Performance_type_set);
+	return Players.performance_type[j] == PERF_NOGAMES
+	;		
+}
+
+static bool_t 
 is_super_player(size_t j)
 {
 	assert(Performance_type_set);
-	return Players.performance_type[j] == PERF_SUPERLOSER || Players.performance_type[j] == PERF_SUPERWINNER;		
+	return Players.performance_type[j] == PERF_SUPERLOSER 
+		|| Players.performance_type[j] == PERF_SUPERWINNER
+		|| Players.performance_type[j] == PERF_NOGAMES
+	;		
 }
 
-static const char *SP_symbolstr[3] = {"<",">"," "};
+static const char *SP_symbolstr[5] = {"<",">","*"," ","X"};
 
 static const char *
 get_super_player_symbolstr(size_t j)
@@ -1669,8 +1687,12 @@ get_super_player_symbolstr(size_t j)
 		return SP_symbolstr[0];
 	} else if (Players.performance_type[j] == PERF_SUPERWINNER) {
 		return SP_symbolstr[1];
-	} else
+	} else if (Players.performance_type[j] == PERF_NOGAMES) {
 		return SP_symbolstr[2];
+	} else if (Players.performance_type[j] == PERF_NORMAL) {
+		return SP_symbolstr[3];
+	} else
+		return SP_symbolstr[4];
 }
 
 static double
@@ -1786,7 +1808,9 @@ all_report 	( const struct GAMES 	*g
 						);
 					}
 
-				} else {
+				} 
+#if 0
+				else {
 
 						fprintf(f, "%4lu %-*s   :%7s %9s %7s %6s%s\n", 
 							i+1,
@@ -1794,6 +1818,7 @@ all_report 	( const struct GAMES 	*g
 							p->name[j], 
 							"----", "----", "----", "----","%");
 				}
+#endif
 			}
 		} else {
 			fprintf(f, "\n%s %-*s    :%7s %6s %8s %7s %6s\n", 
@@ -1806,7 +1831,12 @@ all_report 	( const struct GAMES 	*g
 
 				sdev_str = get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer);
 
-				if (!p->flagged[j]) {
+				if (r->playedby_results[j] == 0) {
+
+					assert(is_empty_player(j));
+					// skip
+
+				} else if (!p->flagged[j]) {
 
 					char rankbuf[80];
 					showrank = !is_old_version((int32_t)j);
@@ -1825,7 +1855,7 @@ all_report 	( const struct GAMES 	*g
 						rankbuf,
 						(int)ml+1, 
 						p->name[j],
- 						get_super_player_symbolstr(j),
+						get_super_player_symbolstr(j),
 						OUTDECIMALS,
 						rating_round(r->ratingof_results[j], OUTDECIMALS), 
 						sdev_str, 
@@ -1850,6 +1880,7 @@ all_report 	( const struct GAMES 	*g
 						"%"
 					);
 				} else {
+
 					fprintf(f, "%4lu %-*s   :%7s %s %8s %7s %6s%s\n", 
 						i+1,
 						(int)ml+1,
@@ -2761,6 +2792,9 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl,
 		w = enc[e].wh;
 		b = enc[e].bl;
 
+		assert(( w >= 0 && (size_t)w < n_players) || !fprintf(stderr,"w=%ld np=%ld\n",(long)w,(long)n_players));
+		assert(( b >= 0 && (size_t)b < n_players) || !fprintf(stderr,"b=%ld np=%ld\n",(long)b,(long)n_players));
+
 		obt[w] += enc[e].wscore;
 		obt[b] += (double)enc[e].played - enc[e].wscore;
 
@@ -2770,13 +2804,18 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl,
 	}
 	for (j = 0; j < n_players; j++) {
 		perftype[j] = PERF_NORMAL;
-		if (obt[j] < 0.001) {
-			perftype[j] = has_a_prior(j)? PERF_NORMAL: PERF_SUPERLOSER;			
-			if (!quiet) printf ("detected (all-losses player) --> %s: seed rating present = %s\n", name[j], has_a_prior(j)? "Yes":"No");
-		}	
-		if (pla[j] - obt[j] < 0.001) {
-			perftype[j] = has_a_prior(j)? PERF_NORMAL: PERF_SUPERWINNER;
-			if (!quiet) printf ("detected (all-wins player)   --> %s: seed rating present = %s\n", name[j], has_a_prior(j)? "Yes":"No");
+		if (pla[j] == 0) {
+			perftype[j] = PERF_NOGAMES;			
+			if (!quiet) printf ("detected (player without games) --> %s\n", name[j]);
+		} else {
+			if (obt[j] < 0.001) {
+				perftype[j] = has_a_prior(j)? PERF_NORMAL: PERF_SUPERLOSER;			
+				if (!quiet) printf ("detected (all-losses player) --> %s: seed rating present = %s\n", name[j], has_a_prior(j)? "Yes":"No");
+			}	
+			if (pla[j] - obt[j] < 0.001) {
+				perftype[j] = has_a_prior(j)? PERF_NORMAL: PERF_SUPERWINNER;
+				if (!quiet) printf ("detected (all-wins player)   --> %s: seed rating present = %s\n", name[j], has_a_prior(j)? "Yes":"No");
+			}
 		}
 		if (perftype[j] != PERF_NORMAL) super++;
 	}
