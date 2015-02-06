@@ -1809,19 +1809,9 @@ all_report 	( const struct GAMES 	*g
 							"%"
 						);
 					}
-
 				} 
-#if 0
-				else {
-
-						fprintf(f, "%4lu %-*s   :%7s %9s %7s %6s%s\n", 
-							i+1,
-							(int)ml+1,
-							p->name[j], 
-							"----", "----", "----", "----","%");
-				}
-#endif
 			}
+
 		} else {
 			fprintf(f, "\n%s %-*s    :%7s %6s %8s %7s %6s\n", 
 				"   #", 
@@ -1904,12 +1894,14 @@ all_report 	( const struct GAMES 	*g
 	f = csvf;
 	if (f != NULL) {
 			fprintf(f, "\"%s\""
+			",\"%s\""
 			",%s"
 			",%s"
 			",%s"
 			",%s"
 			",%s"
-			"\n"		
+			"\n"	
+			,"#"	
 			,"Player"
 			,"\"Rating\"" 
 			,"\"Error\"" 
@@ -1917,8 +1909,12 @@ all_report 	( const struct GAMES 	*g
 			,"\"Games\""
 			,"\"(%)\"" 
 			);
+		rank = 0;
 		for (i = 0; i < p->n; i++) {
 			j = (size_t) r->sorted[i]; //FIXME size_t
+
+			if (r->playedby_results[j]!=0) {
+				rank++;
 
 				if (sdev[j] > 0.00000001) {
 					sprintf(sdev_str_buffer, "%.1f", sdev[j] * confidence_factor);
@@ -1927,19 +1923,22 @@ all_report 	( const struct GAMES 	*g
 					sdev_str = "\"-\"";
 				}
 
-			fprintf(f, "\"%s\",%.1f"
-			",%s"
-			",%.2f"
-			",%d"
-			",%.2f"
-			"\n"		
-			,p->name[j]
-			,r->ratingof_results[j] 
-			,sdev_str
-			,r->obtained_results[j]
-			,r->playedby_results[j]
-			,r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/r->playedby_results[j] 
-			);
+				fprintf(f, "%d,"
+				"\"%s\",%.1f"
+				",%s"
+				",%.2f"
+				",%d"
+				",%.2f"
+				"\n"		
+				,rank
+				,p->name[j]
+				,r->ratingof_results[j] 
+				,sdev_str
+				,r->obtained_results[j]
+				,r->playedby_results[j]
+				,r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/r->playedby_results[j] 
+				);
+			}
 		}
 	}
 
