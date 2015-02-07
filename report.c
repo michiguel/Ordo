@@ -44,7 +44,6 @@ calc_encounters__
 
 static struct PLAYERS 	*pPlayers;
 static size_t 			N_relative_anchors = 100;
-static int 				OUTDECIMALS = 1;
 static double 			White_advantage = 0;
 static double 			Drawrate_evenmatch = 0;
 static double 			Confidence_factor = 1;
@@ -67,7 +66,6 @@ report_loadpars(
 {
 	pPlayers = p;
 	N_relative_anchors = n_relative_anchors;
-	OUTDECIMALS = outdec;
 	White_advantage = wadv;
 	Drawrate_evenmatch = drate;
 	Confidence_factor = conf;
@@ -169,11 +167,11 @@ rating_round(double x, int d)
 }
 
 static char *
-get_sdev_str (double sdev, double confidence_factor, char *str)
+get_sdev_str (double sdev, double confidence_factor, char *str, int decimals)
 {
 	double x = sdev * confidence_factor;
 	if (sdev > 0.00000001) {
-		sprintf(str, "%6.*f", OUTDECIMALS, rating_round(x, OUTDECIMALS));
+		sprintf(str, "%6.*f", decimals, rating_round(x, decimals));
 	} else {
 		sprintf(str, "%s", "  ----");
 	}
@@ -290,7 +288,8 @@ all_report 	( const struct GAMES 	*g
 			, bool_t				hide_old_ver
 			, double				confidence_factor
 			, FILE 					*csvf
-			, FILE 					*textf)
+			, FILE 					*textf
+			, int					decimals)
 {
 	FILE *f;
 	size_t i, j;
@@ -346,8 +345,8 @@ all_report 	( const struct GAMES 	*g
 							(int)ml+1,
 							p->name[j],
 							get_super_player_symbolstr(j),
-							OUTDECIMALS,
-							rating_round (r->ratingof_results[j], OUTDECIMALS), 
+							decimals,
+							rating_round (r->ratingof_results[j], decimals), 
 							r->obtained_results[j], 
 							r->playedby_results[j], 
 							r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/r->playedby_results[j], 
@@ -366,7 +365,7 @@ all_report 	( const struct GAMES 	*g
 			for (i = 0; i < p->n; i++) {
 				j = (size_t) r->sorted[i]; //FIXME size_t
 
-				sdev_str = get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer);
+				sdev_str = get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer, decimals);
 
 				if (r->playedby_results[j] == 0) {
 
@@ -393,8 +392,8 @@ all_report 	( const struct GAMES 	*g
 						(int)ml+1, 
 						p->name[j],
 						get_super_player_symbolstr(j),
-						OUTDECIMALS,
-						rating_round(r->ratingof_results[j], OUTDECIMALS), 
+						decimals,
+						rating_round(r->ratingof_results[j], decimals), 
 						sdev_str, 
 						r->obtained_results[j], 
 						r->playedby_results[j], 
@@ -408,8 +407,8 @@ all_report 	( const struct GAMES 	*g
 						i+1,
 						(int)ml+1, 
 						p->name[j], 
-						OUTDECIMALS,
-						rating_round(r->ratingof_results[j], OUTDECIMALS), 
+						decimals,
+						rating_round(r->ratingof_results[j], decimals), 
 						"  ****", 
 						r->obtained_results[j], 
 						r->playedby_results[j], 

@@ -1273,7 +1273,8 @@ report_loadpars(
 				, Hide_old_ver
 				, Confidence_factor
 				, csvf
-				, textf);
+				, textf
+				, OUTDECIMALS);
 
 	if (Simulate > 1 && NULL != ematstr) {
 		errorsout(&Players, &RA, sim, ematstr);

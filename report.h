@@ -62,7 +62,8 @@ all_report 	( const struct GAMES 	*g
 			, bool_t				hide_old_ver
 			, double				confidence_factor
 			, FILE 					*csvf
-			, FILE 					*textf);
+			, FILE 					*textf
+			, int					decimals);
 
 void
 errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out);
