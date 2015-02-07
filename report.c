@@ -46,7 +46,6 @@ static struct PLAYERS 	*pPlayers;
 static size_t 			N_relative_anchors = 100;
 static double 			White_advantage = 0;
 static double 			Drawrate_evenmatch = 0;
-static double 			Confidence_factor = 1;
 
 static struct relprior *Raa;
 
@@ -56,10 +55,8 @@ report_loadpars(
 
  struct PLAYERS *p,
  size_t 		n_relative_anchors,
- int 			outdec,
  double 		wadv,
  double 		drate,
- double 		conf,
  struct relprior *raa
 
 )
@@ -68,7 +65,6 @@ report_loadpars(
 	N_relative_anchors = n_relative_anchors;
 	White_advantage = wadv;
 	Drawrate_evenmatch = drate;
-	Confidence_factor = conf;
 	Raa = raa;
 }
 
@@ -492,7 +488,7 @@ all_report 	( const struct GAMES 	*g
 
 
 void
-errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out)
+errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out, double confidence_factor)
 {
 	FILE *f;
 	ptrdiff_t idx;
@@ -517,7 +513,7 @@ errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATI
 
 				idx = head2head_idx_sdev ((ptrdiff_t)x, (ptrdiff_t)y);
 
-				fprintf(f,",%.1f", s[idx].sdev * Confidence_factor);
+				fprintf(f,",%.1f", s[idx].sdev * confidence_factor);
 			}
 
 			fprintf(f, "\n");

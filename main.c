@@ -1256,10 +1256,8 @@ report_loadpars(
 
  &Players,
  N_relative_anchors,
- OUTDECIMALS,
  White_advantage,
  Drawrate_evenmatch,
- Confidence_factor,
  Ra
 
 );
@@ -1277,7 +1275,7 @@ report_loadpars(
 				, OUTDECIMALS);
 
 	if (Simulate > 1 && NULL != ematstr) {
-		errorsout(&Players, &RA, sim, ematstr);
+		errorsout(&Players, &RA, sim, ematstr, Confidence_factor);
 	}
 	if (Simulate > 1 && NULL != ctsmatstr) {
 		ctsout (&Players, &RA, sim, ctsmatstr);

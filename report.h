@@ -66,7 +66,7 @@ all_report 	( const struct GAMES 	*g
 			, int					decimals);
 
 void
-errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out);
+errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out, double confidence_factor);
 
 void
 ctsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out);
@@ -76,10 +76,8 @@ report_loadpars(
 
  struct PLAYERS *p,
  size_t 		n_relative_anchors,
- int 			outdec,
  double 		wadv,
  double 		drate,
- double 		conf,
  struct relprior *raa
 
 );
