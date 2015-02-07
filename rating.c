@@ -73,7 +73,7 @@ deviation (size_t n_players, const bool_t *flagged, const double *expected, cons
 	return accum;
 }
 
-#if 0
+#if 1
 static double
 calc_excess		( size_t n_players
 				, const bool_t *flagged
@@ -94,6 +94,20 @@ calc_excess		( size_t n_players
 
 	return excess;
 }
+
+static double
+correct_excess	( size_t n_players
+				, const bool_t *flagged
+				, double excess
+				, double *ratingof)
+{
+	size_t 	j;
+	for (j = 0; j < n_players; j++) {
+		if (!flagged[j]) ratingof[j] -= excess;
+	}
+	return;
+}
+
 #endif
 
 // no globals
@@ -623,6 +637,12 @@ calc_rating2 	( bool_t 		quiet
 			adjust_rating_byanchor (Anchor, General_average, N_players, Ratingof);
 
 	} //end while 
+
+
+	if (anchored_n == 0) {
+		double excess = calc_excess (N_players, Flagged, General_average, Ratingof);
+		correct_excess (N_players, Flagged, excess, Ratingof);
+	}
 
 	*pWhite_advantage = white_adv;
 	*pDraw_date = draw_rate;
