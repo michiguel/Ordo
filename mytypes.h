@@ -133,5 +133,36 @@ struct DEVIATION_ACC {
 	double sdev;
 };
 
+//
+
+struct PLAYERS {
+	size_t		n; 
+	size_t		size;
+	const char  **name;
+	bool_t		*flagged;
+	bool_t		*prefed;
+	int			*performance_type; 
+};
+
+struct RATINGS {
+	size_t		size;
+	int32_t		*sorted; 	/* sorted index by rating */
+	double		*obtained;
+	int32_t		*playedby; 	/* N games played by player "i" */
+ 	double		*ratingof; 	/* rating current */
+ 	double		*ratingbk; 	/* rating backup  */
+ 	double		*changing; 	/* rating backup  */
+	double		*ratingof_results;
+	double		*obtained_results;
+	int32_t		*playedby_results;
+};
+
+struct ENCOUNTERS {
+	size_t		n;		
+	size_t		size;
+	struct ENC *enc;
+};
+
+
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif
