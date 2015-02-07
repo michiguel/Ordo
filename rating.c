@@ -95,7 +95,7 @@ calc_excess		( size_t n_players
 	return excess;
 }
 
-static double
+static void
 correct_excess	( size_t n_players
 				, const bool_t *flagged
 				, double excess
