@@ -63,6 +63,8 @@ all_report 	( const struct GAMES 	*g
 			, double				confidence_factor
 			, FILE 					*csvf
 			, FILE 					*textf
+			, double 				white_advantage
+			, double 				drawrate_evenmatch
 			, int					decimals);
 
 void
@@ -76,8 +78,6 @@ report_loadpars(
 
  struct PLAYERS *p,
  size_t 		n_relative_anchors,
- double 		wadv,
- double 		drate,
  struct relprior *raa
 
 );

@@ -1256,8 +1256,6 @@ report_loadpars(
 
  &Players,
  N_relative_anchors,
- White_advantage,
- Drawrate_evenmatch,
  Ra
 
 );
@@ -1272,6 +1270,8 @@ report_loadpars(
 				, Confidence_factor
 				, csvf
 				, textf
+				, White_advantage
+				, Drawrate_evenmatch
 				, OUTDECIMALS);
 
 	if (Simulate > 1 && NULL != ematstr) {

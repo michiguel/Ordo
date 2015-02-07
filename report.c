@@ -44,8 +44,6 @@ calc_encounters__
 
 static struct PLAYERS 	*pPlayers;
 static size_t 			N_relative_anchors = 100;
-static double 			White_advantage = 0;
-static double 			Drawrate_evenmatch = 0;
 
 static struct relprior *Raa;
 
@@ -55,16 +53,12 @@ report_loadpars(
 
  struct PLAYERS *p,
  size_t 		n_relative_anchors,
- double 		wadv,
- double 		drate,
  struct relprior *raa
 
 )
 {
 	pPlayers = p;
 	N_relative_anchors = n_relative_anchors;
-	White_advantage = wadv;
-	Drawrate_evenmatch = drate;
 	Raa = raa;
 }
 
@@ -285,6 +279,8 @@ all_report 	( const struct GAMES 	*g
 			, double				confidence_factor
 			, FILE 					*csvf
 			, FILE 					*textf
+			, double 				white_advantage
+			, double 				drawrate_evenmatch
 			, int					decimals)
 {
 	FILE *f;
@@ -424,8 +420,8 @@ all_report 	( const struct GAMES 	*g
 		}
 
 		fprintf (f,"\n");
-		fprintf (f,"White advantage = %.2f\n",White_advantage);
-		fprintf (f,"Draw rate (equal opponents) = %.2f %s\n",100*Drawrate_evenmatch, "%");
+		fprintf (f,"White advantage = %.2f\n",white_advantage);
+		fprintf (f,"Draw rate (equal opponents) = %.2f %s\n",100*drawrate_evenmatch, "%");
 		fprintf (f,"\n");
 
 	} /*if*/
