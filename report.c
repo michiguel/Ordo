@@ -42,12 +42,12 @@ calc_encounters__
 
 }
 
-static struct PLAYERS 		*pPlayers;
-static size_t N_relative_anchors = 100;
-static int OUTDECIMALS = 1;
-static double White_advantage = 0;
-static double Drawrate_evenmatch = 0;
-static double Confidence_factor = 1;
+static struct PLAYERS 	*pPlayers;
+static size_t 			N_relative_anchors = 100;
+static int 				OUTDECIMALS = 1;
+static double 			White_advantage = 0;
+static double 			Drawrate_evenmatch = 0;
+static double 			Confidence_factor = 1;
 
 static struct relprior *Raa;
 
@@ -74,31 +74,6 @@ report_loadpars(
 	Raa = raa;
 }
 
-#if 0
-static int
-compareit (const void *a, const void *b)
-{
-	const int *ja = (const int *) a;
-	const int *jb = (const int *) b;
-
-	const double da = RA.ratingof_results[*ja];
-	const double db = RA.ratingof_results[*jb];
-    
-	return (da < db) - (da > db);
-}
-#else
-/*
-static int
-compareit (const void *a, const void *b)
-{	
-	//FIXME 
-	return 1;
-}
-*/
-
-// 	qsort (r->sorted, p->n, sizeof (r->sorted[0]), compareit);
-//ins_sort (RA.ratingof_results, p->n, r->sorted);
-
 static int
 compare__ (const int32_t *a, const int32_t *b, const double *reference )
 {	
@@ -113,7 +88,7 @@ compare__ (const int32_t *a, const int32_t *b, const double *reference )
 }
 
 static void
-ins_sort (const double *reference, size_t n, int32_t *vect)
+insertion_sort (const double *reference, size_t n, int32_t *vect)
 {
 	size_t i, j;
 	int32_t tmp;
@@ -126,8 +101,6 @@ ins_sort (const double *reference, size_t n, int32_t *vect)
 	}
 
 }
-
-#endif
 
 static size_t
 find_maxlen (const char *nm[], size_t n)
@@ -145,7 +118,7 @@ find_maxlen (const char *nm[], size_t n)
 static bool_t 
 is_super_player(size_t j)
 {
-	assert(Performance_type_set);
+	assert(pPlayers->perf_set);
 	return pPlayers->performance_type[j] == PERF_SUPERLOSER 
 		|| pPlayers->performance_type[j] == PERF_SUPERWINNER
 		|| pPlayers->performance_type[j] == PERF_NOGAMES
@@ -158,7 +131,7 @@ static const char *SP_symbolstr[MAXSYMBOLS_STR] = {"<",">","*"," ","X"};
 static const char *
 get_super_player_symbolstr(size_t j)
 {
-	assert(Performance_type_set);
+	assert(pPlayers->perf_set);
 	if (pPlayers->performance_type[j] == PERF_SUPERLOSER) {
 		return SP_symbolstr[0];
 	} else if (pPlayers->performance_type[j] == PERF_SUPERWINNER) {
@@ -228,8 +201,8 @@ cegt_output	( const struct GAMES 	*g
 	for (j = 0; j < p->n; j++) {
 		r->sorted[j] = (int32_t) j; //FIXME size_t
 	}
-//	qsort (r->sorted, p->n, sizeof (r->sorted[0]), compareit);
-ins_sort (r->ratingof_results, p->n, r->sorted);
+
+	insertion_sort (r->ratingof_results, p->n, r->sorted);
 
 	cegt.n_enc = e->n; 
 	cegt.enc = e->enc;
@@ -274,8 +247,8 @@ head2head_output( const struct GAMES 	*g
 	for (j = 0; j < p->n; j++) {
 		r->sorted[j] = (int32_t)j; //FIXME size_t
 	}
-//	qsort (r->sorted, p->n, sizeof (r->sorted[0]), compareit);
-ins_sort (r->ratingof_results, p->n, r->sorted);
+
+	insertion_sort (r->ratingof_results, p->n, r->sorted);
 
 	cegt.n_enc = e->n;
 	cegt.enc = e->enc;
@@ -301,8 +274,8 @@ ins_sort (r->ratingof_results, p->n, r->sorted);
 static bool_t 
 is_empty_player(size_t j)
 {
-	assert(Performance_type_set);
-	return Players.performance_type[j] == PERF_NOGAMES
+	assert(pPlayers->perf_set);
+	return pPlayers->performance_type[j] == PERF_NOGAMES
 	;		
 }
 #endif
@@ -336,8 +309,7 @@ all_report 	( const struct GAMES 	*g
 		r->sorted[j] = (int32_t)j; //FIXME size_t
 	}
 
-//	qsort (r->sorted, p->n, sizeof (r->sorted[0]), compareit);
-ins_sort (r->ratingof_results, p->n, r->sorted);
+	insertion_sort (r->ratingof_results, p->n, r->sorted);
 
 	/* output in text format */
 	f = textf;

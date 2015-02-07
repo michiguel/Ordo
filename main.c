@@ -347,6 +347,9 @@ players_init (size_t n, struct PLAYERS *x)
 	x->flagged			= pv[1];
 	x->prefed			= pv[2];
 	x->performance_type = pv[3]; 
+
+	x->perf_set = FALSE;
+
 	return TRUE;
 }
 
@@ -382,7 +385,7 @@ static bool_t 	Multiple_anchors_present = FALSE;
 static bool_t	General_average_set = FALSE;
 
 static int		Anchored_n = 0;
-static bool_t	Performance_type_set = FALSE;
+//static bool_t	Performance_type_set = FALSE;
 
 static double	Confidence = 95;
 static double	General_average = 2300.0;
@@ -451,7 +454,7 @@ static bool_t	Prior_mode;
 
 static void		purge_players (bool_t quiet, struct PLAYERS *pl);
 
-static long 	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl, bool_t *perftype_set);
+static long 	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl);
 
 static void		players_clear_flagged (struct PLAYERS *p);
 
@@ -1097,7 +1100,7 @@ int main (int argc, char *argv[])
 	/*=====================*/
 
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
-	if (0 < set_super_players(QUIET_MODE, &Encounters, &Players, &Performance_type_set)) {
+	if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
 		purge_players (QUIET_MODE, &Players);
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
@@ -1178,7 +1181,7 @@ int main (int argc, char *argv[])
 					reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingbk);
 
 					calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
-					if (0 < set_super_players(QUIET_MODE, &Encounters, &Players, &Performance_type_set)) {
+					if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
 						purge_players (QUIET_MODE, &Players);
 						calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 					}
@@ -1239,7 +1242,7 @@ int main (int argc, char *argv[])
 		DB_transform(pdaba, &Games, &Players, &Game_stats); /* convert DB to global variables, to restore original data */
 		qsort (Games.ga, (size_t)Games.n, sizeof(struct gamei), compare_GAME);
 		calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
-		if (0 < set_super_players(QUIET_MODE, &Encounters, &Players, &Performance_type_set)) {
+		if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
 			purge_players (QUIET_MODE, &Players);
 			calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 		}
@@ -2032,7 +2035,7 @@ purge_players (bool_t quiet, struct PLAYERS *pl)
 	bool_t *flagged = pl->flagged;
 
 	size_t j;
-	assert(Performance_type_set);
+	assert(pl->perf_set);
 	for (j = 0; j < n_players; j++) {
 		if (flagged[j]) continue;
 		if (performance_type[j] != PERF_NORMAL) {
@@ -2308,7 +2311,7 @@ table_output(double rtng_76)
 
 // no globals
 static long int	
-set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl, bool_t *perftype_set)
+set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl)
 
 {
 	// Encounters
@@ -2371,7 +2374,7 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl,
 		obt[j] = 0.0;	
 		pla[j] = 0;
 	}	
-	*perftype_set = TRUE;
+	pl->perf_set = TRUE;
 
 	memrel(obt);
 	memrel(pla);
