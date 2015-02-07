@@ -70,5 +70,17 @@ errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATI
 void
 ctsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out);
 
+void
+report_loadpars(
+
+ struct PLAYERS *p,
+ size_t 		n_relative_anchors,
+ int 			outdec,
+ double 		wadv,
+ double 		drate,
+ double 		conf,
+ struct relprior *raa
+
+);
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

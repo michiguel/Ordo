@@ -433,8 +433,6 @@ static void 	priors_load		(const char *fpriors_name);
 
 static void		anchor_j 		(size_t j, double x);
 
-#define MAX_RELPRIORS 10000
-
 static struct relprior Ra[MAX_RELPRIORS];
 static struct relprior Ra_store[MAX_RELPRIORS];
 
@@ -1243,6 +1241,19 @@ int main (int argc, char *argv[])
 	/* Simulation block, end */
 
 	// Reports
+
+
+report_loadpars(
+
+ &Players,
+ N_relative_anchors,
+ OUTDECIMALS,
+ White_advantage,
+ Drawrate_evenmatch,
+ Confidence_factor,
+ Ra
+
+);
 
 	all_report 	( &Games
 				, &Players

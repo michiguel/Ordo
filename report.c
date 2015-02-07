@@ -9,6 +9,8 @@
 #include "gauss.h"
 #include "math.h"
 
+#include "ordolim.h"
+
 //=== duplicated in main.c =========
 
 static ptrdiff_t
@@ -40,14 +42,37 @@ calc_encounters__
 
 }
 
-static struct PLAYERS 		Players;
+static struct PLAYERS 		*pPlayers;
 static size_t N_relative_anchors = 100;
 static int OUTDECIMALS = 1;
 static double White_advantage = 0;
 static double Drawrate_evenmatch = 0;
 static double Confidence_factor = 1;
 
-static struct relprior Raa[MAX_RELPRIORS];
+static struct relprior *Raa;
+
+
+void
+report_loadpars(
+
+ struct PLAYERS *p,
+ size_t 		n_relative_anchors,
+ int 			outdec,
+ double 		wadv,
+ double 		drate,
+ double 		conf,
+ struct relprior *raa
+
+)
+{
+	pPlayers = p;
+	N_relative_anchors = n_relative_anchors;
+	OUTDECIMALS = outdec;
+	White_advantage = wadv;
+	Drawrate_evenmatch = drate;
+	Confidence_factor = conf;
+	Raa = raa;
+}
 
 #if 0
 static int
@@ -62,12 +87,46 @@ compareit (const void *a, const void *b)
 	return (da < db) - (da > db);
 }
 #else
+/*
 static int
 compareit (const void *a, const void *b)
 {	
 	//FIXME 
 	return 1;
 }
+*/
+
+// 	qsort (r->sorted, p->n, sizeof (r->sorted[0]), compareit);
+//ins_sort (RA.ratingof_results, p->n, r->sorted);
+
+static int
+compare__ (const int32_t *a, const int32_t *b, const double *reference )
+{	
+	const int32_t *ja = a;
+	const int32_t *jb = b;
+	const double *r = reference;
+
+	const double da = r[*ja];
+	const double db = r[*jb];
+    
+	return (da < db) - (da > db);
+}
+
+static void
+ins_sort (const double *reference, size_t n, int32_t *vect)
+{
+	size_t i, j;
+	int32_t tmp;
+	for (j = n-1; j > 0; j--) {
+		for (i = j; i < n; i++) {
+			if (0 < compare__(&vect[i-1], &vect[i], reference)) {
+				tmp = vect[i-1]; vect[i-1] = vect[i]; vect[i] = tmp; // swap
+			}	
+		}
+	}
+
+}
+
 #endif
 
 static size_t
@@ -86,22 +145,31 @@ find_maxlen (const char *nm[], size_t n)
 static bool_t 
 is_super_player(size_t j)
 {
-	assert(Performance_type_set);
-	return Players.performance_type[j] == PERF_SUPERLOSER || Players.performance_type[j] == PERF_SUPERWINNER;		
+//	assert(Performance_type_set);
+	return pPlayers->performance_type[j] == PERF_SUPERLOSER || pPlayers->performance_type[j] == PERF_SUPERWINNER;		
 }
 
-static const char *SP_symbolstr[3] = {"<",">"," "};
+#define MAXSYMBOLS_STR 3
+static const char *SP_symbolstr[MAXSYMBOLS_STR] = {"<",">"," "};
 
 static const char *
 get_super_player_symbolstr(size_t j)
 {
-	assert(Performance_type_set);
-	if (Players.performance_type[j] == PERF_SUPERLOSER) {
-		return SP_symbolstr[0];
-	} else if (Players.performance_type[j] == PERF_SUPERWINNER) {
-		return SP_symbolstr[1];
-	} else
-		return SP_symbolstr[2];
+	const char *ret = NULL;
+//	assert(Performance_type_set);
+
+	if (pPlayers->performance_type[j] == PERF_SUPERLOSER) {
+
+		ret = SP_symbolstr[0];
+	} else if (pPlayers->performance_type[j] == PERF_SUPERWINNER) {
+
+		ret = SP_symbolstr[1];
+	} else {
+
+		ret = SP_symbolstr[2];	
+	}
+
+	return ret;
 }
 
 static bool_t
@@ -161,7 +229,8 @@ cegt_output	( const struct GAMES 	*g
 	for (j = 0; j < p->n; j++) {
 		r->sorted[j] = (int32_t) j; //FIXME size_t
 	}
-	qsort (r->sorted, (size_t)p->n, sizeof (r->sorted[0]), compareit);
+//	qsort (r->sorted, p->n, sizeof (r->sorted[0]), compareit);
+ins_sort (r->ratingof_results, p->n, r->sorted);
 
 	cegt.n_enc = e->n; 
 	cegt.enc = e->enc;
@@ -206,7 +275,8 @@ head2head_output( const struct GAMES 	*g
 	for (j = 0; j < p->n; j++) {
 		r->sorted[j] = (int32_t)j; //FIXME size_t
 	}
-	qsort (r->sorted, p->n, sizeof (r->sorted[0]), compareit);
+//	qsort (r->sorted, p->n, sizeof (r->sorted[0]), compareit);
+ins_sort (r->ratingof_results, p->n, r->sorted);
 
 	cegt.n_enc = e->n;
 	cegt.enc = e->enc;
@@ -258,7 +328,8 @@ all_report 	( const struct GAMES 	*g
 		r->sorted[j] = (int32_t)j; //FIXME size_t
 	}
 
-	qsort (r->sorted, (size_t)p->n, sizeof (r->sorted[0]), compareit);
+//	qsort (r->sorted, p->n, sizeof (r->sorted[0]), compareit);
+ins_sort (r->ratingof_results, p->n, r->sorted);
 
 	/* output in text format */
 	f = textf;
