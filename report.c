@@ -145,31 +145,30 @@ find_maxlen (const char *nm[], size_t n)
 static bool_t 
 is_super_player(size_t j)
 {
-//	assert(Performance_type_set);
-	return pPlayers->performance_type[j] == PERF_SUPERLOSER || pPlayers->performance_type[j] == PERF_SUPERWINNER;		
+	assert(Performance_type_set);
+	return pPlayers->performance_type[j] == PERF_SUPERLOSER 
+		|| pPlayers->performance_type[j] == PERF_SUPERWINNER
+		|| pPlayers->performance_type[j] == PERF_NOGAMES
+	;		
 }
 
-#define MAXSYMBOLS_STR 3
-static const char *SP_symbolstr[MAXSYMBOLS_STR] = {"<",">"," "};
+#define MAXSYMBOLS_STR 5
+static const char *SP_symbolstr[MAXSYMBOLS_STR] = {"<",">","*"," ","X"};
 
 static const char *
 get_super_player_symbolstr(size_t j)
 {
-	const char *ret = NULL;
-//	assert(Performance_type_set);
-
+	assert(Performance_type_set);
 	if (pPlayers->performance_type[j] == PERF_SUPERLOSER) {
-
-		ret = SP_symbolstr[0];
+		return SP_symbolstr[0];
 	} else if (pPlayers->performance_type[j] == PERF_SUPERWINNER) {
-
-		ret = SP_symbolstr[1];
-	} else {
-
-		ret = SP_symbolstr[2];	
-	}
-
-	return ret;
+		return SP_symbolstr[1];
+	} else if (pPlayers->performance_type[j] == PERF_NOGAMES) {
+		return SP_symbolstr[2];
+	} else if (pPlayers->performance_type[j] == PERF_NORMAL) {
+		return SP_symbolstr[3];
+	} else
+		return SP_symbolstr[4];
 }
 
 static bool_t
@@ -298,6 +297,15 @@ ins_sort (r->ratingof_results, p->n, r->sorted);
 	output_report_individual (head2head_str, &cegt, (int)simulate);
 }
 
+#ifndef NDEBUG
+static bool_t 
+is_empty_player(size_t j)
+{
+	assert(Performance_type_set);
+	return Players.performance_type[j] == PERF_NOGAMES
+	;		
+}
+#endif
 
 void
 all_report 	( const struct GAMES 	*g
@@ -374,16 +382,9 @@ ins_sort (r->ratingof_results, p->n, r->sorted);
 							"%"
 						);
 					}
-
-				} else {
-
-						fprintf(f, "%4lu %-*s   :%7s %9s %7s %6s%s\n", 
-							i+1,
-							(int)ml+1,
-							p->name[j], 
-							"----", "----", "----", "----","%");
-				}
+				} 
 			}
+
 		} else {
 			fprintf(f, "\n%s %-*s    :%7s %6s %8s %7s %6s\n", 
 				"   #", 
@@ -395,7 +396,12 @@ ins_sort (r->ratingof_results, p->n, r->sorted);
 
 				sdev_str = get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer);
 
-				if (!p->flagged[j]) {
+				if (r->playedby_results[j] == 0) {
+
+					assert(is_empty_player(j));
+					// skip
+
+				} else if (!p->flagged[j]) {
 
 					char rankbuf[80];
 					showrank = !is_old_version((int32_t)j);
@@ -414,7 +420,7 @@ ins_sort (r->ratingof_results, p->n, r->sorted);
 						rankbuf,
 						(int)ml+1, 
 						p->name[j],
- 						get_super_player_symbolstr(j),
+						get_super_player_symbolstr(j),
 						OUTDECIMALS,
 						rating_round(r->ratingof_results[j], OUTDECIMALS), 
 						sdev_str, 
@@ -439,6 +445,7 @@ ins_sort (r->ratingof_results, p->n, r->sorted);
 						"%"
 					);
 				} else {
+
 					fprintf(f, "%4lu %-*s   :%7s %s %8s %7s %6s%s\n", 
 						i+1,
 						(int)ml+1,
@@ -460,12 +467,14 @@ ins_sort (r->ratingof_results, p->n, r->sorted);
 	f = csvf;
 	if (f != NULL) {
 			fprintf(f, "\"%s\""
+			",\"%s\""
 			",%s"
 			",%s"
 			",%s"
 			",%s"
 			",%s"
-			"\n"		
+			"\n"	
+			,"#"	
 			,"Player"
 			,"\"Rating\"" 
 			,"\"Error\"" 
@@ -473,8 +482,12 @@ ins_sort (r->ratingof_results, p->n, r->sorted);
 			,"\"Games\""
 			,"\"(%)\"" 
 			);
+		rank = 0;
 		for (i = 0; i < p->n; i++) {
 			j = (size_t) r->sorted[i]; //FIXME size_t
+
+			if (r->playedby_results[j]!=0) {
+				rank++;
 
 				if (sdev[j] > 0.00000001) {
 					sprintf(sdev_str_buffer, "%.1f", sdev[j] * confidence_factor);
@@ -483,24 +496,28 @@ ins_sort (r->ratingof_results, p->n, r->sorted);
 					sdev_str = "\"-\"";
 				}
 
-			fprintf(f, "\"%s\",%.1f"
-			",%s"
-			",%.2f"
-			",%d"
-			",%.2f"
-			"\n"		
-			,p->name[j]
-			,r->ratingof_results[j] 
-			,sdev_str
-			,r->obtained_results[j]
-			,r->playedby_results[j]
-			,r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/r->playedby_results[j] 
-			);
+				fprintf(f, "%d,"
+				"\"%s\",%.1f"
+				",%s"
+				",%.2f"
+				",%d"
+				",%.2f"
+				"\n"		
+				,rank
+				,p->name[j]
+				,r->ratingof_results[j] 
+				,sdev_str
+				,r->obtained_results[j]
+				,r->playedby_results[j]
+				,r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/r->playedby_results[j] 
+				);
+			}
 		}
 	}
 
 	return;
 }
+
 
 
 void
