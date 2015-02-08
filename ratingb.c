@@ -246,16 +246,18 @@ calc_rating_bayes2
 			, struct ENC *	enc
 			, size_t		N_enc
 
-			, size_t		n_players
+, struct PLAYERS *plyrs
+
+//			, size_t		n_players
 			, double *		obtained
 
 			, int *			playedby
 			, double *		ratingof
 			, double *		ratingbk
-			, int *			performance_type
+//			, int *			performance_type
 
-			, bool_t *		flagged
-			, bool_t *		prefed
+//			, bool_t *		flagged
+//			, bool_t *		prefed
 
 			, double		*pwadv
 			, double		general_average
@@ -269,7 +271,7 @@ calc_rating_bayes2
 				
 			, struct GAMES *g
 
-			, const char *	name[]
+//			, const char *	name[]
 
 			, double		beta
 
@@ -310,6 +312,13 @@ calc_rating_bayes2
 	double white_advantage = *pwadv;
 
 	double *probarr;
+
+size_t		n_players = plyrs->n;
+int *		performance_type = plyrs->performance_type;
+bool_t *	flagged = plyrs->flagged;
+bool_t *	prefed  = plyrs->prefed;
+const char **name = plyrs->name;
+
 
 	probarr = memnew (sizeof(double) * n_players * 4);
 

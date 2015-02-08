@@ -2166,16 +2166,16 @@ calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advant
 				( quiet
 				, enc
 				, N_enc
-
-				, Players.n
+, &Players
+//				, Players.n
 				, RA.obtained
 				, RA.playedby
 				, RA.ratingof
 				, RA.ratingbk
-				, Players.performance_type
+//				, Players.performance_type
 
-				, Players.flagged
-				, Players.prefed
+//				, Players.flagged
+//				, Players.prefed
 
 				, pWhite_advantage
 				, General_average
@@ -2188,7 +2188,7 @@ calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advant
 				
 				, &Games
 
-				, Players.name
+//				, Players.name
 				, BETA
 
 				, RA.changing

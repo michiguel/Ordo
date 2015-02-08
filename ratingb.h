@@ -33,15 +33,17 @@ calc_rating_bayes2
 			, struct ENC *	enc
 			, size_t		N_enc
 
-			, size_t		n_players
+, struct PLAYERS *plyrs
+
+//			, size_t		n_players
 			, double *		obtained
 			, int *			playedby
 			, double *		ratingof
 			, double *		ratingbk
-			, int *			performance_type
+//			, int *			performance_type
 
-			, bool_t *		flagged
-			, bool_t *		prefed
+//			, bool_t *		flagged
+//			, bool_t *		prefed
 
 			, double		*pwadv
 			, double		general_average
@@ -55,7 +57,7 @@ calc_rating_bayes2
 				
 			, struct GAMES *g
 
-			, const char *	name[]
+//			, const char *	name[]
 			, double		beta
 
 			// different from non bayes calc
