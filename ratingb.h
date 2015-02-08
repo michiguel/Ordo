@@ -33,17 +33,8 @@ calc_rating_bayes2
 			, struct ENC *	enc
 			, size_t		N_enc
 
-, struct PLAYERS *plyrs
-
-//			, size_t		n_players
-			, double *		obtained
-			, int *			playedby
-			, double *		ratingof
-			, double *		ratingbk
-//			, int *			performance_type
-
-//			, bool_t *		flagged
-//			, bool_t *		prefed
+			, struct PLAYERS *plyrs
+			, struct RATINGS *rat
 
 			, double		*pwadv
 			, double		general_average
@@ -62,7 +53,6 @@ calc_rating_bayes2
 
 			// different from non bayes calc
 
-			, double *			changing
 			, size_t 			n_relative_anchors
 			, struct prior *	pp
 //			, double 			probarray [MAXPLAYERS] [4]
