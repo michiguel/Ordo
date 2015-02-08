@@ -443,9 +443,10 @@ static bool_t 	Hide_old_ver = FALSE;
 
 static void		relpriors_shuffle	(struct rel_prior_set *rps /*@out@*/);
 static void		relpriors_copy		(const struct rel_prior_set *r, struct rel_prior_set *s /*@out@*/);
-static bool_t 	set_relprior 		(const char *player_a, const char *player_b, double x, double sigma, struct rel_prior_set *rps /*@out@*/);
+static bool_t 	set_relprior 		(const struct PLAYERS *plyrs, const char *player_a, const char *player_b
+									, double x, double sigma, struct rel_prior_set *rps /*@out@*/);
 static void 	relpriors_show		(const struct rel_prior_set *rps);
-static void 	relpriors_load		(const char *f_name, struct rel_prior_set *rps);
+static void 	relpriors_load		(const struct PLAYERS *plyrs, const char *f_name, struct rel_prior_set *rps);
 
 static bool_t	Prior_mode;
 
@@ -461,7 +462,7 @@ static long 	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct
 
 static void		players_clear_flagged (struct PLAYERS *p);
 
-static void		init_rating (void);
+static void		init_rating (size_t n, double rat0, struct RATINGS *rat /*@out@*/);
 static void		reset_rating (double general_average, size_t n_players, const bool_t *prefed, const bool_t *flagged, double *rating);
 static void		ratings_copy (const double *r, size_t n, double *t);
 static void		init_manchors(const char *fpins_name);
@@ -938,7 +939,7 @@ RPset_store.x = Relative_priors__buffer2;
 	Confidence_factor = confidence2x(Confidence/100.0);
 	// printf("confidence factor = %f\n",Confidence_factor);
 
-	init_rating();
+	init_rating(Players.n, General_average, &RA);
 
 	// PRIORS
 	priors_reset(PP, Players.n);
@@ -957,7 +958,7 @@ RPset_store.x = Relative_priors__buffer2;
 	// multiple anchors done
 
 	if (relstr != NULL) {
-		relpriors_load(relstr, &RPset); 
+		relpriors_load(&Players, relstr, &RPset); 
 	}
 	if (!QUIET_MODE) {
 		priors_show(PP, Players.n);
@@ -1500,14 +1501,14 @@ head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y)
 //=====================================
 
 static void
-init_rating (void)
+init_rating (size_t n, double rat0, struct RATINGS *rat)
 {
 	size_t i;
-	for (i = 0; i < Players.n; i++) {
-		RA.ratingof[i] = General_average;
+	for (i = 0; i < n; i++) {
+		rat->ratingof[i] = rat0;
 	}
-	for (i = 0; i < Players.n; i++) {
-		RA.ratingbk[i] = General_average;
+	for (i = 0; i < n; i++) {
+		rat->ratingbk[i] = rat0;
 	}
 }
 
@@ -1644,7 +1645,7 @@ init_manchors(const char *fpins_name)
 
 
 static bool_t
-set_relprior (const char *player_a, const char *player_b, double x, double sigma, struct rel_prior_set *rps)
+set_relprior (const struct PLAYERS *plyrs, const char *player_a, const char *player_b, double x, double sigma, struct rel_prior_set *rps)
 {
 	size_t j;
 	int32_t p_a = -1; 
@@ -1654,8 +1655,8 @@ set_relprior (const char *player_a, const char *player_b, double x, double sigma
 
 	assert(sigma > PRIOR_SMALLEST_SIGMA);
 
-	for (j = 0, found = FALSE; !found && j < Players.n; j++) {
-		found = !strcmp(Players.name[j], player_a);
+	for (j = 0, found = FALSE; !found && j < plyrs->n; j++) {
+		found = !strcmp(plyrs->name[j], player_a);
 		if (found) {
 			p_a = (int32_t) j; //FIXME size_t
 		} 
@@ -1663,8 +1664,8 @@ set_relprior (const char *player_a, const char *player_b, double x, double sigma
 
 	if (!found) return found;
 
-	for (j = 0, found = FALSE; !found && j < Players.n; j++) {
-		found = !strcmp(Players.name[j], player_b);
+	for (j = 0, found = FALSE; !found && j < plyrs->n; j++) {
+		found = !strcmp(plyrs->name[j], player_b);
 		if (found) {
 			p_b = (int32_t) j; //FIXME size_t
 		} 
@@ -1743,7 +1744,7 @@ relpriors_show (const struct rel_prior_set *rps)
 }
 
 static bool_t
-assign_relative_prior (char *s, char *z, double x, double y, bool_t quiet, struct rel_prior_set *rps /*@out@*/)
+assign_relative_prior (const struct PLAYERS *plyrs, char *s, char *z, double x, double y, bool_t quiet, struct rel_prior_set *rps /*@out@*/)
 {
 	bool_t prior_success = TRUE;
 	bool_t suc;
@@ -1756,7 +1757,7 @@ assign_relative_prior (char *s, char *z, double x, double y, bool_t quiet, struc
 			fprintf (stderr,"sigma too small\n");
 			exit(EXIT_FAILURE);
 		} else {
-			suc = set_relprior (s, z, x, y, rps);
+			suc = set_relprior (plyrs, s, z, x, y, rps);
 			if (suc) {
 				if (!quiet)
 				printf ("Relative Prior, %s, %s --> %.1lf, %.1lf\n", s, z, x, y);
@@ -1770,7 +1771,7 @@ assign_relative_prior (char *s, char *z, double x, double y, bool_t quiet, struc
 }
 
 static void
-relpriors_load(const char *f_name, struct rel_prior_set *rps /*@out@*/)
+relpriors_load (const struct PLAYERS *plyrs, const char *f_name, struct rel_prior_set *rps /*@out@*/)
 {
 	#define MAX_MYLINE 1024
 
@@ -1825,7 +1826,7 @@ relpriors_load(const char *f_name, struct rel_prior_set *rps /*@out@*/)
 
 			file_success = success;
 
-			prior_success = assign_relative_prior (s, z, x, y, QUIET_MODE, rps);
+			prior_success = assign_relative_prior (plyrs, s, z, x, y, QUIET_MODE, rps);
 
 		}
 
@@ -2044,7 +2045,6 @@ priors_load(const char *fpriors_name)
 static void
 purge_players (bool_t quiet, struct PLAYERS *pl)
 {
-	// Players
 	size_t n_players = pl->n;
 	const int *performance_type = pl->performance_type;
 	const char **name = pl->name;
@@ -2335,7 +2335,7 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl)
 	size_t N_enc = ee->n;
 	const struct ENC *enc = ee->enc;
 
-	//Players
+	// Players
 	size_t n_players = pl->n;
 	int *perftype  = pl->performance_type;
 	const char **name    = pl->name;
