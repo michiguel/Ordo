@@ -430,11 +430,11 @@ static int 		Priored_n = 0;
 static void 	priors_reset	(struct prior *p, size_t n);
 static void		priors_copy		(const struct prior *p, size_t n, struct prior *q);
 static void 	priors_shuffle	(struct prior *p, size_t n);
-static void		priors_show 	(struct prior *p, size_t n);
-static bool_t 	set_prior 		(const char *prior_name, double x, double sigma);
-static void 	priors_load		(const char *fpriors_name);
+static void		priors_show 	(const struct PLAYERS *plyrs, struct prior *p, size_t n);
+static bool_t 	set_prior 		(const struct PLAYERS *plyrs, const char *prior_name, double x, double sigma);
+static void 	priors_load (const char *fpriors_name, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/);
 
-static void		anchor_j 		(size_t j, double x);
+static void		anchor_j 		(size_t j, double x, struct RATINGS *rat, struct PLAYERS *plyrs);
 
 static struct relprior Relative_priors__buffer1[MAX_RELPRIORS];
 static struct relprior Relative_priors__buffer2[MAX_RELPRIORS];
@@ -445,7 +445,7 @@ static void		relpriors_shuffle	(struct rel_prior_set *rps /*@out@*/);
 static void		relpriors_copy		(const struct rel_prior_set *r, struct rel_prior_set *s /*@out@*/);
 static bool_t 	set_relprior 		(const struct PLAYERS *plyrs, const char *player_a, const char *player_b
 									, double x, double sigma, struct rel_prior_set *rps /*@out@*/);
-static void 	relpriors_show		(const struct rel_prior_set *rps);
+static void 	relpriors_show		(const struct PLAYERS *plyrs, const struct rel_prior_set *rps);
 static void 	relpriors_load		(const struct PLAYERS *plyrs, const char *f_name, struct rel_prior_set *rps);
 
 static bool_t	Prior_mode;
@@ -465,12 +465,12 @@ static void		players_clear_flagged (struct PLAYERS *p);
 static void		init_rating (size_t n, double rat0, struct RATINGS *rat /*@out@*/);
 static void		reset_rating (double general_average, size_t n_players, const bool_t *prefed, const bool_t *flagged, double *rating);
 static void		ratings_copy (const double *r, size_t n, double *t);
-static void		init_manchors(const char *fpins_name);
+static void		init_manchors(const char *fpins_name, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/);
 
 static size_t	calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advantage
 							, bool_t adjust_wadv, double *pDraw_rate, struct rel_prior_set *rps);
 
-static void 	ratings_results (void);
+static void 	ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat);
 static void		ratings_for_purged (const struct PLAYERS *p, struct RATINGS *r /*@out@*/);
 
 static void
@@ -886,7 +886,7 @@ RPset_store.x = Relative_priors__buffer2;
 
 	if (Anchor_use) {
 		if (find_player_index(&Players, Anchor_name, &Anchor)) {
-			anchor_j ((size_t)Anchor, General_average);
+			anchor_j ((size_t)Anchor, General_average, &RA, &Players);
 		} else {
 			fprintf (stderr, "ERROR: No games of anchor player, mispelled, wrong capital letters, or extra spaces = \"%s\"\n", Anchor_name);
 			fprintf (stderr, "Surround the name with \"quotes\" if it contains spaces\n\n");
@@ -945,7 +945,7 @@ RPset_store.x = Relative_priors__buffer2;
 	priors_reset(PP, Players.n);
 
 	if (priorsstr != NULL) {
-		priors_load(priorsstr);
+		priors_load(priorsstr, &RA, &Players);
 		#if !defined(DOPRIOR)
 		Some_prior_set = FALSE;
 		#endif
@@ -953,7 +953,7 @@ RPset_store.x = Relative_priors__buffer2;
 
 	// multiple anchors here
 	if (pinsstr != NULL) {
-		init_manchors(pinsstr); 
+		init_manchors(pinsstr, &RA, &Players); 
 	}
 	// multiple anchors done
 
@@ -961,8 +961,8 @@ RPset_store.x = Relative_priors__buffer2;
 		relpriors_load(&Players, relstr, &RPset); 
 	}
 	if (!QUIET_MODE) {
-		priors_show(PP, Players.n);
-		relpriors_show(&RPset);
+		priors_show(&Players, PP, Players.n);
+		relpriors_show(&Players, &RPset);
 	//FIXME do not allow relpriors to be purged
 	}
 
@@ -1118,7 +1118,7 @@ RPset_store.x = Relative_priors__buffer2;
 	}
 	Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch, &RPset);
 
-	ratings_results();
+	ratings_results(&Players, &RA);
 
 	/* Simulation block, begin */
 	if (Simulate > 1)
@@ -1180,7 +1180,6 @@ RPset_store.x = Relative_priors__buffer2;
 					priors_copy(PP, Players.n, PP_store);
 					relpriors_shuffle(&RPset);
 					priors_shuffle(PP, Players.n);
-					//priors_show (PP, Players.n);
 
 					#if defined(SAVE_SIMULATION)
 					if ((Simulate-z) == SAVE_SIMULATION_N) {
@@ -1543,32 +1542,32 @@ static bool_t getnum(char *p, double *px)
 }
 
 static void
-anchor_j (size_t j, double x)
+anchor_j (size_t j, double x, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
 {
 	Multiple_anchors_present = TRUE;
-	Players.prefed[j] = TRUE;
-	RA.ratingof[j] = x;
+	plyrs->prefed[j] = TRUE;
+	rat->ratingof[j] = x;
 	Anchored_n++;
 }
 
 static bool_t
-set_anchor (const char *player_name, double x)
+set_anchor (const char *player_name, double x, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
 {
 	size_t j;
 	bool_t found;
-	for (j = 0, found = FALSE; !found && j < Players.n; j++) {
-		found = !strcmp(Players.name[j], player_name);
+	for (j = 0, found = FALSE; !found && j < plyrs->n; j++) {
+		found = !strcmp(plyrs->name[j], player_name);
 		if (found) {
-			anchor_j (j, x);
+			anchor_j (j, x, rat, plyrs);
 		} 
 	}
 	return found;
 }
 
 static bool_t
-assign_anchor (char *name_pinned, double x, bool_t quiet)
+assign_anchor (char *name_pinned, double x, bool_t quiet, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
 {
-	bool_t pin_success = set_anchor (name_pinned, x);
+	bool_t pin_success = set_anchor (name_pinned, x, rat, plyrs);
 	if (pin_success) {
 		if (!quiet)
 		printf ("Anchoring, %s --> %.1lf\n", name_pinned, x);
@@ -1579,7 +1578,7 @@ assign_anchor (char *name_pinned, double x, bool_t quiet)
 }
 
 static void
-init_manchors(const char *fpins_name)
+init_manchors (const char *fpins_name, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
 {
 	#define MAX_MYLINE 1024
 	FILE *fpins;
@@ -1621,7 +1620,7 @@ init_manchors(const char *fpins_name)
 				exit(EXIT_FAILURE);
 			}
 			file_success = success;
-			pin_success = assign_anchor (name_pinned, x, QUIET_MODE);
+			pin_success = assign_anchor (name_pinned, x, QUIET_MODE, rat, plyrs);
 		}
 
 		fclose(fpins);
@@ -1725,7 +1724,7 @@ relpriors_copy(const struct rel_prior_set *r, struct rel_prior_set *s /*@out@*/)
 #endif
 
 static void
-relpriors_show (const struct rel_prior_set *rps)
+relpriors_show (const struct PLAYERS *plyrs, const struct rel_prior_set *rps)
 {
 	size_t rn = rps->n;
 	const struct relprior *rx = rps->x;
@@ -1735,7 +1734,7 @@ relpriors_show (const struct rel_prior_set *rps)
 		for (i = 0; i < rn; i++) {
 			int a = rx[i].player_a;
 			int b = rx[i].player_b;
-			printf ("[%s] [%s] = %lf +/- %lf\n", Players.name[a], Players.name[b], rx[i].delta, rx[i].sigma);
+			printf ("[%s] [%s] = %lf +/- %lf\n", plyrs->name[a], plyrs->name[b], rx[i].delta, rx[i].sigma);
 		}
 		printf ("}\n");
 	} else {
@@ -1873,7 +1872,6 @@ priors_copy(const struct prior *p, size_t n, struct prior *q)
 	}
 }
 
-#if 1
 static void
 priors_shuffle(struct prior *p, size_t n)
 {
@@ -1887,18 +1885,16 @@ priors_shuffle(struct prior *p, size_t n)
 		}
 	}
 }
-#endif
 
-#if 1
 static void
-priors_show (struct prior *p, size_t n)
+priors_show (const struct PLAYERS *plyrs, struct prior *p, size_t n)
 { 
 	size_t i;
 	if (Priored_n > 0) {
 		printf ("Loose Anchors {\n");
 		for (i = 0; i < n; i++) {
 			if (p[i].isset) {
-				printf ("  [%s] = %lf +/- %lf\n", Players.name[i], p[i].value, p[i].sigma);
+				printf ("  [%s] = %lf +/- %lf\n", plyrs->name[i], p[i].value, p[i].sigma);
 			}
 		}
 		printf ("}\n");
@@ -1906,16 +1902,15 @@ priors_show (struct prior *p, size_t n)
 		printf ("Loose Anchors = none\n");
 	}
 }
-#endif
 
 static bool_t
-set_prior (const char *player_name, double x, double sigma)
+set_prior (const struct PLAYERS *plyrs, const char *player_name, double x, double sigma)
 {
 	size_t j;
 	bool_t found;
 	assert(sigma > PRIOR_SMALLEST_SIGMA);
-	for (j = 0, found = FALSE; !found && j < Players.n; j++) {
-		found = !strcmp(Players.name[j], player_name);
+	for (j = 0, found = FALSE; !found && j < plyrs->n; j++) {
+		found = !strcmp(plyrs->name[j], player_name);
 		if (found) {
 			PP[j].value = x;
 			PP[j].sigma = sigma;
@@ -1931,7 +1926,7 @@ set_prior (const char *player_name, double x, double sigma)
 static bool_t has_a_prior(size_t j) {return PP[j].isset;}
 
 static bool_t
-assign_prior (char *name_prior, double x, double y, bool_t quiet)
+assign_prior (char *name_prior, double x, double y, bool_t quiet, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
 {
 	bool_t prior_success = TRUE;
 	bool_t suc;
@@ -1940,7 +1935,7 @@ assign_prior (char *name_prior, double x, double y, bool_t quiet)
 			suc = FALSE;
 	} else { 
 		if (y < PRIOR_SMALLEST_SIGMA) {
-			suc = set_anchor (name_prior, x);
+			suc = set_anchor (name_prior, x, rat, plyrs);
 			if (!suc) {
 				fprintf (stderr, "Prior, %s --> FAILED, name not found in input file\n", name_prior);
 			} 
@@ -1949,7 +1944,7 @@ assign_prior (char *name_prior, double x, double y, bool_t quiet)
 				printf ("Anchoring, %s --> %.1lf\n", name_prior, x);
 			} 
 		} else {
-			suc = set_prior (name_prior, x, y);
+			suc = set_prior (plyrs, name_prior, x, y);
 			if (!suc) {
 				fprintf (stderr, "Prior, %s --> FAILED, name not found in input file\n", name_prior);					
 			} 
@@ -1964,7 +1959,7 @@ assign_prior (char *name_prior, double x, double y, bool_t quiet)
 }
 
 static void
-priors_load(const char *fpriors_name)
+priors_load (const char *fpriors_name, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
 {
 	#define MAX_MYLINE 1024
 	FILE *fpriors;
@@ -2016,7 +2011,7 @@ priors_load(const char *fpriors_name)
 			}
 
 			file_success = success;
-			prior_success = assign_prior (name_prior, x, y, QUIET_MODE);
+			prior_success = assign_prior (name_prior, x, y, QUIET_MODE, rat, plyrs);
 		}
 
 		fclose(fpriors);
@@ -2062,16 +2057,16 @@ purge_players (bool_t quiet, struct PLAYERS *pl)
 }
 
 static void
-ratings_results (void)
+ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat)
 {
 	double excess;
 
 	size_t j;
-	ratings_for_purged(&Players, &RA);
-	for (j = 0; j < Players.n; j++) {
-		RA.ratingof_results[j] = RA.ratingof[j];
-		RA.obtained_results[j] = RA.obtained[j];
-		RA.playedby_results[j] = RA.playedby[j];
+	ratings_for_purged(plyrs, rat);
+	for (j = 0; j < plyrs->n; j++) {
+		rat->ratingof_results[j] = rat->ratingof[j];
+		rat->obtained_results[j] = rat->obtained[j];
+		rat->playedby_results[j] = rat->playedby[j];
 	}
 
 	// shifting ratings to fix the anchor.
@@ -2080,9 +2075,9 @@ ratings_results (void)
 	// If Anchor_err_rel2avg is set, shifting in the calculation (later) is deactivated.
 	excess = 0.0;
 	if (Anchor_err_rel2avg && Anchor_use) {
-		excess = General_average - RA.ratingof_results[Anchor];		
-		for (j = 0; j < Players.n; j++) {
-			RA.ratingof_results[j] += excess;
+		excess = General_average - rat->ratingof_results[Anchor];		
+		for (j = 0; j < plyrs->n; j++) {
+			rat->ratingof_results[j] += excess;
 		}
 	}
 
@@ -2331,11 +2326,11 @@ static long int
 set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl)
 
 {
-	// Encounters
+	// encounters
 	size_t N_enc = ee->n;
 	const struct ENC *enc = ee->enc;
 
-	// Players
+	// players
 	size_t n_players = pl->n;
 	int *perftype  = pl->performance_type;
 	const char **name    = pl->name;
