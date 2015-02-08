@@ -484,7 +484,7 @@ simulate_scores ( const double 	*ratingof_results
 
 static void 	DB_ignore_draws (struct DATA *db);
 static void 	DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct GAMESTATS *gs);
-static bool_t	find_anchor_player(int32_t *anchor);
+static bool_t	find_player_index(const struct PLAYERS *plyrs, const char *name, int32_t *idx);
 
 /*------------------------------------------------------------------------*/
 
@@ -884,7 +884,7 @@ RPset_store.x = Relative_priors__buffer2;
 	}
 
 	if (Anchor_use) {
-		if (find_anchor_player(&Anchor)) {
+		if (find_player_index(&Players, Anchor_name, &Anchor)) {
 			anchor_j ((size_t)Anchor, General_average);
 		} else {
 			fprintf (stderr, "ERROR: No games of anchor player, mispelled, wrong capital letters, or extra spaces = \"%s\"\n", Anchor_name);
@@ -1471,15 +1471,14 @@ DB_ignore_draws (struct DATA *db)
 }
 
 
-
 static bool_t
-find_anchor_player(int32_t *anchor)
+find_player_index (const struct PLAYERS *plyrs, const char *name, int32_t *idx)
 {
 	size_t i;
 	bool_t found = FALSE;
-	for (i = 0; i < Players.n; i++) {
-		if (!strcmp(Players.name[i], Anchor_name)) {
-			*anchor = (int32_t) i; //FIXME size_t
+	for (i = 0; i < plyrs->n; i++) {
+		if (!strcmp(plyrs->name[i], name)) {
+			*idx = (int32_t) i; //FIXME size_t
 			found = TRUE;
 		} 
 	}
