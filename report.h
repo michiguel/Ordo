@@ -56,6 +56,7 @@ void
 all_report 	( const struct GAMES 	*g
 			, const struct PLAYERS 	*p
 			, const struct RATINGS 	*r
+			, const struct rel_prior_set *rps
 			, struct ENCOUNTERS 	*e  // memory just provided for local calculations
 			, double 				*sdev
 			, long 					simulate
@@ -73,12 +74,5 @@ errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATI
 void
 ctsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out);
 
-void
-report_loadpars(
-
- size_t 		n_relative_anchors,
- struct relprior *raa
-
-);
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

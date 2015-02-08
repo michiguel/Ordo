@@ -1261,18 +1261,10 @@ RPset_store.x = Relative_priors__buffer2;
 	/* Simulation block, end */
 
 	// Reports
-
-
-report_loadpars(
-
- RPset.n,
- RPset.x
-
-);
-
 	all_report 	( &Games
 				, &Players
 				, &RA
+				, &RPset
 				, &Encounters
 				, Sdev
 				, Simulate

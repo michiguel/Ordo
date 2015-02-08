@@ -42,22 +42,6 @@ calc_encounters__
 
 }
 
-static size_t 			N_relative_anchors = 0;
-
-static struct relprior *Raa;
-
-
-void
-report_loadpars(
-
- size_t 		n_relative_anchors,
- struct relprior *raa
-
-)
-{
-	N_relative_anchors = n_relative_anchors;
-	Raa = raa;
-}
 
 static int
 compare__ (const int32_t *a, const int32_t *b, const double *reference )
@@ -130,12 +114,14 @@ get_super_player_symbolstr(size_t j, const struct PLAYERS *pPlayers)
 }
 
 static bool_t
-is_old_version(int32_t j)
+is_old_version(int32_t j, const struct rel_prior_set *rps)
 {
 	size_t i;
 	bool_t found;
-	for (i = 0, found = FALSE; !found && i < N_relative_anchors; i++) {
-		found = j == Raa[i].player_b;
+	size_t rn = rps->n;
+	const struct relprior *rx = rps->x;
+	for (i = 0, found = FALSE; !found && i < rn; i++) {
+		found = j == rx[i].player_b;
 	}
 	return found;
 }
@@ -269,6 +255,7 @@ void
 all_report 	( const struct GAMES 	*g
 			, const struct PLAYERS 	*p
 			, const struct RATINGS 	*r
+			, const struct rel_prior_set *rps
 			, struct ENCOUNTERS 	*e  // memory just provided for local calculations
 			, double 				*sdev
 			, long 					simulate
@@ -318,7 +305,7 @@ all_report 	( const struct GAMES 	*g
 				if (!p->flagged[j]) {
 
 					char rankbuf[80];
-					showrank = !is_old_version((int32_t)j); //FIXME size_t
+					showrank = !is_old_version((int32_t)j, rps); //FIXME size_t
 					if (showrank) {
 						rank++;
 						sprintf(rankbuf,"%d",rank);
@@ -364,7 +351,7 @@ all_report 	( const struct GAMES 	*g
 				} else if (!p->flagged[j]) {
 
 					char rankbuf[80];
-					showrank = !is_old_version((int32_t)j);
+					showrank = !is_old_version((int32_t)j, rps);
 					if (showrank) {
 						rank++;
 						sprintf(rankbuf,"%d",rank);
