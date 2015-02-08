@@ -76,7 +76,6 @@ ctsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_
 void
 report_loadpars(
 
- struct PLAYERS *p,
  size_t 		n_relative_anchors,
  struct relprior *raa
 

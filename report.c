@@ -42,8 +42,7 @@ calc_encounters__
 
 }
 
-static struct PLAYERS 	*pPlayers;
-static size_t 			N_relative_anchors;
+static size_t 			N_relative_anchors = 0;
 
 static struct relprior *Raa;
 
@@ -51,13 +50,11 @@ static struct relprior *Raa;
 void
 report_loadpars(
 
- struct PLAYERS *p,
  size_t 		n_relative_anchors,
  struct relprior *raa
 
 )
 {
-	pPlayers = p;
 	N_relative_anchors = n_relative_anchors;
 	Raa = raa;
 }
@@ -104,7 +101,7 @@ find_maxlen (const char *nm[], size_t n)
 }
 
 static bool_t 
-is_super_player(size_t j)
+is_super_player(size_t j, const struct PLAYERS *pPlayers)
 {
 	assert(pPlayers->perf_set);
 	return pPlayers->performance_type[j] == PERF_SUPERLOSER 
@@ -117,7 +114,7 @@ is_super_player(size_t j)
 static const char *SP_symbolstr[MAXSYMBOLS_STR] = {"<",">","*"," ","X"};
 
 static const char *
-get_super_player_symbolstr(size_t j)
+get_super_player_symbolstr(size_t j, const struct PLAYERS *pPlayers)
 {
 	assert(pPlayers->perf_set);
 	if (pPlayers->performance_type[j] == PERF_SUPERLOSER) {
@@ -260,7 +257,7 @@ head2head_output( const struct GAMES 	*g
 
 #ifndef NDEBUG
 static bool_t 
-is_empty_player(size_t j)
+is_empty_player(size_t j, const struct PLAYERS *pPlayers)
 {
 	assert(pPlayers->perf_set);
 	return pPlayers->performance_type[j] == PERF_NOGAMES
@@ -336,7 +333,7 @@ all_report 	( const struct GAMES 	*g
 							rankbuf,
 							(int)ml+1,
 							p->name[j],
-							get_super_player_symbolstr(j),
+							get_super_player_symbolstr(j,p),
 							decimals,
 							rating_round (r->ratingof_results[j], decimals), 
 							r->obtained_results[j], 
@@ -361,7 +358,7 @@ all_report 	( const struct GAMES 	*g
 
 				if (r->playedby_results[j] == 0) {
 
-					assert(is_empty_player(j));
+					assert(is_empty_player(j,p));
 					// skip
 
 				} else if (!p->flagged[j]) {
@@ -383,7 +380,7 @@ all_report 	( const struct GAMES 	*g
 						rankbuf,
 						(int)ml+1, 
 						p->name[j],
-						get_super_player_symbolstr(j),
+						get_super_player_symbolstr(j,p),
 						decimals,
 						rating_round(r->ratingof_results[j], decimals), 
 						sdev_str, 
@@ -394,7 +391,7 @@ all_report 	( const struct GAMES 	*g
 						);
 					}
 
-				} else if (!is_super_player(j)) {
+				} else if (!is_super_player(j,p)) {
 					fprintf(f, "%4lu %-*s   :%7.*f %s %8.1f %7d %6.1f%s\n", 
 						i+1,
 						(int)ml+1, 

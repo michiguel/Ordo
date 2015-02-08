@@ -1265,7 +1265,6 @@ RPset_store.x = Relative_priors__buffer2;
 
 report_loadpars(
 
- &Players,
  RPset.n,
  RPset.x
 
