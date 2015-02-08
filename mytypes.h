@@ -164,6 +164,12 @@ struct ENCOUNTERS {
 	struct ENC *enc;
 };
 
+//
+
+struct rel_prior_set {
+	size_t n;
+	struct relprior *x; // this points to an array
+};
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

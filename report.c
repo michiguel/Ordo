@@ -43,7 +43,7 @@ calc_encounters__
 }
 
 static struct PLAYERS 	*pPlayers;
-static size_t 			N_relative_anchors = 100;
+static size_t 			N_relative_anchors;
 
 static struct relprior *Raa;
 

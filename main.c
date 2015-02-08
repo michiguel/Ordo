@@ -436,19 +436,23 @@ static void 	priors_load		(const char *fpriors_name);
 
 static void		anchor_j 		(size_t j, double x);
 
-static struct relprior Ra[MAX_RELPRIORS];
-static struct relprior Ra_store[MAX_RELPRIORS];
+static struct relprior Relative_priors__buffer1[MAX_RELPRIORS];
+static struct relprior Relative_priors__buffer2[MAX_RELPRIORS];
 
 static size_t	N_relative_anchors = 0;
 static bool_t 	Hide_old_ver = FALSE;
 
 static void		relpriors_shuffle	(struct relprior *rp, size_t n);
-static void		relpriors_copy		(const struct relprior *r, size_t n, struct relprior *s);
+static void		relpriors_copy		(const struct rel_prior_set *r, struct rel_prior_set *s /*@out@*/)
 static bool_t 	set_relprior 		(const char *player_a, const char *player_b, double x, double sigma);
 static void 	relpriors_show		(void);
 static void 	relpriors_load		(const char *f_name);
 
 static bool_t	Prior_mode;
+
+static struct rel_prior_set		Rel;
+static struct rel_prior_set		Rel_store;
+
 
 /*------------------------------------------------------------------------*/
 
@@ -1020,6 +1024,12 @@ int main (int argc, char *argv[])
 		}
 	}
 
+// init Rel
+Rel.n = 0;
+Rel.x = Relative_priors__buffer1;
+Rel_store.n = 0;
+Rel_store.x = Relative_priors__buffer2;
+
 	/*==== CALCULATIONS ====*/
 
 	randfast_init (1324561);
@@ -1164,9 +1174,9 @@ int main (int argc, char *argv[])
 									, &Games //out
 					);
 
-					relpriors_copy(Ra, N_relative_anchors, Ra_store); 
+					relpriors_copy(&Rel, &Rel_store); 
 					priors_copy(PP, Players.n, PP_store);
-					relpriors_shuffle(Ra, N_relative_anchors);
+					relpriors_shuffle(Rel.x, Rel.n);
 					priors_shuffle(PP, Players.n);
 					//priors_show (PP, Players.n);
 
@@ -1188,7 +1198,7 @@ int main (int argc, char *argv[])
 					Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, FALSE, &sim_draw_rate);
 					ratings_for_purged (&Players, &RA);
 
-					relpriors_copy(Ra_store, N_relative_anchors, Ra);
+					relpriors_copy(&Rel_store, &Rel);
 					priors_copy(PP_store, Players.n, PP);
 
 					if (SIM_UPDATES && z == 0) {
@@ -1256,7 +1266,7 @@ report_loadpars(
 
  &Players,
  N_relative_anchors,
- Ra
+ Rel.x
 
 );
 
@@ -1671,17 +1681,17 @@ set_relprior (const char *player_a, const char *player_b, double x, double sigma
 
 
 
-	n = N_relative_anchors++;
+	n = Rel.n++;
 
 //FIXME
 if (n >= MAX_RELPRIORS) {fprintf (stderr, "Maximum memory for relative anchors exceeded\n"); exit(EXIT_FAILURE);}
 
 if (p_a == -1 || p_b == -1) return FALSE; // defensive programming, not needed.
 
-	Ra[n].player_a = p_a;
-	Ra[n].player_b = p_b;
-	Ra[n].delta    = x;
-	Ra[n].sigma    = sigma;
+	Rel.x[n].player_a = p_a;
+	Rel.x[n].player_b = p_b;
+	Rel.x[n].delta    = x;
+	Rel.x[n].sigma    = sigma;
 
 	return found;
 }
@@ -1700,10 +1710,14 @@ relpriors_shuffle(struct relprior *rp, size_t n)
 }
 
 static void
-relpriors_copy(const struct relprior *r, size_t n, struct relprior *s /*@out@*/)
-{	size_t i;
+relpriors_copy(const struct rel_prior_set *r, struct rel_prior_set *s /*@out@*/)
+{	
+	size_t i;
+	size_t n = r->n;
+	struct relprior *rx = r->x;
+	struct relprior *sx = s->x;
 	for (i = 0; i < n; i++) {
-		s[i] = r[i];
+		sx[i] = rx[i];
 	}
 }
 #endif
@@ -1715,9 +1729,9 @@ relpriors_show (void)
 	if (N_relative_anchors > 0) {
 		printf ("Relative Anchors {\n");
 		for (i = 0; i < N_relative_anchors; i++) {
-			int a = Ra[i].player_a;
-			int b = Ra[i].player_b;
-			printf ("[%s] [%s] = %lf +/- %lf\n", Players.name[a], Players.name[b], Ra[i].delta, Ra[i].sigma);
+			int a = Rel.x[i].player_a;
+			int b = Rel.x[i].player_b;
+			printf ("[%s] [%s] = %lf +/- %lf\n", Players.name[a], Players.name[b], Rel.x[i].delta, Rel.x[i].sigma);
 		}
 		printf ("}\n");
 	} else {
@@ -2182,7 +2196,7 @@ calc_rating (bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advanta
 				, N_relative_anchors
 				, PP
 
-				, Ra
+				, Rel.x
 				, Some_prior_set
 				, Wa_prior
 				, Dr_prior
