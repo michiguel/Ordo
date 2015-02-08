@@ -449,8 +449,8 @@ static void 	relpriors_load		(const char *f_name, struct rel_prior_set *rps);
 
 static bool_t	Prior_mode;
 
-static struct rel_prior_set		Rel = {0, NULL};
-static struct rel_prior_set		Rel_store = {0, NULL};;
+static struct rel_prior_set		RPset = {0, NULL};
+static struct rel_prior_set		RPset_store = {0, NULL};;
 
 
 /*------------------------------------------------------------------------*/
@@ -762,11 +762,11 @@ int main (int argc, char *argv[])
 	|	Return version
 	\*----------------------------------*/
 
-// init Rel
-Rel.n = 0;
-Rel.x = Relative_priors__buffer1;
-Rel_store.n = 0;
-Rel_store.x = Relative_priors__buffer2;
+// init RPset
+RPset.n = 0;
+RPset.x = Relative_priors__buffer1;
+RPset_store.n = 0;
+RPset_store.x = Relative_priors__buffer2;
 
 	if (version_mode) {
 		printf ("%s %s\n",proginfo_name(),proginfo_version());
@@ -957,11 +957,11 @@ Rel_store.x = Relative_priors__buffer2;
 	// multiple anchors done
 
 	if (relstr != NULL) {
-		relpriors_load(relstr, &Rel); 
+		relpriors_load(relstr, &RPset); 
 	}
 	if (!QUIET_MODE) {
 		priors_show(PP, Players.n);
-		relpriors_show(&Rel);
+		relpriors_show(&RPset);
 	//FIXME do not allow relpriors to be purged
 	}
 
@@ -1115,7 +1115,7 @@ Rel_store.x = Relative_priors__buffer2;
 		purge_players (QUIET_MODE, &Players);
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
-	Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch, &Rel);
+	Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch, &RPset);
 
 	ratings_results();
 
@@ -1175,9 +1175,9 @@ Rel_store.x = Relative_priors__buffer2;
 									, &Games //out
 					);
 
-					relpriors_copy(&Rel, &Rel_store); 
+					relpriors_copy(&RPset, &RPset_store); 
 					priors_copy(PP, Players.n, PP_store);
-					relpriors_shuffle(&Rel);
+					relpriors_shuffle(&RPset);
 					priors_shuffle(PP, Players.n);
 					//priors_show (PP, Players.n);
 
@@ -1196,10 +1196,10 @@ Rel_store.x = Relative_priors__buffer2;
 						purge_players (QUIET_MODE, &Players);
 						calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 					}
-					Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, FALSE, &sim_draw_rate, &Rel);
+					Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, FALSE, &sim_draw_rate, &RPset);
 					ratings_for_purged (&Players, &RA);
 
-					relpriors_copy(&Rel_store, &Rel);
+					relpriors_copy(&RPset_store, &RPset);
 					priors_copy(PP_store, Players.n, PP);
 
 					if (SIM_UPDATES && z == 0) {
@@ -1266,8 +1266,8 @@ Rel_store.x = Relative_priors__buffer2;
 report_loadpars(
 
  &Players,
- Rel.n,
- Rel.x
+ RPset.n,
+ RPset.x
 
 );
 
