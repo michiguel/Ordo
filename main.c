@@ -2199,7 +2199,7 @@ calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advant
 	} else {
 
 		double *ratingtmp_memory;
-		size_t bufsize = (size_t)Players.n; 
+		size_t bufsize = plyrs->n; 
 
 		assert(bufsize > 0);
 		if (NULL != (ratingtmp_memory = memnew (sizeof(double) * bufsize))) {
