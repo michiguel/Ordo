@@ -30,17 +30,8 @@ size_t
 calc_rating2 	( bool_t 		quiet
 				, struct ENC *	enc
 				, size_t		N_enc
-
-				, size_t		N_players
-				, double *		Obtained
-
-				, int *			Playedby
-				, double *		Ratingof
-				, double *		Ratingbk
-				, int *			Performance_type
-
-				, bool_t *		Flagged
-				, bool_t *		Prefed
+				, struct PLAYERS *plyrs
+				, struct RATINGS *rat
 
 				, double		*pWhite_advantage
 				, double		General_average
@@ -52,7 +43,6 @@ calc_rating2 	( bool_t 		quiet
 				
 				, struct GAMES *g
 
-				, const char *	Name[]
 				, double		BETA
 //
 				, bool_t 		adjust_white_advantage

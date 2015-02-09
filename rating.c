@@ -411,18 +411,8 @@ size_t
 calc_rating2 	( bool_t 		quiet
 				, struct ENC *	enc
 				, size_t		N_enc
-
-				, size_t		N_players
-				, double *		Obtained
-
-				, int *			Playedby
-				, double *		Ratingof
-				, double *		Ratingbk
-				, int *			Performance_type
-
-				, bool_t *		Flagged
-				, bool_t *		Prefed
-
+				, struct PLAYERS *plyrs
+				, struct RATINGS *rat
 				, double		*pWhite_advantage
 				, double		General_average
 
@@ -433,7 +423,6 @@ calc_rating2 	( bool_t 		quiet
 				
 				, struct GAMES *g
 
-				, const char *	Name[]
 				, double		BETA
 //
 				, bool_t 		adjust_white_advantage
@@ -471,6 +460,18 @@ calc_rating2 	( bool_t 		quiet
 
 	double *expected = NULL;
 	size_t allocsize;
+
+
+size_t		N_players 		= plyrs->n;
+int *		Performance_type= plyrs->performance_type;
+bool_t *	Flagged 		= plyrs->flagged;
+bool_t *	Prefed  		= plyrs->prefed;
+const char **Name 			= plyrs->name;
+double *	Obtained 		= rat->obtained;
+int *		Playedby 		= rat->playedby;
+double *	Ratingof 		= rat->ratingof;
+double *	Ratingbk 		= rat->ratingbk;
+
 
 	allocsize = sizeof(double) * (N_players+1);
 	expected = memnew(allocsize);
