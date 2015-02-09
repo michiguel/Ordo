@@ -184,11 +184,6 @@ static int compare_GAME (const void * a, const void * b)
 	return 0;	
 }
 
-#if 1
-#define NEWFUNC
-#endif
-
-#ifdef NEWFUNC
 static bool_t 
 ratings_init (size_t n, struct RATINGS *r) 
 {
@@ -367,7 +362,7 @@ players_done (struct PLAYERS *x)
 	x->prefed = NULL;
 	x->performance_type = NULL;
 } 
-#endif
+
 
 static bool_t supporting_auxmem_init (size_t nplayers);
 static void	  supporting_auxmem_done (void);
@@ -385,7 +380,6 @@ static bool_t 	Multiple_anchors_present = FALSE;
 static bool_t	General_average_set = FALSE;
 
 static int		Anchored_n = 0;
-//static bool_t	Performance_type_set = FALSE;
 
 static double	Confidence = 95;
 static double	General_average = 2300.0;
@@ -488,11 +482,6 @@ static void 	DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS
 static bool_t	find_player_index(const struct PLAYERS *plyrs, const char *name, int32_t *idx);
 
 /*------------------------------------------------------------------------*/
-
-#if 0
-static double 	overallerror_fwadv (double wadv);
-static double 	adjust_wadv (double start_wadv);
-#endif
 
 static void 	table_output(double Rtng_76);
 
@@ -937,7 +926,6 @@ RPset_store.x = Relative_priors__buffer2;
 	//===
 
 	Confidence_factor = confidence2x(Confidence/100.0);
-	// printf("confidence factor = %f\n",Confidence_factor);
 
 	init_rating(Players.n, General_average, &RA);
 
