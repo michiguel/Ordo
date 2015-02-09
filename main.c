@@ -468,7 +468,7 @@ static void		ratings_copy (const double *r, size_t n, double *t);
 static void		init_manchors(const char *fpins_name, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/);
 
 static size_t	calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advantage
-							, bool_t adjust_wadv, double *pDraw_rate, struct rel_prior_set *rps);
+							, bool_t adjust_wadv, double *pDraw_rate, struct rel_prior_set *rps, struct PLAYERS *plyrs, struct RATINGS *rat);
 
 static void 	ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat);
 static void		ratings_for_purged (const struct PLAYERS *p, struct RATINGS *r /*@out@*/);
@@ -1116,7 +1116,7 @@ RPset_store.x = Relative_priors__buffer2;
 		purge_players (QUIET_MODE, &Players);
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
-	Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch, &RPset);
+	Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch, &RPset, &Players, &RA);
 
 	ratings_results(&Players, &RA);
 
@@ -1196,7 +1196,7 @@ RPset_store.x = Relative_priors__buffer2;
 						purge_players (QUIET_MODE, &Players);
 						calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 					}
-					Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, FALSE, &sim_draw_rate, &RPset);
+					Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, FALSE, &sim_draw_rate, &RPset, &Players, &RA);
 					ratings_for_purged (&Players, &RA);
 
 					relpriors_copy(&RPset_store, &RPset);
@@ -2154,7 +2154,7 @@ simulate_scores ( const double 	*ratingof_results
 
 static size_t
 calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advantage, bool_t adjust_wadv
-			, double *pDraw_rate, struct rel_prior_set *rps)
+			, double *pDraw_rate, struct rel_prior_set *rps, struct PLAYERS *plyrs, struct RATINGS *rat)
 {
 	double dr = *pDraw_rate;
 
@@ -2166,8 +2166,8 @@ calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advant
 				( quiet
 				, enc
 				, N_enc
-				, &Players
-				, &RA
+				, plyrs
+				, rat
 
 				, pWhite_advantage
 				, General_average
@@ -2208,8 +2208,8 @@ calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advant
 					( quiet
 					, enc
 					, N_enc
-					, &Players
-					, &RA
+					, plyrs
+					, rat
 					, pWhite_advantage
 					, General_average
 	
