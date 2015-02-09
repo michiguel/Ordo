@@ -18,10 +18,6 @@
     along with Ordo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-#if 1
-	#define DOPRIOR
-#endif
-
 #define PRIOR_SMALLEST_SIGMA 0.0000001
 
 /*
@@ -934,9 +930,6 @@ RPset_store.x = Relative_priors__buffer2;
 
 	if (priorsstr != NULL) {
 		priors_load(priorsstr, &RA, &Players);
-		#if !defined(DOPRIOR)
-		Some_prior_set = FALSE;
-		#endif
 	}
 
 	// multiple anchors here
@@ -1678,7 +1671,6 @@ set_relprior (const struct PLAYERS *plyrs, const char *player_a, const char *pla
 	return found;
 }
 
-#if 1
 void
 relpriors_shuffle(struct rel_prior_set *rps /*@out@*/)
 {
@@ -1709,7 +1701,7 @@ relpriors_copy(const struct rel_prior_set *r, struct rel_prior_set *s /*@out@*/)
 	}
 	s->n = r->n;
 }
-#endif
+
 
 static void
 relpriors_show (const struct PLAYERS *plyrs, const struct rel_prior_set *rps)
