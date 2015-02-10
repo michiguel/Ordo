@@ -372,7 +372,6 @@ static char		Anchor_name[MAX_ANCHORSIZE] = "";
 
 static bool_t	Anchor_err_rel2avg = FALSE;
 
-static bool_t 	Multiple_anchors_present = FALSE;
 static bool_t	General_average_set = FALSE;
 
 static int		Anchored_n = 0;
@@ -1525,7 +1524,6 @@ static bool_t getnum(char *p, double *px)
 static void
 anchor_j (size_t j, double x, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
 {
-	Multiple_anchors_present = TRUE;
 	plyrs->prefed[j] = TRUE;
 	rat->ratingof[j] = x;
 	Anchored_n++;
@@ -2152,7 +2150,7 @@ calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advant
 				, pWhite_advantage
 				, General_average
 
-				, Multiple_anchors_present
+				, Anchored_n > 0
 				, Anchor_use && !Anchor_err_rel2avg
 				, Anchor
 				, Anchored_n
@@ -2193,7 +2191,7 @@ calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advant
 					, pWhite_advantage
 					, General_average
 	
-					, Multiple_anchors_present
+					, Anchored_n > 0
 					, Anchor_use && !Anchor_err_rel2avg
 					, Anchor
 					, Anchored_n
