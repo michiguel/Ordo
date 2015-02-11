@@ -416,10 +416,8 @@ calc_rating2 	( bool_t 		quiet
 				, double		*pWhite_advantage
 				, double		General_average
 
-				, bool_t		Multiple_anchors_present
 				, bool_t		Anchor_use
 				, int			Anchor
-				, int			anchored_n
 				
 				, struct GAMES *g
 
@@ -471,7 +469,7 @@ double *	Obtained 		= rat->obtained;
 int *		Playedby 		= rat->playedby;
 double *	Ratingof 		= rat->ratingof;
 double *	Ratingbk 		= rat->ratingbk;
-
+int			anchored_n 		= plyrs->anchored_n;
 
 	allocsize = sizeof(double) * (N_players+1);
 	expected = memnew(allocsize);
@@ -547,7 +545,7 @@ double *	Ratingbk 		= rat->ratingbk;
 					failed = TRUE;
 				};	
 
-				if (Multiple_anchors_present && anchored_n > 1) {
+				if (anchored_n > 1) {
 
 					cd = optimum_centerdelta	
 						( last_cd

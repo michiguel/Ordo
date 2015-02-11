@@ -138,6 +138,7 @@ struct DEVIATION_ACC {
 struct PLAYERS {
 	size_t		n; 
 	size_t		size;
+	int32_t		anchored_n;
 	bool_t		perf_set;
 	const char  **name;
 	bool_t		*flagged;

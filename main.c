@@ -334,6 +334,7 @@ players_init (size_t n, struct PLAYERS *x)
 
 	x->n				= 0; /* empty for now */
 	x->size				= n;
+	x->anchored_n		= 0;
 	x->name 			= pv[0];
 	x->flagged			= pv[1];
 	x->prefed			= pv[2];
@@ -1523,7 +1524,8 @@ static bool_t getnum(char *p, double *px)
 
 static void
 anchor_j (size_t j, double x, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
-{
+{	
+	plyrs->anchored_n++;
 	plyrs->prefed[j] = TRUE;
 	rat->ratingof[j] = x;
 	Anchored_n++;
@@ -2138,6 +2140,8 @@ calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advant
 
 	size_t ret;
 
+	assert (Anchored_n == plyrs->anchored_n);
+
 	if (Prior_mode) {
 
 		ret = calc_rating_bayes2 
@@ -2150,10 +2154,8 @@ calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advant
 				, pWhite_advantage
 				, General_average
 
-				, Anchored_n > 0
 				, Anchor_use && !Anchor_err_rel2avg
 				, Anchor
-				, Anchored_n
 				, Priored_n
 				
 				, &Games
@@ -2191,10 +2193,8 @@ calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advant
 					, pWhite_advantage
 					, General_average
 	
-					, Anchored_n > 0
 					, Anchor_use && !Anchor_err_rel2avg
 					, Anchor
-					, Anchored_n
 					
 					, &Games
 	

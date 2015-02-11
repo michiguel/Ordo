@@ -36,10 +36,8 @@ calc_rating2 	( bool_t 		quiet
 				, double		*pWhite_advantage
 				, double		General_average
 
-				, bool_t		Multiple_anchors_present
 				, bool_t		Anchor_use
 				, int			Anchor
-				, int			anchored_n
 				
 				, struct GAMES *g
 

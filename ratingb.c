@@ -252,11 +252,9 @@ calc_rating_bayes2
 			, double		*pwadv
 			, double		general_average
 
-			, bool_t		multiple_anchors_present
 			, bool_t		anchor_use
 
 			, int32_t		anchor
-			, int 			anchored_n
 			, int 			priored_n
 				
 			, struct GAMES *g
@@ -311,6 +309,8 @@ int *		playedby 		= rat->playedby;
 double *	ratingof 		= rat->ratingof;
 double *	ratingbk 		= rat->ratingbk;
 double *	changing 		= rat->changing;
+int			anchored_n 		= plyrs->anchored_n;
+bool_t		multiple_anchors_present = anchored_n > 0; //FIXME ??? > 1???
 
 	probarr = memnew (sizeof(double) * n_players * 4);
 

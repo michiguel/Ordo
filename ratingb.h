@@ -39,11 +39,9 @@ calc_rating_bayes2
 			, double		*pwadv
 			, double		general_average
 
-			, bool_t		multiple_anchors_present
 			, bool_t		anchor_use
 
 			, int32_t		anchor
-			, int 			anchored_n
 			, int 			priored_n
 				
 			, struct GAMES *g
