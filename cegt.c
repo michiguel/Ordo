@@ -276,7 +276,7 @@ all_report_rat (FILE *textf, struct CEGT *p)
 		if (ml > 50) ml = 50;
 
 		{
-			fprintf(f, "\n%s %-*s     %4s %4s %4s %7s %7s %8s %6s\n\n", 
+			fprintf(f, "\n\n%s %-*s     %4s %4s %4s %7s %7s %8s %6s\n\n", 
 				"    ", 			
 				(int)ml,
 				"Program", 
