@@ -545,39 +545,41 @@ int			anchored_n 		= plyrs->anchored_n;
 					failed = TRUE;
 				};	
 
-				if (anchored_n > 1) {
+				if (!failed) {
 
-					cd = optimum_centerdelta	
-						( last_cd
-						, min_resol > 0.1? 0.1: min_resol
-						, enc
-						, N_enc
-						, N_players
-						, Ratingof
-						, Flagged
-						, Prefed
-						, white_adv
-						, BETA
-						, Obtained
-						, expected
-						, Playedby
-						, ratingtmp
-						);
+					if (anchored_n > 1) {
 
-				} else if (Anchor_use && anchored_n == 1) {
-					cd = 0;
-				} else {
-					cd = 0;
-				}
+						cd = optimum_centerdelta	
+							( last_cd
+							, min_resol > 0.1? 0.1: min_resol
+							, enc
+							, N_enc
+							, N_players
+							, Ratingof
+							, Flagged
+							, Prefed
+							, white_adv
+							, BETA
+							, Obtained
+							, expected
+							, Playedby
+							, ratingtmp
+							);
 
-				last_cd = cd;
+					} else if (Anchor_use && anchored_n == 1) {
+						cd = 0;
+					} else {
+						cd = 0;
+					}
 
-				if (absol(cd) > MIN_RESOL) {
-					mobile_center_apply_excess (cd, N_players, Flagged, Prefed, Ratingof);
-					failed = FALSE;
-				}
+					last_cd = cd;
 
-				if (!failed) { 
+					if (absol(cd) > MIN_RESOL) {
+						mobile_center_apply_excess (cd, N_players, Flagged, Prefed, Ratingof);
+					}
+
+					//
+
 					calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
 					curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
 	

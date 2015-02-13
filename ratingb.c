@@ -310,7 +310,7 @@ double *	ratingof 		= rat->ratingof;
 double *	ratingbk 		= rat->ratingbk;
 double *	changing 		= rat->changing;
 int			anchored_n 		= plyrs->anchored_n;
-bool_t		multiple_anchors_present = anchored_n > 0; //FIXME ??? > 1???
+bool_t		multiple_anchors_present = anchored_n > 1; //FIXME check that it should be ">1". it was ">0"
 
 	probarr = memnew (sizeof(double) * n_players * 4);
 
