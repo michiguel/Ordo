@@ -37,7 +37,7 @@ static bool_t getnum(char *p, double *px)
 	return ok;
 }
 
-//
+//====================== RELATIVE PRIORS ====================================================================
 
 void
 relpriors_shuffle(struct rel_prior_set *rps /*@out@*/)
@@ -242,8 +242,7 @@ relpriors_load (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_nam
 	return;
 }
 
-
-//======================
+//====================== PRIORS =============================================================================
 
 #include <math.h>
 
@@ -324,8 +323,6 @@ set_prior (const struct PLAYERS *plyrs, const char *player_name, double x, doubl
 	return found;
 }
 
-
-
 // comes later
 static bool_t set_anchor (const char *player_name, double x, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/);
 
@@ -353,10 +350,6 @@ assign_prior (char *name_prior, double x, double y, bool_t quiet, struct RATINGS
 			if (!suc) {
 				fprintf (stderr, "Prior, %s --> FAILED, name not found in input file\n", name_prior);					
 			} 
-//			else {
-//				if (!quiet)
-//				printf ("Prior, %s --> %.1lf, %.1lf\n", name_prior, x, y);
-//			}
 		}
 	}
 	if (!suc) prior_success = FALSE;
@@ -437,7 +430,7 @@ priors_load (bool_t quietmode, const char *fpriors_name, struct RATINGS *rat /*@
 	return;
 }
 
-//======================
+//====================== ANCHORS ============================================================================
 
 void
 anchor_j (size_t j, double x, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)

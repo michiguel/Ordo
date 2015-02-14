@@ -409,26 +409,6 @@ static struct prior Dr_prior = { 0.5, 0.1,FALSE};
 
 static struct prior *PP;		// to be dynamically assigned
 static struct prior *PP_store; 	// to be dynamically assigned
-	
-
-
-
-#if 0
-static void 	priors_reset	(struct prior *p, size_t n);
-static void		priors_copy		(const struct prior *p, size_t n, struct prior *q);
-static void 	priors_shuffle	(struct prior *p, size_t n);
-static void		priors_show 	(const struct PLAYERS *plyrs, struct prior *p, size_t n);
-static bool_t 	set_prior 		(const struct PLAYERS *plyrs, const char *prior_name, double x, double sigma);
-static void 	priors_load (const char *fpriors_name, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/);
-
-
-static void		anchor_j 		(size_t j, double x, struct RATINGS *rat, struct PLAYERS *plyrs);
-#endif
-
-static bool_t 	Hide_old_ver = FALSE;
-static bool_t	Prior_mode;
-
-
 
 static struct relprior Relative_priors__buffer1[MAX_RELPRIORS];
 static struct relprior Relative_priors__buffer2[MAX_RELPRIORS];
@@ -436,6 +416,8 @@ static struct relprior Relative_priors__buffer2[MAX_RELPRIORS];
 static struct rel_prior_set		RPset = {0, NULL};
 static struct rel_prior_set		RPset_store = {0, NULL};;
 
+static bool_t 	Hide_old_ver = FALSE;
+static bool_t	Prior_mode;
 
 /*------------------------------------------------------------------------*/
 
@@ -1505,12 +1487,6 @@ ratings_copy (const double *r, size_t n, double *t)
 }
 
 //=====================================
-
-//== REL PRIORS ========================================
-
-//== PRIORS ============================================
-
-//== END PRIORS ======================================================
 
 // no globals
 static void
