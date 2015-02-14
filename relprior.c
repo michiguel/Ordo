@@ -242,3 +242,298 @@ relpriors_load (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_nam
 	return;
 }
 
+
+//======================
+
+#include <math.h>
+
+bool_t 	Some_prior_set = FALSE;
+int 	Priored_n = 0;
+
+bool_t 
+has_a_prior(struct prior *pr, size_t j) {return pr[j].isset;}
+
+void
+priors_reset(struct prior *p, size_t n)
+{	size_t i;
+	for (i = 0; i < n; i++) {
+		p[i].value = 0;
+		p[i].sigma = 1;
+		p[i].isset = FALSE;
+	}
+	Some_prior_set = FALSE;
+	Priored_n = 0;
+}
+
+void
+priors_copy(const struct prior *p, size_t n, struct prior *q)
+{	size_t i;
+	for (i = 0; i < n; i++) {
+		q[i] = p[i];
+	}
+}
+
+void
+priors_shuffle(struct prior *p, size_t n)
+{
+	size_t i;
+	double value, sigma;
+	for (i = 0; i < n; i++) {
+		if (p[i].isset) {
+			value = p[i].value;
+			sigma = p[i].sigma;
+			p[i].value = rand_gauss (value, sigma);
+		}
+	}
+}
+
+void
+priors_show (const struct PLAYERS *plyrs, struct prior *p, size_t n)
+{ 
+	size_t i;
+	if (Priored_n > 0) {
+		printf ("Loose Anchors {\n");
+		for (i = 0; i < n; i++) {
+			if (p[i].isset) {
+				printf ("  [%s] = %lf +/- %lf\n", plyrs->name[i], p[i].value, p[i].sigma);
+			}
+		}
+		printf ("}\n");
+	} else {
+		printf ("Loose Anchors = none\n");
+	}
+}
+
+static bool_t
+set_prior (const struct PLAYERS *plyrs, const char *player_name, double x, double sigma, struct prior *pr)
+{
+	size_t j;
+	bool_t found;
+	assert(sigma > PRIOR_SMALLEST_SIGMA);
+	for (j = 0, found = FALSE; !found && j < plyrs->n; j++) {
+		found = !strcmp(plyrs->name[j], player_name);
+		if (found) {
+			pr[j].value = x;
+			pr[j].sigma = sigma;
+			pr[j].isset = TRUE;
+			Some_prior_set = TRUE;
+			Priored_n++;
+		} 
+	}
+
+	return found;
+}
+
+
+
+// comes later
+static bool_t set_anchor (const char *player_name, double x, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/);
+
+
+static bool_t
+assign_prior (char *name_prior, double x, double y, bool_t quiet, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/, struct prior *pr /*@out@*/)
+{
+	bool_t prior_success = TRUE;
+	bool_t suc;
+	if (y < 0) {
+			fprintf (stderr, "Prior, %s --> FAILED, error/uncertainty cannot be negative", name_prior);	
+			suc = FALSE;
+	} else { 
+		if (y < PRIOR_SMALLEST_SIGMA) {
+			suc = set_anchor (name_prior, x, rat, plyrs);
+			if (!suc) {
+				fprintf (stderr, "Prior, %s --> FAILED, name not found in input file\n", name_prior);
+			} 
+			else {
+				if (!quiet)
+				printf ("Anchoring, %s --> %.1lf\n", name_prior, x);
+			} 
+		} else {
+			suc = set_prior (plyrs, name_prior, x, y, pr);
+			if (!suc) {
+				fprintf (stderr, "Prior, %s --> FAILED, name not found in input file\n", name_prior);					
+			} 
+//			else {
+//				if (!quiet)
+//				printf ("Prior, %s --> %.1lf, %.1lf\n", name_prior, x, y);
+//			}
+		}
+	}
+	if (!suc) prior_success = FALSE;
+	return prior_success;
+}
+
+void
+priors_load (bool_t quietmode, const char *fpriors_name, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/, struct prior *pr /*@out@*/)
+{
+	#define MAX_MYLINE 1024
+	FILE *fpriors;
+	char myline[MAX_MYLINE];
+	char name_prior[MAX_MYLINE];
+	char *p;
+	bool_t success;
+	double x, y;
+	bool_t prior_success = TRUE;
+	bool_t file_success = TRUE;
+
+	assert(NULL != fpriors_name);
+
+	if (NULL == fpriors_name) {
+		fprintf (stderr, "Error, file not provided, absent, or corrupted\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (NULL != (fpriors = fopen (fpriors_name, "r"))) {
+
+		csv_line_t csvln;
+
+		while (file_success && NULL != fgets(myline, MAX_MYLINE, fpriors)) {
+			success = FALSE;
+			p = myline;
+			p = skipblanks(p);
+			x = 0;
+			y = 0;
+			if (*p == '\0') continue;
+
+			if (csv_line_init(&csvln, myline)) {
+				success = csvln.n >= 3 && getnum(csvln.s[1], &x) && getnum(csvln.s[2], &y);
+				if (success) {
+					strcpy(name_prior, csvln.s[0]); //FIXME
+				}
+				if (success && csvln.n > 3) {
+					int i;
+					double acc = y*y;
+					for (i = 3; success && i < csvln.n; i++) {
+						success = getnum(csvln.s[i], &y);
+						if (success) acc += y*y;		
+					}
+					y = sqrt(acc);
+				}
+				csv_line_done(&csvln);		
+			} else {
+				fprintf (stderr, "Failure to input -y file\n");
+				exit(EXIT_FAILURE);
+			}
+
+			file_success = success;
+			prior_success = assign_prior (name_prior, x, y, quietmode, rat, plyrs, pr);
+		}
+
+		fclose(fpriors);
+	}
+	else {
+		file_success = FALSE;
+	}
+
+	if (!file_success) {
+			fprintf (stderr, "Errors in file \"%s\"\n",fpriors_name);
+			exit(EXIT_FAILURE);
+	}
+	if (!prior_success) {
+			fprintf (stderr, "Errors in file \"%s\" (not matching names)\n",fpriors_name);
+			exit(EXIT_FAILURE);
+	}
+
+	return;
+}
+
+//======================
+
+void
+anchor_j (size_t j, double x, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
+{	
+	plyrs->anchored_n++;
+	plyrs->prefed[j] = TRUE;
+	rat->ratingof[j] = x;
+}
+
+static bool_t
+set_anchor (const char *player_name, double x, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
+{
+	size_t j;
+	bool_t found;
+	for (j = 0, found = FALSE; !found && j < plyrs->n; j++) {
+		found = !strcmp(plyrs->name[j], player_name);
+		if (found) {
+			anchor_j (j, x, rat, plyrs);
+		} 
+	}
+	return found;
+}
+
+static bool_t
+assign_anchor (char *name_pinned, double x, bool_t quiet, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
+{
+	bool_t pin_success = set_anchor (name_pinned, x, rat, plyrs);
+	if (pin_success) {
+		if (!quiet)
+		printf ("Anchoring, %s --> %.1lf\n", name_pinned, x);
+	} else {
+		fprintf (stderr, "Anchoring, %s --> FAILED, name not found in input file\n", name_pinned);					
+	}
+	return pin_success;
+}
+
+void
+init_manchors (bool_t quietmode, const char *fpins_name, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
+{
+	#define MAX_MYLINE 1024
+	FILE *fpins;
+	char myline[MAX_MYLINE];
+	char name_pinned[MAX_MYLINE];
+	char *p;
+	bool_t success;
+	double x;
+	bool_t pin_success = TRUE;
+	bool_t file_success = TRUE;
+
+	assert(NULL != fpins_name);
+
+	if (NULL == fpins_name) {
+		fprintf (stderr, "Error, file not provided, absent, or corrupted\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (NULL != (fpins = fopen (fpins_name, "r"))) {
+
+		csv_line_t csvln;
+
+		while (pin_success && file_success && NULL != fgets(myline, MAX_MYLINE, fpins)) {
+			success = FALSE;
+			p = myline;
+
+			p = skipblanks(p);
+			x = 0;
+			if (*p == '\0') continue;
+
+			if (csv_line_init(&csvln, myline)) {
+				success = csvln.n >= 2 && getnum(csvln.s[1], &x);
+				if (success) {
+					strcpy(name_pinned, csvln.s[0]); //FIXME
+				}
+				csv_line_done(&csvln);		
+			} else {
+				printf ("Failure to input -m file\n");
+				exit(EXIT_FAILURE);
+			}
+			file_success = success;
+			pin_success = assign_anchor (name_pinned, x, quietmode, rat, plyrs);
+		}
+
+		fclose(fpins);
+	}
+	else {
+		file_success = FALSE;
+	}
+
+	if (!file_success) {
+			fprintf (stderr, "Errors in file \"%s\"\n",fpins_name);
+			exit(EXIT_FAILURE);
+	}
+	if (!pin_success) {
+			fprintf (stderr, "Errors in file \"%s\" (not matching names)\n",fpins_name);
+			exit(EXIT_FAILURE);
+	}
+	return;
+}
+
