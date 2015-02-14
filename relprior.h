@@ -19,24 +19,19 @@
 */
 
 
-#if !defined(H_OLIM)
-#define H_OLIM
+#if !defined(H_RELP)
+#define H_RELP
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
-#define PRIOR_SMALLEST_SIGMA 0.0000001
+#include "mytypes.h"
 
-//#define MAXGAMES 3000000
-//#define LABELBUFFERSIZE 1000000
-//#define MAXPLAYERS 50000
-//#define MAXENCOUNTERS 3000000
+extern void		relpriors_shuffle	(struct rel_prior_set *rps /*@out@*/);
+extern void		relpriors_copy		(const struct rel_prior_set *r, struct rel_prior_set *s /*@out@*/);
+extern void 	relpriors_show		(const struct PLAYERS *plyrs, const struct rel_prior_set *rps);
+extern void 	relpriors_load		(bool_t quietmode, const struct PLAYERS *plyrs, const char *f_name, struct rel_prior_set *rps);
 
-#define LABELBUFFERSIZE 100
-#define MAXBLOCKS ((size_t)2048*(size_t)1024)
-
-#define MAXGAMESxBLOCK ((size_t)16)
-#define MAXNAMESxBLOCK ((size_t)16)
-
-#define MAX_RELPRIORS 10000
+//extern bool_t 	set_relprior 		(const struct PLAYERS *plyrs, const char *player_a, const char *player_b
+//									, double x, double sigma, struct rel_prior_set *rps /*@out@*/);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif
