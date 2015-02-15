@@ -222,7 +222,6 @@ relpriors_load (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_nam
 			file_success = success;
 
 			prior_success = assign_relative_prior (plyrs, s, z, x, y, quietmode, rps);
-
 		}
 
 		fclose(fil);
@@ -239,7 +238,6 @@ relpriors_load (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_nam
 			fprintf (stderr, "Errors in file \"%s\" (not matching names)\n",f_name);
 			exit(EXIT_FAILURE);
 	}
-
 
 	rps_backup->n = 0;
 
