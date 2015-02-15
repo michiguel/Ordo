@@ -28,7 +28,10 @@
 extern void		relpriors_shuffle	(struct rel_prior_set *rps /*@out@*/);
 extern void		relpriors_copy		(const struct rel_prior_set *r, struct rel_prior_set *s /*@out@*/);
 extern void 	relpriors_show		(const struct PLAYERS *plyrs, const struct rel_prior_set *rps);
-extern void 	relpriors_load		(bool_t quietmode, const struct PLAYERS *plyrs, const char *f_name, struct rel_prior_set *rps);
+extern void 	relpriors_load (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_name
+				, struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *rps_backup /*@out@*/);
+
+extern void		relpriors_done (struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *rps_backup /*@out@*/);
 
 //
 
@@ -44,7 +47,7 @@ extern void priors_show (const struct PLAYERS *plyrs, struct prior *p, size_t n)
 
 extern bool_t has_a_prior(struct prior *pr, size_t j);
 
-//
+
 
 extern void anchor_j (size_t j, double x, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/);
 extern void init_manchors (bool_t quietmode, const char *fpins_name, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/);

@@ -913,7 +913,7 @@ RPset_store.x = Relative_priors__buffer2;
 	// multiple anchors done
 
 	if (relstr != NULL) {
-		relpriors_load(QUIET_MODE, &Players, relstr, &RPset); 
+		relpriors_load(QUIET_MODE, &Players, relstr, &RPset, &RPset_store); 
 	}
 	if (!QUIET_MODE) {
 		priors_show(&Players, PP, Players.n);
@@ -1286,6 +1286,8 @@ RPset_store.x = Relative_priors__buffer2;
 	encounters_done (&Encounters);
 	players_done (&Players);
 	supporting_auxmem_done();
+
+	relpriors_done (&RPset, &RPset_store);
 
 	return EXIT_SUCCESS;
 }

@@ -165,7 +165,8 @@ assign_relative_prior (const struct PLAYERS *plyrs, char *s, char *z, double x, 
 }
 
 void
-relpriors_load (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_name, struct rel_prior_set *rps /*@out@*/)
+relpriors_load (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_name
+				, struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *rps_backup /*@out@*/)
 {
 	#define MAX_MYLINE 1024
 
@@ -239,6 +240,20 @@ relpriors_load (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_nam
 			exit(EXIT_FAILURE);
 	}
 
+
+	rps_backup->n = 0;
+
+	return;
+}
+
+
+void
+relpriors_done (struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *rps_backup /*@out@*/)
+{
+	assert(rps);
+	assert(rps_backup);
+	rps->n = 0;
+	rps_backup->n = 0;
 	return;
 }
 
