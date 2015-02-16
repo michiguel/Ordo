@@ -55,6 +55,8 @@
 
 #include "report.h"
 
+#include "plyrs.h"
+
 /*
 |
 |	GENERAL OPTIONS
@@ -446,7 +448,6 @@ simulate_scores ( const double 	*ratingof_results
 
 static void 	DB_ignore_draws (struct DATA *db);
 static void 	DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct GAMESTATS *gs);
-static bool_t	find_player_index(const struct PLAYERS *plyrs, const char *name, int32_t *idx);
 
 /*------------------------------------------------------------------------*/
 
@@ -835,8 +836,10 @@ int main (int argc, char *argv[])
 	}
 
 	if (Anchor_use) {
-		if (find_player_index(&Players, Anchor_name, &Anchor)) {
-			anchor_j ((size_t)Anchor, General_average, &RA, &Players);
+		size_t anch_idx;
+		if (players_name2idx(&Players, Anchor_name, &anch_idx)) {
+			Anchor = (int32_t)anch_idx;
+			anchor_j (anch_idx, General_average, &RA, &Players);
 		} else {
 			fprintf (stderr, "ERROR: No games of anchor player, mispelled, wrong capital letters, or extra spaces = \"%s\"\n", Anchor_name);
 			fprintf (stderr, "Surround the name with \"quotes\" if it contains spaces\n\n");
@@ -1418,7 +1421,7 @@ DB_ignore_draws (struct DATA *db)
 	return;
 }
 
-
+#if 0
 static bool_t
 find_player_index (const struct PLAYERS *plyrs, const char *name, int32_t *idx)
 {
@@ -1432,7 +1435,7 @@ find_player_index (const struct PLAYERS *plyrs, const char *name, int32_t *idx)
 	}
 	return found;
 }
-
+#endif
 
 static ptrdiff_t
 head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y)

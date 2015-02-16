@@ -30,6 +30,7 @@
 #include "randfast.h"
 
 #include "relpman.h"
+#include "plyrs.h"
 
 
 static char *skipblanks(char *p) {while (isspace(*p)) p++; return p;}
@@ -39,22 +40,6 @@ static bool_t getnum(char *p, double *px)
 	*px = (double) x;
 	return ok;
 }
-
-
-static bool_t
-players_name2idx (const struct PLAYERS *plyrs, const char *player_name, size_t *pi)
-{
-	size_t j;
-	bool_t found;
-	for (j = 0, found = FALSE; !found && j < plyrs->n; j++) {
-		found = !strcmp(plyrs->name[j], player_name);
-		if (found) {
-			*pi = j; 
-		} 
-	}
-	return found;
-}
-
 
 //====================== RELATIVE PRIORS ====================================================================
 
