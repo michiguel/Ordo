@@ -40,6 +40,22 @@ static bool_t getnum(char *p, double *px)
 	return ok;
 }
 
+
+static bool_t
+players_name2idx (const struct PLAYERS *plyrs, const char *player_name, size_t *pi)
+{
+	size_t j;
+	bool_t found;
+	for (j = 0, found = FALSE; !found && j < plyrs->n; j++) {
+		found = !strcmp(plyrs->name[j], player_name);
+		if (found) {
+			*pi = j; 
+		} 
+	}
+	return found;
+}
+
+
 //====================== RELATIVE PRIORS ====================================================================
 
 void
@@ -104,44 +120,28 @@ rpunit_build (int32_t p_a, int32_t p_b, double x, double sigma, rpunit_t *u /*@o
 	u->sigma    = sigma;
 }
 
-
-static bool_t
-players_name2idx (const struct PLAYERS *plyrs, const char *player_name, int32_t *pi)
-{
-	size_t j;
-	bool_t found;
-	for (j = 0, found = FALSE; !found && j < plyrs->n; j++) {
-		found = !strcmp(plyrs->name[j], player_name);
-		if (found) {
-			*pi = (int32_t) j; //FIXME size_t
-		} 
-	}
-	return found;
-}
-
 //==============================
 
 static bool_t
 rman_set_relprior__ (const struct PLAYERS *plyrs, const char *player_a, const char *player_b, double x, double sigma, struct rpmanager *rm)
 {
-	int32_t p_a = -1; 
-	int32_t p_b = -1;
-	bool_t found, ok;
+	size_t p_a; 
+	size_t p_b;
+	bool_t found;
 	rpunit_t u;
 
 	assert(sigma > PRIOR_SMALLEST_SIGMA);
 
 	found = players_name2idx (plyrs, player_a, &p_a) && 
 			players_name2idx (plyrs, player_b, &p_b);
-	if (!found) return found;
-
-	rpunit_build (p_a, p_b, x, sigma, &u);
-
-	ok = rpman_add_unit(rm, &u);
-
-	if (!ok) { {fprintf (stderr, "Maximum memory for relative anchors exceeded\n"); exit(EXIT_FAILURE);}}
-
-	return ok;
+	if (found) {
+		rpunit_build ((int32_t)p_a, (int32_t)p_b, x, sigma, &u);
+		if (!rpman_add_unit(rm, &u)) { 
+			fprintf (stderr, "Maximum memory for relative anchors exceeded\n"); 
+			exit(EXIT_FAILURE);
+		}
+	}
+	return found;
 }
 
 static bool_t
@@ -356,17 +356,14 @@ set_prior (const struct PLAYERS *plyrs, const char *player_name, double x, doubl
 	size_t j;
 	bool_t found;
 	assert(sigma > PRIOR_SMALLEST_SIGMA);
-	for (j = 0, found = FALSE; !found && j < plyrs->n; j++) {
-		found = !strcmp(plyrs->name[j], player_name);
-		if (found) {
-			pr[j].value = x;
-			pr[j].sigma = sigma;
-			pr[j].isset = TRUE;
-			Some_prior_set = TRUE;
-			Priored_n++;
-		} 
+	found = players_name2idx (plyrs, player_name, &j);
+	if (found) {
+		pr[j].value = x;
+		pr[j].sigma = sigma;
+		pr[j].isset = TRUE;
+		Some_prior_set = TRUE;
+		Priored_n++;
 	}
-
 	return found;
 }
 
@@ -491,13 +488,10 @@ static bool_t
 set_anchor (const char *player_name, double x, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
 {
 	size_t j;
-	bool_t found;
-	for (j = 0, found = FALSE; !found && j < plyrs->n; j++) {
-		found = !strcmp(plyrs->name[j], player_name);
-		if (found) {
-			anchor_j (j, x, rat, plyrs);
-		} 
-	}
+	bool_t found = players_name2idx (plyrs, player_name, &j);
+	if (found) {
+		anchor_j (j, x, rat, plyrs);
+	} 
 	return found;
 }
 
