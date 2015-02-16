@@ -36,7 +36,7 @@
 #define MAXGAMESxBLOCK ((size_t)16)
 #define MAXNAMESxBLOCK ((size_t)16)
 
-#define MAX_RELPRIORS 10000
+//#define MAX_RELPRIORS 10000
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

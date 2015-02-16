@@ -410,9 +410,6 @@ static struct prior Dr_prior = { 0.5, 0.1,FALSE};
 static struct prior *PP;		// to be dynamically assigned
 static struct prior *PP_store; 	// to be dynamically assigned
 
-static struct relprior Relative_priors__buffer1[MAX_RELPRIORS];
-static struct relprior Relative_priors__buffer2[MAX_RELPRIORS];
-
 static struct rel_prior_set		RPset = {0, NULL};
 static struct rel_prior_set		RPset_store = {0, NULL};;
 
@@ -722,12 +719,6 @@ int main (int argc, char *argv[])
 	|	Return version
 	\*----------------------------------*/
 
-// init RPset
-RPset.n = 0;
-RPset.x = Relative_priors__buffer1;
-RPset_store.n = 0;
-RPset_store.x = Relative_priors__buffer2;
-
 	if (version_mode) {
 		printf ("%s %s\n",proginfo_name(),proginfo_version());
 		if (license_mode)
@@ -913,7 +904,7 @@ RPset_store.x = Relative_priors__buffer2;
 	// multiple anchors done
 
 	if (relstr != NULL) {
-		relpriors_load(QUIET_MODE, &Players, relstr, &RPset, &RPset_store); 
+		relpriors_init(QUIET_MODE, &Players, relstr, &RPset, &RPset_store); 
 	}
 	if (!QUIET_MODE) {
 		priors_show(&Players, PP, Players.n);

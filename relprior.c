@@ -90,55 +90,263 @@ relpriors_show (const struct PLAYERS *plyrs, const struct rel_prior_set *rps)
 	}
 }
 
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+#include "mytypes.h"
+
+typedef struct relprior rpunit_t;
+
+#define MAX_RPBLOCK 100
+
+struct relprior_block;
+
+struct relprior_block {
+	rpunit_t 				u[MAX_RPBLOCK];
+	size_t 					n;
+	size_t					sz;
+	struct relprior_block *	next;
+};
+
+typedef struct relprior_block rpblock_t;
+
+struct rpmanager {
+	rpblock_t *	first;
+	rpblock_t *	last;
+	rpblock_t *	p;
+	size_t 		i;
+};
+
+//================================================
+
+void
+rpblock_clear (rpblock_t *r)
+{
+	assert (r);
+	r->n = 0;
+	r->sz = MAX_RPBLOCK;
+	r->next = NULL;
+}
+
+rpblock_t *
+rpblock_create(void)
+{
+	rpblock_t *q = malloc (sizeof(rpblock_t));
+	if (q) rpblock_clear(q);
+	return q;
+}
+
+void
+rpblock_destroy(rpblock_t *p)
+{
+	assert(p);
+	rpblock_clear(p);
+	free(p);
+	return;
+}
+
+bool_t
+rpblock_add (rpblock_t *b, rpunit_t *u)
+{
+	rpblock_t *q;
+	rpblock_t *t;
+
+	assert(b);
+	assert(u);
+
+	q = b;
+	assert(q->n <= q->size);
+
+	if (q->n == q->sz) {
+		t = rpblock_create();
+		if (t) {
+				q->next = t;
+				q = t;
+				q->n = 0;
+		} else {
+			return FALSE;
+		}
+	}
+
+	q->u[q->n++] = *u;
+
+	return TRUE;
+}
+
+//
+
+bool_t
+rpman_init (struct rpmanager *rm)
+{
+	rpblock_t *q = rpblock_create();
+	assert(rm);
+	rm->first = q;
+	rm->last = q;
+	rm->p = NULL;
+	rm->i = 0;
+	return q != NULL;
+}
+
+void
+rpman_done (struct rpmanager *rm)
+{
+	rpblock_t *p;
+	rpblock_t *q;
+	assert(rm);
+	p = rm->first;
+	rm->first = NULL;
+	rm->last  = NULL;
+	rm->p     = NULL;
+	rm->i 	  = 0;
+	while(p) {
+		q = p->next;
+		rpblock_destroy(p);
+		p = q;
+	}
+	return;
+}
+
+
+size_t
+rpman_count(struct rpmanager *rm)
+{
+	rpblock_t *p;
+	size_t count = 0;
+	assert(rm);
+	for (p = rm->first; p != NULL; p = p->next) {
+			count += p->n;
+	}
+	return count;
+}
+
+void
+rpman_parkstart(struct rpmanager *rm)
+{
+	assert(rm);
+	rm->i = 0;
+	rm->p = rm->first;
+}
+
+rpunit_t *
+rpman_pointnext_unit(struct rpmanager *rm)
+{
+	size_t i;
+	rpblock_t *p;
+	rpunit_t *pu;
+
+	assert(rm);
+	p = rm->p;
+	i = rm->i;
+	assert(i <= p->n);
+	
+	while (i == p->n) {
+		p = p->next;
+		if (NULL == p) {
+			return NULL;
+		}
+		i = 0;
+	}
+
+	pu = &p->u[i++];
+
+	rm->p = p;
+	rm->i = i;
+
+	return pu;
+}
+
+
+bool_t
+rpman_add_unit(struct rpmanager *rm, rpunit_t *u)
+{
+	bool_t ok;
+	rpblock_t *p;
+
+	assert(rm);
+	p = rm->last;
+	assert(p);
+
+	ok = rpblock_add (p, u);
+	if (ok && NULL != p->next) rm->last = p->next; // next was created
+	return ok;
+}
+
+
+rpunit_t *
+rpman_to_newarray (struct rpmanager *rm, size_t *psz)
+{
+	rpunit_t *p_ret;
+	rpunit_t *p;
+	rpunit_t *pu;
+	size_t sz = rpman_count (rm);
+
+	p_ret = p = malloc(sizeof(rpunit_t) * sz);
+
+	if (p == NULL) return p;
+
+	rpman_parkstart (rm);
+	while (NULL != (pu = rpman_pointnext_unit(rm))) {
+		*p++ = *pu;
+	}
+
+	*psz = sz;
+	return p_ret;
+}
+
+//==============================
+
+void
+rpunit_build (int32_t p_a, int32_t p_b, double x, double sigma, rpunit_t *u /*@out@*/)
+{
+	u->player_a = p_a;
+	u->player_b = p_b;
+	u->delta    = x;
+	u->sigma    = sigma;
+}
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+bool_t
+players_name2idx (const struct PLAYERS *plyrs, const char *player_name, int32_t *pi)
+{
+	size_t j;
+	bool_t found;
+	for (j = 0, found = FALSE; !found && j < plyrs->n; j++) {
+		found = !strcmp(plyrs->name[j], player_name);
+		if (found) {
+			*pi = (int32_t) j; //FIXME size_t
+		} 
+	}
+	return found;
+}
+
 static bool_t
-set_relprior (const struct PLAYERS *plyrs, const char *player_a, const char *player_b, double x, double sigma, struct rel_prior_set *rps)
+rman_set_relprior__ (const struct PLAYERS *plyrs, const char *player_a, const char *player_b, double x, double sigma, struct rpmanager *rm)
 {
 	size_t j;
 	int32_t p_a = -1; 
 	int32_t p_b = -1;
 	size_t n;
-	bool_t found;
+	bool_t found, ok;
+	rpunit_t u;
 
 	assert(sigma > PRIOR_SMALLEST_SIGMA);
 
-	for (j = 0, found = FALSE; !found && j < plyrs->n; j++) {
-		found = !strcmp(plyrs->name[j], player_a);
-		if (found) {
-			p_a = (int32_t) j; //FIXME size_t
-		} 
-	}
-
+	found = players_name2idx (plyrs, player_a, &p_a) && 
+			players_name2idx (plyrs, player_b, &p_b);
 	if (!found) return found;
 
-	for (j = 0, found = FALSE; !found && j < plyrs->n; j++) {
-		found = !strcmp(plyrs->name[j], player_b);
-		if (found) {
-			p_b = (int32_t) j; //FIXME size_t
-		} 
-	}
+	rpunit_build (p_a, p_b, x, sigma, &u);
 
-	if (!found) return found;
+	ok = rpman_add_unit(rm, &u);
 
-	assert (rps != NULL);
-	assert (rps->x != NULL);
+	if (!ok) { {fprintf (stderr, "Maximum memory for relative anchors exceeded\n"); exit(EXIT_FAILURE);}}
 
-	n = rps->n++;
-
-	//FIXME
-	if (n >= MAX_RELPRIORS) {fprintf (stderr, "Maximum memory for relative anchors exceeded\n"); exit(EXIT_FAILURE);}
-
-	if (p_a == -1 || p_b == -1) return FALSE; // defensive programming, not needed.
-
-	rps->x[n].player_a = p_a;
-	rps->x[n].player_b = p_b;
-	rps->x[n].delta    = x;
-	rps->x[n].sigma    = sigma;
-
-	return found;
+	return ok;
 }
 
 static bool_t
-assign_relative_prior (const struct PLAYERS *plyrs, char *s, char *z, double x, double y, bool_t quiet, struct rel_prior_set *rps /*@out@*/)
+rman_assign_relative_prior__ (const struct PLAYERS *plyrs, char *s, char *z, double x, double y, bool_t quiet, struct rpmanager *rm /*@out@*/)
 {
 	bool_t prior_success = TRUE;
 	bool_t suc;
@@ -151,7 +359,7 @@ assign_relative_prior (const struct PLAYERS *plyrs, char *s, char *z, double x, 
 			fprintf (stderr,"sigma too small\n");
 			exit(EXIT_FAILURE);
 		} else {
-			suc = set_relprior (plyrs, s, z, x, y, rps);
+			suc = rman_set_relprior__ (plyrs, s, z, x, y, rm);
 			if (suc) {
 				if (!quiet)
 				printf ("Relative Prior, %s, %s --> %.1lf, %.1lf\n", s, z, x, y);
@@ -165,10 +373,12 @@ assign_relative_prior (const struct PLAYERS *plyrs, char *s, char *z, double x, 
 }
 
 void
-relpriors_load (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_name
-				, struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *rps_backup /*@out@*/)
+relpriors_init (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_name
+				, struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *bak /*@out@*/)
 {
 	#define MAX_MYLINE 1024
+
+	struct rpmanager rpmanager = {NULL, NULL, NULL, 0};
 
 	FILE *fil;
 	char myline[MAX_MYLINE];
@@ -189,39 +399,58 @@ relpriors_load (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_nam
 
 	if (NULL != (fil = fopen (f_name, "r"))) {
 
-		csv_line_t csvln;
+		if (rpman_init(&rpmanager)) {
 
-		while (file_success && NULL != fgets(myline, MAX_MYLINE, fil)) {
-			success = FALSE;
-			p = myline;
-			s = name_a;
-			z = name_b;
+			csv_line_t csvln;
 
-			p = skipblanks(p);
-			x = 0;
-			y = 0;
-			if (*p == '\0') continue;
+			while (file_success && NULL != fgets(myline, MAX_MYLINE, fil)) {
+				success = FALSE;
+				p = myline;
+				s = name_a;
+				z = name_b;
 
-			if (csv_line_init(&csvln, myline)) {
-				success = csvln.n == 4 && getnum(csvln.s[2], &x) && getnum(csvln.s[3], &y);
-				if (success) {
-					strcpy(s, csvln.s[0]); //FIXME
-					strcpy(z, csvln.s[1]); //FIXME
+				p = skipblanks(p);
+				x = 0;
+				y = 0;
+				if (*p == '\0') continue;
+
+				if (csv_line_init(&csvln, myline)) {
+					success = csvln.n == 4 && getnum(csvln.s[2], &x) && getnum(csvln.s[3], &y);
+					if (success) {
+						strcpy(s, csvln.s[0]); //FIXME
+						strcpy(z, csvln.s[1]); //FIXME
+					}
+					csv_line_done(&csvln);		
+				} else {
+					printf ("Failure to input -r file\n");	
+					exit(EXIT_FAILURE);
 				}
-				csv_line_done(&csvln);		
-			} else {
-				printf ("Failure to input -r file\n");	
-				exit(EXIT_FAILURE);
-			}
 			
-			if (!success) {
-				printf ("Problems with input in -r file\n");	
+				if (!success) {
+					printf ("Problems with input in -r file\n");	
+					exit(EXIT_FAILURE);
+				}
+
+				file_success = success;
+
+				prior_success = rman_assign_relative_prior__ (plyrs, s, z, x, y, quietmode, &rpmanager);
+
+			}
+
+			rps->x 	= rpman_to_newarray (&rpmanager, &rps->n);
+			bak->x	= rpman_to_newarray (&rpmanager, &bak->n);
+
+			if (rps->x == NULL || bak->x == NULL) {
+				if (rps->x != NULL) {free (rps->x); rps->n = 0;}
+				if (bak->x != NULL) {free (bak->x); bak->n = 0;}
+				fprintf (stderr, "Not enough memory for relative priors\n");
 				exit(EXIT_FAILURE);
 			}
 
-			file_success = success;
+			rpman_done(&rpmanager);
 
-			prior_success = assign_relative_prior (plyrs, s, z, x, y, quietmode, rps);
+		} else {
+			prior_success = FALSE;
 		}
 
 		fclose(fil);
@@ -239,10 +468,12 @@ relpriors_load (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_nam
 			exit(EXIT_FAILURE);
 	}
 
-	rps_backup->n = 0;
-
 	return;
 }
+
+
+
+//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 void
@@ -252,6 +483,10 @@ relpriors_done (struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *rps_b
 	assert(rps_backup);
 	rps->n = 0;
 	rps_backup->n = 0;
+	assert(rps->x);
+	assert(rps_backup->x);
+	free(rps->x);
+	free(rps_backup->x);
 	return;
 }
 
