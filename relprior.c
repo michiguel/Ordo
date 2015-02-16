@@ -29,6 +29,9 @@
 #include "csv.h"
 #include "randfast.h"
 
+#include "relpman.h"
+
+
 static char *skipblanks(char *p) {while (isspace(*p)) p++; return p;}
 static bool_t getnum(char *p, double *px) 
 { 	float x;
@@ -90,211 +93,9 @@ relpriors_show (const struct PLAYERS *plyrs, const struct rel_prior_set *rps)
 	}
 }
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-#include "mytypes.h"
-
-typedef struct relprior rpunit_t;
-
-#define MAX_RPBLOCK 100
-
-struct relprior_block;
-
-struct relprior_block {
-	rpunit_t 				u[MAX_RPBLOCK];
-	size_t 					n;
-	size_t					sz;
-	struct relprior_block *	next;
-};
-
-typedef struct relprior_block rpblock_t;
-
-struct rpmanager {
-	rpblock_t *	first;
-	rpblock_t *	last;
-	rpblock_t *	p;
-	size_t 		i;
-};
-
-//================================================
-
-void
-rpblock_clear (rpblock_t *r)
-{
-	assert (r);
-	r->n = 0;
-	r->sz = MAX_RPBLOCK;
-	r->next = NULL;
-}
-
-rpblock_t *
-rpblock_create(void)
-{
-	rpblock_t *q = malloc (sizeof(rpblock_t));
-	if (q) rpblock_clear(q);
-	return q;
-}
-
-void
-rpblock_destroy(rpblock_t *p)
-{
-	assert(p);
-	rpblock_clear(p);
-	free(p);
-	return;
-}
-
-bool_t
-rpblock_add (rpblock_t *b, rpunit_t *u)
-{
-	rpblock_t *q;
-	rpblock_t *t;
-
-	assert(b);
-	assert(u);
-
-	q = b;
-	assert(q->n <= q->size);
-
-	if (q->n == q->sz) {
-		t = rpblock_create();
-		if (t) {
-				q->next = t;
-				q = t;
-				q->n = 0;
-		} else {
-			return FALSE;
-		}
-	}
-
-	q->u[q->n++] = *u;
-
-	return TRUE;
-}
-
-//
-
-bool_t
-rpman_init (struct rpmanager *rm)
-{
-	rpblock_t *q = rpblock_create();
-	assert(rm);
-	rm->first = q;
-	rm->last = q;
-	rm->p = NULL;
-	rm->i = 0;
-	return q != NULL;
-}
-
-void
-rpman_done (struct rpmanager *rm)
-{
-	rpblock_t *p;
-	rpblock_t *q;
-	assert(rm);
-	p = rm->first;
-	rm->first = NULL;
-	rm->last  = NULL;
-	rm->p     = NULL;
-	rm->i 	  = 0;
-	while(p) {
-		q = p->next;
-		rpblock_destroy(p);
-		p = q;
-	}
-	return;
-}
-
-
-size_t
-rpman_count(struct rpmanager *rm)
-{
-	rpblock_t *p;
-	size_t count = 0;
-	assert(rm);
-	for (p = rm->first; p != NULL; p = p->next) {
-			count += p->n;
-	}
-	return count;
-}
-
-void
-rpman_parkstart(struct rpmanager *rm)
-{
-	assert(rm);
-	rm->i = 0;
-	rm->p = rm->first;
-}
-
-rpunit_t *
-rpman_pointnext_unit(struct rpmanager *rm)
-{
-	size_t i;
-	rpblock_t *p;
-	rpunit_t *pu;
-
-	assert(rm);
-	p = rm->p;
-	i = rm->i;
-	assert(i <= p->n);
-	
-	while (i == p->n) {
-		p = p->next;
-		if (NULL == p) {
-			return NULL;
-		}
-		i = 0;
-	}
-
-	pu = &p->u[i++];
-
-	rm->p = p;
-	rm->i = i;
-
-	return pu;
-}
-
-
-bool_t
-rpman_add_unit(struct rpmanager *rm, rpunit_t *u)
-{
-	bool_t ok;
-	rpblock_t *p;
-
-	assert(rm);
-	p = rm->last;
-	assert(p);
-
-	ok = rpblock_add (p, u);
-	if (ok && NULL != p->next) rm->last = p->next; // next was created
-	return ok;
-}
-
-
-rpunit_t *
-rpman_to_newarray (struct rpmanager *rm, size_t *psz)
-{
-	rpunit_t *p_ret;
-	rpunit_t *p;
-	rpunit_t *pu;
-	size_t sz = rpman_count (rm);
-
-	p_ret = p = malloc(sizeof(rpunit_t) * sz);
-
-	if (p == NULL) return p;
-
-	rpman_parkstart (rm);
-	while (NULL != (pu = rpman_pointnext_unit(rm))) {
-		*p++ = *pu;
-	}
-
-	*psz = sz;
-	return p_ret;
-}
-
 //==============================
 
-void
+static void
 rpunit_build (int32_t p_a, int32_t p_b, double x, double sigma, rpunit_t *u /*@out@*/)
 {
 	u->player_a = p_a;
@@ -303,10 +104,8 @@ rpunit_build (int32_t p_a, int32_t p_b, double x, double sigma, rpunit_t *u /*@o
 	u->sigma    = sigma;
 }
 
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-bool_t
+static bool_t
 players_name2idx (const struct PLAYERS *plyrs, const char *player_name, int32_t *pi)
 {
 	size_t j;
@@ -320,13 +119,13 @@ players_name2idx (const struct PLAYERS *plyrs, const char *player_name, int32_t 
 	return found;
 }
 
+//==============================
+
 static bool_t
 rman_set_relprior__ (const struct PLAYERS *plyrs, const char *player_a, const char *player_b, double x, double sigma, struct rpmanager *rm)
 {
-	size_t j;
 	int32_t p_a = -1; 
 	int32_t p_b = -1;
-	size_t n;
 	bool_t found, ok;
 	rpunit_t u;
 

@@ -19,19 +19,40 @@
 */
 
 
-#if !defined(H_OLIM)
-#define H_OLIM
+#if !defined(H_RPMAN)
+#define H_RPMAN
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
-#define PRIOR_SMALLEST_SIGMA 0.0000001
+#include "mytypes.h"
+#include "ordolim.h"
 
-#define LABELBUFFERSIZE 100
-#define MAXBLOCKS ((size_t)2048*(size_t)1024)
+typedef struct relprior rpunit_t;
 
-#define MAXGAMESxBLOCK ((size_t)16)
-#define MAXNAMESxBLOCK ((size_t)16)
+struct relprior_block;
 
-#define MAX_RPBLOCK 100
+struct relprior_block {
+	rpunit_t 				u[MAX_RPBLOCK];
+	size_t 					n;
+	size_t					sz;
+	struct relprior_block *	next;
+};
+
+typedef struct relprior_block rpblock_t;
+
+struct rpmanager {
+	rpblock_t *	first;
+	rpblock_t *	last;
+	rpblock_t *	p;
+	size_t 		i;
+};
+
+extern bool_t		rpman_init (struct rpmanager *rm);
+extern void			rpman_done (struct rpmanager *rm);
+extern size_t		rpman_count(struct rpmanager *rm);
+extern void			rpman_parkstart(struct rpmanager *rm);
+extern rpunit_t *	rpman_pointnext_unit(struct rpmanager *rm);
+extern bool_t 		rpman_add_unit(struct rpmanager *rm, rpunit_t *u);
+extern rpunit_t *	rpman_to_newarray (struct rpmanager *rm, size_t *psz);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

@@ -28,7 +28,7 @@
 extern void		relpriors_shuffle	(struct rel_prior_set *rps /*@out@*/);
 extern void		relpriors_copy		(const struct rel_prior_set *r, struct rel_prior_set *s /*@out@*/);
 extern void 	relpriors_show		(const struct PLAYERS *plyrs, const struct rel_prior_set *rps);
-extern void 	relpriors_load (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_name
+extern void 	relpriors_init (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_name
 				, struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *rps_backup /*@out@*/);
 
 extern void		relpriors_done (struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *rps_backup /*@out@*/);
