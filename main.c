@@ -180,53 +180,44 @@ static int compare_GAME (const void * a, const void * b)
 	return 0;	
 }
 
+
 static bool_t 
 ratings_init (size_t n, struct RATINGS *r) 
 {
-	enum {MAXU=3, MAXD=6};
-	int32_t 	*pu[MAXU];
-	double		*pd[MAXD];
-	bool_t		failed;
-	int i,u,d;
-
+	enum {MAXU=9};
+	void	 	*pu[MAXU];
+	bool_t		ok;
+	int i,u;
+	size_t szu[MAXU] = {
+		sizeof(uint32_t),sizeof(uint32_t),sizeof(uint32_t),
+		sizeof(double),sizeof(double),sizeof(double),
+		sizeof(double),sizeof(double),sizeof(double)
+	};
 	assert (n > 0);
 
-	r->size = n;
-
-	for (failed = FALSE, u = 0, i = 0; i < MAXU && !failed; i++) {
-		if (NULL != (pu[i] = memnew (sizeof(uint32_t) * (size_t)n))) { 
+	for (ok = TRUE, u = 0, i = 0; i < MAXU && ok; i++) {
+		if (NULL != (pu[i] = memnew (szu[i] * n))) { 
 			u++;
 		} else {
 			while (u-->0) memrel(pu[u]);
-			failed = TRUE;
+			ok = FALSE;
 		}
 	}
-	if (failed) return FALSE;
-
-	for (failed = FALSE, d = 0, i = 0; i < MAXD && !failed; i++) {
-		if (NULL != (pd[d] = memnew (sizeof(double) * (size_t)n))) { 
-			d++;
-		} else {
-			while (d-->0) memrel(pd[d]);
-			while (u-->0) memrel(pu[u]);
-			failed = TRUE;
-		}
+	if (ok) {
+		r->size				= n;
+		r->sorted 			= pu[0];
+		r->playedby 		= pu[1];
+		r->playedby_results = pu[2];
+		r->obtained 		= pu[3];
+ 		r->ratingof 		= pu[4];
+ 		r->ratingbk 		= pu[5];
+ 		r->changing 		= pu[6];
+		r->ratingof_results = pu[7];
+		r->obtained_results = pu[8];
 	}
-	if (failed) return FALSE;
-
-	r->size				= n;
-	r->sorted 			= pu[0];
-	r->playedby 		= pu[1];
-	r->playedby_results = pu[2];
-
-	r->obtained 		= pd[0];
- 	r->ratingof 		= pd[1];
- 	r->ratingbk 		= pd[2];
- 	r->changing 		= pd[3];
-	r->ratingof_results = pd[4];
-	r->obtained_results = pd[5];
-	return TRUE;
+	return ok;
 }
+
 
 static void 
 ratings_done (struct RATINGS *r)
