@@ -58,7 +58,7 @@ ratings_backup (size_t n_players, const double *r_of, double *r_bk)
 
 // no globals
 static double 
-deviation (size_t n_players, const bool_t *flagged, const double *expected, const double *obtained, const int *playedby)
+deviation (size_t n_players, const bool_t *flagged, const double *expected, const double *obtained, const gamesnum_t *playedby)
 {
 	double accum = 0;
 	double diff;
@@ -119,7 +119,7 @@ adjust_rating 	( double delta
 				, const bool_t *prefed
 				, const double *expected 
 				, const double *obtained 
-				, int *playedby
+				, gamesnum_t *playedby
 				, double *ratingof
 				, int anchored_n
 )
@@ -267,7 +267,7 @@ unfitness		( const struct ENC *enc
 
 				, double *		obtained
 				, double *		expected
-				, int *			playedby
+				, gamesnum_t *			playedby
 )
 {
 		double dev;
@@ -303,7 +303,7 @@ unfitness_fcenter 	( double excess
 
 					, double *		obtained
 					, double *		expected
-					, int *			playedby
+					, gamesnum_t *			playedby
 					, double 	   *ratingtmp)
 {
 	double u;
@@ -344,7 +344,7 @@ struct UNFITPAR {
 	double				beta;
 	double *			obtained;
 	double *			expected;
-	int *				playedby;
+	gamesnum_t *				playedby;
 	double *			ratingtmp;
 };
 
@@ -375,7 +375,7 @@ optimum_centerdelta	( double 			start_delta
 					, double			beta
 					, double *			obtained
 					, double *			expected
-					, int *				playedby
+					, gamesnum_t *				playedby
 					, double *			ratingtmp
 					)
 {
@@ -466,7 +466,7 @@ bool_t *	Flagged 		= plyrs->flagged;
 bool_t *	Prefed  		= plyrs->prefed;
 const char **Name 			= plyrs->name;
 double *	Obtained 		= rat->obtained;
-int *		Playedby 		= rat->playedby;
+gamesnum_t *		Playedby 		= rat->playedby;
 double *	Ratingof 		= rat->ratingof;
 double *	Ratingbk 		= rat->ratingbk;
 int			anchored_n 		= plyrs->anchored_n;

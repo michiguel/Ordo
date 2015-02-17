@@ -316,7 +316,7 @@ all_report 	( const struct GAMES 	*g
 					if (showrank
 						|| !hide_old_ver
 					){
-						fprintf(f, "%4s %-*s %s :%7.*f %9.1f %7d %6.1f%s\n", 
+						fprintf(f, "%4s %-*s %s :%7.*f %9.1f %7ld %6.1f%s\n", 
 							rankbuf,
 							(int)ml+1,
 							p->name[j],
@@ -324,8 +324,8 @@ all_report 	( const struct GAMES 	*g
 							decimals,
 							rating_round (r->ratingof_results[j], decimals), 
 							r->obtained_results[j], 
-							r->playedby_results[j], 
-							r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/r->playedby_results[j], 
+							(long)r->playedby_results[j], 
+							r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], 
 							"%"
 						);
 					}
@@ -363,7 +363,7 @@ all_report 	( const struct GAMES 	*g
 						|| !hide_old_ver
 					){
 
-						fprintf(f, "%4s %-*s %s :%7.*f %s %8.1f %7d %6.1f%s\n", 
+						fprintf(f, "%4s %-*s %s :%7.*f %s %8.1f %7ld %6.1f%s\n", 
 						rankbuf,
 						(int)ml+1, 
 						p->name[j],
@@ -372,14 +372,14 @@ all_report 	( const struct GAMES 	*g
 						rating_round(r->ratingof_results[j], decimals), 
 						sdev_str, 
 						r->obtained_results[j], 
-						r->playedby_results[j], 
-						r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/r->playedby_results[j], 
+						(long)r->playedby_results[j], 
+						r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/(double)r->playedby_results[j], 
 						"%"
 						);
 					}
 
 				} else if (!is_super_player(j,p)) {
-					fprintf(f, "%4lu %-*s   :%7.*f %s %8.1f %7d %6.1f%s\n", 
+					fprintf(f, "%4lu %-*s   :%7.*f %s %8.1f %7ld %6.1f%s\n", 
 						i+1,
 						(int)ml+1, 
 						p->name[j], 
@@ -387,8 +387,8 @@ all_report 	( const struct GAMES 	*g
 						rating_round(r->ratingof_results[j], decimals), 
 						"  ****", 
 						r->obtained_results[j], 
-						r->playedby_results[j], 
-						r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/r->playedby_results[j], 
+						(long)r->playedby_results[j], 
+						r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/(double)r->playedby_results[j], 
 						"%"
 					);
 				} else {
@@ -447,7 +447,7 @@ all_report 	( const struct GAMES 	*g
 				"\"%s\",%.1f"
 				",%s"
 				",%.2f"
-				",%d"
+				",%ld"
 				",%.2f"
 				"\n"		
 				,rank
@@ -455,8 +455,8 @@ all_report 	( const struct GAMES 	*g
 				,r->ratingof_results[j] 
 				,sdev_str
 				,r->obtained_results[j]
-				,r->playedby_results[j]
-				,r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/r->playedby_results[j] 
+				,(long)r->playedby_results[j]
+				,r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/(double)r->playedby_results[j] 
 				);
 			}
 		}

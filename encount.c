@@ -104,7 +104,7 @@ calc_encounters ( int selectivity
 
 // no globals
 void
-calc_obtained_playedby (const struct ENC *enc, size_t N_enc, size_t n_players, double *obtained, int *playedby)
+calc_obtained_playedby (const struct ENC *enc, size_t N_enc, size_t n_players, double *obtained, gamesnum_t *playedby)
 {
 	int w, b;
 	size_t e, j;

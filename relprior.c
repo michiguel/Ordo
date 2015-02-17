@@ -31,7 +31,7 @@
 
 #include "relpman.h"
 #include "plyrs.h"
-
+#include "mymem.h"
 
 static char *skipblanks(char *p) {while (isspace(*p)) p++; return p;}
 static bool_t getnum(char *p, double *px) 
@@ -225,8 +225,8 @@ relpriors_init (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_nam
 			bak->x	= rpman_to_newarray (&rpmanager, &bak->n);
 
 			if (rps->x == NULL || bak->x == NULL) {
-				if (rps->x != NULL) {free (rps->x); rps->n = 0;}
-				if (bak->x != NULL) {free (bak->x); bak->n = 0;}
+				if (rps->x != NULL) {memrel (rps->x); rps->n = 0;}
+				if (bak->x != NULL) {memrel (bak->x); bak->n = 0;}
 				fprintf (stderr, "Not enough memory for relative priors\n");
 				exit(EXIT_FAILURE);
 			}

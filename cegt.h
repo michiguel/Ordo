@@ -32,10 +32,10 @@ struct CEGT {
 	long 				simulate;
 
 	size_t				n_players;
-	int					*sorted; /* sorted index by rating */
+	player_t					*sorted; /* sorted index by rating */
 	double				*ratingof_results;
 	double				*obtained_results;
-	int					*playedby_results;
+	gamesnum_t					*playedby_results;
 	double				*sdev; 
 	bool_t				*flagged;
 	const char			**name;

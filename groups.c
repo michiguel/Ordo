@@ -26,8 +26,10 @@
 
 #include "mymem.h"
 
+typedef uint64_t pod_t;
+
 struct BITARRAY {
-	uint64_t *pod;
+	pod_t *pod;
 	player_t max;
 };
 
@@ -473,7 +475,7 @@ ba_init(struct BITARRAY *ba, player_t max)
 	size_t i;
 	size_t max_p = (size_t)max/64 + (max % 64 > 0?1:0);
 
-	ok = NULL != (ptr = memnew (sizeof(uint64_t)*max_p));
+	ok = NULL != (ptr = memnew (sizeof(pod_t)*max_p));
 	if (ok) {
 		ba->max = max;
 		ba->pod = ptr;

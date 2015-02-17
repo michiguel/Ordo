@@ -189,7 +189,8 @@ ratings_init (size_t n, struct RATINGS *r)
 	bool_t		ok;
 	int i,u;
 	size_t szu[MAXU] = {
-		sizeof(uint32_t),sizeof(uint32_t),sizeof(uint32_t),
+		sizeof(player_t),
+		sizeof(gamesnum_t),sizeof(gamesnum_t),
 		sizeof(double),sizeof(double),sizeof(double),
 		sizeof(double),sizeof(double),sizeof(double)
 	};
@@ -856,14 +857,15 @@ int main (int argc, char *argv[])
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 	if (!QUIET_MODE) {
-		printf ("Total games         %8ld\n", Game_stats.white_wins
+		printf ("Total games         %8ld\n",(long)
+											 (Game_stats.white_wins
 											 +Game_stats.draws
 											 +Game_stats.black_wins
-											 +Game_stats.noresult);
-		printf (" - White wins       %8ld\n", Game_stats.white_wins);
-		printf (" - Draws            %8ld\n", Game_stats.draws);
-		printf (" - Black wins       %8ld\n", Game_stats.black_wins);
-		printf (" - Truncated        %8ld\n", Game_stats.noresult);
+											 +Game_stats.noresult));
+		printf (" - White wins       %8ld\n", (long) Game_stats.white_wins);
+		printf (" - Draws            %8ld\n", (long) Game_stats.draws);
+		printf (" - Black wins       %8ld\n", (long) Game_stats.black_wins);
+		printf (" - Truncated        %8ld\n", (long) Game_stats.noresult);
 		printf ("Unique head to head %8.2f%s\n", 100.0*(double)Encounters.n/(double)Games.n, "%");
 		if (Anchor_use) {
 			printf ("Reference rating    %8.1lf",General_average);
@@ -900,6 +902,7 @@ int main (int argc, char *argv[])
 	if (relstr != NULL) {
 		relpriors_init(QUIET_MODE, &Players, relstr, &RPset, &RPset_store); 
 	}
+
 	if (!QUIET_MODE) {
 		priors_show(&Players, PP, Players.n);
 		relpriors_show(&Players, &RPset);
@@ -1052,6 +1055,7 @@ int main (int argc, char *argv[])
 	/*=====================*/
 
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
+
 	if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
 		purge_players (QUIET_MODE, &Players);
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
@@ -1252,7 +1256,6 @@ int main (int argc, char *argv[])
 					, sim);
 	}
 
-
 	// Cleanup
 	if (textf_opened) 	fclose (textf);
 	if (csvf_opened)  	fclose (csvf); 
@@ -1322,7 +1325,7 @@ DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct G
 {
 	player_t j;
 	player_t topn;
-	long int gamestat[4] = {0,0,0,0};
+	gamesnum_t gamestat[4] = {0,0,0,0};
 
 	p->n = (size_t)db->n_players; //FIXME size_t
 	g->n = db->n_games; 
@@ -1751,13 +1754,13 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl)
 	const char **name    = pl->name;
 
 	double 	*obt;
-	int		*pla;
+	gamesnum_t	*pla;
 	size_t e, j;
 	int32_t w, b;
 	long super = 0;
 
 	obt = memnew (sizeof(double) * n_players);
-	pla = memnew (sizeof(int) * n_players);
+	pla = memnew (sizeof(gamesnum_t) * n_players);
 	if (NULL==obt || NULL==pla) {
 		fprintf(stderr, "Not enough memory\n");
 		exit(EXIT_FAILURE);
@@ -1790,7 +1793,7 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl)
 				perftype[j] = has_a_prior(PP,j)? PERF_NORMAL: PERF_SUPERLOSER;			
 				if (!quiet) printf ("detected (all-losses player) --> %s: seed rating present = %s\n", name[j], has_a_prior(PP,j)? "Yes":"No");
 			}	
-			if (pla[j] - obt[j] < 0.001) {
+			if ((double)pla[j] - obt[j] < 0.001) {
 				perftype[j] = has_a_prior(PP,j)? PERF_NORMAL: PERF_SUPERWINNER;
 				if (!quiet) printf ("detected (all-wins player)   --> %s: seed rating present = %s\n", name[j], has_a_prior(PP,j)? "Yes":"No");
 			}

@@ -305,7 +305,7 @@ bool_t *	prefed  		= plyrs->prefed;
 const char **name 			= plyrs->name;
 
 double *	obtained 		= rat->obtained;
-int *		playedby 		= rat->playedby;
+gamesnum_t *		playedby 		= rat->playedby;
 double *	ratingof 		= rat->ratingof;
 double *	ratingbk 		= rat->ratingbk;
 double *	changing 		= rat->changing;
@@ -682,11 +682,11 @@ adjust_drawrate_bayes
 }
 
 static double
-wdl_probabilities (int ww, int dd, int ll, double pw, double pd, double pl)
+wdl_probabilities (gamesnum_t ww, gamesnum_t dd, gamesnum_t ll, double pw, double pd, double pl)
 {
-	return 	 	(ww > 0? ww * log(pw) : 0) 
-			+ 	(dd > 0? dd * log(pd) : 0) 
-			+ 	(ll > 0? ll * log(pl) : 0)
+	return 	 	(ww > 0? (double)ww * log(pw) : 0) 
+			+ 	(dd > 0? (double)dd * log(pd) : 0) 
+			+ 	(ll > 0? (double)ll * log(pl) : 0)
 			;
 }
 
@@ -747,7 +747,8 @@ calc_bayes_unfitness_full
 )
 {
 	double pw, pd, pl, accum;
-	int w,b, ww,dd,ll;
+	int w, b;
+	gamesnum_t ww,dd,ll;
 	size_t e;
 
 	for (accum = 0, e = 0; e < n_enc; e++) {

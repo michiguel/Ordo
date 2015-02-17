@@ -261,7 +261,7 @@ all_report_rat (FILE *textf, struct CEGT *p)
 	int			*Sorted = p->sorted ;
 	double		*Ratingof_results = p->ratingof_results ;
 	double		*Obtained_results = p->obtained_results ;
-	int			*Playedby_results = p->playedby_results ;
+	gamesnum_t			*Playedby_results = p->playedby_results ;
 	double		*Sdev = p->sdev; 
 	bool_t		*Flagged = p->flagged ;
 	const char	**Name = p->name ;
@@ -285,7 +285,7 @@ all_report_rat (FILE *textf, struct CEGT *p)
 			for (i = 0; i < N_players; i++) {
 				j = Sorted[i];
 				if (!Flagged[j]) {
-					fprintf(f, "%4lu %-*s %s :%5.0f%5.0f%5.0f %5d %7.1f%s %6.0f %6.1f%s\n", 
+					fprintf(f, "%4lu %-*s %s :%5.0f%5.0f%5.0f %5ld %7.1f%s %6.0f %6.1f%s\n", 
 						i+1,
 						(int)ml+1,
 						Name[j],
@@ -294,15 +294,15 @@ all_report_rat (FILE *textf, struct CEGT *p)
 						Ratingof_results[j],
 						Sdev[j] * confidence,
 						Sdev[j] * confidence,
-						Playedby_results[j],
-						Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j],
+						(long)Playedby_results[j],
+						Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/(double)Playedby_results[j],
 						" %",
 						av_opp(j, p),
 						draw_percentage(j, Enc, N_enc),
 						" %"
 					);
 				} else {
-					fprintf(f, "%4lu %-*s %s :%5s%5s%5s %5d %7.1f%s %6.0f %6.1f%s\n", 
+					fprintf(f, "%4lu %-*s %s :%5s%5s%5s %5ld %7.1f%s %6.0f %6.1f%s\n", 
 						i+1,
 						(int)ml+1,
 						Name[j],
@@ -311,8 +311,8 @@ all_report_rat (FILE *textf, struct CEGT *p)
 						"----",
 						"--",
 						"--",
-						Playedby_results[j],
-						Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/Playedby_results[j],
+						(long)Playedby_results[j],
+						Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/(double)Playedby_results[j],
 						" %",
 						av_opp(j, p),
 						draw_percentage(j, Enc, N_enc),
