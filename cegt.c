@@ -197,7 +197,7 @@ get_super_player_symbolstr(int j, struct CEGT *p)
 {
 	if (p->obtained_results[j] < 0.01) {
 		return SP_symbolstr[0];
-	} else if (p->playedby_results[j] - p->obtained_results[j] < 0.01) {
+	} else if ((double)p->playedby_results[j] - p->obtained_results[j] < 0.01) {
 		return SP_symbolstr[1];
 	} else
 		return SP_symbolstr[2];
@@ -219,7 +219,7 @@ static double av_opp(long int j, struct CEGT *p)
 	for (e = 0; e < n_enc; e++) {
 		if (enc[e].wh == target || enc[e].bl == target) {
 			opp = enc[e].wh == target? enc[e].bl: enc[e].wh;
-			rsum += enc[e].played * ratingof_results[opp];
+			rsum += (double)enc[e].played * ratingof_results[opp];
 			nsum += enc[e].played;
 		}	
 	}

@@ -1042,8 +1042,17 @@ group_output(FILE *f, group_t *s)
 
 }
 
-static bool_t encounter_is_SW(const struct ENC *e) {return (e->played - e->wscore) < 0.0001;}
-static bool_t encounter_is_SL(const struct ENC *e) {return              e->wscore  < 0.0001;}
+static bool_t encounter_is_SW(const struct ENC *e) 
+{
+	return e->W > 0 && e->D == 0 && e->L == 0;
+//	return (e->played - e->wscore) < 0.0001;
+}
+
+static bool_t encounter_is_SL(const struct ENC *e) 
+{
+	return e->W == 0 && e->D == 0 && e->L > 0;
+//	return              e->wscore  < 0.0001;
+}
 
 void
 scan_encounters(const struct ENC *enc, size_t N_enc, size_t N_plyrs)
