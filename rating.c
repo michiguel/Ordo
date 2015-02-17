@@ -67,7 +67,7 @@ deviation (size_t n_players, const bool_t *flagged, const double *expected, cons
 	for (accum = 0, j = 0; j < n_players; j++) {
 		if (!flagged[j]) {
 			diff = expected[j] - obtained [j];
-			accum += diff * diff / playedby[j];
+			accum += diff * diff / (double)playedby[j];
 		}
 	}		
 	return accum;
@@ -155,7 +155,7 @@ adjust_rating 	( double delta
 		}
 
 		// find multiplier "y"
-		d = (expected[j] - obtained[j]) / playedby[j];
+		d = (expected[j] - obtained[j]) / (double)playedby[j];
 		d = d < 0? -d: d;
 		y = d / (kappa + d);
 		if (y > ymax) ymax = y;
@@ -204,15 +204,15 @@ static double
 overallerrorE_fwadv (size_t N_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv)
 {
 	size_t e;
-	int32_t w, b;
+	player_t w, b;
 	double dp2, f;
 	for (dp2 = 0, e = 0; e < N_enc; e++) {
 		w = enc[e].wh;
 		b = enc[e].bl;
 		f = xpect (ratingof[w] + wadv, ratingof[b], beta);
-		dp2 +=	enc[e].W * (1.0 - f) * (1.0 - f)
-		+		enc[e].D * (0.5 - f) * (0.5 - f)
-		+		enc[e].L * (0.0 - f) * (0.0 - f)
+		dp2 +=	(double)enc[e].W * (1.0 - f) * (1.0 - f)
+		+		(double)enc[e].D * (0.5 - f) * (0.5 - f)
+		+		(double)enc[e].L * (0.0 - f) * (0.0 - f)
 		;
 	}
 	return dp2;
@@ -670,8 +670,8 @@ overallerrorE_fdrawrate (size_t N_enc, const struct ENC *enc, const double *rati
 		dexp = draw_rate_fperf (f, dr0);
 
 		dp2 +=
-				enc[e].D                   * (1-dexp) * (1-dexp) +
-				(enc[e].played - enc[e].D) *    dexp  *    dexp  ;
+				(double)enc[e].D                   * (1-dexp) * (1-dexp) +
+				(double)(enc[e].played - enc[e].D) *    dexp  *    dexp  ;
 		;
 	}
 

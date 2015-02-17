@@ -747,7 +747,7 @@ calc_bayes_unfitness_full
 )
 {
 	double pw, pd, pl, accum;
-	int w, b;
+	player_t w, b;
 	gamesnum_t ww,dd,ll;
 	size_t e;
 
@@ -762,9 +762,9 @@ calc_bayes_unfitness_full
 		dd = enc[e].D;
 		ll = enc[e].L;
 
-		accum 	+= 	(ww > 0? ww * log(pw) : 0) 
-				+ 	(dd > 0? dd * log(pd) : 0) 
-				+ 	(ll > 0? ll * log(pl) : 0);
+		accum 	+= 	(ww > 0? (double)ww * log(pw) : 0) 
+				+ 	(dd > 0? (double)dd * log(pd) : 0) 
+				+ 	(ll > 0? (double)ll * log(pl) : 0);
 	}
 	// Priors
 	accum += -prior_unfitness
