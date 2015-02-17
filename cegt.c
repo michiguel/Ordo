@@ -258,7 +258,7 @@ all_report_rat (FILE *textf, struct CEGT *p)
 	struct ENC 	*Enc = p->enc;
 	size_t	 	N_enc = p->n_enc ;
 	size_t	 	N_players = p->n_players ;
-	int			*Sorted = p->sorted ;
+	player_t		*Sorted = p->sorted ;
 	double		*Ratingof_results = p->ratingof_results ;
 	double		*Obtained_results = p->obtained_results ;
 	gamesnum_t			*Playedby_results = p->playedby_results ;
@@ -360,7 +360,7 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 	struct ENC 	*Enc = p->enc;
 	size_t	 	N_enc = p->n_enc ;
 	size_t	 	N_players = p->n_players ;
-	int			*Sorted = p->sorted ;
+	player_t		*Sorted = p->sorted ;
 	double		*Ratingof_results = p->ratingof_results ;
 	bool_t		*Flagged = p->flagged ;
 	const char	**Name = p->name ;
@@ -541,7 +541,7 @@ all_report_indiv_stats 	( FILE *textf
 	struct ENC 	*Enc = p->enc;
 	size_t	 	N_enc = p->n_enc ;
 	size_t	 	N_players = p->n_players ;
-	int			*Sorted = p->sorted ;
+	player_t		*Sorted = p->sorted ;
 	double		*Ratingof_results = p->ratingof_results ;
 	bool_t		*Flagged = p->flagged ;
 	const char	**Name = p->name ;

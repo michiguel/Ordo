@@ -76,7 +76,7 @@
 
 typedef int64_t gamesnum_t;
 
-typedef int32_t player_t;
+typedef int64_t player_t;
 
 struct gamei {
 	player_t 	whiteplayer;

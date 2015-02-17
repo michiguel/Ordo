@@ -44,10 +44,10 @@ calc_encounters__
 
 
 static int
-compare__ (const int32_t *a, const int32_t *b, const double *reference )
+compare__ (const player_t *a, const player_t *b, const double *reference )
 {	
-	const int32_t *ja = a;
-	const int32_t *jb = b;
+	const player_t *ja = a;
+	const player_t *jb = b;
 	const double *r = reference;
 
 	const double da = r[*ja];
@@ -57,7 +57,7 @@ compare__ (const int32_t *a, const int32_t *b, const double *reference )
 }
 
 static void
-insertion_sort (const double *reference, size_t n, int32_t *vect)
+insertion_sort (const double *reference, size_t n, player_t *vect)
 {
 	size_t i, j;
 	int32_t tmp;
