@@ -329,7 +329,7 @@ struct NAMEPOD namehashtab[PODMAX];
 struct NAMEPEA nameremains[PEA_REM_MAX];
 int nameremains_n;
 
-static const char *get_DB_name(int i) 
+static const char *get_DB_name(player_t i) 
 {
 	size_t j = (size_t)i / MAXNAMESxBLOCK;
 	size_t k = (size_t)i % MAXNAMESxBLOCK;
@@ -392,7 +392,7 @@ name_ispresent (const char *s, uint32_t hash, /*out*/ player_t *out_index)
 }
 
 static bool_t
-name_register (uint32_t hash, int i)
+name_register (uint32_t hash, player_t i)
 {
 	struct NAMEPOD *ppod = &namehashtab[hash & PODMASK];
 	struct NAMEPEA *ppea;

@@ -195,7 +195,7 @@ add_participant (group_t *g, size_t i)
 }
 
 static void
-add_connection (group_t *g, int i)
+add_connection (group_t *g, player_t i)
 {
 	int group_id;
 	connection_t *nw = connection_new();
@@ -224,7 +224,7 @@ add_connection (group_t *g, int i)
 }
 
 static void
-add_revconn (group_t *g, int i)
+add_revconn (group_t *g, player_t i)
 {
 	int group_id;
 	connection_t *nw = connection_new();
@@ -252,13 +252,13 @@ add_revconn (group_t *g, int i)
 	}		
 }
 
-static int get_iwin(struct ENC *pe) {return pe->wscore > 0.5? pe->wh: pe->bl;}
-static int get_ilos(struct ENC *pe) {return pe->wscore > 0.5? pe->bl: pe->wh;}
+static player_t get_iwin(struct ENC *pe) {return pe->wscore > 0.5? pe->wh: pe->bl;}
+static player_t get_ilos(struct ENC *pe) {return pe->wscore > 0.5? pe->bl: pe->wh;}
 
 static void
 enc2groups (struct ENC *pe)
 {
-	int iwin, ilos;
+	player_t iwin, ilos;
 	group_t *glw, *gll, *g;
 
 	assert(pe);
@@ -1092,7 +1092,7 @@ scan_encounters(const struct ENC *enc, size_t N_enc, size_t N_plyrs)
 	} 
 
 	for (e = 0, N_se2 = 0 ; e < N_se; e++) {
-		int x,y;
+		player_t x,y;
 		x = SE[e].wh;
 		y = SE[e].bl;	
 		if (Group_belong[x] != Group_belong[y]) {
