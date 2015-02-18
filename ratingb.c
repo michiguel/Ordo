@@ -54,7 +54,7 @@ static double adjust_drawrate (double start_wadv, double *ratingof, int N_enc, c
 static double
 relative_anchors_unfitness_full(size_t n_relative_anchors, const struct relprior *ra, const double *ratingof)
 {
-	int a, b;
+	player_t a, b;
 	size_t i;
 	double d, x;
 	double accum = 0;
@@ -309,7 +309,7 @@ gamesnum_t *		playedby 		= rat->playedby;
 double *	ratingof 		= rat->ratingof;
 double *	ratingbk 		= rat->ratingbk;
 double *	changing 		= rat->changing;
-int			anchored_n 		= plyrs->anchored_n;
+player_t	anchored_n 		= plyrs->anchored_n;
 bool_t		multiple_anchors_present = anchored_n > 1; //FIXME check that it should be ">1". it was ">0"
 
 	probarr = memnew (sizeof(double) * n_players * 4);
@@ -826,7 +826,7 @@ probarray_build	( size_t n_enc
 {
 	double pw, pd, pl, delta;
 	double p;
-	int w,b;
+	player_t w,b;
 	size_t e;
 
 	for (e = 0; e < n_enc; e++) {

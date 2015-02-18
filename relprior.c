@@ -84,8 +84,8 @@ relpriors_show (const struct PLAYERS *plyrs, const struct rel_prior_set *rps)
 	if (rn > 0) {
 		printf ("Relative Anchors {\n");
 		for (i = 0; i < rn; i++) {
-			int a = rx[i].player_a;
-			int b = rx[i].player_b;
+			player_t a = rx[i].player_a;
+			player_t b = rx[i].player_b;
 			printf ("[%s] [%s] = %lf +/- %lf\n", plyrs->name[a], plyrs->name[b], rx[i].delta, rx[i].sigma);
 		}
 		printf ("}\n");

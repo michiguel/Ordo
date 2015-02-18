@@ -272,14 +272,14 @@ rate_super_players_internal
 				while (myenc_n-->0) {
 					size_t n = myenc_n;
 					if (myenc[n].wh == j) { 
-						int opp = myenc[n].bl;
+						player_t opp = myenc[n].bl;
 						weig[r	] = (double)myenc[n].played;
 						rtng[r++] = ratingof[opp] - white_advantage;
 						cume_score += myenc[n].wscore;
 						cume_total += (double)myenc[n].played;
 				 	} else 
 					if (myenc[myenc_n].bl == j) { 
-						int opp = myenc[n].wh;
+						player_t opp = myenc[n].wh;
 						weig[r	] = (double)myenc[n].played;
 						rtng[r++] = ratingof[opp] + white_advantage;
 						cume_score += (double)myenc[n].played - myenc[n].wscore;

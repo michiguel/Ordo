@@ -68,8 +68,8 @@ calc_encounters ( int selectivity
 	for (i = 0; i < n_games; i++) {
 
 		int32_t score_i = gam[i].score;
-		int32_t wp_i = gam[i].whiteplayer;
-		int32_t bp_i = gam[i].blackplayer;
+		player_t wp_i = gam[i].whiteplayer;
+		player_t bp_i = gam[i].blackplayer;
 
 		skip = score_i >= DISCARD
 			|| (selectivity == ENCOUNTERS_NOFLAGGED 
@@ -106,7 +106,7 @@ calc_encounters ( int selectivity
 void
 calc_obtained_playedby (const struct ENC *enc, size_t N_enc, size_t n_players, double *obtained, gamesnum_t *playedby)
 {
-	int w, b;
+	player_t w, b;
 	size_t e, j;
 
 	for (j = 0; j < n_players; j++) {

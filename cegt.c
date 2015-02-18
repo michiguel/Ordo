@@ -44,7 +44,7 @@ struct OPP_LINE {
 // STATICS
 static size_t find_maxlen (const char *nm[], size_t n);
 static const char *SP_symbolstr[3] = {"<",">"," "};
-static const char *get_super_player_symbolstr(int j, struct CEGT *p);
+static const char *get_super_player_symbolstr(player_t j, struct CEGT *p);
 static void all_report_rat (FILE *textf, struct CEGT *p);
 static void all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc);
 static void all_report_gen (FILE *textf, struct CEGT *p);
@@ -193,7 +193,7 @@ find_maxlen (const char *nm[], size_t n)
 }
 
 static const char *
-get_super_player_symbolstr(int j, struct CEGT *p)
+get_super_player_symbolstr(player_t j, struct CEGT *p)
 {
 	if (p->obtained_results[j] < 0.01) {
 		return SP_symbolstr[0];
@@ -203,11 +203,11 @@ get_super_player_symbolstr(int j, struct CEGT *p)
 		return SP_symbolstr[2];
 }
 
-static double av_opp(long int j, struct CEGT *p)
+static double av_opp(player_t j, struct CEGT *p)
 {
 	size_t e;
-	int32_t opp;
-	long target = j;
+	player_t opp;
+	player_t target = j;
 
 	double rsum = 0;
 	long nsum = 0;
@@ -227,7 +227,7 @@ static double av_opp(long int j, struct CEGT *p)
 	return rsum/ (double) nsum;
 }
 
-static double draw_percentage(int32_t j, struct ENC *enc, size_t n_enc)
+static double draw_percentage(player_t j, struct ENC *enc, size_t n_enc)
 {
 	size_t e;
 	long target = j;
@@ -250,7 +250,7 @@ static void
 all_report_rat (FILE *textf, struct CEGT *p)
 {
 	FILE *f;
-	int j;
+	player_t j;
 	size_t i;
 	size_t ml;
 
@@ -353,7 +353,7 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 {
 	FILE *f;
 	size_t i;
-	int32_t j;
+	player_t j;
 	size_t ml;
 
 	// Interface p with internal variables or pointers
@@ -384,11 +384,11 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 			if (!Flagged[j]) {
 				size_t e;
 				size_t t;
-				int32_t target = j;
+				player_t target = j;
 
-				long won; 
-				long dra; 
-				long los;
+				gamesnum_t won; 
+				gamesnum_t dra; 
+				gamesnum_t los;
 
 				t = 0;
 				for (e = 0; e < N_enc; e++) {
@@ -428,7 +428,7 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 				los = 0;
 
 				for (e = 0; e < t; ) {
-					int oth = Temp_enc[e].wh == target? Temp_enc[e].bl: Temp_enc[e].wh;
+					player_t oth = Temp_enc[e].wh == target? Temp_enc[e].bl: Temp_enc[e].wh;
 	
 					won = Temp_enc[e].wh == target? Temp_enc[e].W: Temp_enc[e].L;
 					dra = Temp_enc[e].D;
@@ -525,7 +525,7 @@ all_report_indiv_stats 	( FILE *textf
 {
 	FILE *f;
 	size_t i;
-	int32_t j;
+	player_t j;
 	size_t ml;
 	size_t gl = 7;
 
@@ -619,7 +619,7 @@ all_report_indiv_stats 	( FILE *textf
 				maxgames = maxwon = maxdra = maxlos = 0;
 				nl = 0;
 				for (e = 0; e < t; ) {
-					int oth = Temp_enc[e].wh == target? Temp_enc[e].bl: Temp_enc[e].wh;
+					player_t oth = Temp_enc[e].wh == target? Temp_enc[e].bl: Temp_enc[e].wh;
 	
 					won = Temp_enc[e].wh == target? Temp_enc[e].W: Temp_enc[e].L;
 					dra = Temp_enc[e].D;

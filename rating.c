@@ -121,7 +121,7 @@ adjust_rating 	( double delta
 				, const double *obtained 
 				, gamesnum_t *playedby
 				, double *ratingof
-				, int anchored_n
+				, player_t anchored_n
 )
 {
 	size_t 	j;
@@ -469,7 +469,7 @@ double *	Obtained 		= rat->obtained;
 gamesnum_t *		Playedby 		= rat->playedby;
 double *	Ratingof 		= rat->ratingof;
 double *	Ratingbk 		= rat->ratingbk;
-int			anchored_n 		= plyrs->anchored_n;
+player_t	anchored_n 		= plyrs->anchored_n;
 
 	allocsize = sizeof(double) * (N_players+1);
 	expected = memnew(allocsize);
@@ -657,7 +657,7 @@ static double
 overallerrorE_fdrawrate (size_t N_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv, double dr0)
 {
 	size_t e;
-	int w, b;
+	player_t w, b;
 	double dp2, f;
 	double dexp;
 

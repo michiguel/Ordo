@@ -60,7 +60,7 @@ static void
 insertion_sort (const double *reference, size_t n, player_t *vect)
 {
 	size_t i, j;
-	int32_t tmp;
+	player_t tmp;
 	for (j = n-1; j > 0; j--) {
 		for (i = j; i < n; i++) {
 			if (0 < compare__(&vect[i-1], &vect[i], reference)) {
@@ -472,7 +472,7 @@ errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATI
 {
 	FILE *f;
 	ptrdiff_t idx;
-	int32_t y,x;
+	player_t y,x;
 	size_t i, j;
 
 	if (NULL != (f = fopen (out, "w"))) {
@@ -514,7 +514,8 @@ ctsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_
 {
 	FILE *f;
 	ptrdiff_t idx;
-	int32_t y,x;
+	player_t y;
+	player_t x;
 	size_t i,j;
 
 	if (NULL != (f = fopen (out, "w"))) {

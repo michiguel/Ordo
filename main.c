@@ -1578,7 +1578,7 @@ simulate_scores ( const double 	*ratingof_results
 	struct gamei *gam = g->ga;
 
 	size_t i;
-	int32_t w, b;
+	player_t w, b;
 	const double *rating = ratingof_results;
 	double pwin, pdraw, plos;
 
@@ -1740,7 +1740,7 @@ table_output(double rtng_76)
 }
 
 // no globals
-static long int	
+static player_t	
 set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl)
 
 {
@@ -1756,8 +1756,8 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl)
 	double 	*obt;
 	gamesnum_t	*pla;
 	size_t e, j;
-	int32_t w, b;
-	long super = 0;
+	player_t w, b;
+	player_t super = 0;
 
 	obt = memnew (sizeof(double) * n_players);
 	pla = memnew (sizeof(gamesnum_t) * n_players);
