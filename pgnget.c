@@ -324,10 +324,15 @@ struct NAMEPOD {
 	int n;
 };
 
-struct NAMEPOD namehashtab[PODMAX];
 
-struct NAMEPEA nameremains[PEA_REM_MAX];
-int nameremains_n;
+
+// ----------------- PRIVATE DATA---------------
+static struct NAMEPOD Namehashtab[PODMAX];
+static struct NAMEPEA Nameremains[PEA_REM_MAX];
+static int Nameremains_n;
+//----------------------------------------------
+
+
 
 static const char *get_DB_name(player_t i) 
 {
@@ -344,7 +349,7 @@ hashstat(void)
 	int hist[9] = {0,0,0,0,0,0,0,0,0};
 
 	for (i = 0; i < PODMAX; i++) {
-		level = namehashtab[i].n;
+		level = Namehashtab[i].n;
 		hist[level]++;
 	}
 	for (i = 0; i < 9; i++) {
@@ -356,7 +361,7 @@ hashstat(void)
 static bool_t
 name_ispresent (const char *s, uint32_t hash, /*out*/ player_t *out_index)
 {
-	struct NAMEPOD *ppod = &namehashtab[hash & PODMASK];
+	struct NAMEPOD *ppod = &Namehashtab[hash & PODMASK];
 	struct NAMEPEA *ppea;
 	int 			n;
 	bool_t 			found= FALSE;
@@ -378,8 +383,8 @@ name_ispresent (const char *s, uint32_t hash, /*out*/ player_t *out_index)
 	}
 	if (found) return found;
 
-	ppea = nameremains;
-	n = nameremains_n;
+	ppea = Nameremains;
+	n = Nameremains_n;
 	for (i = 0; i < n; i++) {
 		if (ppea[i].hash == hash && !strcmp(s, get_DB_name(ppea[i].itos))) {
 			found = TRUE;
@@ -394,7 +399,7 @@ name_ispresent (const char *s, uint32_t hash, /*out*/ player_t *out_index)
 static bool_t
 name_register (uint32_t hash, player_t i)
 {
-	struct NAMEPOD *ppod = &namehashtab[hash & PODMASK];
+	struct NAMEPOD *ppod = &Namehashtab[hash & PODMASK];
 	struct NAMEPEA *ppea;
 	int 			n;
 
@@ -407,10 +412,10 @@ name_register (uint32_t hash, player_t i)
 		ppod->n++;
 		return TRUE;
 	}
-	else if (nameremains_n < PEA_REM_MAX) {
-		nameremains[nameremains_n].itos = i;
-		nameremains[nameremains_n].hash = hash;
-		nameremains_n++;
+	else if (Nameremains_n < PEA_REM_MAX) {
+		Nameremains[Nameremains_n].itos = i;
+		Nameremains[Nameremains_n].hash = hash;
+		Nameremains_n++;
 		return TRUE;
 	}
 	else {
@@ -634,7 +639,7 @@ res2int (const char *s)
 		return DISCARD;
 	} else {
 		fprintf(stderr, "PGN reading problems in Result tag: %s\n",s);
-		exit(0);
+		exit(EXIT_FAILURE);
 		return DISCARD;
 	}
 }
