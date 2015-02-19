@@ -60,6 +60,7 @@ static struct DATA DaBa;
 static bool_t	data_init (struct DATA *d);
 
 /*------------------------------------------------------------------------*/
+static const char *database_ptr2name (const struct DATA *db, player_t i);
 
 static bool_t	addplayer (struct DATA *d, const char *s, player_t *i);
 static void		report_error 	(long int n);
@@ -107,7 +108,7 @@ database_done (struct DATA *p)
 }
 
 
-const char *
+static const char *
 database_ptr2name (const struct DATA *db, player_t i)
 {
 	const char *r;
@@ -117,6 +118,102 @@ database_ptr2name (const struct DATA *db, player_t i)
 	return r;	
 }
 
+#include "mytypes.h"
+
+void 
+DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct GAMESTATS *gs)
+{
+	player_t j;
+	player_t topn;
+	gamesnum_t gamestat[4] = {0,0,0,0};
+
+	p->n = (size_t)db->n_players; //FIXME size_t
+	g->n = db->n_games; 
+
+	topn = db->n_players; 
+	for (j = 0; j < topn; j++) {
+		p->name[j] = database_ptr2name(db,j);
+		p->flagged[j] = FALSE;
+		p->prefed [j] = FALSE;
+		p->performance_type[j] = PERF_NORMAL;
+	}
+
+{
+	size_t blk_filled  = db->gb_filled;
+	size_t blk;
+	size_t idx_last = db->gb_idx;
+	size_t idx;
+	size_t i = 0;
+
+	for (blk = 0; blk < blk_filled; blk++) {
+
+		for (idx = 0; idx < MAXGAMESxBLOCK; idx++) {
+
+			g->ga[i].whiteplayer = db->gb[blk]->white[idx];
+			g->ga[i].blackplayer = db->gb[blk]->black[idx]; 
+			g->ga[i].score       = db->gb[blk]->score[idx];
+			if (g->ga[i].score <= DISCARD) gamestat[g->ga[i].score]++;
+			i++;
+		}
+	
+	}
+
+	blk = blk_filled;
+
+		for (idx = 0; idx < idx_last; idx++) {
+
+			g->ga[i].whiteplayer = db->gb[blk]->white[idx];
+			g->ga[i].blackplayer = db->gb[blk]->black[idx]; 
+			g->ga[i].score       = db->gb[blk]->score[idx];
+			if (g->ga[i].score <= DISCARD) gamestat[g->ga[i].score]++;
+			i++;
+		}
+
+
+	if (i != db->n_games) {
+		fprintf (stderr, "Error, games not loaded propely\n");
+		exit(EXIT_FAILURE);
+	}
+}
+
+	gs->white_wins	= gamestat[WHITE_WIN];
+	gs->draws		= gamestat[RESULT_DRAW];
+	gs->black_wins	= gamestat[BLACK_WIN];
+	gs->noresult	= gamestat[DISCARD];
+
+	assert ((long)g->n == (gs->white_wins + gs->draws + gs->black_wins + gs->noresult));
+
+	return;
+}
+
+
+void 
+DB_ignore_draws (struct DATA *db)
+{
+	size_t blk_filled = db->gb_filled;
+	size_t idx_last   = db->gb_idx;
+	size_t blk;
+	size_t idx;
+
+	blk_filled = db->gb_filled;
+	idx_last   = db->gb_idx;
+
+	for (blk = 0; blk < blk_filled; blk++) {
+		for (idx = 0; idx < MAXGAMESxBLOCK; idx++) {
+			if (db->gb[blk]->score[idx] == RESULT_DRAW)
+				db->gb[blk]->score[idx] = DISCARD;
+		}
+	}
+
+	blk = blk_filled;
+
+		for (idx = 0; idx < idx_last; idx++) {
+			if (db->gb[blk]->score[idx] == RESULT_DRAW)
+				db->gb[blk]->score[idx] = DISCARD;
+		}
+
+	return;
+}
 
 /*--------------------------------------------------------------*\
 |
