@@ -121,7 +121,7 @@ database_ptr2name (const struct DATA *db, player_t i)
 #include "mytypes.h"
 
 void 
-DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct GAMESTATS *gs)
+database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct GAMESTATS *gs)
 {
 	player_t j;
 	player_t topn;
@@ -188,7 +188,7 @@ DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct G
 
 
 void 
-DB_ignore_draws (struct DATA *db)
+database_ignore_draws (struct DATA *db)
 {
 	size_t blk_filled = db->gb_filled;
 	size_t idx_last   = db->gb_idx;

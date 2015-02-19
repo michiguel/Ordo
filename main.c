@@ -774,7 +774,7 @@ int main (int argc, char *argv[])
 	/*==== SET INPUT ====*/
 
 	if (NULL != (pdaba = database_init_frompgn(inputf, QUIET_MODE))) {
-		if (Ignore_draws) DB_ignore_draws(pdaba);
+		if (Ignore_draws) database_ignore_draws(pdaba);
 	} else {
 		fprintf (stderr, "Problems reading results from: %s\n", inputf);
 		return EXIT_FAILURE; 
@@ -809,7 +809,7 @@ int main (int argc, char *argv[])
 	}
 	/**/
 
-	DB_transform(pdaba, &Games, &Players, &Game_stats); /* convert DB to global variables */
+	database_transform(pdaba, &Games, &Players, &Game_stats); /* convert database to global variables */
 	qsort (Games.ga, (size_t)Games.n, sizeof(struct gamei), compare_GAME);
 
 	if (!supporting_auxmem_init (Players.n)) {
@@ -1187,7 +1187,7 @@ int main (int argc, char *argv[])
 			}
 		}
 
-		DB_transform(pdaba, &Games, &Players, &Game_stats); /* convert DB to global variables, to restore original data */
+		database_transform(pdaba, &Games, &Players, &Game_stats); /* convert database to global variables, to restore original data */
 		qsort (Games.ga, (size_t)Games.n, sizeof(struct gamei), compare_GAME);
 		calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 		if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {

@@ -39,8 +39,8 @@ extern void 			database_done (struct DATA *p);
 
 #include "mytypes.h"
 
-extern void DB_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct GAMESTATS *gs);
-extern void DB_ignore_draws (struct DATA *db);
+extern void database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct GAMESTATS *gs);
+extern void database_ignore_draws (struct DATA *db);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif
