@@ -55,17 +55,15 @@ struct pgn_result {
 	char 	btag[PGNSTRSIZE];
 };
 
-static struct DATA DaBa;
-
 static bool_t	data_init (struct DATA *d);
 
 /*------------------------------------------------------------------------*/
-static const char *database_ptr2name (const struct DATA *db, player_t i);
+static const char *get_DB_name (const struct DATA *db, player_t i);
 
 static bool_t	addplayer (struct DATA *d, const char *s, player_t *i);
 static void		report_error 	(long int n);
 static int		res2int 		(const char *s);
-static bool_t 	fpgnscan (FILE *fpgn, bool_t quiet);
+static bool_t 	fpgnscan (FILE *fpgn, bool_t quiet, struct DATA *d);
 static bool_t 	is_complete (struct pgn_result *p);
 static void 	pgn_result_reset (struct pgn_result *p);
 static bool_t 	pgn_result_collect (struct pgn_result *p, struct DATA *d);
@@ -78,6 +76,7 @@ static bool_t 	pgn_result_collect (struct pgn_result *p, struct DATA *d);
 struct DATA *
 database_init_frompgn (const char *pgn, bool_t quiet)
 {
+static struct DATA DaBa;
 	struct DATA *pDAB = NULL;
 	FILE *fpgn;
 	bool_t ok = FALSE;
@@ -86,7 +85,7 @@ database_init_frompgn (const char *pgn, bool_t quiet)
 
 	if (ok) {
 		if (NULL != (fpgn = fopen (pgn, "r"))) {
-			ok = fpgnscan (fpgn, quiet);
+			ok = fpgnscan (fpgn, quiet, &DaBa);
 			fclose(fpgn);
 		}
 		pDAB = &DaBa;
@@ -107,16 +106,13 @@ database_done (struct DATA *p)
 	return;
 }
 
-
-static const char *
-database_ptr2name (const struct DATA *db, player_t i)
+static const char *get_DB_name(const struct DATA *d, player_t i) 
 {
-	const char *r;
 	size_t j = (size_t)i / MAXNAMESxBLOCK;
 	size_t k = (size_t)i % MAXNAMESxBLOCK;
-	r = db->nm[j]->p[k];
-	return r;	
+	return d->nm[j]->p[k];
 }
+
 
 #include "mytypes.h"
 
@@ -132,7 +128,7 @@ database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, st
 
 	topn = db->n_players; 
 	for (j = 0; j < topn; j++) {
-		p->name[j] = database_ptr2name(db,j);
+		p->name[j] = get_DB_name(db,j);
 		p->flagged[j] = FALSE;
 		p->prefed [j] = FALSE;
 		p->performance_type[j] = PERF_NORMAL;
@@ -431,12 +427,6 @@ static int Nameremains_n;
 
 
 
-static const char *get_DB_name(player_t i) 
-{
-	size_t j = (size_t)i / MAXNAMESxBLOCK;
-	size_t k = (size_t)i % MAXNAMESxBLOCK;
-	return DaBa.nm[j]->p[k];
-}
 
 #if 0
 static void
@@ -456,7 +446,7 @@ hashstat(void)
 #endif
 
 static bool_t
-name_ispresent (const char *s, uint32_t hash, /*out*/ player_t *out_index)
+name_ispresent (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
 {
 	struct NAMEPOD *ppod = &Namehashtab[hash & PODMASK];
 	struct NAMEPEA *ppea;
@@ -469,7 +459,7 @@ name_ispresent (const char *s, uint32_t hash, /*out*/ player_t *out_index)
 	n = ppod->n;
 	for (i = 0; i < n; i++) {
 		if (ppea[i].hash == hash) {
-			const char *name_str = get_DB_name(ppea[i].itos);
+			const char *name_str = get_DB_name(d, ppea[i].itos);
 			assert(name_str);
 			if (!strcmp(s, name_str)) {
 				found = TRUE;
@@ -483,7 +473,7 @@ name_ispresent (const char *s, uint32_t hash, /*out*/ player_t *out_index)
 	ppea = Nameremains;
 	n = Nameremains_n;
 	for (i = 0; i < n; i++) {
-		if (ppea[i].hash == hash && !strcmp(s, get_DB_name(ppea[i].itos))) {
+		if (ppea[i].hash == hash && !strcmp(s, get_DB_name(d, ppea[i].itos))) {
 			found = TRUE;
 			*out_index = ppea[i].itos;
 			break;
@@ -560,7 +550,7 @@ pgn_result_collect (struct pgn_result *p, struct DATA *d)
 	tagstr = p->wtag;
 	taghsh = namehash(tagstr);
 
-	if (ok && !name_ispresent (tagstr, taghsh, &plyr)) {
+	if (ok && !name_ispresent (d, tagstr, taghsh, &plyr)) {
 		ok = addplayer (d, tagstr, &plyr) && name_register(taghsh,plyr);
 	}
 	i = plyr;
@@ -568,7 +558,7 @@ pgn_result_collect (struct pgn_result *p, struct DATA *d)
 	tagstr = p->btag;
 	taghsh = namehash(tagstr);
 
-	if (ok && !name_ispresent (tagstr, taghsh, &plyr)) {
+	if (ok && !name_ispresent (d, tagstr, taghsh, &plyr)) {
 		ok = addplayer (d, tagstr, &plyr) && name_register(taghsh,plyr);
 	}
 	j = plyr;
@@ -626,7 +616,7 @@ parsing_error(long line_counter)
 
 
 static bool_t
-fpgnscan (FILE *fpgn, bool_t quiet)
+fpgnscan (FILE *fpgn, bool_t quiet, struct DATA *d)
 {
 #define MAX_MYLINE 40000
 
@@ -697,7 +687,7 @@ fpgnscan (FILE *fpgn, bool_t quiet)
 		}
 
 		if (is_complete (&result)) {
-			if (!pgn_result_collect (&result, &DaBa)) {
+			if (!pgn_result_collect (&result, d)) {
 				fprintf (stderr, "\nCould not collect more games: Limits reached\n");
 				exit(EXIT_FAILURE);
 			}
