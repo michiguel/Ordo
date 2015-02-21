@@ -66,7 +66,8 @@ all_report 	( const struct GAMES 	*g
 			, FILE 					*textf
 			, double 				white_advantage
 			, double 				drawrate_evenmatch
-			, int					decimals);
+			, int					decimals
+			, struct output_qualifiers outqual);
 
 void
 errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out, double confidence_factor);

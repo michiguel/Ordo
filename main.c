@@ -167,6 +167,8 @@ struct PLAYERS 		Players;
 struct RATINGS 		RA;
 struct ENCOUNTERS 	Encounters;
 
+struct output_qualifiers Outqual = {FALSE, 0};
+
 static int compare_GAME (const void * a, const void * b)
 {
 	const struct gamei *ap = a;
@@ -1211,7 +1213,8 @@ int main (int argc, char *argv[])
 				, textf
 				, White_advantage
 				, Drawrate_evenmatch
-				, OUTDECIMALS);
+				, OUTDECIMALS
+				, Outqual);
 
 	if (Simulate > 1 && NULL != ematstr) {
 		errorsout(&Players, &RA, sim, ematstr, Confidence_factor);

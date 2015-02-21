@@ -140,7 +140,7 @@ struct DEVIATION_ACC {
 struct PLAYERS {
 	size_t		n; 
 	size_t		size;
-	player_t		anchored_n;
+	player_t	anchored_n;
 	bool_t		perf_set;
 	const char  **name;
 	bool_t		*flagged;
@@ -150,15 +150,15 @@ struct PLAYERS {
 
 struct RATINGS {
 	size_t		size;
-	player_t		*sorted; 	/* sorted index by rating */
+	player_t	*sorted; 	/* sorted index by rating */
 	double		*obtained;
-	gamesnum_t		*playedby; 	/* N games played by player "i" */
+	gamesnum_t	*playedby; 	/* N games played by player "i" */
  	double		*ratingof; 	/* rating current */
  	double		*ratingbk; 	/* rating backup  */
  	double		*changing; 	/* rating backup  */
 	double		*ratingof_results;
 	double		*obtained_results;
-	gamesnum_t		*playedby_results;
+	gamesnum_t	*playedby_results;
 };
 
 struct ENCOUNTERS {
@@ -174,5 +174,10 @@ struct rel_prior_set {
 	struct relprior *x; // this points to an array
 };
 
+
+struct output_qualifiers {
+	bool_t  	mingames_set;
+	gamesnum_t	mingames; 
+};
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

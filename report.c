@@ -11,6 +11,8 @@
 
 #include "ordolim.h"
 
+#define MINGAMES 1000
+
 //=== duplicated in main.c =========
 
 static ptrdiff_t
@@ -151,6 +153,26 @@ get_sdev_str (double sdev, double confidence_factor, char *str, int decimals)
 	return str;
 }
 
+#if 0
+static void
+flag_lowfrequency_players 	( const struct PLAYERS 	*p
+							, const struct RATINGS 	*r
+							, gamesnum_t mingames)
+{
+	size_t j;
+	for (j = 0; j < p->n; j++) {
+		if (r->playedby_results[j] < mingames)
+			p->flagged[j] = TRUE;
+	}
+}
+#endif
+
+static bool_t
+ok_to_out (struct output_qualifiers *poutqual, gamesnum_t x)
+{
+	return !poutqual->mingames_set || x >= poutqual->mingames;
+} 
+
 //======================
 
 void 
@@ -265,7 +287,8 @@ all_report 	( const struct GAMES 	*g
 			, FILE 					*textf
 			, double 				white_advantage
 			, double 				drawrate_evenmatch
-			, int					decimals)
+			, int					decimals
+			, struct output_qualifiers	outqual)
 {
 	FILE *f;
 	size_t i, j;
@@ -302,7 +325,7 @@ all_report 	( const struct GAMES 	*g
 			for (i = 0; i < p->n; i++) {
 
 				j = (size_t)r->sorted[i]; //FIXME size_t
-				if (!p->flagged[j]) {
+				if (!p->flagged[j] && ok_to_out (&outqual, r->playedby_results[j])) {
 
 					char rankbuf[80];
 					showrank = !is_old_version((int32_t)j, rps); //FIXME size_t
