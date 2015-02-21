@@ -55,7 +55,8 @@ struct pgn_result {
 	char 	btag[PGNSTRSIZE];
 };
 
-static bool_t	data_init (struct DATA *d);
+static struct DATA * structdata_init (void);
+static void	structdata_done (struct DATA *d);
 
 /*------------------------------------------------------------------------*/
 static const char *get_DB_name (const struct DATA *db, player_t i);
@@ -73,22 +74,115 @@ static bool_t 	pgn_result_collect (struct pgn_result *p, struct DATA *d);
 |
 \*--------------------------------------------------------------*/
 
+static struct DATA *
+structdata_init (void)
+{
+	struct DATA *d;
+	struct GAMEBLOCK *p;
+	struct NAMEBLOCK *t;
+	bool_t ok = TRUE;
+
+	ok = ok && NULL != (d = memnew (sizeof(struct DATA)));
+	if (ok) {
+		d->labels_head.buf = NULL;
+		d->labels_head.nxt = NULL;
+		d->labels_head.idx = 0;
+		d->curr = &d->labels_head;
+
+		d->n_players = 0;
+		d->n_games = 0;
+
+		d->gb_filled = 0;;
+		d->gb_idx = 0;
+		d->gb_allocated = 0;
+
+		d->nm_filled = 0;;
+		d->nm_idx = 0;
+		d->nm_allocated = 0;
+
+		ok = ok && NULL != (p = memnew (sizeof(struct GAMEBLOCK)));
+		if (ok)	d->gb_allocated++;
+		d->gb[0] = p;
+
+		ok = ok && NULL != (t = memnew (sizeof(struct NAMEBLOCK)));
+		if (ok)	d->nm_allocated++;
+		d->nm[0] = t;
+
+		if (!ok) structdata_done(d);
+	}
+	return ok? d: NULL;
+}
+
+static void
+structdata_done (struct DATA *d)
+{
+	size_t n;
+	namenode_t *p;
+	namenode_t *q;
+
+	d->n_players = 0;
+	d->n_games = 0;
+
+//
+	n = d->gb_allocated;
+
+	while (n-->0) {
+		memrel(d->gb[n]);
+		d->gb[n] = NULL;
+	}
+
+	d->gb_filled = 0;;
+	d->gb_idx = 0;
+	d->gb_allocated = 0;
+
+//
+	n = d->nm_allocated;
+
+	while (n-->0) {
+		memrel(d->nm[n]);
+		d->nm[n] = NULL;
+	}
+
+	d->nm_filled = 0;;
+	d->nm_idx = 0;
+	d->nm_allocated = 0;
+
+//
+	p = d->labels_head.nxt;
+
+	while (p) {
+		if (p->buf) {memrel(p->buf); p->buf = NULL; p->idx = 0;}
+		q = p->nxt;	
+		memrel(p);
+		p = q;
+	}
+
+	p = &d->labels_head;
+		if (p->buf) {memrel(p->buf); p->buf = NULL; p->idx = 0;}
+
+}
+
+
+/*
+|
+|
+\*--------------------------------------------------------------*/
+
 struct DATA *
 database_init_frompgn (const char *pgn, bool_t quiet)
 {
-static struct DATA DaBa;
+
 	struct DATA *pDAB = NULL;
 	FILE *fpgn;
 	bool_t ok = FALSE;
 
-	ok = data_init (&DaBa);
+	ok = NULL != (pDAB = structdata_init ());
 
 	if (ok) {
 		if (NULL != (fpgn = fopen (pgn, "r"))) {
-			ok = fpgnscan (fpgn, quiet, &DaBa);
+			ok = fpgnscan (fpgn, quiet, pDAB);
 			fclose(fpgn);
 		}
-		pDAB = &DaBa;
 	}
 	return ok? pDAB: NULL;
 
@@ -97,12 +191,10 @@ static struct DATA DaBa;
 	#endif
 }
 
-static void data_done (struct DATA *d);
-
 void 
 database_done (struct DATA *p)
 {
-	data_done (p);
+	structdata_done (p);
 	return;
 }
 
@@ -215,91 +307,6 @@ database_ignore_draws (struct DATA *db)
 |
 |
 \**/
-
-static bool_t
-data_init (struct DATA *d)
-{
-	struct GAMEBLOCK *p;
-	struct NAMEBLOCK *t;
-	bool_t ok = TRUE;
-
-	d->labels_head.buf = NULL;
-	d->labels_head.nxt = NULL;
-	d->labels_head.idx = 0;
-	d->curr = &d->labels_head;
-
-	d->n_players = 0;
-	d->n_games = 0;
-
-	d->gb_filled = 0;;
-	d->gb_idx = 0;
-	d->gb_allocated = 0;
-
-	d->nm_filled = 0;;
-	d->nm_idx = 0;
-	d->nm_allocated = 0;
-
-	ok = ok && NULL != (p = memnew (sizeof(struct GAMEBLOCK)));
-	if (ok)	d->gb_allocated++;
-	d->gb[0] = p;
-
-	ok = ok && NULL != (t = memnew (sizeof(struct NAMEBLOCK)));
-	if (ok)	d->nm_allocated++;
-	d->nm[0] = t;
-
-	if (!ok) data_done(d);
-
-	return ok;
-}
-
-static void
-data_done (struct DATA *d)
-{
-	size_t n;
-	namenode_t *p;
-	namenode_t *q;
-
-	d->n_players = 0;
-	d->n_games = 0;
-
-//
-	n = d->gb_allocated;
-
-	while (n-->0) {
-		memrel(d->gb[n]);
-		d->gb[n] = NULL;
-	}
-
-	d->gb_filled = 0;;
-	d->gb_idx = 0;
-	d->gb_allocated = 0;
-
-//
-	n = d->nm_allocated;
-
-	while (n-->0) {
-		memrel(d->nm[n]);
-		d->nm[n] = NULL;
-	}
-
-	d->nm_filled = 0;;
-	d->nm_idx = 0;
-	d->nm_allocated = 0;
-
-//
-	p = d->labels_head.nxt;
-
-	while (p) {
-		if (p->buf) {memrel(p->buf); p->buf = NULL; p->idx = 0;}
-		q = p->nxt;	
-		memrel(p);
-		p = q;
-	}
-
-	p = &d->labels_head;
-		if (p->buf) {memrel(p->buf); p->buf = NULL; p->idx = 0;}
-
-}
 
 
 static const char *
