@@ -702,7 +702,6 @@ int main (int argc, char *argv[])
 						} else {
 							outqual.mingames = (gamesnum_t)mingames;
 							outqual.mingames_set = TRUE;
-printf ("mingames=%ld\n", outqual.mingames);
 						}
 						break;
 			case '?': 	parameter_error();
