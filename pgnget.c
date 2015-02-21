@@ -33,6 +33,8 @@
 
 #include "mymem.h"
 
+#include "namehash.h"
+
 #if 0
 static void	hashstat(void);
 #endif
@@ -59,7 +61,7 @@ static struct DATA * structdata_init (void);
 static void	structdata_done (struct DATA *d);
 
 /*------------------------------------------------------------------------*/
-static const char *get_DB_name (const struct DATA *db, player_t i);
+
 
 static bool_t	addplayer (struct DATA *d, const char *s, player_t *i);
 static void		report_error 	(long int n);
@@ -198,7 +200,8 @@ database_done (struct DATA *p)
 	return;
 }
 
-static const char *get_DB_name(const struct DATA *d, player_t i) 
+const char *
+database_getname(const struct DATA *d, player_t i) 
 {
 	size_t j = (size_t)i / MAXNAMESxBLOCK;
 	size_t k = (size_t)i % MAXNAMESxBLOCK;
@@ -220,7 +223,7 @@ database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, st
 
 	topn = db->n_players; 
 	for (j = 0; j < topn; j++) {
-		p->name[j] = get_DB_name(db,j);
+		p->name[j] = database_getname(db,j);
 		p->flagged[j] = FALSE;
 		p->prefed [j] = FALSE;
 		p->performance_type[j] = PERF_NORMAL;
@@ -408,130 +411,10 @@ static void report_error (long int n)
 	fprintf(stderr, "\nParsing error in line: %ld\n", n+1);
 }
 
-#define PEAXPOD 8
-#define PODBITS 12
-#define PODMASK ((1<<PODBITS)-1)
-#define PODMAX   (1<<PODBITS)
-#define PEA_REM_MAX (256*256)
-
-struct NAMEPEA {
-	player_t itos;
-	uint32_t hash;
-};
-
-struct NAMEPOD {
-	struct NAMEPEA pea[PEAXPOD];
-	int n;
-};
-
-
-
-// ----------------- PRIVATE DATA---------------
-static struct NAMEPOD Namehashtab[PODMAX];
-static struct NAMEPEA Nameremains[PEA_REM_MAX];
-static int Nameremains_n;
-//----------------------------------------------
 
 
 
 
-#if 0
-static void
-hashstat(void)
-{
-	int i, level;
-	int hist[9] = {0,0,0,0,0,0,0,0,0};
-
-	for (i = 0; i < PODMAX; i++) {
-		level = Namehashtab[i].n;
-		hist[level]++;
-	}
-	for (i = 0; i < 9; i++) {
-		printf ("level[%d]=%d\n",i,hist[i]);
-	}
-}
-#endif
-
-static bool_t
-name_ispresent (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
-{
-	struct NAMEPOD *ppod = &Namehashtab[hash & PODMASK];
-	struct NAMEPEA *ppea;
-	int 			n;
-	bool_t 			found= FALSE;
-	int i;
-
-
-	ppea = ppod->pea;
-	n = ppod->n;
-	for (i = 0; i < n; i++) {
-		if (ppea[i].hash == hash) {
-			const char *name_str = get_DB_name(d, ppea[i].itos);
-			assert(name_str);
-			if (!strcmp(s, name_str)) {
-				found = TRUE;
-				*out_index = ppea[i].itos;
-				break;
-			}
-		}
-	}
-	if (found) return found;
-
-	ppea = Nameremains;
-	n = Nameremains_n;
-	for (i = 0; i < n; i++) {
-		if (ppea[i].hash == hash && !strcmp(s, get_DB_name(d, ppea[i].itos))) {
-			found = TRUE;
-			*out_index = ppea[i].itos;
-			break;
-		}
-	}
-
-	return found;
-}
-
-static bool_t
-name_register (uint32_t hash, player_t i)
-{
-	struct NAMEPOD *ppod = &Namehashtab[hash & PODMASK];
-	struct NAMEPEA *ppea;
-	int 			n;
-
-	ppea = ppod->pea;
-	n = ppod->n;	
-
-	if (n < PEAXPOD) {
-		ppea[n].itos = i;
-		ppea[n].hash = hash;
-		ppod->n++;
-		return TRUE;
-	}
-	else if (Nameremains_n < PEA_REM_MAX) {
-		Nameremains[Nameremains_n].itos = i;
-		Nameremains[Nameremains_n].hash = hash;
-		Nameremains_n++;
-		return TRUE;
-	}
-	else {
-		return FALSE;
-	}
-}
-
-/*http://www.cse.yorku.ca/~oz/hash.html*/
-
-static uint32_t
-namehash(const char *str)
-{
-	uint32_t hash = 5381;
-	char chr;
-	unsigned int c;
-	while ('\0' != *str) {
-		chr = *str++;
-		c = (unsigned int) ((unsigned char)(chr));
-		hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-	}
-	return hash;
-}
 
 static void
 pgn_result_reset (struct pgn_result *p)

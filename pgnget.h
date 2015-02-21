@@ -41,6 +41,7 @@ extern void 			database_done (struct DATA *p);
 
 extern void database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct GAMESTATS *gs);
 extern void database_ignore_draws (struct DATA *db);
+extern const char *database_getname (const struct DATA *db, player_t i);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

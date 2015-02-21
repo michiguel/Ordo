@@ -84,7 +84,7 @@ $INCLUDE='-I myopt'
 $WARNINGS='-Wwrite-strings -Wconversion -Wshadow -Wparentheses -Wlogical-op -Wunused -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement -W -Wall -Wextra'
 $OPT='-O3'
 $LIB='-lm'
-$SRC='myopt/myopt.c mystr.c proginfo.c pgnget.c randfast.c gauss.c groups.c cegt.c indiv.c encount.c ratingb.c rating.c xpect.c csv.c fit1d.c mymem.c report.c relprior.c relpman.c plyrs.c main.c'
+$SRC='myopt/myopt.c mystr.c proginfo.c pgnget.c randfast.c gauss.c groups.c cegt.c indiv.c encount.c ratingb.c rating.c xpect.c csv.c fit1d.c mymem.c report.c relprior.c relpman.c plyrs.c namehash.c main.c'
 $EXE='-o ' + $NAME
 
 #=====================
