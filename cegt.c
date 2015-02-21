@@ -33,10 +33,10 @@
 #include "mymem.h"
 
 struct OPP_LINE {
-	long i;
-	long w;
-	long d;
-	long l;
+	player_t i;
+	gamesnum_t w;
+	gamesnum_t d;
+	gamesnum_t l;
 	double R;
 };
 
@@ -219,7 +219,7 @@ static double av_opp(player_t j, struct CEGT *p)
 	player_t target = j;
 
 	double rsum = 0;
-	long nsum = 0;
+	gamesnum_t nsum = 0;
 
 	struct ENC 	*enc = p->enc;
 	size_t	 	n_enc = p->n_enc ;
@@ -239,10 +239,10 @@ static double av_opp(player_t j, struct CEGT *p)
 static double draw_percentage(player_t j, struct ENC *enc, size_t n_enc)
 {
 	size_t e;
-	long target = j;
+	player_t target = j;
 
-	long draws = 0;
-	long games = 0;
+	gamesnum_t draws = 0;
+	gamesnum_t games = 0;
 
 	for (e = 0; e < n_enc; e++) {
 		if (enc[e].wh == target || enc[e].bl == target) {
@@ -350,10 +350,10 @@ static int compare_ENC2 (const void * a, const void * b)
 	const struct ENC *ap = a;
 	const struct ENC *bp = b;
 
-	long int topa = ap->wh > ap->bl? ap->wh: ap->bl;
-	long int bota = ap->wh < ap->bl? ap->wh: ap->bl;
-	long int topb = bp->wh > bp->bl? bp->wh: bp->bl;
-	long int botb = bp->wh < bp->bl? bp->wh: bp->bl;
+	player_t topa = ap->wh > ap->bl? ap->wh: ap->bl;
+	player_t bota = ap->wh < ap->bl? ap->wh: ap->bl;
+	player_t topb = bp->wh > bp->bl? bp->wh: bp->bl;
+	player_t botb = bp->wh < bp->bl? bp->wh: bp->bl;
 
 	if (ap->wh == bp->wh && ap->bl == bp->bl) return 0;
 
@@ -428,14 +428,14 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 				}
 
 				fprintf(f, "%ld %-*s :%5.0f %ld (+%3ld,=%3ld,-%3ld), %4.1f %s\n\n"
-					,i+1
+					,(long)i+1
 					,(int)ml+1
 					, Name[target]
 					, Ratingof_results[target]
-					, (won+dra+los)
-					, won
-					, dra
-					, los
+					, (long)(won+dra+los)
+					, (long)won
+					, (long)dra
+					, (long)los
 					, 100.0*((double)won+(double)dra/2)/(double)(won+dra+los)
 					, "%" 
 				);
@@ -468,8 +468,8 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 					fprintf(f, "%-*s : %ld (+%3ld,=%3ld,-%3ld), %4.1f %s\n"
 						,(int)ml+5
 						, Name[oth]
-						, won+dra+los
-						, won, dra, los
+						, (long)(won+dra+los)
+						, (long)won, (long)dra, (long)los
 						, 100.0*((double)won+(double)dra/2)/(double)(won+dra+los), "%" 
 					);
 					e++;
@@ -478,10 +478,10 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 				fprintf(f, "\n");
 
 			} else {
-				fprintf(f, "%4ld %-*s :Removed from calculation\n", 
-					i+1,
-					(int)ml+1,
-					Name[j]
+				fprintf(f, "%4ld %-*s :Removed from calculation\n" 
+					, (long)i+1
+					, (int)ml+1
+					, Name[j]
 				);
 			}
 		}
@@ -514,9 +514,11 @@ static int compare_oline (const void * a, const void * b)
 
 
 static ptrdiff_t
-head2head_idx_sdev (long x, long y)
+head2head_idx_sdev (player_t inp_x, player_t inp_y)
 {	
 	ptrdiff_t idx;
+	ptrdiff_t x = (ptrdiff_t)inp_x;
+	ptrdiff_t y = (ptrdiff_t)inp_y;
 	if (y < x) 
 		idx = (x*x-x)/2+y;					
 	else
@@ -550,7 +552,7 @@ all_report_indiv_stats 	( FILE *textf
 	int gdlen = 5;
 	int gllen = 7;
 
-	long int maxgames, maxwon, maxdra, maxlos;
+	gamesnum_t maxgames, maxwon, maxdra, maxlos;
 
 	int	indent = 0;
 
@@ -583,11 +585,11 @@ all_report_indiv_stats 	( FILE *textf
 			if (!Flagged[j]) {
 				size_t e;
 				size_t t;
-				long target = j;
+				player_t target = j;
 
-				long won; 
-				long dra; 
-				long los;
+				gamesnum_t won; 
+				gamesnum_t dra; 
+				gamesnum_t los;
 				size_t nl;
 
 				t = 0;
@@ -618,13 +620,14 @@ all_report_indiv_stats 	( FILE *textf
 				gllen = (int)calclen((long)los);
 
 				fprintf(f, "%*ld) %-*s %5.0f : %*ld (+%*ld,=%*ld,-%*ld), %5.1f %s\n\n"
-					, indent, i+1
+					, indent
+					, (long)i+1
 					, (int)ml, Name[target]
 					, Ratingof_results[target]
-					, (int)gl, (won+dra+los)
-					, gwlen, won
-					, gdlen, dra
-					, gllen, los
+					, (int)gl, (long)(won+dra+los)
+					, gwlen, (long)won
+					, gdlen, (long)dra
+					, gllen, (long)los
 					, 100.0*((double)won+(double)dra/2)/(double)(won+dra+los)
 					, "%" 
 				);
@@ -724,7 +727,7 @@ all_report_indiv_stats 	( FILE *textf
 
 				// output lines
 				for (e = 0; e < nl; e++) {
-					long int oth = oline[e].i;
+					player_t oth = oline[e].i;
 
 					double dr = Ratingof_results[target] - oline[e].R;
 
@@ -739,10 +742,10 @@ all_report_indiv_stats 	( FILE *textf
 						,(int)ml+6
 						, Name[oth]
 						,(int)gl
-						, won+dra+los
-						, gwlen, won
-						, gdlen, dra
-						, gllen, los
+						,(long)(won+dra+los)
+						, gwlen, (long)won
+						, gdlen, (long)dra
+						, gllen, (long)los
 						, 100.0*((double)won+(double)dra/2)/(double)(won+dra+los) 
 					);
 
@@ -766,7 +769,7 @@ all_report_indiv_stats 	( FILE *textf
 
 			} else {
 				fprintf(f, "%4ld %-*s :Removed from calculation\n", 
-					i+1,
+					(long)i+1,
 					(int)ml+6,
 					Name[j]
 				);
@@ -786,17 +789,17 @@ all_report_gen (FILE *textf, struct CEGT *p)
 
 	size_t e;
 
-	long totalgames = 0;
-	long white_wins = 0;
+	gamesnum_t totalgames = 0;
+	gamesnum_t white_wins = 0;
 	double white_perc = 0.0;
-	long black_wins  = 0;
+	gamesnum_t black_wins  = 0;
 	double black_perc = 0.0;
-	long draw  = 0;
+	gamesnum_t draw  = 0;
 	double draw_perc = 0.0;
 	double white_performance = 0.0;
 	double black_performance = 0.0;
 
-	long won, dra, los;
+	gamesnum_t won, dra, los;
 
 	won = 0;
 	dra = 0;
@@ -833,10 +836,10 @@ all_report_gen (FILE *textf, struct CEGT *p)
 		"Black Score  : %.1f %s\n"
 		"\n"
 
-		,totalgames
-		,white_wins, 100*white_perc, "%"
-		,black_wins, 100*black_perc, "%"
-		,draw, 100*draw_perc, "%"
+		,(long)totalgames
+		,(long)white_wins, 100*white_perc, "%"
+		,(long)black_wins, 100*black_perc, "%"
+		,(long)draw, 100*draw_perc, "%"
 		,(long)p->gstat->noresult
 		,100*white_performance, "%"
 		,100*black_performance, "%"
