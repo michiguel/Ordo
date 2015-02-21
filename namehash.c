@@ -68,30 +68,28 @@ hashstat(void)
 }
 #endif
 
+static bool_t name_ispresent_hashtable (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
+static bool_t name_ispresent_tail (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
+
 bool_t
 name_ispresent (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
 {
-	struct NAMEPOD *ppod = &Namehashtab[hash & PODMASK];
+	if (name_ispresent_hashtable(d,s,hash,out_index)) {
+		return TRUE;
+	} else if (name_ispresent_tail(d,s,hash,out_index)) {
+		return TRUE;
+	}
+	return FALSE;
+}
+
+
+static bool_t
+name_ispresent_tail (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
+{
 	struct NAMEPEA *ppea;
 	int 			n;
 	bool_t 			found= FALSE;
 	int i;
-
-
-	ppea = ppod->pea;
-	n = ppod->n;
-	for (i = 0; i < n; i++) {
-		if (ppea[i].hash == hash) {
-			const char *name_str = database_getname(d, ppea[i].pidx);
-			assert(name_str);
-			if (!strcmp(s, name_str)) {
-				found = TRUE;
-				*out_index = ppea[i].pidx;
-				break;
-			}
-		}
-	}
-	if (found) return found;
 
 	ppea = Nameremains;
 	n = Nameremains_n;
@@ -106,8 +104,48 @@ name_ispresent (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *
 	return found;
 }
 
+static bool_t
+name_ispresent_hashtable (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
+{
+	struct NAMEPOD *ppod = &Namehashtab[hash & PODMASK];
+	struct NAMEPEA *ppea;
+	int 			n;
+	bool_t 			found= FALSE;
+	int i;
+
+	ppea = ppod->pea;
+	n = ppod->n;
+	for (i = 0; i < n; i++) {
+		if (ppea[i].hash == hash) {
+			const char *name_str = database_getname(d, ppea[i].pidx);
+			assert(name_str);
+			if (!strcmp(s, name_str)) {
+				found = TRUE;
+				*out_index = ppea[i].pidx;
+				break;
+			}
+		}
+	}
+	return found;
+}
+
+static bool_t name_register_tail (uint32_t hash, player_t i);
+static bool_t name_register_hashtable (uint32_t hash, player_t i);
+
 bool_t
 name_register (uint32_t hash, player_t i)
+{
+	if (name_register_hashtable (hash, i)) {
+		return TRUE;
+	} else if (name_register_tail (hash, i)) {
+		return TRUE;
+	}else {
+		return FALSE;
+	}
+}
+
+bool_t
+name_register_hashtable (uint32_t hash, player_t i)
 {
 	struct NAMEPOD *ppod = &Namehashtab[hash & PODMASK];
 	struct NAMEPEA *ppea;
@@ -122,7 +160,16 @@ name_register (uint32_t hash, player_t i)
 		ppod->n++;
 		return TRUE;
 	}
-	else if (Nameremains_n < PEA_REM_MAX) {
+	else {
+		return FALSE;
+	}
+}
+
+
+static bool_t
+name_register_tail (uint32_t hash, player_t i)
+{
+	if (Nameremains_n < PEA_REM_MAX) {
 		Nameremains[Nameremains_n].pidx = i;
 		Nameremains[Nameremains_n].hash = hash;
 		Nameremains_n++;
