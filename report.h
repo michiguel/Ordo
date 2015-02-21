@@ -37,7 +37,8 @@ cegt_output	( const struct GAMES 	*g
 			, long 					simulate
 			, double				confidence_factor
 			, const struct GAMESTATS *pgame_stats
-			, const struct DEVIATION_ACC *s);
+			, const struct DEVIATION_ACC *s
+			, struct output_qualifiers outqual);
 
 // Function provided to have all head to head information
 void 

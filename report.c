@@ -168,9 +168,13 @@ flag_lowfrequency_players 	( const struct PLAYERS 	*p
 #endif
 
 static bool_t
-ok_to_out (struct output_qualifiers *poutqual, gamesnum_t x)
+ok_to_out (size_t j, const struct output_qualifiers *poutqual, const struct PLAYERS *p, const struct RATINGS *r)
 {
-	return !poutqual->mingames_set || x >= poutqual->mingames;
+	gamesnum_t games = r->playedby_results[j];
+	bool_t ok = !p->flagged[j]
+				&& games > 0
+				&& (!poutqual->mingames_set || games >= poutqual->mingames);
+	return ok;
 } 
 
 //======================
@@ -184,7 +188,8 @@ cegt_output	( const struct GAMES 	*g
 			, long 					simulate
 			, double				confidence_factor
 			, const struct GAMESTATS *pgame_stats
-			, const struct DEVIATION_ACC *s)
+			, const struct DEVIATION_ACC *s
+			, struct output_qualifiers outqual)
 {
 	struct CEGT cegt;
 	size_t j;
@@ -213,6 +218,8 @@ cegt_output	( const struct GAMES 	*g
 	cegt.gstat = pgame_stats;
 
 	cegt.sim = s;
+
+	cegt.outqual = outqual;
 
 	output_cegt_style ("general.dat", "rating.dat", "programs.dat", &cegt);
 }
@@ -325,7 +332,8 @@ all_report 	( const struct GAMES 	*g
 			for (i = 0; i < p->n; i++) {
 
 				j = (size_t)r->sorted[i]; //FIXME size_t
-				if (!p->flagged[j] && ok_to_out (&outqual, r->playedby_results[j])) {
+
+				if (ok_to_out (j, &outqual, p, r)) {
 
 					char rankbuf[80];
 					showrank = !is_old_version((int32_t)j, rps); //FIXME size_t
@@ -371,7 +379,7 @@ all_report 	( const struct GAMES 	*g
 					assert(is_empty_player(j,p));
 					// skip
 
-				} else if (!p->flagged[j]) {
+				} else if (ok_to_out (j, &outqual, p, r)) {
 
 					char rankbuf[80];
 					showrank = !is_old_version((int32_t)j, rps);
@@ -456,7 +464,7 @@ all_report 	( const struct GAMES 	*g
 		for (i = 0; i < p->n; i++) {
 			j = (size_t) r->sorted[i]; //FIXME size_t
 
-			if (r->playedby_results[j]!=0) {
+			if (ok_to_out (j, &outqual, p, r)) {
 				rank++;
 
 				if (sdev[j] > 0.00000001) {

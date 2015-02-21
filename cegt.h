@@ -45,6 +45,8 @@ struct CEGT {
 	const struct GAMESTATS 	*gstat;
 
 	const struct DEVIATION_ACC *sim;
+
+	struct output_qualifiers outqual;
  
 };
 

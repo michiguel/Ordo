@@ -144,6 +144,7 @@ static void usage (void);
 		" -C <file>   saves a matrix (.csv) with confidence for superiority (-s was used)\n"
 		" -F <value>  confidence (%) to estimate error margins. Default is 95.0\n"
 		" -X          Ignore draws\n"
+		" -t <value>  threshold of minimum games played for a participant to be included\n"
 		" -N <value>  Output, number of decimals, minimum is 0 (default=1)\n"
 		"\n"
 		;
@@ -154,7 +155,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:XN:";
+const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:Xt:N:";
 
 /*
 |
@@ -166,8 +167,6 @@ struct GAMES 		Games;
 struct PLAYERS 		Players;
 struct RATINGS 		RA;
 struct ENCOUNTERS 	Encounters;
-
-struct output_qualifiers Outqual = {FALSE, 0};
 
 static int compare_GAME (const void * a, const void * b)
 {
@@ -528,6 +527,9 @@ static struct DATA *pdaba;
 
 int main (int argc, char *argv[])
 {
+	struct output_qualifiers outqual = {FALSE, 0};
+	long int mingames = 0;
+
 	bool_t csvf_opened;
 	bool_t textf_opened;
 	bool_t groupf_opened;
@@ -692,6 +694,15 @@ int main (int argc, char *argv[])
 			case 'N': 	if (1 != sscanf(opt_arg,"%d", &OUTDECIMALS) || OUTDECIMALS < 0) {
 							fprintf(stderr, "wrong decimals parameter\n");
 							exit(EXIT_FAILURE);
+						}
+						break;
+			case 't': 	if (1 != sscanf(opt_arg,"%ld", &mingames) || mingames < 0) {
+							fprintf(stderr, "wrong threshold parameter\n");
+							exit(EXIT_FAILURE);
+						} else {
+							outqual.mingames = (gamesnum_t)mingames;
+							outqual.mingames_set = TRUE;
+printf ("mingames=%ld\n", outqual.mingames);
 						}
 						break;
 			case '?': 	parameter_error();
@@ -1214,7 +1225,7 @@ int main (int argc, char *argv[])
 				, White_advantage
 				, Drawrate_evenmatch
 				, OUTDECIMALS
-				, Outqual);
+				, outqual);
 
 	if (Simulate > 1 && NULL != ematstr) {
 		errorsout(&Players, &RA, sim, ematstr, Confidence_factor);
@@ -1249,7 +1260,8 @@ int main (int argc, char *argv[])
 					, Simulate
 					, Confidence_factor
 					, &Game_stats
-					, sim);
+					, sim
+					, outqual);
 	}
 
 	// Cleanup

@@ -63,6 +63,15 @@ output_report_individual_f (FILE *indf, struct CEGT *p, int simulate);
 static bool_t 
 output_cegt_style_f (FILE *genf, FILE *ratf, FILE *prgf, struct CEGT *p);
 
+static bool_t
+ok_to_out (const struct output_qualifiers *poutqual, bool_t flagged, gamesnum_t games)
+{
+	bool_t ok = !flagged
+				&& games > 0
+				&& (!poutqual->mingames_set || games >= poutqual->mingames);
+	return ok;
+}
+
 extern bool_t 
 output_cegt_style (const char *general_name, const char *rating_name, const char *programs_name, struct CEGT *p)
 {
@@ -258,14 +267,15 @@ all_report_rat (FILE *textf, struct CEGT *p)
 	struct ENC 	*Enc = p->enc;
 	size_t	 	N_enc = p->n_enc ;
 	size_t	 	N_players = p->n_players ;
-	player_t		*Sorted = p->sorted ;
+	player_t	*Sorted = p->sorted ;
 	double		*Ratingof_results = p->ratingof_results ;
 	double		*Obtained_results = p->obtained_results ;
-	gamesnum_t			*Playedby_results = p->playedby_results ;
+	gamesnum_t	*Playedby_results = p->playedby_results ;
 	double		*Sdev = p->sdev; 
 	bool_t		*Flagged = p->flagged ;
 	const char	**Name = p->name ;
 	double		confidence = p->confidence_factor;
+	player_t	rank = 0;
 
 	/* output in text format */
 	f = textf;
@@ -284,9 +294,13 @@ all_report_rat (FILE *textf, struct CEGT *p)
 	
 			for (i = 0; i < N_players; i++) {
 				j = Sorted[i];
-				if (!Flagged[j]) {
+
+				if (ok_to_out (&p->outqual, Flagged[j], Playedby_results[j])) {
+
+					rank++;
+
 					fprintf(f, "%4lu %-*s %s :%5.0f%5.0f%5.0f %5ld %7.1f%s %6.0f %6.1f%s\n", 
-						i+1,
+						(long unsigned)rank,
 						(int)ml+1,
 						Name[j],
 						get_super_player_symbolstr(j,p),
@@ -301,7 +315,9 @@ all_report_rat (FILE *textf, struct CEGT *p)
 						draw_percentage(j, Enc, N_enc),
 						" %"
 					);
-				} else {
+				} 
+#if 0
+				else {
 					fprintf(f, "%4lu %-*s %s :%5s%5s%5s %5ld %7.1f%s %6.0f %6.1f%s\n", 
 						i+1,
 						(int)ml+1,
@@ -319,6 +335,7 @@ all_report_rat (FILE *textf, struct CEGT *p)
 						" %"
 					);
 				}
+#endif
 			}
 		}
 
@@ -360,7 +377,7 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 	struct ENC 	*Enc = p->enc;
 	size_t	 	N_enc = p->n_enc ;
 	size_t	 	N_players = p->n_players ;
-	player_t		*Sorted = p->sorted ;
+	player_t	*Sorted = p->sorted ;
 	double		*Ratingof_results = p->ratingof_results ;
 	bool_t		*Flagged = p->flagged ;
 	const char	**Name = p->name ;
@@ -541,7 +558,7 @@ all_report_indiv_stats 	( FILE *textf
 	struct ENC 	*Enc = p->enc;
 	size_t	 	N_enc = p->n_enc ;
 	size_t	 	N_players = p->n_players ;
-	player_t		*Sorted = p->sorted ;
+	player_t	*Sorted = p->sorted ;
 	double		*Ratingof_results = p->ratingof_results ;
 	bool_t		*Flagged = p->flagged ;
 	const char	**Name = p->name ;
