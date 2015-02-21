@@ -415,7 +415,7 @@ static bool_t	Prior_mode;
 
 static void		purge_players (bool_t quiet, struct PLAYERS *pl);
 
-static long 	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl);
+static player_t	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl);
 
 static void		players_clear_flagged (struct PLAYERS *p);
 
@@ -1033,7 +1033,8 @@ int main (int argc, char *argv[])
 					convert_to_groups(groupf, Players.n, Players.name);
 					sieve_encounters(Encounters.enc, Encounters.n, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
 					if (!QUIET_MODE)
-						printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n",(long)Encounters.n, N_encounters2, N_encounters3);
+						printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n"
+									,(long)Encounters.n, (long)N_encounters2, (long)N_encounters3);
 
 					supporting_groupmem_done ();
 

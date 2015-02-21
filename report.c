@@ -86,6 +86,7 @@ find_maxlen (const char *nm[], size_t n)
 	return maxl;
 }
 
+#if 0
 static bool_t 
 is_super_player(size_t j, const struct PLAYERS *pPlayers)
 {
@@ -95,6 +96,7 @@ is_super_player(size_t j, const struct PLAYERS *pPlayers)
 		|| pPlayers->performance_type[j] == PERF_NOGAMES
 	;		
 }
+#endif
 
 #define MAXSYMBOLS_STR 5
 static const char *SP_symbolstr[MAXSYMBOLS_STR] = {"<",">","*"," ","X"};
@@ -374,12 +376,9 @@ all_report 	( const struct GAMES 	*g
 
 				sdev_str = get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer, decimals);
 
-				if (r->playedby_results[j] == 0) {
+				assert(r->playedby_results[j] != 0 || is_empty_player(j,p));
 
-					assert(is_empty_player(j,p));
-					// skip
-
-				} else if (ok_to_out (j, &outqual, p, r)) {
+				if (ok_to_out (j, &outqual, p, r)) {
 
 					char rankbuf[80];
 					showrank = !is_old_version((int32_t)j, rps);
@@ -409,7 +408,9 @@ all_report 	( const struct GAMES 	*g
 						);
 					}
 
-				} else if (!is_super_player(j,p)) {
+				}
+#if 0
+				 else if (!is_super_player(j,p)) {
 					fprintf(f, "%4lu %-*s   :%7.*f %s %8.1f %7ld %6.1f%s\n", 
 						i+1,
 						(int)ml+1, 
@@ -431,6 +432,8 @@ all_report 	( const struct GAMES 	*g
 						"----", "  ----", "----", "----", "----","%"
 					);
 				}
+#endif
+
 			}
 		}
 
@@ -510,14 +513,14 @@ errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATI
 
 		fprintf(f, "\"N\",\"NAME\"");	
 		for (i = 0; i < p->n; i++) {
-			fprintf(f, ",%ld",i);		
+			fprintf(f, ",%ld", (long) i);		
 		}
 		fprintf(f, "\n");	
 
 		for (i = 0; i < p->n; i++) {
 			y = r->sorted[i];
 
-			fprintf(f, "%ld,\"%21s\"", i, p->name[y]);
+			fprintf(f, "%ld,\"%21s\"", (long) i, p->name[y]);
 
 			for (j = 0; j < i; j++) {
 				x = r->sorted[j];
@@ -553,13 +556,13 @@ ctsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_
 
 		fprintf(f, "\"N\",\"NAME\"");	
 		for (i = 0; i < p->n; i++) {
-			fprintf(f, ",%ld",i);		
+			fprintf(f, ",%ld",(long) i);		
 		}
 		fprintf(f, "\n");	
 
 		for (i = 0; i < p->n; i++) {
 			y = r->sorted[i];
-			fprintf(f, "%ld,\"%21s\"", i, p->name[y]);
+			fprintf(f, "%ld,\"%21s\"", (long) i, p->name[y]);
 
 			for (j = 0; j < p->n; j++) {
 				double ctrs, sd, dr;
