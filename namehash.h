@@ -19,25 +19,16 @@
 */
 
 
-#if !defined(H_CSV)
-#define H_CSV
+#if !defined(H_NMHASH)
+#define H_NMHASH
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
 #include "boolean.h"
+#include "datatype.h"
 
-//FIXME make it dynamic
-#define MAXSIZETOKEN 1024
-
-struct csv_line {
-	int 	n;
-	char 	*mem; // points to block of memory
-	char 	*s[1024]; //FIXME make it dynamic
-};
-
-typedef struct csv_line csv_line_t;
-
-extern bool_t 	csv_line_init(csv_line_t *c, char *p);
-extern void 	csv_line_done(csv_line_t *c);
+extern bool_t name_ispresent (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
+extern bool_t name_register (uint32_t hash, player_t i);
+extern uint32_t namehash(const char *str);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

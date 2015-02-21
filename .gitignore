@@ -32,5 +32,8 @@ differences/*
 fit1d/*
 merging/*
 tmp/*
+csvfolder/*
+manchor_fix.c
+merging2/*
 
 
