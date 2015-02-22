@@ -328,6 +328,7 @@ unfitness_fcenter 	( double excess
 #define MIN_RESOL 0.000001
 #define START_RESOL 10.0
 #define ACCEPTABLE_RESOL 0.001
+#define PRECISIONERROR (1E-16)
 
 static double absol(double x) {return x >= 0? x: -x;}
 
@@ -402,10 +403,9 @@ optimum_centerdelta	( double 			start_delta
 	assert(!is_nan(hi_d));
 	return quadfit1d (resolution, lo_d, hi_d, unfitf, &p);
 }
+
 //============ center adjustment end
 
-
-#define PRECISIONERROR (1E-16)
 
 size_t
 calc_rating2 	( bool_t 		quiet
@@ -442,7 +442,7 @@ calc_rating2 	( bool_t 		quiet
 	double 	denom = 2;
 	int 	phase = 0;
 	int 	n = 20;
-	double 	resol;
+	double 	resol = START_RESOL; // big number at the beginning
 	bool_t	doneonce = FALSE;
 
 	int max_cycle;

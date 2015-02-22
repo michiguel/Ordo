@@ -79,9 +79,9 @@ static bool_t 	pgn_result_collect (struct pgn_result *p, struct DATA *d);
 static struct DATA *
 structdata_init (void)
 {
-	struct DATA *d;
-	struct GAMEBLOCK *p;
-	struct NAMEBLOCK *t;
+	struct DATA *d = NULL;
+	struct GAMEBLOCK *p = NULL;
+	struct NAMEBLOCK *t = NULL;
 	bool_t ok = TRUE;
 
 	ok = ok && NULL != (d = memnew (sizeof(struct DATA)));
@@ -317,7 +317,7 @@ addname (struct DATA *d, const char *s)
 {
 	char *b;
 	char *nameptr;
-	char *bf;
+	char *bf = NULL;
 	namenode_t *nd;
 	size_t sz = strlen(s) + 1;
 	bool_t ok;

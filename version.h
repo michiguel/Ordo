@@ -1,2 +1,2 @@
-#define VERSION "v0.9.8.4-beta3-nmhash8"
+#define VERSION "v0.9.8.4-beta3-nmhash9"
 

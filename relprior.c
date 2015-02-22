@@ -110,8 +110,8 @@ rpunit_build (int32_t p_a, int32_t p_b, double x, double sigma, rpunit_t *u /*@o
 static bool_t
 rman_set_relprior__ (const struct PLAYERS *plyrs, const char *player_a, const char *player_b, double x, double sigma, struct rpmanager *rm)
 {
-	size_t p_a; 
-	size_t p_b;
+	size_t p_a = 0; // silence warnings
+	size_t p_b = 0; // silence warnings
 	bool_t found;
 	rpunit_t u;
 
