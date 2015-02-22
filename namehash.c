@@ -24,9 +24,9 @@
 #include "namehash.h"
 #include "pgnget.h"
 
-//#define PEAXPOD 8
-//#define PODBITS 12
-#define PEAXPOD 2
+//#define PEAXPOD 8  //FIXME true values
+//#define PODBITS 12 //FIXME true values
+#define PEAXPOD 1
 #define PODBITS 1
 #define PODMASK ((1<<PODBITS)-1)
 #define PODMAX   (1<<PODBITS)
@@ -166,17 +166,19 @@ hashstat(void)
 #endif
 
 static bool_t name_ispresent_hashtable (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
-static bool_t name_ispresent_tail (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
-
-static bool_t name_register_tail (uint32_t hash, player_t i);
 static bool_t name_register_hashtable (uint32_t hash, player_t i);
+
+#if 0
+static bool_t name_ispresent_tail (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
+static bool_t name_register_tail (uint32_t hash, player_t i);
+#endif
 
 bool_t
 name_ispresent (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
 {
 	if (name_ispresent_hashtable(d,s,hash,out_index)) {
 		return TRUE;
-	} else if (name_ispresent_tail(d,s,hash,out_index)) {
+	} else if (name_ispresent_tree(d,s,hash,out_index)) {
 		return TRUE;
 	}
 	return FALSE;
@@ -189,32 +191,11 @@ name_register (uint32_t hash, player_t i)
 {
 	if (name_register_hashtable (hash, i)) {
 		return TRUE;
-	} else if (name_register_tail (hash, i)) {
+	} else if (name_register_tree (hash, i)) {
 		return TRUE;
 	}else {
 		return FALSE;
 	}
-}
-
-static bool_t
-name_ispresent_tail (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
-{
-	struct NAMEPEA *ppea;
-	player_t		n;
-	bool_t 			found= FALSE;
-	int i;
-
-	ppea = Nameremains;
-	n = Nameremains_n;
-	for (i = 0; i < n; i++) {
-		if (ppea[i].hash == hash && !strcmp(s, database_getname(d, ppea[i].pidx))) {
-			found = TRUE;
-			*out_index = ppea[i].pidx;
-			break;
-		}
-	}
-
-	return found;
 }
 
 static bool_t
@@ -263,6 +244,27 @@ name_register_hashtable (uint32_t hash, player_t i)
 	}
 }
 
+#if 0
+static bool_t
+name_ispresent_tail (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
+{
+	struct NAMEPEA *ppea;
+	player_t		n;
+	bool_t 			found= FALSE;
+	int i;
+
+	ppea = Nameremains;
+	n = Nameremains_n;
+	for (i = 0; i < n; i++) {
+		if (ppea[i].hash == hash && !strcmp(s, database_getname(d, ppea[i].pidx))) {
+			found = TRUE;
+			*out_index = ppea[i].pidx;
+			break;
+		}
+	}
+
+	return found;
+}
 
 static bool_t
 name_register_tail (uint32_t hash, player_t i)
@@ -277,6 +279,7 @@ name_register_tail (uint32_t hash, player_t i)
 		return FALSE;
 	}
 }
+#endif
 
 /*http://www.cse.yorku.ca/~oz/hash.html*/
 
