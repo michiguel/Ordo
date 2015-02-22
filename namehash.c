@@ -45,108 +45,8 @@ struct NAMEPOD {
 
 // ----------------- PRIVATE DATA---------------
 static struct NAMEPOD Namehashtab[PODMAX];
-static struct NAMEPEA Nameremains[PEA_REM_MAX];
-static player_t Nameremains_n;
 //----------------------------------------------
 
-//**************************************************************************
-struct NODETREE {
-	struct NODETREE *hi;
-	struct NODETREE *lo;
-	struct NAMEPEA p;
-};
-
-// ----------------- PRIVATE DATA---------------
-static struct NODETREE Tremains[PEA_REM_MAX];
-static player_t Tremains_n;
-static struct NODETREE *Troot = NULL;
-//----------------------------------------------
-
-static void connect (struct NODETREE *root, struct NODETREE *pnew);
-static int	nodetreecmp (struct NODETREE *a, struct NODETREE *b);
-static bool_t ishit (const struct DATA *d, const char *s, uint32_t hash, const struct NODETREE *pnode);
-
-static bool_t
-name_register_tree (uint32_t hash, player_t i)
-{
-	player_t n = Tremains_n;
-	if (n < PEA_REM_MAX) {
-		if (n == 0) Troot = Tremains; // init
-		Tremains[n].hi = NULL;
-		Tremains[n].lo = NULL;		
-		Tremains[n].p.pidx = i;
-		Tremains[n].p.hash = hash;
-		if (n > 0)
-			connect (Tremains, &Tremains[n]);
-		Tremains_n++;
-		return TRUE;
-	}
-	else {
-		return FALSE;
-	}
-}
-
-
-static bool_t
-name_ispresent_tree (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
-{
-	struct NODETREE *pnode = Troot;
-	for (;;) {
-		if (pnode == NULL) return FALSE;
-		if (ishit (d, s, hash, pnode)) {
-			*out_index = pnode->p.pidx;
-			return TRUE;
-		} else if (hash < pnode->p.hash) {
-			pnode = pnode->lo;
-		} else {
-			pnode = pnode->hi;			
-		}	
-	}
-}
-
-
-static int
-nodetreecmp (struct NODETREE *a, struct NODETREE *b)
-{
-	if (a->p.hash < b->p.hash) return -1;
-	if (a->p.hash > b->p.hash) return +1;
-	if (a->p.pidx < b->p.pidx) return -1;
-	if (a->p.pidx > b->p.pidx) return +1;
-	return 0;	
-}
-
-static void
-connect (struct NODETREE *root, struct NODETREE *pnew)
-{
-	struct NODETREE *r = root;
-	bool_t done = FALSE;
-	while (!done) {
-		if (0 > nodetreecmp(pnew,r)) {
-			if (r->lo == NULL) {
-				r->lo = pnew;
-				done = TRUE;
-			} else {
-				r = r->lo;
-			}	
-		} else {
-			if (r->hi == NULL) {
-				r->hi = pnew;
-				done = TRUE;
-			} else {
-				r = r->hi;
-			}	
-		}
-	}
-	return;
-}
-
-static bool_t
-ishit (const struct DATA *d, const char *s, uint32_t hash, const struct NODETREE *pnode)
-{
-	return hash == pnode->p.hash && !strcmp(s, database_getname(d, pnode->p.pidx));
-}
-
-//**************************************************************************
 
 #if 0
 static void
@@ -167,6 +67,8 @@ hashstat(void)
 
 static bool_t name_ispresent_hashtable (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
 static bool_t name_register_hashtable (uint32_t hash, player_t i);
+static bool_t name_ispresent_tree (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
+static bool_t name_register_tree (uint32_t hash, player_t i);
 
 #if 0
 static bool_t name_ispresent_tail (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
@@ -184,7 +86,6 @@ name_ispresent (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *
 	return FALSE;
 }
 
-#include <stdio.h>
 
 bool_t
 name_register (uint32_t hash, player_t i)
@@ -197,6 +98,8 @@ name_register (uint32_t hash, player_t i)
 		return FALSE;
 	}
 }
+
+//**************************************************************************
 
 static bool_t
 name_ispresent_hashtable (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
@@ -244,7 +147,111 @@ name_register_hashtable (uint32_t hash, player_t i)
 	}
 }
 
+//**************************************************************************
+struct NODETREE {
+	struct NODETREE *hi;
+	struct NODETREE *lo;
+	struct NAMEPEA p;
+};
+
+// ----------------- PRIVATE DATA---------------
+static struct NODETREE Tremains[PEA_REM_MAX];
+static player_t Tremains_n;
+static struct NODETREE *Troot = NULL;
+//----------------------------------------------
+
+static void nodetree_connect (struct NODETREE *root, struct NODETREE *pnew);
+static int	nodetree_cmp (struct NODETREE *a, struct NODETREE *b);
+static bool_t nodetree_is_hit (const struct DATA *d, const char *s, uint32_t hash, const struct NODETREE *pnode);
+
+static bool_t
+name_register_tree (uint32_t hash, player_t i)
+{
+	player_t n = Tremains_n;
+	if (n < PEA_REM_MAX) {
+		if (n == 0) Troot = Tremains; // init
+		Tremains[n].hi = NULL;
+		Tremains[n].lo = NULL;		
+		Tremains[n].p.pidx = i;
+		Tremains[n].p.hash = hash;
+		if (n > 0)
+			nodetree_connect (Tremains, &Tremains[n]);
+		Tremains_n++;
+		return TRUE;
+	}
+	else {
+		return FALSE;
+	}
+}
+
+
+static bool_t
+name_ispresent_tree (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
+{
+	struct NODETREE *pnode = Troot;
+	for (;;) {
+		if (pnode == NULL) return FALSE;
+		if (nodetree_is_hit (d, s, hash, pnode)) {
+			*out_index = pnode->p.pidx;
+			return TRUE;
+		} else if (hash < pnode->p.hash) {
+			pnode = pnode->lo;
+		} else {
+			pnode = pnode->hi;			
+		}	
+	}
+}
+
+
+static int
+nodetree_cmp (struct NODETREE *a, struct NODETREE *b)
+{
+	if (a->p.hash < b->p.hash) return -1;
+	if (a->p.hash > b->p.hash) return +1;
+	if (a->p.pidx < b->p.pidx) return -1;
+	if (a->p.pidx > b->p.pidx) return +1;
+	return 0;	
+}
+
+static void
+nodetree_connect (struct NODETREE *root, struct NODETREE *pnew)
+{
+	struct NODETREE *r = root;
+	bool_t done = FALSE;
+	while (!done) {
+		if (0 > nodetree_cmp(pnew,r)) {
+			if (r->lo == NULL) {
+				r->lo = pnew;
+				done = TRUE;
+			} else {
+				r = r->lo;
+			}	
+		} else {
+			if (r->hi == NULL) {
+				r->hi = pnew;
+				done = TRUE;
+			} else {
+				r = r->hi;
+			}	
+		}
+	}
+	return;
+}
+
+static bool_t
+nodetree_is_hit (const struct DATA *d, const char *s, uint32_t hash, const struct NODETREE *pnode)
+{
+	return hash == pnode->p.hash && !strcmp(s, database_getname(d, pnode->p.pidx));
+}
+
+//**************************************************************************
+
 #if 0
+// ----------------- PRIVATE DATA---------------
+static struct NAMEPEA Nameremains[PEA_REM_MAX];
+static player_t Nameremains_n;
+//----------------------------------------------
+
 static bool_t
 name_ispresent_tail (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
 {
@@ -280,6 +287,8 @@ name_register_tail (uint32_t hash, player_t i)
 	}
 }
 #endif
+
+/************************************************************************/
 
 /*http://www.cse.yorku.ca/~oz/hash.html*/
 
