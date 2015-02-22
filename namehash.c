@@ -43,28 +43,6 @@ struct NAMEPOD {
 };
 
 
-// ----------------- PRIVATE DATA---------------
-static struct NAMEPOD Namehashtab[PODMAX];
-//----------------------------------------------
-
-
-#if 0
-static void
-hashstat(void)
-{
-	int i, level;
-	int hist[9] = {0,0,0,0,0,0,0,0,0};
-
-	for (i = 0; i < PODMAX; i++) {
-		level = Namehashtab[i].n;
-		hist[level]++;
-	}
-	for (i = 0; i < 9; i++) {
-		printf ("level[%d]=%d\n",i,hist[i]);
-	}
-}
-#endif
-
 static bool_t name_ispresent_hashtable (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
 static bool_t name_register_hashtable (uint32_t hash, player_t i);
 static bool_t name_ispresent_tree (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
@@ -78,28 +56,23 @@ static bool_t name_register_tail (uint32_t hash, player_t i);
 bool_t
 name_ispresent (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
 {
-	if (name_ispresent_hashtable(d,s,hash,out_index)) {
-		return TRUE;
-	} else if (name_ispresent_tree(d,s,hash,out_index)) {
-		return TRUE;
-	}
-	return FALSE;
+	return	name_ispresent_hashtable (d, s, hash, out_index)
+		||	name_ispresent_tree (d, s, hash, out_index);
 }
 
 
 bool_t
 name_register (uint32_t hash, player_t i)
 {
-	if (name_register_hashtable (hash, i)) {
-		return TRUE;
-	} else if (name_register_tree (hash, i)) {
-		return TRUE;
-	}else {
-		return FALSE;
-	}
+	return	name_register_hashtable (hash, i)
+		||	name_register_tree (hash, i);
 }
 
 //**************************************************************************
+
+// ----------------- PRIVATE DATA---------------
+static struct NAMEPOD Namehashtab[PODMAX];
+//----------------------------------------------
 
 static bool_t
 name_ispresent_hashtable (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
@@ -188,18 +161,19 @@ name_register_tree (uint32_t hash, player_t i)
 static bool_t
 name_ispresent_tree (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
 {
-	struct NODETREE *pnode = Troot;
-	for (;;) {
-		if (pnode == NULL) return FALSE;
-		if (nodetree_is_hit (d, s, hash, pnode)) {
+	bool_t hit = FALSE;
+	struct NODETREE *pnode;
+	for (pnode = Troot; !hit && pnode != NULL;) {
+		hit = nodetree_is_hit (d, s, hash, pnode);
+		if (hit) {
 			*out_index = pnode->p.pidx;
-			return TRUE;
 		} else if (hash < pnode->p.hash) {
 			pnode = pnode->lo;
 		} else {
 			pnode = pnode->hi;			
 		}	
 	}
+	return hit;
 }
 
 

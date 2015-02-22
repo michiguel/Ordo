@@ -430,10 +430,11 @@ pgn_result_reset (struct pgn_result *p)
 static bool_t
 pgn_result_collect (struct pgn_result *p, struct DATA *d)
 {
+	#define NOPLAYER -1
 	player_t 	i;
 	player_t 	j;
 	bool_t 		ok = TRUE;
-	player_t 	plyr;
+	player_t 	plyr = NOPLAYER; // to silence warnings
 	const char *tagstr;
 	uint32_t 	taghsh;
 
@@ -454,6 +455,8 @@ pgn_result_collect (struct pgn_result *p, struct DATA *d)
 	j = plyr;
 
 	ok = ok && (uint64_t)d->n_games < ((uint64_t)MAXGAMESxBLOCK*(uint64_t)MAXBLOCKS);
+
+	assert (i != NOPLAYER && j != NOPLAYER);
 
 	if (ok) {
 
