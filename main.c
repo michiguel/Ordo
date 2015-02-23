@@ -57,6 +57,8 @@
 
 #include "plyrs.h"
 
+#include "namehash.h"
+
 /*
 |
 |	GENERAL OPTIONS
@@ -783,6 +785,12 @@ int main (int argc, char *argv[])
 
 	Prior_mode = switch_k || switch_u || NULL != relstr || NULL != priorsstr;
 
+	/*==== mem init ====*/
+	if (!name_storage_init()) {
+		fprintf (stderr, "Problem initializing buffers for reading names, probably lack of memory.\n");	
+		exit(EXIT_FAILURE);
+	}
+
 	/*==== SET INPUT ====*/
 
 	if (NULL != (pdaba = database_init_frompgn(inputf, QUIET_MODE))) {
@@ -1284,6 +1292,8 @@ int main (int argc, char *argv[])
 	supporting_auxmem_done();
 
 	relpriors_done (&RPset, &RPset_store);
+
+	name_storage_done();
 
 	return EXIT_SUCCESS;
 }

@@ -1,1 +1,1 @@
-v0.9.8.4-beta3-nmhash11
+v0.9.8.4-beta3-nmhash12

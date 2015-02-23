@@ -44,16 +44,27 @@ struct NAMEPOD {
 	int n;
 };
 
-
+static bool_t name_tree_init(void);
+static void   name_tree_done(void);
 static bool_t name_ispresent_hashtable (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
 static bool_t name_register_hashtable (uint32_t hash, player_t i);
 static bool_t name_ispresent_tree (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
 static bool_t name_register_tree (uint32_t hash, player_t i);
 
-#if 0
-static bool_t name_ispresent_tail (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
-static bool_t name_register_tail (uint32_t hash, player_t i);
-#endif
+//**************************************************************************
+
+bool_t
+name_storage_init(void)
+{
+	return TRUE;
+}
+
+void
+name_storage_done(void)
+{
+	name_tree_done();
+	return;
+}
 
 bool_t
 name_ispresent (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
@@ -275,50 +286,6 @@ nodetree_is_hit (const struct DATA *d, const char *s, uint32_t hash, const struc
 {
 	return hash == pnode->p.hash && !strcmp(s, database_getname(d, pnode->p.pidx));
 }
-
-//**************************************************************************
-
-#if 0
-// ----------------- PRIVATE DATA---------------
-static struct NAMEPEA Nameremains[PEA_REM_MAX];
-static player_t Nameremains_n;
-//----------------------------------------------
-
-static bool_t
-name_ispresent_tail (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
-{
-	struct NAMEPEA *ppea;
-	player_t		n;
-	bool_t 			found= FALSE;
-	int i;
-
-	ppea = Nameremains;
-	n = Nameremains_n;
-	for (i = 0; i < n; i++) {
-		if (ppea[i].hash == hash && !strcmp(s, database_getname(d, ppea[i].pidx))) {
-			found = TRUE;
-			*out_index = ppea[i].pidx;
-			break;
-		}
-	}
-
-	return found;
-}
-
-static bool_t
-name_register_tail (uint32_t hash, player_t i)
-{
-	if (Nameremains_n < PEA_REM_MAX) {
-		Nameremains[Nameremains_n].pidx = i;
-		Nameremains[Nameremains_n].hash = hash;
-		Nameremains_n++;
-		return TRUE;
-	}
-	else {
-		return FALSE;
-	}
-}
-#endif
 
 /************************************************************************/
 
