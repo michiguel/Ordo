@@ -25,13 +25,19 @@
 
 #define PRIOR_SMALLEST_SIGMA 0.0000001
 
-#define LABELBUFFERSIZE 100
-#define MAXBLOCKS ((size_t)2048*(size_t)1024)
-
-#define MAXGAMESxBLOCK ((size_t)16)
-#define MAXNAMESxBLOCK ((size_t)16)
-
-#define MAX_RPBLOCK 100
+#ifdef NDEBUG
+	#define LABELBUFFERSIZE (1 << 16)
+	#define MAXBLOCKS ((size_t)2048*(size_t)1024)
+	#define MAXGAMESxBLOCK ((size_t)1024*(size_t)1024)
+	#define MAXNAMESxBLOCK ((size_t)1024*(size_t)64)
+	#define MAX_RPBLOCK 1024
+#else
+	#define LABELBUFFERSIZE 100
+	#define MAXBLOCKS ((size_t)2048*(size_t)1024)
+	#define MAXGAMESxBLOCK ((size_t)16)
+	#define MAXNAMESxBLOCK ((size_t)16)
+	#define MAX_RPBLOCK 100
+#endif
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

@@ -25,14 +25,20 @@
 #include "pgnget.h"
 #include "mymem.h"
 
-//#define PEAXPOD 8  //FIXME true values
-//#define PODBITS 12 //FIXME true values
-#define PEAXPOD 1
-#define PODBITS 1
+#ifdef NDEBUG
+	// normal values
+	#define PEAXPOD 8  
+	#define PODBITS 12 
+	#define PEA_REM_MAX (256*256)
+#else
+	// forces extremely low values
+	#define PEAXPOD 1
+	#define PODBITS 1
+	#define PEA_REM_MAX 1
+#endif
+
 #define PODMASK ((1<<PODBITS)-1)
 #define PODMAX   (1<<PODBITS)
-//#define PEA_REM_MAX (256*256) //FIXME true values
-#define PEA_REM_MAX (2)
 
 struct NAMEPEA {
 	player_t pidx; // player index
