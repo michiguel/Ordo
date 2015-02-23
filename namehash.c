@@ -23,6 +23,7 @@
 
 #include "namehash.h"
 #include "pgnget.h"
+#include "mymem.h"
 
 //#define PEAXPOD 8  //FIXME true values
 //#define PODBITS 12 //FIXME true values
@@ -127,15 +128,71 @@ struct NODETREE {
 	struct NAMEPEA p;
 };
 
+struct BUFFERBLOCK {
+	struct NODETREE buffer[PEA_REM_MAX];
+	struct BUFFERBLOCK *next;
+};
+
+
+static struct BUFFERBLOCK *Buffer_head = NULL;
+static struct BUFFERBLOCK *Buffer_curr = NULL;
+static player_t Treemembers = 0;
+static struct NODETREE *Troot = NULL;
+static struct NODETREE *T_end = NULL;
+static struct NODETREE *Tstop = NULL;
+
+
 // ----------------- PRIVATE DATA---------------
 static struct NODETREE Tremains[PEA_REM_MAX];
 static player_t Tremains_n;
-static struct NODETREE *Troot = NULL;
+//static struct NODETREE *Troot = NULL;
 //----------------------------------------------
 
 static void nodetree_connect (struct NODETREE *root, struct NODETREE *pnew);
 static int	nodetree_cmp (struct NODETREE *a, struct NODETREE *b);
 static bool_t nodetree_is_hit (const struct DATA *d, const char *s, uint32_t hash, const struct NODETREE *pnode);
+
+static bool_t
+name_tree_init (void)
+{
+	struct BUFFERBLOCK *q = memnew (sizeof (struct BUFFERBLOCK));
+	if (q == NULL) return FALSE;
+	q->next = NULL;
+	Buffer_head = q;
+	Buffer_curr = q;
+	Troot = &q->buffer[0];
+	T_end = Troot;
+	Tstop = T_end + PEA_REM_MAX;
+	Treemembers = 0;
+	return TRUE;
+}
+
+static void
+name_tree_done (void)
+{
+	struct BUFFERBLOCK *p = Buffer_head;
+	struct BUFFERBLOCK *n = NULL;
+	while (p) {
+		n = p->next;
+		p->next = NULL;
+		memrel(p);
+		p = n;
+	}
+	return;
+}
+
+static bool_t
+name_tree_addmem (void)
+{
+	struct BUFFERBLOCK *q = memnew (sizeof (struct BUFFERBLOCK));
+	if (q == NULL) return FALSE;
+	q->next = NULL;
+	Buffer_curr->next = q;
+	Buffer_curr = q;
+	T_end = &q->buffer[0];
+	Tstop = T_end + PEA_REM_MAX;
+	return TRUE;	
+}
 
 static bool_t
 name_register_tree (uint32_t hash, player_t i)
