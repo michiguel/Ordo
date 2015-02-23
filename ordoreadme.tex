@@ -47,18 +47,25 @@
 \begin{abstract}
 Ordo is a program designed to calculate ratings of individual chess engines (or players).
 It has a similar concept than the Elo rating\footnote{\url{http://en.wikipedia.org/wiki/Elo_rating_system}}, but with a different model and algorithm. 
-Ordo keeps consistency among the ratings because it calculates them considering all the results at once.
-That philosophy is similar to BayesElo\footnote{\url{http://remi.coulom.free.fr/Bayesian-Elo/}}.
+Ordo keeps consistency among ratings because it calculates them considering all results at once.
+In that respect, it behaves similarly to BayesElo\footnote{\url{http://remi.coulom.free.fr/Bayesian-Elo/}}.
 Ordo is distributed under the GPL license and binaries are available for GNU/Linux, Windows\rgstrd{}, and OS X.
-In addition, the sources could easily be compiled to be run in other systems. 
+In addition, the sources are portable and could be easily compiled for other systems. 
 \end{abstract}
 
-\subsubsection*{Files}
-In this distribution, you will find this file and versions for GNU/Linux (32 and 64 bits) or Windows\rgstrd{} (64 and 32 bits). 
+\subsubsection*{Precompiled Files}
+In this distribution, you may find versions for GNU/Linux (32 and 64 bits) or Windows\rgstrd{} (64 and 32 bits). 
 For convenience, you can rename the proper file for your system to \textbf{ordo} (GNU/Linux) or \textbf{ordo.exe} (Windows\rgstrd{}). 
 As an input example, a publicly available file \filename{games.pgn} is included\footnote{Taken from the recently discontinued \person{Ingo Bauer's} IPON rating list}. 
 A batch file (\filename{ordo\_example.bat}) is included in the Windows\rgstrd{} distribution\footnote{Kindly prepared by \person{Adam Hair}}. 
 It is a quick and great start for users of that operating system.
+
+\subsubsection*{GNU/Linux compilation and installation}
+After unzipping the contents, you can type
+\cmdln{make}
+\cmdln{make install}
+or in Ubuntu
+\cmdln{sudo make install}
 
 \subsubsection*{Usage}
 The input should be a file that adheres to the PGN standard\footnote{\url{http://en.wikipedia.org/wiki/Portable_Game_Notation}}. 
@@ -89,6 +96,7 @@ If you want both, you can use:
 
 	\cmdln{ordo -a 2500 -p games.pgn -o ratings.txt -c rating.csv}
 
+\subsubsection*{Anchor}
 In addition, \swtch{-A} will fix the rating of a given player as a reference (\textit{anchor}) for the whole pool of players.
 
 	\cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt}
@@ -97,7 +105,7 @@ That will calculate the ratings from \filename{games.pgn}, save it in \filename{
 Names that contain spaces should be surrounded by quote marks as in this example.
 
 \subsubsection*{White advantage}
-An important switch is \swtch{-w}, which sets the rating advantage for having white pieces in chess. 
+The switch \swtch{-w} sets the rating advantage for having white pieces in chess. 
 Alternatively, the (highly recommended) switch \swtch{-W} lets Ordo calculate it automatically. 
 With this switch we can complete the above example:
 
@@ -110,8 +118,8 @@ Ordo assumes a Gaussian distribution centered in \swtch{<value>} with a standard
 
 \subsubsection*{Simulation and errors}
 
-The switch \swtch{-s~<n>} instructs Ordo to perform \swtch{<n>} simulations virtually \textit{replaying} the games \swtch{<n>} times.
-The results will be randomly assigned according to the probabilities calculated from the ratings. 
+The switch \swtch{-s~<n>} instructs Ordo to perform \swtch{<n>} simulations, virtually \textit{replaying} the games \swtch{<n>} times.
+The results will be randomly re-assigned for each game according to the probabilities calculated from the ratings. 
 After running the simulations, and based on all those different results, Ordo calculates standard deviations (\textit{errors}) for the ratings.
 For this purpose, an optional switch is \swtch{-F~value}, where \swtch{value} is the \% \textit{confidence level} (The default is 95.0, which is roughly equivalent to $\pm$ 2 standard deviations).
 The errors displayed are relative to the pool average. 
