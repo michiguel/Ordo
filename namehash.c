@@ -31,7 +31,8 @@
 #define PODBITS 1
 #define PODMASK ((1<<PODBITS)-1)
 #define PODMAX   (1<<PODBITS)
-#define PEA_REM_MAX (256*256)
+//#define PEA_REM_MAX (256*256)
+#define PEA_REM_MAX (2)
 
 struct NAMEPEA {
 	player_t pidx; // player index
@@ -74,6 +75,7 @@ name_register (uint32_t hash, player_t i)
 // ----------------- PRIVATE DATA---------------
 static struct NAMEPOD Namehashtab[PODMAX];
 //----------------------------------------------
+
 
 static bool_t
 name_ispresent_hashtable (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
@@ -122,6 +124,8 @@ name_register_hashtable (uint32_t hash, player_t i)
 }
 
 //**************************************************************************
+#define MAX_NODESxBUFFER PEA_REM_MAX
+
 struct NODETREE {
 	struct NODETREE *hi;
 	struct NODETREE *lo;
@@ -129,23 +133,17 @@ struct NODETREE {
 };
 
 struct BUFFERBLOCK {
-	struct NODETREE buffer[PEA_REM_MAX];
+	struct NODETREE buffer[MAX_NODESxBUFFER];
 	struct BUFFERBLOCK *next;
 };
 
-
+// ----------------- PRIVATE DATA---------------
 static struct BUFFERBLOCK *Buffer_head = NULL;
 static struct BUFFERBLOCK *Buffer_curr = NULL;
 static player_t Treemembers = 0;
 static struct NODETREE *Troot = NULL;
 static struct NODETREE *T_end = NULL;
 static struct NODETREE *Tstop = NULL;
-
-
-// ----------------- PRIVATE DATA---------------
-static struct NODETREE Tremains[PEA_REM_MAX];
-static player_t Tremains_n;
-//static struct NODETREE *Troot = NULL;
 //----------------------------------------------
 
 static void nodetree_connect (struct NODETREE *root, struct NODETREE *pnew);
@@ -162,7 +160,7 @@ name_tree_init (void)
 	Buffer_curr = q;
 	Troot = &q->buffer[0];
 	T_end = Troot;
-	Tstop = T_end + PEA_REM_MAX;
+	Tstop = T_end + MAX_NODESxBUFFER;
 	Treemembers = 0;
 	return TRUE;
 }
@@ -190,28 +188,31 @@ name_tree_addmem (void)
 	Buffer_curr->next = q;
 	Buffer_curr = q;
 	T_end = &q->buffer[0];
-	Tstop = T_end + PEA_REM_MAX;
+	Tstop = T_end + MAX_NODESxBUFFER;
 	return TRUE;	
 }
 
 static bool_t
 name_register_tree (uint32_t hash, player_t i)
 {
-	player_t n = Tremains_n;
-	if (n < PEA_REM_MAX) {
-		if (n == 0) Troot = Tremains; // init
-		Tremains[n].hi = NULL;
-		Tremains[n].lo = NULL;		
-		Tremains[n].p.pidx = i;
-		Tremains[n].p.hash = hash;
-		if (n > 0)
-			nodetree_connect (Tremains, &Tremains[n]);
-		Tremains_n++;
-		return TRUE;
+	if (Treemembers == 0)
+		name_tree_init();
+
+	if (T_end == Tstop) {
+		if (!name_tree_addmem())
+			return FALSE;
 	}
-	else {
-		return FALSE;
-	}
+
+	T_end->hi = NULL;
+	T_end->lo = NULL;		
+	T_end->p.pidx = i;
+	T_end->p.hash = hash;
+
+	if (Treemembers > 0)
+		nodetree_connect (Troot, T_end);
+	Treemembers++;
+	T_end++;
+	return TRUE;
 }
 
 
