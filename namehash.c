@@ -39,11 +39,6 @@ struct NAMEPEA {
 	uint32_t hash; // name hash
 };
 
-struct NAMEPOD {
-	struct NAMEPEA pea[PEAXPOD];
-	int n;
-};
-
 static bool_t name_tree_init(void);
 static void   name_tree_done(void);
 static bool_t name_ispresent_hashtable (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
@@ -51,7 +46,7 @@ static bool_t name_register_hashtable (uint32_t hash, player_t i);
 static bool_t name_ispresent_tree (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
 static bool_t name_register_tree (uint32_t hash, player_t i);
 
-//**************************************************************************
+//*************************** GENERAL **************************************
 
 bool_t
 name_storage_init(void)
@@ -81,7 +76,12 @@ name_register (uint32_t hash, player_t i)
 		||	name_register_tree (hash, i);
 }
 
-//**************************************************************************
+//************************* HASHED STORAGE *********************************
+
+struct NAMEPOD {
+	struct NAMEPEA pea[PEAXPOD];
+	int n;
+};
 
 // ----------------- PRIVATE DATA---------------
 static struct NAMEPOD Namehashtab[PODMAX];
