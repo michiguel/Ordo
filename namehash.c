@@ -31,7 +31,7 @@
 #define PODBITS 1
 #define PODMASK ((1<<PODBITS)-1)
 #define PODMAX   (1<<PODBITS)
-//#define PEA_REM_MAX (256*256)
+//#define PEA_REM_MAX (256*256) //FIXME true values
 #define PEA_REM_MAX (2)
 
 struct NAMEPEA {
