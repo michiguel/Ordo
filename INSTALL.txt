@@ -1,6 +1,5 @@
-You can install ordo in linux by going into the sources folder then, make, and make install (or sudo make install in Debian/Ubuntu/Mint)
+You can install ordo in linux by make, and make install (or sudo make install in Debian/Ubuntu/Mint)
 
-cd sources
 make
 sudo make install
 
