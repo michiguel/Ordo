@@ -44,6 +44,8 @@ calc_encounters__
 
 }
 
+static long counter = 0;
+static long swap = 0;
 
 static int
 compare__ (const player_t *a, const player_t *b, const double *reference )
@@ -55,6 +57,8 @@ compare__ (const player_t *a, const player_t *b, const double *reference )
 	const double da = r[*ja];
 	const double db = r[*jb];
     
+counter++;
+
 	return (da < db) - (da > db);
 }
 
@@ -63,15 +67,99 @@ insertion_sort (const double *reference, size_t n, player_t *vect)
 {
 	size_t i, j;
 	player_t tmp;
+	if (n < 2) return;
 	for (j = n-1; j > 0; j--) {
 		for (i = j; i < n; i++) {
 			if (0 < compare__(&vect[i-1], &vect[i], reference)) {
+swap++;
 				tmp = vect[i-1]; vect[i-1] = vect[i]; vect[i] = tmp; // swap
 			}	
 		}
 	}
 
 }
+
+
+//==== my qsort 
+
+static size_t
+partition (const double *reference, player_t *vect, size_t l, size_t h)
+{
+	size_t p;
+	size_t i = l + 1;
+	player_t tmp;
+	player_t pivot_content = vect[l];
+
+	while (i < h) {
+		if (0 < compare__(&pivot_content, &vect[i], reference)) {
+			i++;
+		} else {
+swap++;
+			tmp = vect[i]; vect[i] = vect[h]; vect[h] = tmp; // swap i, h
+			h--;
+		}
+	}
+
+	p = 0 < compare__(&pivot_content, &vect[i], reference)? i: i - 1;
+	
+	if (p > l) 	{
+swap++;
+			tmp = vect[p]; vect[p] = vect[l]; vect[l] = tmp; // swap p, l
+	}
+	return p;
+}
+
+static void
+range_qsort (const double *reference, player_t *vect, size_t l, size_t h)
+{
+
+	size_t m;
+	assert (h >= l);
+
+//printf ("%d - %d\n", l,h);
+
+	if (h < l + 6) {
+		insertion_sort (reference, h - l + 1, vect + l);
+		return;
+	}
+
+	// choose pivot to have in l
+	
+	if (h <= l + 12) {
+		player_t tmp;
+		size_t j = l + (h-l)/2;
+
+		if (0 < compare__(&vect[h], &vect[j], reference) && 0 < compare__(&vect[j], &vect[l], reference)) {
+swap++;
+			tmp = vect[j]; vect[j] = vect[l]; vect[l] = tmp; // swap
+		}
+		if (0 < compare__(&vect[j], &vect[h], reference) && 0 < compare__(&vect[h], &vect[l], reference)) {
+swap++;
+			tmp = vect[h]; vect[h] = vect[l]; vect[l] = tmp; // swap
+		}
+
+	}
+
+
+	m = partition (reference, vect, l, h);
+//printf ("m=%d\n", m);
+
+	if (m > l+1) range_qsort(reference, vect, l, m-1);
+	if (h > m+1) range_qsort(reference, vect, m+1, h);
+
+}
+
+static void
+my_qsort (const double *reference, size_t n, player_t *vect)
+{
+	range_qsort(reference, vect, 0, n-1);
+//	insertion_sort (reference, n, vect);
+
+printf ("\n--> counter=%ld\n",counter);
+printf ("\n--> swap   =%ld\n",swap);
+}
+
+//====
 
 static size_t
 find_maxlen (const char *nm[], size_t n)
@@ -202,7 +290,8 @@ cegt_output	( const struct GAMES 	*g
 		r->sorted[j] = (int32_t) j; //FIXME size_t
 	}
 
-	insertion_sort (r->ratingof_results, p->n, r->sorted);
+//	insertion_sort (r->ratingof_results, p->n, r->sorted);
+	my_qsort(r->ratingof_results, p->n, r->sorted);
 
 	cegt.n_enc = e->n; 
 	cegt.enc = e->enc;
@@ -250,7 +339,8 @@ head2head_output( const struct GAMES 	*g
 		r->sorted[j] = (int32_t)j; //FIXME size_t
 	}
 
-	insertion_sort (r->ratingof_results, p->n, r->sorted);
+//	insertion_sort (r->ratingof_results, p->n, r->sorted);
+	my_qsort(r->ratingof_results, p->n, r->sorted);
 
 	cegt.n_enc = e->n;
 	cegt.enc = e->enc;
@@ -316,7 +406,8 @@ all_report 	( const struct GAMES 	*g
 		r->sorted[j] = (int32_t)j; //FIXME size_t
 	}
 
-	insertion_sort (r->ratingof_results, p->n, r->sorted);
+//	insertion_sort (r->ratingof_results, p->n, r->sorted);
+	my_qsort(r->ratingof_results, p->n, r->sorted);
 
 	/* output in text format */
 	f = textf;
