@@ -62,6 +62,7 @@ counter++;
 	return (da < db) - (da > db);
 }
 
+#if 0
 static void
 insertion_sort (const double *reference, size_t n, player_t *vect)
 {
@@ -71,14 +72,46 @@ insertion_sort (const double *reference, size_t n, player_t *vect)
 	for (j = n-1; j > 0; j--) {
 		for (i = j; i < n; i++) {
 			if (0 < compare__(&vect[i-1], &vect[i], reference)) {
-swap++;
+swap += 3;
 				tmp = vect[i-1]; vect[i-1] = vect[i]; vect[i] = tmp; // swap
-			}	
+			}	else {
+
+
+				break;
+			}
 		}
 	}
 
 }
+#else
+static void
+insertion_sort (const double *reference, size_t n, player_t *vect)
+{
+	size_t i, j, pivot;
+	player_t tmp;
+	if (n < 2) return;
+	for (j = n-1; j > 0; j--) {
+		pivot = j - 1;
+		for (i = j; i < n; i++) {
+			if (!(0 < compare__(&vect[pivot], &vect[i], reference))) {
+				break;
+			}
+		}
 
+		if (i > j) {
+			size_t k;
+			tmp = vect[j-1];
+swap++;
+			for (k = j; k < i; k++) {
+swap++;
+				vect[k-1] = vect[k];
+			}
+			vect[i-1] = tmp;
+swap++;
+		}
+	}
+}
+#endif
 
 //==== my qsort 
 
@@ -94,7 +127,7 @@ partition (const double *reference, player_t *vect, size_t l, size_t h)
 		if (0 < compare__(&pivot_content, &vect[i], reference)) {
 			i++;
 		} else {
-swap++;
+swap += 3;
 			tmp = vect[i]; vect[i] = vect[h]; vect[h] = tmp; // swap i, h
 			h--;
 		}
@@ -103,7 +136,7 @@ swap++;
 	p = 0 < compare__(&pivot_content, &vect[i], reference)? i: i - 1;
 	
 	if (p > l) 	{
-swap++;
+swap += 3;
 			tmp = vect[p]; vect[p] = vect[l]; vect[l] = tmp; // swap p, l
 	}
 	return p;
@@ -119,27 +152,25 @@ range_qsort (const double *reference, player_t *vect, size_t l, size_t h)
 //printf ("%d - %d\n", l,h);
 
 	if (h < l + 6) {
-		insertion_sort (reference, h - l + 1, vect + l);
+//		insertion_sort (reference, h - l + 1, vect + l);
 		return;
 	}
 
 	// choose pivot to have in l
-	
 	if (h <= l + 12) {
 		player_t tmp;
 		size_t j = l + (h-l)/2;
 
 		if (0 < compare__(&vect[h], &vect[j], reference) && 0 < compare__(&vect[j], &vect[l], reference)) {
-swap++;
+swap += 3;
 			tmp = vect[j]; vect[j] = vect[l]; vect[l] = tmp; // swap
 		}
 		if (0 < compare__(&vect[j], &vect[h], reference) && 0 < compare__(&vect[h], &vect[l], reference)) {
-swap++;
+swap += 3;
 			tmp = vect[h]; vect[h] = vect[l]; vect[l] = tmp; // swap
 		}
 
 	}
-
 
 	m = partition (reference, vect, l, h);
 //printf ("m=%d\n", m);
@@ -153,13 +184,13 @@ static void
 my_qsort (const double *reference, size_t n, player_t *vect)
 {
 	range_qsort(reference, vect, 0, n-1);
-//	insertion_sort (reference, n, vect);
+	insertion_sort (reference, n, vect);
 
-printf ("\n--> counter=%ld\n",counter);
-printf ("\n--> swap   =%ld\n",swap);
+printf ("--> counter=%ld\n",counter);
+printf ("--> swap   =%ld\n",swap);
 }
 
-//====
+//==== end my qsort
 
 static size_t
 find_maxlen (const char *nm[], size_t n)
