@@ -105,7 +105,7 @@ static void usage (void);
 		"Program to calculate individual ratings\n"
 		;
 
-	const char *example_options = 
+	static const char *example_options = 
 		"-a 2500 -p input.pgn -o output.txt";
 
 	static const char *example_str =
@@ -151,13 +151,13 @@ static void usage (void);
 		"\n"
 		;
 
-	const char *usage_options = 
+	static const char *usage_options = 
 		"[-OPTION]";
 		;
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:Xt:N:";
+static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:Xt:N:";
 
 /*
 |
@@ -165,10 +165,7 @@ const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:Xt:
 |
 \*--------------------------------------------------------------*/
 
-struct GAMES 		Games;
-struct PLAYERS 		Players;
-struct RATINGS 		RA;
-struct ENCOUNTERS 	Encounters;
+
 
 static int compare_GAME (const void * a, const void * b)
 {
@@ -426,7 +423,8 @@ static void		reset_rating (double general_average, size_t n_players, const bool_
 static void		ratings_copy (const double *r, size_t n, double *t);
 
 static size_t	calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advantage
-							, bool_t adjust_wadv, double *pDraw_rate, struct rel_prior_set *rps, struct PLAYERS *plyrs, struct RATINGS *rat);
+							, bool_t adjust_wadv, double *pDraw_rate, struct rel_prior_set *rps
+							, struct PLAYERS *plyrs, struct RATINGS *rat, struct GAMES *pGames);
 
 static void 	ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat);
 static void		ratings_for_purged (const struct PLAYERS *p, struct RATINGS *r /*@out@*/);
@@ -464,9 +462,9 @@ static void 	ratings_center_to_zero (size_t n_players, const bool_t *flagged, do
 static const char *Result_string[4] = {"1-0","1/2-1/2","0-1","*"};
 
 static void
-save_simulated(int num)
+save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num)
 {
-	int i;
+	size_t i;
 	const char *name_w;
 	const char *name_b;
 	const char *result;
@@ -479,16 +477,16 @@ save_simulated(int num)
 
 	if (NULL != (fout = fopen (filename, "w"))) {
 
-		for (i = 0; i < Games.n; i++) {
+		for (i = 0; i < pGames->n; i++) {
 
-			uint32_t score_i = Games.ga[i].score;
-			uint32_t wp_i = Games.ga[i].whiteplayer;
-			uint32_t bp_i = Games.ga[i].blackplayer;
+			int32_t score_i = pGames->ga[i].score;
+			player_t wp_i = pGames->ga[i].whiteplayer;
+			player_t bp_i = pGames->ga[i].blackplayer;
 
 			if (score_i == DISCARD) continue;
 	
-			name_w = Players.name [wp_i];
-			name_b = Players.name [bp_i];		
+			name_w = pPlayers->name [wp_i];
+			name_b = pPlayers->name [bp_i];		
 			result = Result_string[score_i];
 
 			fprintf(fout,"[White \"%s\"]\n",name_w);
@@ -525,10 +523,18 @@ calc_encounters__
 |
 \*--------------------------------------------------------------*/
 
-static struct DATA *pdaba;
+
 
 int main (int argc, char *argv[])
 {
+	struct DATA *pdaba;
+
+	struct GAMES 		Games;
+	struct PLAYERS 		Players;
+	struct RATINGS 		RA;
+	struct ENCOUNTERS 	Encounters;
+
+//
 	struct output_qualifiers outqual = {FALSE, 0};
 	long int mingames = 0;
 
@@ -1074,7 +1080,8 @@ int main (int argc, char *argv[])
 		purge_players (QUIET_MODE, &Players);
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
-	Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch, &RPset, &Players, &RA);
+	Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage
+							, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch, &RPset, &Players, &RA, &Games);
 
 	ratings_results(&Players, &RA);
 
@@ -1141,7 +1148,7 @@ int main (int argc, char *argv[])
 
 					#if defined(SAVE_SIMULATION)
 					if ((Simulate-z) == SAVE_SIMULATION_N) {
-						save_simulated((int)(Simulate-z)); 
+						save_simulated(&Players, &Games, (int)(Simulate-z)); 
 					}
 					#endif
 
@@ -1154,7 +1161,8 @@ int main (int argc, char *argv[])
 						purge_players (QUIET_MODE, &Players);
 						calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 					}
-					Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, FALSE, &sim_draw_rate, &RPset, &Players, &RA);
+					Encounters.n = calc_rating
+									(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, FALSE, &sim_draw_rate, &RPset, &Players, &RA, &Games);
 					ratings_for_purged (&Players, &RA);
 
 					relpriors_copy(&RPset_store, &RPset);
@@ -1518,7 +1526,7 @@ simulate_scores ( const double 	*ratingof_results
 
 static size_t
 calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advantage, bool_t adjust_wadv
-			, double *pDraw_rate, struct rel_prior_set *rps, struct PLAYERS *plyrs, struct RATINGS *rat)
+			, double *pDraw_rate, struct rel_prior_set *rps, struct PLAYERS *plyrs, struct RATINGS *rat, struct GAMES *pGames)
 {
 	double dr = *pDraw_rate;
 
@@ -1540,7 +1548,7 @@ calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advant
 				, Anchor
 				, Priored_n
 				
-				, &Games
+				, pGames
 
 				, BETA
 
@@ -1578,7 +1586,7 @@ calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advant
 					, Anchor_use && !Anchor_err_rel2avg
 					, Anchor
 					
-					, &Games
+					, pGames
 	
 					, BETA
 

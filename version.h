@@ -1,2 +1,2 @@
-#define VERSION "v0.9.8.7-qs4"
+#define VERSION "v0.9.8.7-qs4-sta1"
 

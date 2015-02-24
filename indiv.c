@@ -327,12 +327,12 @@ rate_super_players	( bool_t quiet
 					, double beta
 )
 {
-	static struct ENC 	*myenc;
-	static double 		*weig;
-	static double 		*rtng;
-	bool_t				ok;
-	size_t				np = (size_t) n_players;
-	size_t				ne = (size_t) N_enc;
+	struct ENC 	*myenc = NULL;
+	double 		*weig = NULL;
+	double 		*rtng = NULL;
+	bool_t		ok;
+	size_t		np = (size_t) n_players;
+	size_t		ne = (size_t) N_enc;
 
 	if (NULL != (weig = memnew(sizeof(double) * ne))) {
 		if (NULL != (rtng = memnew(sizeof(double) * ne))) {
