@@ -58,8 +58,7 @@ compare__ (const player_t *a, const player_t *b, const double *reference )
 	return (da < db) - (da > db);
 }
 
-#if 0
-#else
+
 static void
 insertion_sort (const double *reference, size_t n, player_t *vect)
 {
@@ -83,7 +82,6 @@ insertion_sort (const double *reference, size_t n, player_t *vect)
 		}
 	}
 }
-#endif
 
 //==== my qsort 
 
