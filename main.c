@@ -234,11 +234,11 @@ static player_t	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, str
 
 static void		players_clear_flagged (struct PLAYERS *p);
 
-static void		init_rating (size_t n, double rat0, struct RATINGS *rat /*@out@*/);
-static void		reset_rating (double general_average, size_t n_players, const bool_t *prefed, const bool_t *flagged, double *rating);
-static void		ratings_copy (const double *r, size_t n, double *t);
+static void		init_rating (player_t n, double rat0, struct RATINGS *rat /*@out@*/);
+static void		reset_rating (double general_average, player_t n_players, const bool_t *prefed, const bool_t *flagged, double *rating);
+static void		ratings_copy (const double *r, player_t n, double *t);
 
-static size_t	calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advantage
+static size_t	calc_rating ( bool_t quiet, struct ENC *enc, gamesnum_t N_enc, double *pWhite_advantage
 							, bool_t adjust_wadv, double *pDraw_rate, struct rel_prior_set *rps
 							, struct PLAYERS *plyrs, struct RATINGS *rat, struct GAMES *pGames);
 
@@ -259,7 +259,7 @@ static void 		table_output(double Rtng_76);
 
 static ptrdiff_t	head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y);
 
-static void 		ratings_center_to_zero (size_t n_players, const bool_t *flagged, double *ratingof);
+static void 		ratings_center_to_zero (player_t n_players, const bool_t *flagged, double *ratingof);
 
 /*------------------------------------------------------------------------*/
 
@@ -620,10 +620,10 @@ int main (int argc, char *argv[])
 
 	/*==== memory initialization ====*/
 	{
-	size_t mpr = (size_t)pdaba->n_players; //FIXME size_t
-	size_t mpp = (size_t)pdaba->n_players; //FIXME size_t
-	size_t mg  = pdaba->n_games;
-	size_t me  = pdaba->n_games;
+	player_t mpr 	= pdaba->n_players; //FIXME size_t
+	player_t mpp 	= pdaba->n_players; //FIXME size_t
+	gamesnum_t mg  	= pdaba->n_games;
+	gamesnum_t me  	= pdaba->n_games;
 
 	if (!ratings_init (mpr, &RA)) {
 		fprintf (stderr, "Could not initialize rating memory\n"); exit(0);	
@@ -837,15 +837,15 @@ int main (int argc, char *argv[])
 			struct ENC *	b;
 			struct ENC *	Encounter2;
 			struct ENC *	Encounter3;
-			size_t			N_encounters2 = 0;
-			size_t 			N_encounters3 = 0;
-			size_t 			nenc = (size_t)Encounters.n;
+			gamesnum_t		N_encounters2 = 0;
+			gamesnum_t 		N_encounters3 = 0;
+			gamesnum_t 		nenc = Encounters.n;
 	
 			assert (nenc > 0);
-			if (NULL == (a = memnew (sizeof(struct ENC) * nenc))) {
+			if (NULL == (a = memnew (sizeof(struct ENC) * (size_t)nenc))) {
 				ok = FALSE;
 			} else 
-			if (NULL == (b = memnew (sizeof(struct ENC) * nenc))) {
+			if (NULL == (b = memnew (sizeof(struct ENC) * (size_t)nenc))) {
 				ok = FALSE;
 				memrel(a);
 			} else {
@@ -1189,9 +1189,9 @@ head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y)
 //=====================================
 
 static void
-init_rating (size_t n, double rat0, struct RATINGS *rat)
+init_rating (player_t n, double rat0, struct RATINGS *rat)
 {
-	size_t i;
+	player_t i;
 	for (i = 0; i < n; i++) {
 		rat->ratingof[i] = rat0;
 	}
@@ -1202,9 +1202,9 @@ init_rating (size_t n, double rat0, struct RATINGS *rat)
 
 // no globals
 static void
-reset_rating (double general_average, size_t n_players, const bool_t *prefed, const bool_t *flagged, double *rating)
+reset_rating (double general_average, player_t n_players, const bool_t *prefed, const bool_t *flagged, double *rating)
 {
-	size_t i;
+	player_t i;
 	for (i = 0; i < n_players; i++) {
 		if (!prefed[i] && !flagged[i])
 			rating[i] = general_average;
@@ -1212,9 +1212,9 @@ reset_rating (double general_average, size_t n_players, const bool_t *prefed, co
 }
 
 static void
-ratings_copy (const double *r, size_t n, double *t)
+ratings_copy (const double *r, player_t n, double *t)
 {
-	size_t i;
+	player_t i;
 	for (i = 0; i < n; i++) {
 		t[i] = r[i];
 	}
@@ -1226,12 +1226,12 @@ ratings_copy (const double *r, size_t n, double *t)
 static void
 purge_players (bool_t quiet, struct PLAYERS *pl)
 {
-	size_t n_players = pl->n;
+	player_t n_players = pl->n;
 	const int *performance_type = pl->performance_type;
 	const char **name = pl->name;
 	bool_t *flagged = pl->flagged;
 
-	size_t j;
+	player_t j;
 	assert(pl->perf_set);
 	for (j = 0; j < n_players; j++) {
 		if (flagged[j]) continue;
@@ -1272,8 +1272,8 @@ ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat)
 static void
 players_clear_flagged (struct PLAYERS *p)
 {
-	size_t j;
-	size_t n = p->n;
+	player_t j;
+	player_t n = p->n;
 	for (j = 0; j < n; j++) {
 		p->flagged[j] = FALSE;
 	}	
@@ -1282,8 +1282,8 @@ players_clear_flagged (struct PLAYERS *p)
 static void
 ratings_for_purged (const struct PLAYERS *p, struct RATINGS *r /*@out@*/)
 {
-	size_t j;
-	size_t n = p->n;
+	player_t j;
+	player_t n = p->n;
 	for (j = 0; j < n; j++) {
 		if (p->flagged[j]) {
 			r->ratingof[j] = 0;
@@ -1318,10 +1318,10 @@ simulate_scores ( const double 	*ratingof_results
 				, struct GAMES *g	// output
 )
 {
-	size_t n_games = g->n;
+	gamesnum_t n_games = g->n;
 	struct gamei *gam = g->ga;
 
-	size_t i;
+	gamesnum_t i;
 	player_t w, b;
 	const double *rating = ratingof_results;
 	double pwin, pdraw, plos;
@@ -1339,7 +1339,7 @@ simulate_scores ( const double 	*ratingof_results
 //==== CALCULATE INDIVIDUAL RATINGS =========================
 
 static size_t
-calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advantage, bool_t adjust_wadv
+calc_rating ( bool_t quiet, struct ENC *enc, gamesnum_t N_enc, double *pWhite_advantage, bool_t adjust_wadv
 			, double *pDraw_rate, struct rel_prior_set *rps, struct PLAYERS *plyrs, struct RATINGS *rat, struct GAMES *pGames)
 {
 	double dr = *pDraw_rate;
@@ -1383,10 +1383,9 @@ calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advant
 	} else {
 
 		double *ratingtmp_memory;
-		size_t bufsize = plyrs->n; 
 
-		assert(bufsize > 0);
-		if (NULL != (ratingtmp_memory = memnew (sizeof(double) * bufsize))) {
+		assert(plyrs->n > 0);
+		if (NULL != (ratingtmp_memory = memnew (sizeof(double) * (size_t)plyrs->n))) {
 
 			ret = calc_rating2 	
 					( quiet
@@ -1426,9 +1425,9 @@ calc_rating ( bool_t quiet, struct ENC *enc, size_t N_enc, double *pWhite_advant
 
 // no globals
 static void
-ratings_apply_excess_correction(double excess, size_t n_players, const bool_t *flagged, double *ratingof /*out*/)
+ratings_apply_excess_correction(double excess, player_t n_players, const bool_t *flagged, double *ratingof /*out*/)
 {
-	size_t j;
+	player_t j;
 	for (j = 0; j < n_players; j++) {
 		if (!flagged[j])
 			ratingof[j] -= excess;
@@ -1436,9 +1435,9 @@ ratings_apply_excess_correction(double excess, size_t n_players, const bool_t *f
 }
 
 static void
-ratings_center_to_zero (size_t n_players, const bool_t *flagged, double *ratingof)
+ratings_center_to_zero (player_t n_players, const bool_t *flagged, double *ratingof)
 {
-	size_t 	j, notflagged;
+	player_t 	j, notflagged;
 	double 	excess, average;
 	double 	accum = 0;
 
@@ -1489,22 +1488,23 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl)
 
 {
 	// encounters
-	size_t N_enc = ee->n;
+	gamesnum_t N_enc = ee->n;
 	const struct ENC *enc = ee->enc;
 
 	// players
-	size_t n_players = pl->n;
+	player_t n_players = pl->n;
 	int *perftype  = pl->performance_type;
 	const char **name    = pl->name;
 
-	double 	*obt;
+	double 		*obt;
 	gamesnum_t	*pla;
-	size_t e, j;
-	player_t w, b;
-	player_t super = 0;
+	gamesnum_t	e;
+	player_t 	j;
+	player_t 	w, b;
+	player_t 	super = 0;
 
-	obt = memnew (sizeof(double) * n_players);
-	pla = memnew (sizeof(gamesnum_t) * n_players);
+	obt = memnew (sizeof(double) * (size_t)n_players);
+	pla = memnew (sizeof(gamesnum_t) * (size_t)n_players);
 	if (NULL==obt || NULL==pla) {
 		fprintf(stderr, "Not enough memory\n");
 		exit(EXIT_FAILURE);
@@ -1517,8 +1517,8 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl)
 		w = enc[e].wh;
 		b = enc[e].bl;
 
-		assert(( w >= 0 && (size_t)w < n_players) || !fprintf(stderr,"w=%ld np=%ld\n",(long)w,(long)n_players));
-		assert(( b >= 0 && (size_t)b < n_players) || !fprintf(stderr,"b=%ld np=%ld\n",(long)b,(long)n_players));
+		assert(( w >= 0 && w < n_players) || !fprintf(stderr,"w=%ld np=%ld\n",(long)w,(long)n_players));
+		assert(( b >= 0 && b < n_players) || !fprintf(stderr,"b=%ld np=%ld\n",(long)b,(long)n_players));
 
 		obt[w] += enc[e].wscore;
 		obt[b] += (double)enc[e].played - enc[e].wscore;

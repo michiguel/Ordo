@@ -41,11 +41,11 @@ static struct GROUP_BUFFER 			group_buffer;
 static struct PARTICIPANT_BUFFER	participant_buffer;
 static struct CONNECT_BUFFER		connection_buffer;
 
-static bool_t	group_buffer_init(struct GROUP_BUFFER *g, size_t n);
+static bool_t	group_buffer_init(struct GROUP_BUFFER *g, player_t n);
 static void		group_buffer_done(struct GROUP_BUFFER *g);
-static bool_t	participant_buffer_init(struct PARTICIPANT_BUFFER *x, size_t n);
+static bool_t	participant_buffer_init(struct PARTICIPANT_BUFFER *x, player_t n);
 static void		participant_buffer_done(struct PARTICIPANT_BUFFER *x);
-static bool_t	connection_buffer_init(struct CONNECT_BUFFER *x, size_t n);
+static bool_t	connection_buffer_init(struct CONNECT_BUFFER *x, gamesnum_t n);
 static void		connection_buffer_done(struct CONNECT_BUFFER *x);
 
 //---------------------------------------------------------------------
@@ -56,15 +56,15 @@ static void		connection_buffer_done(struct CONNECT_BUFFER *x);
 
 static struct ENC *	SE   = NULL;
 static struct ENC *	SE2  = NULL;
-static size_t		N_se  = 0;
-static size_t		N_se2 = 0;
+static gamesnum_t	N_se  = 0;
+static gamesnum_t	N_se2 = 0;
 
 	// groups
 
 static player_t		N_players = 0;
 
 static int32_t		*Group_belong;
-static size_t		N_groups;
+static player_t		N_groups;
 
 struct BITARRAY 	BA;
 struct BITARRAY		BB;
@@ -179,12 +179,12 @@ static group_t * group_combined(group_t *g)
 }
 
 static void
-add_participant (group_t *g, size_t i)
+add_participant (group_t *g, player_t i)
 {
 	participant_t *nw = participant_new();
 	nw->next = NULL;
 	nw->name = Namelist[i];
-	nw->id = (int32_t) i; //FIXME size_t
+	nw->id = i; 
 	if (g->pstart == NULL) {
 		g->pstart = nw; 
 		g->plast = nw;	
@@ -306,7 +306,7 @@ static void
 group_gocombine(group_t *g, group_t *h);
 
 static void
-ifisolated2group (size_t x)
+ifisolated2group (player_t x)
 {
 	group_t *g;
 
@@ -324,9 +324,9 @@ ifisolated2group (size_t x)
 }
 
 static void
-convert_general_init(size_t N_plyrs)
+convert_general_init(player_t N_plyrs)
 {
-	size_t i;
+	player_t i;
 	connect_init();
 	participant_init();
 	groupset_init();
@@ -337,14 +337,14 @@ convert_general_init(size_t N_plyrs)
 }
 
 void
-convert_to_groups(FILE *f, size_t N_plyrs, const char **name)
+convert_to_groups(FILE *f, player_t N_plyrs, const char **name)
 {
-	size_t i;
-	size_t e;
+	player_t i;
+	gamesnum_t e;
 
 	Namelist = name;
 
-	convert_general_init(N_plyrs);
+	convert_general_init (N_plyrs);
 
 	for (e = 0 ; e < N_se2; e++) {
 		enc2groups(&SE2[e]);
@@ -371,7 +371,7 @@ convert_to_groups(FILE *f, size_t N_plyrs, const char **name)
 }
 
 static int
-group_belonging(size_t plyr)
+group_belonging(player_t plyr)
 {
 	group_t *ggg = group_pointed_by_node(&Gnode[plyr]);
 	if (ggg) 
@@ -381,18 +381,18 @@ group_belonging(size_t plyr)
 }
 
 void
-sieve_encounters(const struct ENC *enc, size_t N_enc, struct ENC *enca, size_t *N_enca, struct ENC *encb, size_t *N_encb)
+sieve_encounters(const struct ENC *enc, gamesnum_t N_enc, struct ENC *enca, gamesnum_t *N_enca, struct ENC *encb, gamesnum_t *N_encb)
 {
-	size_t e;
-	size_t w,b;
-	size_t na = 0, nb = 0;
+	gamesnum_t e;
+	player_t w,b;
+	gamesnum_t na = 0, nb = 0;
 
 	*N_enca = 0;
 	*N_encb = 0;
 
 	for (e = 0; e < N_enc; e++) {
-		w = (size_t) enc[e].wh; //FIXME size_t
-		b = (size_t) enc[e].bl; //FIXME size_t
+		w = enc[e].wh; 
+		b = enc[e].bl; 
 		if (group_belonging(w) == group_belonging(b)) {
 			enca[na] = enc[e]; na += 1;
 		} else {
@@ -1055,7 +1055,7 @@ static bool_t encounter_is_SL(const struct ENC *e)
 }
 
 void
-scan_encounters(const struct ENC *enc, size_t N_enc, size_t N_plyrs)
+scan_encounters(const struct ENC *enc, gamesnum_t N_enc, player_t N_plyrs)
 {
 	size_t i,e;
 	const struct ENC *pe;
@@ -1105,15 +1105,15 @@ scan_encounters(const struct ENC *enc, size_t N_enc, size_t N_plyrs)
 
 
 bool_t
-supporting_encmem_init (size_t nenc)
+supporting_encmem_init (gamesnum_t nenc)
 {
 	struct ENC *a;
 	struct ENC *b;
 
-	if (NULL == (a = memnew (sizeof(struct ENC) * nenc))) {
+	if (NULL == (a = memnew (sizeof(struct ENC) * (size_t)nenc))) {
 		return FALSE;
 	} else 
-	if (NULL == (b = memnew (sizeof(struct ENC) * nenc))) {
+	if (NULL == (b = memnew (sizeof(struct ENC) * (size_t)nenc))) {
 		memrel(a);
 		return FALSE;
 	}
@@ -1137,7 +1137,7 @@ supporting_encmem_done (void)
 
 
 bool_t
-supporting_groupmem_init (size_t nplayers, size_t nenc)
+supporting_groupmem_init (player_t nplayers, gamesnum_t nenc)
 {
 	int32_t 	*a;
 	int 		*b;
@@ -1151,25 +1151,25 @@ supporting_groupmem_init (size_t nplayers, size_t nenc)
 	size_t		sd = sizeof(node_t);
 	size_t		se = sizeof(int);
 
-	if (NULL == (a = memnew (sa * nplayers))) {
+	if (NULL == (a = memnew (sa * (size_t)nplayers))) {
 		return FALSE;
 	} else 
-	if (NULL == (b = memnew (sb * nplayers))) {
+	if (NULL == (b = memnew (sb * (size_t)nplayers))) {
 		memrel(a);
 		return FALSE;
 	} else 
-	if (NULL == (c = memnew (sc * nplayers))) {
+	if (NULL == (c = memnew (sc * (size_t)nplayers))) {
 		memrel(a);
 		memrel(b);
 		return FALSE;
 	} else 
-	if (NULL == (d = memnew (sd * nplayers))) {
+	if (NULL == (d = memnew (sd * (size_t)nplayers))) {
 		memrel(a);
 		memrel(b);
 		memrel(c);
 		return FALSE;
 	} else 
-	if (NULL == (e = memnew (se * nplayers))) {
+	if (NULL == (e = memnew (se * (size_t)nplayers))) {
 		memrel(a);
 		memrel(b);
 		memrel(c);
@@ -1183,7 +1183,7 @@ supporting_groupmem_init (size_t nplayers, size_t nenc)
 	Gnode = d;
 	CHAIN = e;
 
-	N_players = (player_t) nplayers;
+	N_players = nplayers;
 
 	if (!group_buffer_init (&group_buffer, nplayers)) {
 		return FALSE;
@@ -1231,10 +1231,10 @@ supporting_groupmem_done (void)
 
 
 static bool_t
-group_buffer_init(struct GROUP_BUFFER *g, size_t n)
+group_buffer_init(struct GROUP_BUFFER *g, player_t n)
 {
 	group_t *p;
-	if (NULL != (p = memnew (sizeof(group_t) * n))) {
+	if (NULL != (p = memnew (sizeof(group_t) * (size_t)n))) {
 		g->list = p;		
 		g->tail = NULL;
 		g->prehead = NULL;
@@ -1260,10 +1260,10 @@ group_buffer_done(struct GROUP_BUFFER *g)
 
 
 static bool_t
-participant_buffer_init(struct PARTICIPANT_BUFFER *x, size_t n)
+participant_buffer_init(struct PARTICIPANT_BUFFER *x, player_t n)
 {
 	participant_t *p;
-	if (NULL != (p = memnew (sizeof(participant_t) * n))) {
+	if (NULL != (p = memnew (sizeof(participant_t) * (size_t)n))) {
 		x->list = p;		
 		x->n = 0;
 		x->max = n;
@@ -1284,10 +1284,10 @@ participant_buffer_done(struct PARTICIPANT_BUFFER *x)
 }
 
 static bool_t
-connection_buffer_init(struct CONNECT_BUFFER *x, size_t n)
+connection_buffer_init(struct CONNECT_BUFFER *x, gamesnum_t n)
 {
 	connection_t *p;
-	if (NULL != (p = memnew (sizeof(connection_t) * n))) {
+	if (NULL != (p = memnew (sizeof(connection_t) * (size_t)n))) {
 		x->list = p;		
 		x->n = 0;
 		x->max = n;

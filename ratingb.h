@@ -31,7 +31,7 @@ extern size_t
 calc_rating_bayes2 	
 			( bool_t 		quiet
 			, struct ENC *	enc
-			, size_t		N_enc
+			, gamesnum_t	N_enc
 
 			, struct PLAYERS *plyrs
 			, struct RATINGS *rat

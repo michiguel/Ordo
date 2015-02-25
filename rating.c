@@ -408,29 +408,29 @@ optimum_centerdelta	( double 			start_delta
 
 
 size_t
-calc_rating2 	( bool_t 		quiet
-				, struct ENC *	enc
-				, size_t		N_enc
-				, struct PLAYERS *plyrs
-				, struct RATINGS *rat
-				, double		*pWhite_advantage
-				, double		General_average
+calc_rating2 	( bool_t 			quiet
+				, struct ENC *		enc
+				, gamesnum_t		N_enc
+				, struct PLAYERS 	*plyrs
+				, struct RATINGS 	*rat
+				, double			*pWhite_advantage
+				, double			General_average
 
-				, bool_t		Anchor_use
-				, int			Anchor
+				, bool_t			Anchor_use
+				, int				Anchor
 				
-				, struct GAMES *g
+				, struct GAMES 		*g
 
-				, double		BETA
+				, double			BETA
 //
-				, bool_t 		adjust_white_advantage
+				, bool_t 			adjust_white_advantage
 
-				, bool_t		adjust_draw_rate
-				, double		*pDraw_date
-				, double		*ratingtmp_buffer
+				, bool_t			adjust_draw_rate
+				, double			*pDraw_date
+				, double			*ratingtmp_buffer
 )
 {
-	size_t	N_games = g->n;
+	gamesnum_t	N_games = g->n;
 
 	double 	*ratingtmp = ratingtmp_buffer;
 
@@ -460,7 +460,7 @@ calc_rating2 	( bool_t 		quiet
 	size_t allocsize;
 
 
-size_t		N_players 		= plyrs->n;
+player_t	N_players 		= plyrs->n;
 int *		Performance_type= plyrs->performance_type;
 bool_t *	Flagged 		= plyrs->flagged;
 bool_t *	Prefed  		= plyrs->prefed;
@@ -471,7 +471,7 @@ double *	Ratingof 		= rat->ratingof;
 double *	Ratingbk 		= rat->ratingbk;
 player_t	anchored_n 		= plyrs->anchored_n;
 
-	allocsize = sizeof(double) * (N_players+1);
+	allocsize = sizeof(double) * (size_t)(N_players+1);
 	expected = memnew(allocsize);
 	if (expected == NULL) {
 		fprintf(stderr, "Not enough memory to allocate all players\n");
@@ -716,5 +716,4 @@ adjust_drawrate (double start_wadv, const double *ratingof, size_t N_enc, const 
 	
 	return dr;
 }
-
 

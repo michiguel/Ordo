@@ -282,11 +282,11 @@ bool_t 	Some_prior_set = FALSE;
 int 	Priored_n = 0;
 
 bool_t 
-has_a_prior(struct prior *pr, size_t j) {return pr[j].isset;}
+has_a_prior(struct prior *pr, player_t j) {return pr[j].isset;}
 
 void
-priors_reset(struct prior *p, size_t n)
-{	size_t i;
+priors_reset(struct prior *p, player_t n)
+{	player_t i;
 	for (i = 0; i < n; i++) {
 		p[i].value = 0;
 		p[i].sigma = 1;
@@ -297,17 +297,17 @@ priors_reset(struct prior *p, size_t n)
 }
 
 void
-priors_copy(const struct prior *p, size_t n, struct prior *q)
-{	size_t i;
+priors_copy(const struct prior *p, player_t n, struct prior *q)
+{	player_t i;
 	for (i = 0; i < n; i++) {
 		q[i] = p[i];
 	}
 }
 
 void
-priors_shuffle(struct prior *p, size_t n)
+priors_shuffle(struct prior *p, player_t n)
 {
-	size_t i;
+	player_t i;
 	double value, sigma;
 	for (i = 0; i < n; i++) {
 		if (p[i].isset) {
@@ -319,9 +319,9 @@ priors_shuffle(struct prior *p, size_t n)
 }
 
 void
-priors_show (const struct PLAYERS *plyrs, struct prior *p, size_t n)
+priors_show (const struct PLAYERS *plyrs, struct prior *p, player_t n)
 { 
-	size_t i;
+	player_t i;
 	if (Priored_n > 0) {
 		printf ("Loose Anchors {\n");
 		for (i = 0; i < n; i++) {

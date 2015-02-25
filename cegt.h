@@ -28,14 +28,14 @@
 
 struct CEGT {
 	struct ENC 			*enc;
-	size_t 				n_enc;
+	gamesnum_t			n_enc;
 	long 				simulate;
 
-	size_t				n_players;
-	player_t					*sorted; /* sorted index by rating */
+	player_t			n_players;
+	player_t			*sorted; /* sorted index by rating */
 	double				*ratingof_results;
 	double				*obtained_results;
-	gamesnum_t					*playedby_results;
+	gamesnum_t			*playedby_results;
 	double				*sdev; 
 	bool_t				*flagged;
 	const char			**name;

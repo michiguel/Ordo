@@ -59,39 +59,39 @@ struct NODE {
 struct PARTICIPANT {
 	participant_t 	*next;
 	const char		*name;
-	int				id;
+	player_t		id;
 };
 
 struct GROUP_BUFFER {
 	group_t		*list; //buffer
 	group_t		*tail;
 	group_t		*prehead;
-	size_t		n;
-	size_t		max;
+	player_t	n;
+	player_t	max;
 };
 
 struct PARTICIPANT_BUFFER {
 	participant_t		*list; //buffer
-	size_t				n;
-	size_t				max;
+	player_t			n;
+	player_t			max;
 };
 
 struct CONNECT_BUFFER {
 	connection_t		*list; //buffer
-	size_t				n;
-	size_t				max;
+	gamesnum_t			n;
+	gamesnum_t			max;
 };
 
 //
 
-extern void scan_encounters(const struct ENC Encounter[], size_t N_encounters, size_t N_players);
-extern void	convert_to_groups(FILE *f, size_t N_plyers, const char **name);
-extern void	sieve_encounters(const struct ENC *enc, size_t N_enc, struct ENC *enca, size_t *N_enca, struct ENC *encb, size_t *N_encb);
+extern void scan_encounters(const struct ENC Encounter[], gamesnum_t N_encounters, player_t N_players);
+extern void	convert_to_groups(FILE *f, player_t N_plyers, const char **name);
+extern void	sieve_encounters(const struct ENC *enc, gamesnum_t N_enc, struct ENC *enca, gamesnum_t *N_enca, struct ENC *encb, gamesnum_t *N_encb);
 
-extern bool_t 	supporting_encmem_init (size_t nenc);
+extern bool_t 	supporting_encmem_init (gamesnum_t nenc);
 extern void 	supporting_encmem_done (void);
 
-extern bool_t 	supporting_groupmem_init (size_t nplayers, size_t nenc);
+extern bool_t 	supporting_groupmem_init (player_t nplayers, gamesnum_t nenc);
 extern void 	supporting_groupmem_done (void);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/

@@ -116,13 +116,13 @@ static bool_t
 output_cegt_style_f (FILE *genf, FILE *ratf, FILE *prgf, struct CEGT *p)
 {
 	struct ENC *Temp_enc = NULL;
-	size_t	 	N_enc = p->n_enc ;
+	gamesnum_t 	N_enc = p->n_enc ;
 	bool_t		ok;
 
 	if (ratf) all_report_rat (ratf, p);
 	if (genf) all_report_gen (genf, p);
 
-	if (NULL != (Temp_enc = memnew(sizeof(struct ENC) * (N_enc+1)))) {
+	if (NULL != (Temp_enc = memnew(sizeof(struct ENC) * (size_t)(N_enc+1)))) {
 		if (prgf) all_report_prg (prgf, p, Temp_enc); 
 		memrel(Temp_enc);
 	}
@@ -160,14 +160,14 @@ output_report_individual_f (FILE *indf, struct CEGT *p, int simulate)
 {
 	struct OPP_LINE 	*oline = NULL;
 	struct ENC 			*Temp_enc = NULL;
-	size_t	 			N_enc = p->n_enc ;
-	size_t	 			N_players = p->n_players ;
+	gamesnum_t	 		N_enc = p->n_enc ;
+	player_t	 		N_players = p->n_players ;
 	bool_t				ok;
 
 	assert (indf);
 
-	if (NULL != (oline = memnew(sizeof(struct OPP_LINE) * N_players))) {
-		if (NULL != (Temp_enc = memnew(sizeof(struct ENC) * (N_enc+1)))) {
+	if (NULL != (oline = memnew(sizeof(struct OPP_LINE) * (size_t)N_players))) {
+		if (NULL != (Temp_enc = memnew(sizeof(struct ENC) * (size_t)(N_enc+1)))) {
 
 			all_report_indiv_stats (indf, p, simulate, oline, Temp_enc); 
 
@@ -214,7 +214,7 @@ get_super_player_symbolstr(player_t j, struct CEGT *p)
 
 static double av_opp(player_t j, struct CEGT *p)
 {
-	size_t e;
+	gamesnum_t e;
 	player_t opp;
 	player_t target = j;
 
@@ -222,7 +222,7 @@ static double av_opp(player_t j, struct CEGT *p)
 	gamesnum_t nsum = 0;
 
 	struct ENC 	*enc = p->enc;
-	size_t	 	n_enc = p->n_enc ;
+	gamesnum_t 	n_enc = p->n_enc ;
 	double		*ratingof_results = p->ratingof_results ;
 
 	for (e = 0; e < n_enc; e++) {
@@ -236,9 +236,9 @@ static double av_opp(player_t j, struct CEGT *p)
 	return rsum/ (double) nsum;
 }
 
-static double draw_percentage(player_t j, struct ENC *enc, size_t n_enc)
+static double draw_percentage(player_t j, struct ENC *enc, gamesnum_t n_enc)
 {
-	size_t e;
+	gamesnum_t e;
 	player_t target = j;
 
 	gamesnum_t draws = 0;
@@ -260,13 +260,13 @@ all_report_rat (FILE *textf, struct CEGT *p)
 {
 	FILE *f;
 	player_t j;
-	size_t i;
+	player_t i;
 	size_t ml;
 
 	// Interface p with internal variables or pointers
 	struct ENC 	*Enc = p->enc;
-	size_t	 	N_enc = p->n_enc ;
-	size_t	 	N_players = p->n_players ;
+	gamesnum_t	N_enc = p->n_enc ;
+	player_t 	N_players = p->n_players ;
 	player_t	*Sorted = p->sorted ;
 	double		*Ratingof_results = p->ratingof_results ;
 	double		*Obtained_results = p->obtained_results ;
@@ -281,7 +281,7 @@ all_report_rat (FILE *textf, struct CEGT *p)
 	f = textf;
 	if (f != NULL) {
 
-		ml = find_maxlen (Name, N_players);
+		ml = find_maxlen (Name, (size_t)N_players);
 		//intf ("max length=%ld\n", ml);
 		if (ml > 50) ml = 50;
 
@@ -369,14 +369,14 @@ static void
 all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 {
 	FILE *f;
-	size_t i;
+	player_t i;
 	player_t j;
 	size_t ml;
 
 	// Interface p with internal variables or pointers
 	struct ENC 	*Enc = p->enc;
-	size_t	 	N_enc = p->n_enc ;
-	size_t	 	N_players = p->n_players ;
+	gamesnum_t 	N_enc = p->n_enc ;
+	player_t 	N_players = p->n_players ;
 	player_t	*Sorted = p->sorted ;
 	double		*Ratingof_results = p->ratingof_results ;
 	bool_t		*Flagged = p->flagged ;
@@ -388,7 +388,7 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 		/* output in text format */
 		f = textf;
 
-		ml = find_maxlen (Name, N_players);
+		ml = find_maxlen (Name, (size_t) N_players);
 
 		if (ml > 50) 
 			ml = 50;
@@ -543,7 +543,7 @@ all_report_indiv_stats 	( FILE *textf
 )
 {
 	FILE *f;
-	size_t i;
+	player_t i;
 	player_t j;
 	size_t ml;
 	size_t gl = 7;
@@ -558,8 +558,8 @@ all_report_indiv_stats 	( FILE *textf
 
 	// Interface p with internal variables or pointers
 	struct ENC 	*Enc = p->enc;
-	size_t	 	N_enc = p->n_enc ;
-	size_t	 	N_players = p->n_players ;
+	gamesnum_t 	N_enc = p->n_enc ;
+	player_t	N_players = p->n_players ;
 	player_t	*Sorted = p->sorted ;
 	double		*Ratingof_results = p->ratingof_results ;
 	bool_t		*Flagged = p->flagged ;
@@ -572,7 +572,7 @@ all_report_indiv_stats 	( FILE *textf
 		/* output in text format */
 		f = textf;
 
-		ml = find_maxlen (Name, N_players);
+		ml = find_maxlen (Name, (size_t)N_players);
 
 		if (ml > 50) 
 			ml = 50;
@@ -785,9 +785,9 @@ all_report_gen (FILE *textf, struct CEGT *p)
 {
 	// Interface p with internal variables or pointers
 	struct ENC 	*Enc = p->enc;
-	size_t 	N_enc = p->n_enc ;
+	gamesnum_t 	N_enc = p->n_enc ;
 
-	size_t e;
+	gamesnum_t e;
 
 	gamesnum_t totalgames = 0;
 	gamesnum_t white_wins = 0;

@@ -85,8 +85,8 @@ struct gamei {
 };
 
 struct GAMES {
-	size_t	 	n; 
-	size_t		size;
+	gamesnum_t 	n; 
+	gamesnum_t	size;
 	struct gamei *ga;
 };
 
@@ -138,8 +138,8 @@ struct DEVIATION_ACC {
 //
 
 struct PLAYERS {
-	size_t		n; 
-	size_t		size;
+	player_t	n; 
+	player_t	size;
 	player_t	anchored_n;
 	bool_t		perf_set;
 	const char  **name;
@@ -149,7 +149,7 @@ struct PLAYERS {
 };
 
 struct RATINGS {
-	size_t		size;
+	player_t	size;
 	player_t	*sorted; 	/* sorted index by rating */
 	double		*obtained;
 	gamesnum_t	*playedby; 	/* N games played by player "i" */
@@ -162,8 +162,8 @@ struct RATINGS {
 };
 
 struct ENCOUNTERS {
-	size_t		n;		
-	size_t		size;
+	gamesnum_t	n;		
+	gamesnum_t	size;
 	struct ENC *enc;
 };
 

@@ -25,30 +25,32 @@
 
 #include "mytypes.h"
 
-extern bool_t 	ratings_init (size_t n, struct RATINGS *r); 
+extern bool_t 	ratings_init (player_t n, struct RATINGS *r); 
 
 extern void 	ratings_done (struct RATINGS *r);
 
-extern bool_t 	games_init (size_t n, struct GAMES *g);
+extern bool_t 	games_init (gamesnum_t n, struct GAMES *g);
 
 extern void 	games_done (struct GAMES *g);
 
-extern bool_t 	encounters_init (size_t n, struct ENCOUNTERS *e);
+extern bool_t 	encounters_init (gamesnum_t n, struct ENCOUNTERS *e);
 
 extern void 	encounters_done (struct ENCOUNTERS *e);
 
-extern bool_t 	players_init (size_t n, struct PLAYERS *x);
+extern bool_t 	players_init (player_t n, struct PLAYERS *x);
 
 extern void 	players_done (struct PLAYERS *x);
 
-extern bool_t 	supporting_auxmem_init 	( size_t nplayers
+extern bool_t 	supporting_auxmem_init 	
+						( player_t nplayers
 						, double **pSum1
 						, double **pSum2
 						, double **pSdev
 						, struct prior **pPP
 						, struct prior **pPP_store
 						);
-extern void 	supporting_auxmem_done 	( double **pSum1
+extern void 	supporting_auxmem_done 	
+						( double **pSum1
 						, double **pSum2
 						, double **pSdev
 						, struct prior **pPP

@@ -244,7 +244,7 @@ size_t
 calc_rating_bayes2 	
 			( bool_t 		quiet
 			, struct ENC *	enc
-			, size_t		N_enc
+			, gamesnum_t	N_enc
 
 			, struct PLAYERS *plyrs
 			, struct RATINGS *rat
@@ -277,7 +277,7 @@ calc_rating_bayes2
 			, double			*pDraw_date
 )
 {
-	size_t  n_games = g->n;
+	gamesnum_t  n_games = g->n;
 
 	double 	olddev, curdev, outputdev;
 	int 	i;
@@ -298,7 +298,7 @@ calc_rating_bayes2
 
 	double *probarr;
 
-size_t		n_players 		= plyrs->n;
+player_t	n_players 		= plyrs->n;
 int *		performance_type= plyrs->performance_type;
 bool_t *	flagged 		= plyrs->flagged;
 bool_t *	prefed  		= plyrs->prefed;
@@ -312,7 +312,7 @@ double *	changing 		= rat->changing;
 player_t	anchored_n 		= plyrs->anchored_n;
 bool_t		multiple_anchors_present = anchored_n > 1; //FIXME check that it should be ">1". it was ">0"
 
-	probarr = memnew (sizeof(double) * n_players * 4);
+	probarr = memnew (sizeof(double) * (size_t)n_players * 4);
 
 	if (NULL == probarr) {
 		fprintf(stderr,"Not enough memory to initialize probability arrays\n");

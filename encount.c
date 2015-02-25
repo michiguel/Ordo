@@ -58,7 +58,7 @@ calc_encounters ( int selectivity
 				, struct ENC *enc // out
 )
 {
-	size_t n_games = g->n;
+	gamesnum_t n_games = g->n;
 	const struct gamei *gam = g->ga;
 	size_t i;
 	size_t e = 0;
@@ -104,10 +104,12 @@ calc_encounters ( int selectivity
 
 // no globals
 void
-calc_obtained_playedby (const struct ENC *enc, size_t N_enc, size_t n_players, double *obtained, gamesnum_t *playedby)
+calc_obtained_playedby (const struct ENC *enc, gamesnum_t N_enc, player_t n_players, double *obtained, gamesnum_t *playedby)
 {
-	player_t w, b;
-	size_t e, j;
+	player_t 	w, b;
+	player_t 	j;
+	gamesnum_t 	e;
+
 
 	for (j = 0; j < n_players; j++) {
 		obtained[j] = 0.0;	
@@ -129,13 +131,14 @@ calc_obtained_playedby (const struct ENC *enc, size_t N_enc, size_t n_players, d
 
 // no globals
 void
-calc_expected (const struct ENC *enc, size_t N_enc, double white_advantage, size_t n_players, const double *ratingof, double *expected, double beta)
+calc_expected (const struct ENC *enc, gamesnum_t N_enc, double white_advantage, player_t n_players, const double *ratingof, double *expected, double beta)
 {
-	player_t w, b;
-	size_t e;
+	player_t 	w, b;
+	player_t 	j;
+	gamesnum_t 	e;
 	double wperf;
-	for (e = 0; e < n_players; e++) {
-		expected[e] = 0.0;	
+	for (j = 0; j < n_players; j++) {
+		expected[j] = 0.0;	
 	}	
 	for (e = 0; e < N_enc; e++) {
 		w = enc[e].wh;

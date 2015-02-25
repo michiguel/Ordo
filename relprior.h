@@ -38,14 +38,14 @@ extern void		relpriors_done (struct rel_prior_set *rps /*@out@*/, struct rel_pri
 extern bool_t 	Some_prior_set;
 extern int 		Priored_n;
 
-extern void priors_reset(struct prior *p, size_t n);
+extern void priors_reset(struct prior *p, player_t n);
 extern void priors_load (bool_t quietmode, const char *fpriors_name, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/, struct prior *pr /*@out@*/);
 
-extern void priors_copy(const struct prior *p, size_t n, struct prior *q);
-extern void priors_shuffle(struct prior *p, size_t n);
-extern void priors_show (const struct PLAYERS *plyrs, struct prior *p, size_t n);
+extern void priors_copy(const struct prior *p, player_t n, struct prior *q);
+extern void priors_shuffle(struct prior *p, player_t n);
+extern void priors_show (const struct PLAYERS *plyrs, struct prior *p, player_t n);
 
-extern bool_t has_a_prior(struct prior *pr, size_t j);
+extern bool_t has_a_prior(struct prior *pr, player_t j);
 
 
 

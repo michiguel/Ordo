@@ -24,7 +24,7 @@
 #include "mymem.h"
 
 bool_t 
-ratings_init (size_t n, struct RATINGS *r) 
+ratings_init (player_t n, struct RATINGS *r) 
 {
 	enum {MAXU=9};
 	void	 	*pu[MAXU];
@@ -39,7 +39,7 @@ ratings_init (size_t n, struct RATINGS *r)
 	assert (n > 0);
 
 	for (ok = TRUE, u = 0, i = 0; i < MAXU && ok; i++) {
-		if (NULL != (pu[i] = memnew (szu[i] * n))) { 
+		if (NULL != (pu[i] = memnew (szu[i] * (size_t)n))) { 
 			u++;
 		} else {
 			while (u-->0) memrel(pu[u]);
@@ -80,7 +80,7 @@ ratings_done (struct RATINGS *r)
 
 
 bool_t 
-games_init (size_t n, struct GAMES *g)
+games_init (gamesnum_t n, struct GAMES *g)
 {
 	struct gamei *p;
 
@@ -112,7 +112,7 @@ games_done (struct GAMES *g)
 //
 
 bool_t 
-encounters_init (size_t n, struct ENCOUNTERS *e)
+encounters_init (gamesnum_t n, struct ENCOUNTERS *e)
 {
 	struct ENC 	*p;
 
@@ -142,7 +142,7 @@ encounters_done (struct ENCOUNTERS *e)
 
 
 bool_t 
-players_init (size_t n, struct PLAYERS *x)
+players_init (player_t n, struct PLAYERS *x)
 {
 	enum VARIAB {NV = 4};
 	bool_t failed;
@@ -199,7 +199,7 @@ players_done (struct PLAYERS *x)
 //
 
 bool_t
-supporting_auxmem_init 	( size_t nplayers
+supporting_auxmem_init 	( player_t nplayers
 						, double **pSum1
 						, double **pSum2
 						, double **pSdev
@@ -221,25 +221,25 @@ supporting_auxmem_init 	( size_t nplayers
 
 	assert(nplayers > 0);
 
-	if (NULL == (a = memnew (sa * nplayers))) {
+	if (NULL == (a = memnew (sa * (size_t)nplayers))) {
 		return FALSE;
 	} else 
-	if (NULL == (b = memnew (sb * nplayers))) {
+	if (NULL == (b = memnew (sb * (size_t)nplayers))) {
 		memrel(a);
 		return FALSE;
 	} else 
-	if (NULL == (c = memnew (sc * nplayers))) {
+	if (NULL == (c = memnew (sc * (size_t)nplayers))) {
 		memrel(a);
 		memrel(b);
 		return FALSE;
 	} else 
-	if (NULL == (d = memnew (sd * nplayers))) {
+	if (NULL == (d = memnew (sd * (size_t)nplayers))) {
 		memrel(a);
 		memrel(b);
 		memrel(c);
 		return FALSE;
 	} else 
-	if (NULL == (e = memnew (se * nplayers))) {
+	if (NULL == (e = memnew (se * (size_t)nplayers))) {
 		memrel(a);
 		memrel(b);
 		memrel(c);

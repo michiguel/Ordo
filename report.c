@@ -278,16 +278,16 @@ cegt_output	( const struct GAMES 	*g
 			, struct output_qualifiers outqual)
 {
 	struct CEGT cegt;
-	size_t j;
+	player_t j;
 
 	calc_encounters__(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
 	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
 	for (j = 0; j < p->n; j++) {
-		r->sorted[j] = (int32_t) j; //FIXME size_t
+		r->sorted[j] = j;
 	}
 
 //	insertion_sort (r->ratingof_results, p->n, r->sorted);
-	my_qsort(r->ratingof_results, p->n, r->sorted);
+	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
 
 	cegt.n_enc = e->n; 
 	cegt.enc = e->enc;
@@ -327,16 +327,16 @@ head2head_output( const struct GAMES 	*g
 				, const char *head2head_str)
 {
 	struct CEGT cegt;
-	size_t j;
+	player_t j;
 
 	calc_encounters__(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
 	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
 	for (j = 0; j < p->n; j++) {
-		r->sorted[j] = (int32_t)j; //FIXME size_t
+		r->sorted[j] = j; 
 	}
 
 //	insertion_sort (r->ratingof_results, p->n, r->sorted);
-	my_qsort(r->ratingof_results, p->n, r->sorted);
+	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
 
 	cegt.n_enc = e->n;
 	cegt.enc = e->enc;
@@ -403,7 +403,7 @@ all_report 	( const struct GAMES 	*g
 	}
 
 //	insertion_sort (r->ratingof_results, p->n, r->sorted);
-	my_qsort(r->ratingof_results, p->n, r->sorted);
+	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
 
 	/* output in text format */
 	f = textf;

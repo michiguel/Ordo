@@ -47,7 +47,7 @@ typedef struct NAMENODE namenode_t;
 
 struct DATA {	
 	player_t	n_players;
-	size_t 		n_games;
+	gamesnum_t	n_games;
 
 	namenode_t 	labels_head;
 	namenode_t 	*curr;
