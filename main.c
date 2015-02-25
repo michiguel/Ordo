@@ -51,6 +51,8 @@
 #include "report.h"
 #include "plyrs.h"
 #include "namehash.h"
+#include "relprior.h"
+#include "inidone.h"
 
 /*
 |
@@ -158,8 +160,6 @@ static void usage (void);
 |
 \*--------------------------------------------------------------*/
 
-
-
 static int compare_GAME (const void * a, const void * b)
 {
 	const struct gamei *ap = a;
@@ -172,195 +172,6 @@ static int compare_GAME (const void * a, const void * b)
 	}
 	return 0;	
 }
-
-
-static bool_t 
-ratings_init (size_t n, struct RATINGS *r) 
-{
-	enum {MAXU=9};
-	void	 	*pu[MAXU];
-	bool_t		ok;
-	int i,u;
-	size_t szu[MAXU] = {
-		sizeof(player_t),
-		sizeof(gamesnum_t),sizeof(gamesnum_t),
-		sizeof(double),sizeof(double),sizeof(double),
-		sizeof(double),sizeof(double),sizeof(double)
-	};
-	assert (n > 0);
-
-	for (ok = TRUE, u = 0, i = 0; i < MAXU && ok; i++) {
-		if (NULL != (pu[i] = memnew (szu[i] * n))) { 
-			u++;
-		} else {
-			while (u-->0) memrel(pu[u]);
-			ok = FALSE;
-		}
-	}
-	if (ok) {
-		r->size				= n;
-		r->sorted 			= pu[0];
-		r->playedby 		= pu[1];
-		r->playedby_results = pu[2];
-		r->obtained 		= pu[3];
- 		r->ratingof 		= pu[4];
- 		r->ratingbk 		= pu[5];
- 		r->changing 		= pu[6];
-		r->ratingof_results = pu[7];
-		r->obtained_results = pu[8];
-	}
-	return ok;
-}
-
-
-static void 
-ratings_done (struct RATINGS *r)
-{
-	r->size	= 0;
-
-	memrel(r->sorted);
-	memrel(r->playedby);
-	memrel(r->playedby_results);
-	memrel(r->obtained);
- 	memrel(r->ratingof);
- 	memrel(r->ratingbk);
- 	memrel(r->changing);
-	memrel(r->ratingof_results);
-	memrel(r->obtained_results);
-} 
-
-
-static bool_t 
-games_init (size_t n, struct GAMES *g)
-{
-	struct gamei *p;
-
-	assert (n > 0);
-
-	if (NULL == (p = memnew (sizeof(struct gamei) * (size_t)n))) {
-		g->n	 	= 0; 
-		g->size 	= 0;
-		g->ga		= NULL;
-		return FALSE; // failed
-	}
-
-	g->n	 	= 0; /* empty for now */
-	g->size 	= n;
-	g->ga		= p;
-	return TRUE;
-}
-
-
-static void 
-games_done (struct GAMES *g)
-{
-	memrel(g->ga);
-	g->n	 		= 0;
-	g->size			= 0;
-	g->ga		 	= NULL;
-} 
-
-//
-
-static bool_t 
-encounters_init (size_t n, struct ENCOUNTERS *e)
-{
-	struct ENC 	*p;
-
-	assert (n > 0);
-
-	if (NULL == (p = memnew (sizeof(struct ENC) * (size_t)n))) {
-		e->n	 	= 0; 
-		e->size 	= 0;
-		e->enc		= NULL;
-		return FALSE; // failed
-	}
-
-	e->n	 	= 0; /* empty for now */
-	e->size 	= n;
-	e->enc		= p;
-	return TRUE;
-}
-
-static void 
-encounters_done (struct ENCOUNTERS *e)
-{
-	memrel(e->enc);
-	e->n	 = 0;
-	e->size	 = 0;
-	e->enc	 = NULL;
-} 
-
-
-static bool_t 
-players_init (size_t n, struct PLAYERS *x)
-{
-	enum VARIAB {NV = 4};
-	bool_t failed;
-	size_t sz[NV];
-	void * pv[NV];
-	int i, j;
-
-	assert (n > 0);
-
-	// size of the individual elements
-	sz[0] = sizeof(char *);
-	sz[1] = sizeof(bool_t);
-	sz[2] = sizeof(bool_t);
-	sz[3] = sizeof(int);
-
-	for (failed = FALSE, i = 0; !failed && i < NV; i++) {
-		if (NULL == (pv[i] = memnew (sz[i] * (size_t)n))) {
-			for (j = 0; j < i; j++) memrel(pv[j]);
-			failed = TRUE;
-		}
-	}
-	if (failed) return FALSE;
-
-	x->n				= 0; /* empty for now */
-	x->size				= n;
-	x->anchored_n		= 0;
-	x->name 			= pv[0];
-	x->flagged			= pv[1];
-	x->prefed			= pv[2];
-	x->performance_type = pv[3]; 
-
-	x->perf_set = FALSE;
-
-	return TRUE;
-}
-
-static void 
-players_done (struct PLAYERS *x)
-{
-	memrel(x->name);
-	memrel(x->flagged);
-	memrel(x->prefed);
-	memrel(x->performance_type);
-	x->n = 0;
-	x->size	= 0;
-	x->name = NULL;
-	x->flagged = NULL;
-	x->prefed = NULL;
-	x->performance_type = NULL;
-} 
-
-
-static bool_t
-supporting_auxmem_init 	( size_t nplayers
-						, double **pSum1
-						, double **pSum2
-						, double **pSdev
-						, struct prior **pp
-						, struct prior **pp_store
-						);
-
-static void
-supporting_auxmem_done 	( double **pSum1
-						, double **pSum2
-						, double **pSdev
-						, struct prior **pPP
-						, struct prior **pPP_store);
 
 /*------------------------------------------------------------------------*/
 
@@ -402,7 +213,6 @@ static double 	Drawrate_evenmatch_percent = 100*STANDARD_DRAWRATE; //default
 static double 	Drawrate_evenmatch_percent_SD = 0;
 
 /*------------------------------------------------------------------------*/
-#include "relprior.h"
 
 static struct prior Wa_prior = {40.0,20.0,FALSE};
 static struct prior Dr_prior = { 0.5, 0.1,FALSE};
@@ -445,15 +255,11 @@ simulate_scores ( const double 	*ratingof_results
 
 /*------------------------------------------------------------------------*/
 
-static void 	table_output(double Rtng_76);
-
-/*------------------------------------------------------------------------*/
+static void 		table_output(double Rtng_76);
 
 static ptrdiff_t	head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y);
 
-/*------------------------------------------------------------------------*/
-
-static void 	ratings_center_to_zero (size_t n_players, const bool_t *flagged, double *ratingof);
+static void 		ratings_center_to_zero (size_t n_players, const bool_t *flagged, double *ratingof);
 
 /*------------------------------------------------------------------------*/
 
@@ -1751,93 +1557,4 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl)
 
 //**************************************************************
 
-
-//
-
-static bool_t
-supporting_auxmem_init 	( size_t nplayers
-						, double **pSum1
-						, double **pSum2
-						, double **pSdev
-						, struct prior **pPP
-						, struct prior **pPP_store
-						)
-{
-	double			*a;
-	double 			*b;
-	double 			*c;
-	struct prior	*d;
-	struct prior	*e;
-
-	size_t		sa = sizeof(double);
-	size_t		sb = sizeof(double);
-	size_t		sc = sizeof(double);
-	size_t		sd = sizeof(struct prior);
-	size_t		se = sizeof(struct prior);
-
-	assert(nplayers > 0);
-
-	if (NULL == (a = memnew (sa * nplayers))) {
-		return FALSE;
-	} else 
-	if (NULL == (b = memnew (sb * nplayers))) {
-		memrel(a);
-		return FALSE;
-	} else 
-	if (NULL == (c = memnew (sc * nplayers))) {
-		memrel(a);
-		memrel(b);
-		return FALSE;
-	} else 
-	if (NULL == (d = memnew (sd * nplayers))) {
-		memrel(a);
-		memrel(b);
-		memrel(c);
-		return FALSE;
-	} else 
-	if (NULL == (e = memnew (se * nplayers))) {
-		memrel(a);
-		memrel(b);
-		memrel(c);
-		memrel(d);
-		return FALSE;
-	}
-
-	*pSum1 	 	= a; 
-	*pSum2 	 	= b; 
-	*pSdev 	 	= c; 
-	*pPP  	 	= d;
-	*pPP_store 	= e;
-
-	return TRUE;
-}
-
-static void
-supporting_auxmem_done 	( double **pSum1
-						, double **pSum2
-						, double **pSdev
-						, struct prior **pPP
-						, struct prior **pPP_store)
-{
-	double *sum1 = *pSum1;
-	double *sum2 = *pSum2;	
-	double *sdev = *pSdev;	
-	struct prior *pp = *pPP;	
-	struct prior *pp_store = *pPP_store;
-
-
-	if (sum1) 		memrel (sum1 );
-	if (sum2) 		memrel (sum2);
-	if (sdev)	 	memrel (sdev);
-	if (pp) 		memrel (pp);
-	if (pp_store)	memrel (pp_store);
-
-	*pSum1 	 	= NULL;
-	*pSum2 	 	= NULL;
-	*pSdev 	 	= NULL;
-	*pPP 	 	= NULL;
-	*pPP_store 	= NULL;
-
-	return;
-}
 
