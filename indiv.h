@@ -33,7 +33,7 @@
 extern void
 rate_super_players 	( bool_t quiet
 					, struct ENC *enc
-					, size_t N_enc
+					, gamesnum_t N_enc
 					, int *performance_type
 					, player_t n_players
 					, double *ratingof

@@ -409,7 +409,7 @@ all_report 	( const struct GAMES 	*g
 	f = textf;
 	if (f != NULL) {
 
-		ml = find_maxlen (p->name, p->n);
+		ml = find_maxlen (p->name, (size_t)p->n);
 		if (ml > 50) ml = 50;
 
 		if (simulate < 2) {

@@ -26,7 +26,7 @@
 #include "boolean.h"
 #include "mytypes.h"
 
-size_t
+gamesnum_t
 calc_rating2 	( bool_t 		quiet
 				, struct ENC *	enc
 				, gamesnum_t	N_enc

@@ -238,7 +238,7 @@ static void		init_rating (player_t n, double rat0, struct RATINGS *rat /*@out@*/
 static void		reset_rating (double general_average, player_t n_players, const bool_t *prefed, const bool_t *flagged, double *rating);
 static void		ratings_copy (const double *r, player_t n, double *t);
 
-static size_t	calc_rating ( bool_t quiet, struct ENC *enc, gamesnum_t N_enc, double *pWhite_advantage
+static gamesnum_t	calc_rating ( bool_t quiet, struct ENC *enc, gamesnum_t N_enc, double *pWhite_advantage
 							, bool_t adjust_wadv, double *pDraw_rate, struct rel_prior_set *rps
 							, struct PLAYERS *plyrs, struct RATINGS *rat, struct GAMES *pGames);
 
@@ -1338,13 +1338,13 @@ simulate_scores ( const double 	*ratingof_results
 
 //==== CALCULATE INDIVIDUAL RATINGS =========================
 
-static size_t
+static gamesnum_t
 calc_rating ( bool_t quiet, struct ENC *enc, gamesnum_t N_enc, double *pWhite_advantage, bool_t adjust_wadv
 			, double *pDraw_rate, struct rel_prior_set *rps, struct PLAYERS *plyrs, struct RATINGS *rat, struct GAMES *pGames)
 {
 	double dr = *pDraw_rate;
 
-	size_t ret;
+	gamesnum_t ret;
 
 	if (Prior_mode) {
 

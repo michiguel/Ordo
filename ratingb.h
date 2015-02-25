@@ -27,7 +27,7 @@
 #include "mytypes.h"
 #include "ordolim.h"
 
-extern size_t
+extern gamesnum_t
 calc_rating_bayes2 	
 			( bool_t 		quiet
 			, struct ENC *	enc
@@ -41,7 +41,7 @@ calc_rating_bayes2
 
 			, bool_t		anchor_use
 
-			, int32_t		anchor
+			, player_t		anchor
 			, int 			priored_n
 				
 			, struct GAMES *g
