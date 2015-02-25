@@ -263,7 +263,7 @@ calc_rating_bayes2
 
 			// different from non bayes calc
 
-			, size_t 			n_relative_anchors
+			, player_t 			n_relative_anchors
 			, struct prior 		*pp
 
 			, struct relprior 	*ra
@@ -305,7 +305,7 @@ bool_t *	prefed  		= plyrs->prefed;
 const char **name 			= plyrs->name;
 
 double *	obtained 		= rat->obtained;
-gamesnum_t *		playedby 		= rat->playedby;
+gamesnum_t *playedby 		= rat->playedby;
 double *	ratingof 		= rat->ratingof;
 double *	ratingbk 		= rat->ratingbk;
 double *	changing 		= rat->changing;

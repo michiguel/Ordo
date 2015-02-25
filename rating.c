@@ -254,7 +254,7 @@ adjust_wadv (double start_wadv, const double *ratingof, gamesnum_t N_enc, const 
 
 //============ center adjustment begin
 
-static void ratings_copy (const double *r, player_t n, double *t) {size_t i;	for (i = 0; i < n; i++) {t[i] = r[i];}}
+static void ratings_copy (const double *r, player_t n, double *t) {player_t i;	for (i = 0; i < n; i++) {t[i] = r[i];}}
 
 static double 
 unfitness		( const struct ENC *enc
@@ -415,7 +415,7 @@ calc_rating2 	( bool_t 			quiet
 				, double			General_average
 
 				, bool_t			Anchor_use
-				, int				Anchor
+				, player_t			Anchor
 				
 				, struct GAMES 		*g
 

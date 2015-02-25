@@ -182,14 +182,15 @@ rpman_add_unit(struct rpmanager *rm, rpunit_t *u)
 
 
 rpunit_t *
-rpman_to_newarray (struct rpmanager *rm, size_t *psz)
+rpman_to_newarray (struct rpmanager *rm, player_t *psz)
 {
 	rpunit_t *p_ret;
 	rpunit_t *p;
 	rpunit_t *pu;
-	size_t sz = rpman_count (rm);
+	player_t sz = (player_t)rpman_count (rm);
 
-	p_ret = p = memnew(sizeof(rpunit_t) * sz);
+	p = memnew(sizeof(rpunit_t) * (size_t) sz);
+	p_ret = p;
 
 	if (p == NULL) return p;
 

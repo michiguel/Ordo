@@ -46,10 +46,10 @@ static bool_t getnum(char *p, double *px)
 void
 relpriors_shuffle(struct rel_prior_set *rps /*@out@*/)
 {
-	size_t i;
+	player_t i;
 	double value, sigma;
 	struct relprior *rp;
-	size_t n;
+	player_t n;
 
 	n  = rps->n;
 	rp = rps->x;
@@ -64,8 +64,8 @@ relpriors_shuffle(struct rel_prior_set *rps /*@out@*/)
 void
 relpriors_copy(const struct rel_prior_set *r, struct rel_prior_set *s /*@out@*/)
 {	
-	size_t i;
-	size_t n = r->n;
+	player_t i;
+	player_t n = r->n;
 	struct relprior *rx = r->x;
 	struct relprior *sx = s->x;
 	for (i = 0; i < n; i++) {
@@ -78,9 +78,9 @@ relpriors_copy(const struct rel_prior_set *r, struct rel_prior_set *s /*@out@*/)
 void
 relpriors_show (const struct PLAYERS *plyrs, const struct rel_prior_set *rps)
 {
-	size_t rn = rps->n;
+	player_t rn = rps->n;
 	const struct relprior *rx = rps->x;
-	size_t i;
+	player_t i;
 	if (rn > 0) {
 		printf ("Relative Anchors {\n");
 		for (i = 0; i < rn; i++) {
@@ -110,8 +110,8 @@ rpunit_build (int32_t p_a, int32_t p_b, double x, double sigma, rpunit_t *u /*@o
 static bool_t
 rman_set_relprior__ (const struct PLAYERS *plyrs, const char *player_a, const char *player_b, double x, double sigma, struct rpmanager *rm)
 {
-	size_t p_a = 0; // silence warnings
-	size_t p_b = 0; // silence warnings
+	player_t p_a = 0; // silence warnings
+	player_t p_b = 0; // silence warnings
 	bool_t found;
 	rpunit_t u;
 
@@ -338,7 +338,7 @@ priors_show (const struct PLAYERS *plyrs, struct prior *p, player_t n)
 static bool_t
 set_prior (const struct PLAYERS *plyrs, const char *player_name, double x, double sigma, struct prior *pr)
 {
-	size_t j;
+	player_t j;
 	bool_t found;
 	assert(sigma > PRIOR_SMALLEST_SIGMA);
 	found = players_name2idx (plyrs, player_name, &j);
@@ -462,7 +462,7 @@ priors_load (bool_t quietmode, const char *fpriors_name, struct RATINGS *rat /*@
 //====================== ANCHORS ============================================================================
 
 void
-anchor_j (size_t j, double x, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
+anchor_j (player_t j, double x, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
 {	
 	plyrs->anchored_n++;
 	plyrs->prefed[j] = TRUE;
@@ -472,7 +472,7 @@ anchor_j (size_t j, double x, struct RATINGS *rat /*@out@*/, struct PLAYERS *ply
 static bool_t
 set_anchor (const char *player_name, double x, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
 {
-	size_t j;
+	player_t j;
 	bool_t found = players_name2idx (plyrs, player_name, &j);
 	if (found) {
 		anchor_j (j, x, rat, plyrs);

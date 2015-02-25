@@ -25,7 +25,7 @@
 
 #include "mytypes.h"
 
-extern bool_t players_name2idx (const struct PLAYERS *plyrs, const char *player_name, size_t *pi);
+extern bool_t players_name2idx (const struct PLAYERS *plyrs, const char *player_name, player_t *pi);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

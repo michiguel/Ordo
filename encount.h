@@ -31,7 +31,7 @@ enum SELECTIVITY {
 	ENCOUNTERS_NOFLAGGED = 1
 };
 
-size_t
+gamesnum_t
 calc_encounters ( int selectivity
 				, const struct GAMES *g
 				, const bool_t *flagged

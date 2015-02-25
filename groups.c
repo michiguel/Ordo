@@ -1057,7 +1057,8 @@ static bool_t encounter_is_SL(const struct ENC *e)
 void
 scan_encounters(const struct ENC *enc, gamesnum_t N_enc, player_t N_plyrs)
 {
-	size_t i,e;
+	player_t i;
+	gamesnum_t e;
 	const struct ENC *pe;
 	int gw, gb, lowerg, higherg;
 

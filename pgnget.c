@@ -218,7 +218,7 @@ database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, st
 	player_t topn;
 	gamesnum_t gamestat[4] = {0,0,0,0};
 
-	p->n = (size_t)db->n_players; //FIXME size_t
+	p->n = db->n_players; 
 	g->n = db->n_games; 
 
 	topn = db->n_players; 
@@ -234,7 +234,7 @@ database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, st
 	size_t blk;
 	size_t idx_last = db->gb_idx;
 	size_t idx;
-	size_t i = 0;
+	gamesnum_t i = 0;
 
 	for (blk = 0; blk < blk_filled; blk++) {
 

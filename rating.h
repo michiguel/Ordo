@@ -37,7 +37,7 @@ calc_rating2 	( bool_t 		quiet
 				, double		General_average
 
 				, bool_t		Anchor_use
-				, int			Anchor
+				, player_t		Anchor
 				
 				, struct GAMES *g
 

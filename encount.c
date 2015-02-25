@@ -31,7 +31,7 @@
 //Statics
 
 static struct ENC encounter_merge (const struct ENC *a, const struct ENC *b);
-static size_t shrink_ENC (struct ENC *enc, size_t N_enc);
+static gamesnum_t shrink_ENC (struct ENC *enc, gamesnum_t N_enc);
 static int compare_ENC (const void * a, const void * b);
 
 //=======================================================================
@@ -51,7 +51,7 @@ static int compare_ENC (const void * a, const void * b)
 
 
 // no globals
-size_t
+gamesnum_t
 calc_encounters ( int selectivity
 				, const struct GAMES *g
 				, const bool_t *flagged
@@ -60,9 +60,9 @@ calc_encounters ( int selectivity
 {
 	gamesnum_t n_games = g->n;
 	const struct gamei *gam = g->ga;
-	size_t i;
-	size_t e = 0;
-	size_t ne;
+	gamesnum_t i;
+	gamesnum_t e = 0;
+	gamesnum_t ne;
 	bool_t skip;
 
 	for (i = 0; i < n_games; i++) {
@@ -166,11 +166,11 @@ encounter_merge (const struct ENC *a, const struct ENC *b)
 		return r;
 }
 
-static size_t
-shrink_ENC (struct ENC *enc, size_t N_enc)
+static gamesnum_t
+shrink_ENC (struct ENC *enc, gamesnum_t N_enc)
 {
-	size_t e;
-	size_t g;
+	gamesnum_t e;
+	gamesnum_t g;
 
 	if (N_enc == 0) return 0; 
 

@@ -51,7 +51,7 @@ calc_rating_bayes2
 
 			// different from non bayes calc
 
-			, size_t 			n_relative_anchors
+			, player_t 			n_relative_anchors
 			, struct prior *	pp
 //			, double 			probarray [MAXPLAYERS] [4]
 			, struct relprior *	ra

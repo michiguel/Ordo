@@ -399,8 +399,8 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 			j = Sorted[i];
 
 			if (!Flagged[j]) {
-				size_t e;
-				size_t t;
+				gamesnum_t e;
+				gamesnum_t t;
 				player_t target = j;
 
 				gamesnum_t won; 
@@ -414,7 +414,7 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 					}	
 				}
 
-				qsort (Temp_enc, t, sizeof(struct ENC), compare_ENC2);
+				qsort (Temp_enc, (size_t)t, sizeof(struct ENC), compare_ENC2);
 	
 				won = 0;
 				dra = 0;
@@ -583,14 +583,14 @@ all_report_indiv_stats 	( FILE *textf
 			j = Sorted[i];
 
 			if (!Flagged[j]) {
-				size_t e;
-				size_t t;
+				gamesnum_t e;
+				gamesnum_t t;
 				player_t target = j;
 
 				gamesnum_t won; 
 				gamesnum_t dra; 
 				gamesnum_t los;
-				size_t nl;
+				gamesnum_t nl;
 
 				t = 0;
 				for (e = 0; e < N_enc; e++) {
@@ -723,7 +723,7 @@ all_report_indiv_stats 	( FILE *textf
 
 				fprintf(f,"\n");
 
-				qsort (oline, nl, sizeof(struct OPP_LINE), compare_oline);
+				qsort (oline, (size_t) nl, sizeof(struct OPP_LINE), compare_oline);
 
 				// output lines
 				for (e = 0; e < nl; e++) {

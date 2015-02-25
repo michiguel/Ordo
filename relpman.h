@@ -52,7 +52,7 @@ extern size_t		rpman_count(struct rpmanager *rm);
 extern void			rpman_parkstart(struct rpmanager *rm);
 extern rpunit_t *	rpman_pointnext_unit(struct rpmanager *rm);
 extern bool_t 		rpman_add_unit(struct rpmanager *rm, rpunit_t *u);
-extern rpunit_t *	rpman_to_newarray (struct rpmanager *rm, size_t *psz);
+extern rpunit_t *	rpman_to_newarray (struct rpmanager *rm, player_t *psz);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

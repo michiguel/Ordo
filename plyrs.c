@@ -24,9 +24,9 @@
 
 
 bool_t
-players_name2idx (const struct PLAYERS *plyrs, const char *player_name, size_t *pi)
+players_name2idx (const struct PLAYERS *plyrs, const char *player_name, player_t *pi)
 {
-	size_t j;
+	player_t j;
 	bool_t found;
 	for (j = 0, found = FALSE; !found && j < plyrs->n; j++) {
 		found = !strcmp(plyrs->name[j], player_name);

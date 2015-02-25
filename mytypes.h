@@ -170,7 +170,7 @@ struct ENCOUNTERS {
 //
 
 struct rel_prior_set {
-	size_t n;
+	player_t n;
 	struct relprior *x; // this points to an array
 };
 

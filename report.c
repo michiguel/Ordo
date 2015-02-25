@@ -186,7 +186,7 @@ is_super_player(size_t j, const struct PLAYERS *pPlayers)
 static const char *SP_symbolstr[MAXSYMBOLS_STR] = {"<",">","*"," ","X"};
 
 static const char *
-get_super_player_symbolstr(size_t j, const struct PLAYERS *pPlayers)
+get_super_player_symbolstr(player_t j, const struct PLAYERS *pPlayers)
 {
 	assert(pPlayers->perf_set);
 	if (pPlayers->performance_type[j] == PERF_SUPERLOSER) {
@@ -202,11 +202,11 @@ get_super_player_symbolstr(size_t j, const struct PLAYERS *pPlayers)
 }
 
 static bool_t
-is_old_version(int32_t j, const struct rel_prior_set *rps)
+is_old_version(player_t j, const struct rel_prior_set *rps)
 {
-	size_t i;
+	player_t i;
 	bool_t found;
-	size_t rn = rps->n;
+	player_t rn = rps->n;
 	const struct relprior *rx = rps->x;
 	for (i = 0, found = FALSE; !found && i < rn; i++) {
 		found = j == rx[i].player_b;
@@ -254,7 +254,7 @@ flag_lowfrequency_players 	( const struct PLAYERS 	*p
 #endif
 
 static bool_t
-ok_to_out (size_t j, const struct output_qualifiers *poutqual, const struct PLAYERS *p, const struct RATINGS *r)
+ok_to_out (player_t j, const struct output_qualifiers *poutqual, const struct PLAYERS *p, const struct RATINGS *r)
 {
 	gamesnum_t games = r->playedby_results[j];
 	bool_t ok = !p->flagged[j]
@@ -360,7 +360,7 @@ head2head_output( const struct GAMES 	*g
 
 #ifndef NDEBUG
 static bool_t 
-is_empty_player(size_t j, const struct PLAYERS *pPlayers)
+is_empty_player(player_t j, const struct PLAYERS *pPlayers)
 {
 	assert(pPlayers->perf_set);
 	return pPlayers->performance_type[j] == PERF_NOGAMES
@@ -386,7 +386,8 @@ all_report 	( const struct GAMES 	*g
 			, struct output_qualifiers	outqual)
 {
 	FILE *f;
-	size_t i, j;
+	player_t i;
+	player_t j;
 	size_t ml;
 	char sdev_str_buffer[80];
 	const char *sdev_str;
@@ -399,7 +400,7 @@ all_report 	( const struct GAMES 	*g
 	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
 
 	for (j = 0; j < p->n; j++) {
-		r->sorted[j] = (int32_t)j; //FIXME size_t
+		r->sorted[j] = j; 
 	}
 
 //	insertion_sort (r->ratingof_results, p->n, r->sorted);
@@ -420,12 +421,12 @@ all_report 	( const struct GAMES 	*g
 	
 			for (i = 0; i < p->n; i++) {
 
-				j = (size_t)r->sorted[i]; //FIXME size_t
+				j = r->sorted[i]; 
 
 				if (ok_to_out (j, &outqual, p, r)) {
 
 					char rankbuf[80];
-					showrank = !is_old_version((int32_t)j, rps); //FIXME size_t
+					showrank = !is_old_version(j, rps); //FIXME size_t
 					if (showrank) {
 						rank++;
 						sprintf(rankbuf,"%d",rank);
@@ -459,7 +460,7 @@ all_report 	( const struct GAMES 	*g
 				"PLAYER", "RATING", "ERROR", "POINTS", "PLAYED", "(%)");
 	
 			for (i = 0; i < p->n; i++) {
-				j = (size_t) r->sorted[i]; //FIXME size_t
+				j = r->sorted[i]; 
 
 				sdev_str = get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer, decimals);
 
@@ -468,7 +469,7 @@ all_report 	( const struct GAMES 	*g
 				if (ok_to_out (j, &outqual, p, r)) {
 
 					char rankbuf[80];
-					showrank = !is_old_version((int32_t)j, rps);
+					showrank = !is_old_version(j, rps);
 					if (showrank) {
 						rank++;
 						sprintf(rankbuf,"%d",rank);
@@ -552,7 +553,7 @@ all_report 	( const struct GAMES 	*g
 			);
 		rank = 0;
 		for (i = 0; i < p->n; i++) {
-			j = (size_t) r->sorted[i]; //FIXME size_t
+			j = r->sorted[i];
 
 			if (ok_to_out (j, &outqual, p, r)) {
 				rank++;
@@ -594,7 +595,8 @@ errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATI
 	FILE *f;
 	ptrdiff_t idx;
 	player_t y,x;
-	size_t i, j;
+	player_t i;
+	player_t j;
 
 	if (NULL != (f = fopen (out, "w"))) {
 
@@ -637,7 +639,7 @@ ctsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_
 	ptrdiff_t idx;
 	player_t y;
 	player_t x;
-	size_t i,j;
+	player_t i,j;
 
 	if (NULL != (f = fopen (out, "w"))) {
 

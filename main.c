@@ -177,7 +177,7 @@ static int compare_GAME (const void * a, const void * b)
 
 enum 			AnchorSZ	{MAX_ANCHORSIZE=256};
 static bool_t	Anchor_use = FALSE;
-static int32_t	Anchor = 0;
+static player_t	Anchor = 0;
 static char		Anchor_name[MAX_ANCHORSIZE] = "";
 
 static bool_t	Anchor_err_rel2avg = FALSE;
@@ -660,9 +660,9 @@ int main (int argc, char *argv[])
 	}
 
 	if (Anchor_use) {
-		size_t anch_idx;
+		player_t anch_idx;
 		if (players_name2idx(&Players, Anchor_name, &anch_idx)) {
-			Anchor = (int32_t)anch_idx;
+			Anchor = anch_idx;
 			anchor_j (anch_idx, General_average, &RA, &Players);
 		} else {
 			fprintf (stderr, "ERROR: No games of anchor player, mispelled, wrong capital letters, or extra spaces = \"%s\"\n", Anchor_name);
@@ -815,7 +815,7 @@ int main (int argc, char *argv[])
 
 	BETA = 1.0/Inv_beta;
 	
-	{	size_t i;
+	{	player_t i;
 		for (i = 0; i < Players.n; i++) {
 			Sum1[i] = 0;
 			Sum2[i] = 0;
@@ -831,7 +831,7 @@ int main (int argc, char *argv[])
 
 		bool_t ok = FALSE;
 
-		if (supporting_encmem_init ((size_t)Encounters.n)) {
+		if (supporting_encmem_init (Encounters.n)) {
 
 			struct ENC *	a;
 			struct ENC *	b;
@@ -1247,7 +1247,7 @@ ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat)
 {
 	double excess;
 
-	size_t j;
+	player_t j;
 	ratings_for_purged(plyrs, rat);
 	for (j = 0; j < plyrs->n; j++) {
 		rat->ratingof_results[j] = rat->ratingof[j];
