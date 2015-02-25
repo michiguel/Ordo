@@ -324,10 +324,10 @@ unfitness_fcenter 	( double excess
 	return u;
 }
 
-#define MIN_DEVIA 0.000000001
+#define MIN_DEVIA 0.000001
 #define MIN_RESOL 0.000001
 #define START_RESOL 10.0
-#define ACCEPTABLE_RESOL 0.001
+#define ACCEPTABLE_RESOL 0.000001
 #define PRECISIONERROR (1E-16)
 
 static double absol(double x) {return x >= 0? x: -x;}
@@ -584,7 +584,7 @@ player_t	anchored_n 		= plyrs->anchored_n;
 					curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
 	
 					outputdev = 1000*sqrt(curdev/(double)N_games);
-					done = outputdev < min_devia || (absol(resol)+absol(cd)) < min_resol;
+					done = outputdev < min_devia && (absol(resol)+absol(cd)) < min_resol;
 					//kk *= 0.995;
 					kk *= (1.0-1.0/200);
 				}

@@ -342,7 +342,6 @@ bool_t		multiple_anchors_present = anchored_n > 1; //FIXME check that it should 
 		for (i = 0; i < rounds && resol >= MIN_RESOLUTION; i++) {
 			ratings_backup  (n_players, ratingof, ratingbk);
 			olddev = curdev;
-//			resol_prev = resol;
 
 			// Calc "changing" vector
 			derivative_vector_calc
@@ -400,7 +399,7 @@ bool_t		multiple_anchors_present = anchored_n > 1; //FIXME check that it should 
 
 			if (
 				(curdev < olddev) 
-				&& (curdev/olddev < 0.99999) 
+	//			&& (curdev/olddev < 0.999999999999999) 
 			) {
 				ratings_backup  (n_players, ratingof, ratingbk);
 				olddev = curdev;
