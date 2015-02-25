@@ -40,23 +40,16 @@
 #include "gauss.h"
 #include "groups.h"
 #include "mytypes.h"
-
 #include "cegt.h"
-
 #include "indiv.h"
 #include "encount.h"
 #include "rating.h"
 #include "ratingb.h"
-
 #include "xpect.h"
 #include "csv.h"
-
 #include "mymem.h"
-
 #include "report.h"
-
 #include "plyrs.h"
-
 #include "namehash.h"
 
 /*
@@ -157,7 +150,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:Xt:N:";
+	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:Xt:N:";
 
 /*
 |
@@ -353,10 +346,23 @@ players_done (struct PLAYERS *x)
 } 
 
 
-static bool_t supporting_auxmem_init (size_t nplayers);
-static void	  supporting_auxmem_done (void);
+static bool_t
+supporting_auxmem_init 	( size_t nplayers
+						, double **pSum1
+						, double **pSum2
+						, double **pSdev
+						, struct prior **pp
+						, struct prior **pp_store
+						);
 
-//=====================================================
+static void
+supporting_auxmem_done 	( double **pSum1
+						, double **pSum2
+						, double **pSdev
+						, struct prior **pPP
+						, struct prior **pPP_store);
+
+/*------------------------------------------------------------------------*/
 
 enum 			AnchorSZ	{MAX_ANCHORSIZE=256};
 static bool_t	Anchor_use = FALSE;
@@ -838,7 +844,8 @@ int main (int argc, char *argv[])
 	database_transform(pdaba, &Games, &Players, &Game_stats); /* convert database to global variables */
 	qsort (Games.ga, (size_t)Games.n, sizeof(struct gamei), compare_GAME);
 
-	if (!supporting_auxmem_init (Players.n)) {
+
+	if (!supporting_auxmem_init (Players.n, &Sum1, &Sum2, &Sdev, &PP, &PP_store)) {
 		ratings_done (&RA);
 		games_done (&Games);
 		encounters_done (&Encounters);
@@ -1297,9 +1304,10 @@ int main (int argc, char *argv[])
 	games_done (&Games);
 	encounters_done (&Encounters);
 	players_done (&Players);
-	supporting_auxmem_done();
+	supporting_auxmem_done(&Sum1, &Sum2, &Sdev, &PP, &PP_store);
 
-	relpriors_done (&RPset, &RPset_store);
+	if (relstr != NULL)
+		relpriors_done (&RPset, &RPset_store);
 
 	name_storage_done();
 
@@ -1747,7 +1755,13 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl)
 //
 
 static bool_t
-supporting_auxmem_init (size_t nplayers)
+supporting_auxmem_init 	( size_t nplayers
+						, double **pSum1
+						, double **pSum2
+						, double **pSdev
+						, struct prior **pPP
+						, struct prior **pPP_store
+						)
 {
 	double			*a;
 	double 			*b;
@@ -1789,29 +1803,40 @@ supporting_auxmem_init (size_t nplayers)
 		return FALSE;
 	}
 
-	Sum1 = a; 
-	Sum2 = b; 
-	Sdev = c; 
-	PP 	 = d;
-	PP_store = e;
+	*pSum1 	 	= a; 
+	*pSum2 	 	= b; 
+	*pSdev 	 	= c; 
+	*pPP  	 	= d;
+	*pPP_store 	= e;
 
 	return TRUE;
 }
 
 static void
-supporting_auxmem_done (void)
+supporting_auxmem_done 	( double **pSum1
+						, double **pSum2
+						, double **pSdev
+						, struct prior **pPP
+						, struct prior **pPP_store)
 {
-	if (Sum1) 		memrel (Sum1 );
-	if (Sum2) 		memrel (Sum2);
-	if (Sdev)	 	memrel (Sdev);
-	if (PP) 		memrel (PP);
-	if (PP_store)	memrel (PP_store);
+	double *sum1 = *pSum1;
+	double *sum2 = *pSum2;	
+	double *sdev = *pSdev;	
+	struct prior *pp = *pPP;	
+	struct prior *pp_store = *pPP_store;
 
-	Sum1 	= NULL;
-	Sum2 	= NULL;
-	Sdev 	= NULL;
-	PP 	 	= NULL;
-	PP_store= NULL;
+
+	if (sum1) 		memrel (sum1 );
+	if (sum2) 		memrel (sum2);
+	if (sdev)	 	memrel (sdev);
+	if (pp) 		memrel (pp);
+	if (pp_store)	memrel (pp_store);
+
+	*pSum1 	 	= NULL;
+	*pSum2 	 	= NULL;
+	*pSdev 	 	= NULL;
+	*pPP 	 	= NULL;
+	*pPP_store 	= NULL;
 
 	return;
 }
