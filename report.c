@@ -312,6 +312,13 @@ cegt_output	( const struct GAMES 	*g
 }
 
 
+static const char *Player_str = "PLAYER";
+static const char *Rating_str = "RATING";
+static const char *Error_str  = "ERROR";
+static const char *Points_str = "POINTS";
+static const char *Played_str = "PLAYED";
+static const char *Percent_str = "(%)";
+
 // Function provided to have all head to head information
 
 void 
@@ -412,13 +419,13 @@ all_report 	( const struct GAMES 	*g
 
 		ml = find_maxlen (p->name, (size_t)p->n);
 		if (ml > 50) ml = 50;
-		if (ml < strlen("PLAYER")) ml = strlen("PLAYER");
+		if (ml < strlen(Player_str)) ml = strlen(Player_str);
 
 		if (simulate < 2) {
 			fprintf(f, "\n%s %-*s    :%7s %9s %7s %6s\n", 
 				"   #", 			
 				(int)ml,
-				"PLAYER", "RATING", "POINTS", "PLAYED", "(%)");
+				Player_str, Rating_str, Points_str, Played_str, Percent_str);
 	
 			for (i = 0; i < p->n; i++) {
 
@@ -458,7 +465,7 @@ all_report 	( const struct GAMES 	*g
 			fprintf(f, "\n%s %-*s    :%7s %6s %8s %7s %6s\n", 
 				"   #", 
 				(int)ml, 
-				"PLAYER", "RATING", "ERROR", "POINTS", "PLAYED", "(%)");
+				Player_str, Rating_str, Error_str, Points_str, Played_str, Percent_str);
 	
 			for (i = 0; i < p->n; i++) {
 				j = r->sorted[i]; 
@@ -538,19 +545,19 @@ all_report 	( const struct GAMES 	*g
 	if (f != NULL) {
 			fprintf(f, "\"%s\""
 			",\"%s\""
-			",%s"
-			",%s"
-			",%s"
-			",%s"
+			",\"%s\""
+			",\"%s\""
+			",\"%s\""
+			",\"%s\""
 			",%s"
 			"\n"	
 			,"#"	
-			,"Player"
-			,"\"Rating\"" 
-			,"\"Error\"" 
-			,"\"Score\""
-			,"\"Games\""
-			,"\"(%)\"" 
+			,Player_str
+			,Rating_str 
+			,Error_str
+			,Points_str
+			,Played_str
+			,Percent_str
 			);
 		rank = 0;
 		for (i = 0; i < p->n; i++) {
