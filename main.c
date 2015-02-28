@@ -612,6 +612,10 @@ int main (int argc, char *argv[])
 	/*==== SET INPUT ====*/
 
 	if (NULL != (pdaba = database_init_frompgn(inputf, QUIET_MODE))) {
+		if (0 == pdaba->n_players || 0 == pdaba->n_games) {
+			fprintf (stderr, "ERROR: Input file contains no games\n");
+			return EXIT_FAILURE; 			
+		}
 		if (Ignore_draws) database_ignore_draws(pdaba);
 	} else {
 		fprintf (stderr, "Problems reading results from: %s\n", inputf);
@@ -620,8 +624,8 @@ int main (int argc, char *argv[])
 
 	/*==== memory initialization ====*/
 	{
-	player_t mpr 	= pdaba->n_players; //FIXME size_t
-	player_t mpp 	= pdaba->n_players; //FIXME size_t
+	player_t mpr 	= pdaba->n_players; 
+	player_t mpp 	= pdaba->n_players; 
 	gamesnum_t mg  	= pdaba->n_games;
 	gamesnum_t me  	= pdaba->n_games;
 
@@ -648,6 +652,10 @@ int main (int argc, char *argv[])
 	/**/
 
 	database_transform(pdaba, &Games, &Players, &Game_stats); /* convert database to global variables */
+	if (0 == Games.n) {
+		fprintf (stderr, "ERROR: Input file contains no games\n");
+		return EXIT_FAILURE; 			
+	}
 	qsort (Games.ga, (size_t)Games.n, sizeof(struct gamei), compare_GAME);
 
 
@@ -687,6 +695,11 @@ int main (int argc, char *argv[])
 	}
 
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
+
+	if (0 == Encounters.n) {
+		fprintf (stderr, "ERROR: Input file contains no games to process\n");
+		return EXIT_FAILURE; 			
+	}
 
 	if (!QUIET_MODE) {
 		printf ("Total games         %8ld\n",(long)
