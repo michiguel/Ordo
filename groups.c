@@ -336,7 +336,13 @@ convert_general_init(player_t N_plyrs)
 	return;
 }
 
-void
+static long
+groups_counter (void)
+{
+	return Group_final_list_n;
+}
+
+long
 convert_to_groups(FILE *f, player_t N_plyrs, const char **name)
 {
 	player_t i;
@@ -365,9 +371,10 @@ convert_to_groups(FILE *f, player_t N_plyrs, const char **name)
 
 	simplify_all();
 	finish_it();
-	final_list_output(f);
+	if (NULL != f)
+		final_list_output(f);
 
-	return;
+	return groups_counter() ;
 }
 
 static int
@@ -941,7 +948,7 @@ finish_it(void)
 						
 						for (p = chain; p < chain_end; p++) {
 							group_t *x, *y;
-//printf("combine x=%d y=%d\n",own_id, *p);
+							//printf("combine x=%d y=%d\n",own_id, *p);
 							x = group_pointed_by_node(Gnode + own_id);
 							y = group_pointed_by_node(Gnode + *p);
 							group_gocombine(x,y);
@@ -956,8 +963,10 @@ finish_it(void)
 			}
 		} while (!combined && !startover);
 	} while (startover);
+
 	return;
 }
+
 
 static void
 final_list_output(FILE *f)
@@ -965,7 +974,6 @@ final_list_output(FILE *f)
 	group_t *g;
 	int i;
 	int new_id;
-	size_t count = 0;
 
 	for (i = 0; i < N_players; i++) {
 		Get_new_id[i] = -1;
@@ -986,11 +994,8 @@ final_list_output(FILE *f)
 		simplify_shrink (g);
 
 		group_output(f,g);
-
-		count++;
 	}
 
-	printf ("groups=%lu\n", (long unsigned) count);
 	fprintf(f,"\n");
 }
 

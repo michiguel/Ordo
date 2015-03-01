@@ -868,14 +868,15 @@ int main (int argc, char *argv[])
 				Encounter3 = b;
 
 				if (supporting_groupmem_init (Players.n, Encounters.n)) {
-
+					long groups_n;
 					scan_encounters(Encounters.enc, Encounters.n, Players.n); 
-					convert_to_groups(groupf, Players.n, Players.name);
+					groups_n = convert_to_groups(groupf, Players.n, Players.name);
 					sieve_encounters(Encounters.enc, Encounters.n, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
-					if (!QUIET_MODE)
+					if (!QUIET_MODE) {
+						printf ("Groups=%ld\n", groups_n);
 						printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n"
 									,(long)Encounters.n, (long)N_encounters2, (long)N_encounters3);
-
+					}
 					supporting_groupmem_done ();
 
 				} else {fprintf(stderr, "Not enough memory\n");}

@@ -85,7 +85,7 @@ struct CONNECT_BUFFER {
 //
 
 extern void scan_encounters(const struct ENC Encounter[], gamesnum_t N_encounters, player_t N_players);
-extern void	convert_to_groups(FILE *f, player_t N_plyers, const char **name);
+extern long	convert_to_groups(FILE *f, player_t N_plyers, const char **name);
 extern void	sieve_encounters(const struct ENC *enc, gamesnum_t N_enc, struct ENC *enca, gamesnum_t *N_enca, struct ENC *encb, gamesnum_t *N_encb);
 
 extern bool_t 	supporting_encmem_init (gamesnum_t nenc);
