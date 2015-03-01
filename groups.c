@@ -583,7 +583,7 @@ beat_lost_output (group_t *g)
 #endif
 
 static void
-simplify_shrink (group_t *g)
+simplify_shrink__ (group_t *g)
 {
 	group_t 		*beat_to, *lost_to;
 	connection_t 	*c, *p;
@@ -679,6 +679,17 @@ simplify_shrink (group_t *g)
 	return;
 }
 
+static void
+simplify_shrink (group_t *g)
+{
+	//printf("-------------\n");
+	//printf("before shrink\n");
+	//beat_lost_output (g);
+	simplify_shrink__ (g);
+	//printf("after  shrink\n");
+	//beat_lost_output (g);
+	//printf("-------------\n");
+}
 
 static void
 simplify (group_t *g)
@@ -692,25 +703,18 @@ simplify (group_t *g)
 	id=-1;
 
 	do {
+		simplify_shrink (g);
 
-//printf("-------------\n");
-//printf("before shrink\n");
-//beat_lost_output (g);
-simplify_shrink (g);
-//printf("after  shrink\n");
-//beat_lost_output (g);
-//printf("-------------\n");
-
-assert(groupset_sanity_check());
+		assert(groupset_sanity_check());
 
 		ba_init(&BA, N_players); // was - 1
 		ba_init(&BB, N_players); // was - 2 
 
 		oid = g->id; // own id
 
-gotta_combine = FALSE;
+		gotta_combine = FALSE;
 
-	// loop connections, examine id if repeated or self point (delete them)
+		// loop connections, examine id if repeated or self point (delete them)
 		beat_to = NULL;
 		do {
 			c = g->cstart; 
@@ -748,12 +752,12 @@ gotta_combine = FALSE;
 
 		}
 
-	//=====
-	// loop connections, examine id if repeated or self point (delete them)
+		//=====
+		// loop connections, examine id if repeated or self point (delete them)
 
 		lost_to = NULL;
 
-assert(groupset_sanity_check());
+		assert(groupset_sanity_check());
 
 		do {
 			c = g->lstart; 
@@ -766,16 +770,16 @@ assert(groupset_sanity_check());
 			}
 		} while (c && lost_to && id == oid);
 
-//if (lost_to) printf ("found=%d\n",lost_to->id); else printf("no lost to found\n");
+		//if (lost_to) printf ("found=%d\n",lost_to->id); else printf("no lost to found\n");
 
-assert(groupset_sanity_check());
+		assert(groupset_sanity_check());
 
 		if (c && lost_to) {
 
 			// GOTTACOMBINE?
 			if (ba_ison(&BA, id)) {
 
-assert(groupset_sanity_check());
+				assert(groupset_sanity_check());
 
 				gotta_combine = TRUE;
 				combine_with = lost_to;
@@ -786,7 +790,7 @@ assert(groupset_sanity_check());
 			p = c;
 			c = c->next;
 
-assert(groupset_sanity_check());
+			assert(groupset_sanity_check());
 
 			while (c != NULL && !gotta_combine) {
 				lost_to = group_pointed(c);
@@ -811,16 +815,15 @@ assert(groupset_sanity_check());
 				}
 			}
 
-
-assert(groupset_sanity_check());
+			assert(groupset_sanity_check());
 		}
 
 		ba_done(&BA);
 		ba_done(&BB);
 
 		if (gotta_combine) {
-//printf("combine g=%d combine_with=%d\n",g->id, combine_with->id);
-assert(groupset_sanity_check());
+			//printf("combine g=%d combine_with=%d\n",g->id, combine_with->id);
+			assert(groupset_sanity_check());
 
 			group_gocombine(g,combine_with);
 
@@ -832,14 +835,8 @@ assert(groupset_sanity_check());
 	} while (combined);
 
 
-//printf("----final----\n");
-//printf("before shrink\n");
-//beat_lost_output (g);
-simplify_shrink (g);
-//printf("after  shrink\n");
-//beat_lost_output (g);
-//printf("-------------\n");
-
+	//printf("----final----\n");
+	simplify_shrink (g);
 
 	return;
 }
@@ -985,13 +982,8 @@ final_list_output(FILE *f)
 		g = Group_final_list[i];
 		fprintf (f,"\nGroup %d\n",Get_new_id[g->id]);
 
-//printf("-post-final--\n");
-//printf("before shrink\n");
-//beat_lost_output (g);
-simplify_shrink (g);
-//printf("after  shrink\n");
-//beat_lost_output (g);
-//printf("-------------\n");
+		//printf("-post-final--\n");
+		simplify_shrink (g);
 
 		group_output(f,g);
 
