@@ -94,5 +94,7 @@ extern void 	supporting_encmem_done (void);
 extern bool_t 	supporting_groupmem_init (player_t nplayers, gamesnum_t nenc);
 extern void 	supporting_groupmem_done (void);
 
+extern bool_t	groups_process (bool_t quiet, const struct ENCOUNTERS *encounters, const struct PLAYERS *players, FILE *groupf);
+
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

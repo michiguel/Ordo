@@ -841,63 +841,16 @@ int main (int argc, char *argv[])
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 	if (group_is_output) {
-
-		bool_t ok = FALSE;
-
-		if (supporting_encmem_init (Encounters.n)) {
-
-			struct ENC *	a;
-			struct ENC *	b;
-			struct ENC *	Encounter2;
-			struct ENC *	Encounter3;
-			gamesnum_t		N_encounters2 = 0;
-			gamesnum_t 		N_encounters3 = 0;
-			gamesnum_t 		nenc = Encounters.n;
-	
-			assert (nenc > 0);
-			if (NULL == (a = memnew (sizeof(struct ENC) * (size_t)nenc))) {
-				ok = FALSE;
-			} else 
-			if (NULL == (b = memnew (sizeof(struct ENC) * (size_t)nenc))) {
-				ok = FALSE;
-				memrel(a);
-			} else {
-				ok = TRUE;
-
-				Encounter2 = a;
-				Encounter3 = b;
-
-				if (supporting_groupmem_init (Players.n, Encounters.n)) {
-					long groups_n;
-					scan_encounters(Encounters.enc, Encounters.n, Players.n); 
-					groups_n = convert_to_groups(groupf, Players.n, Players.name);
-					sieve_encounters(Encounters.enc, Encounters.n, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
-					if (!QUIET_MODE) {
-						printf ("Groups=%ld\n", groups_n);
-						printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n"
-									,(long)Encounters.n, (long)N_encounters2, (long)N_encounters3);
-					}
-					supporting_groupmem_done ();
-
-				} else {fprintf(stderr, "Not enough memory\n");}
-
-				memrel(a);
-				memrel(b);
-			}
-	
-			supporting_encmem_done ();
-	
-		} 
-
+		bool_t ok;
+		ok = groups_process (QUIET_MODE, &Encounters, &Players, groupf);
 		if (!ok) {
 			fprintf (stderr, "not enough memory for encounters allocation\n");
 			exit(EXIT_FAILURE);
 		}
-
 		if (textstr == NULL && csvstr == NULL)	{
 			exit(EXIT_SUCCESS);
 		}
-	}
+ 	}
 
 	/*=====================*/
 
