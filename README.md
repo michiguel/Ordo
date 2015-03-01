@@ -56,7 +56,8 @@ Other switches are available and information about them can be obtained by typin
 
 `ordo -h`
 
-That will list the help.
+That will list the help. For more information and a [manual](https://docs.google.com/viewer?a=v&pid=sites&srcid=ZGVmYXVsdGRvbWFpbnxnYXZpb3RhY2hlc3NlbmdpbmV8Z3g6M2M0YjhlYzRiOGE2NDRlMA), 
+please to [Ordo-info](https://sites.google.com/site/gaviotachessengine/ordo/ordo-readme).
 
 ### Acknowledgments
 Adam Hair has extensively tested and suggested valuable ideas.

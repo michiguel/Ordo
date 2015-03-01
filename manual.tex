@@ -37,8 +37,8 @@
 %===========================================================================================
 
 \title{ORDO \input{version.txt} \\ Ratings for chess and other games} 
-\author{Copyright \cpyrht{} 2014 Miguel A. Ballicora\\e-mail: mballicora (at gmail dot com)}
-\date{September 2014}
+\author{Copyright \cpyrht{} 2015 Miguel A. Ballicora\\e-mail: mballicora (at gmail dot com)}
+\date{February 2015}
 \parindent 0mm 
 \parskip 2mm 
 \begin{document}
@@ -185,6 +185,12 @@ These \textit{isolated} groups produce meaningless ratings when compared to the 
 The \swtch{-g} switch saves a report of how many groups are in this situation.
 This information may help to properly link those groups with extra games and stabilize the ranking.
 
+\subsubsection*{Minimum games}
+
+In certain cases, the use may not want to include in the rating certain players with very few games played. 
+For that reason, the switch \swtch{-t <value>} provides to the program a threshold of minimum games played for a participant to be included in the final list.
+The games are still included for calculation.
+
 \subsubsection*{Perfect winners and losers}
 
 Players who won all games (\textit{perfect winners}) or lost all of them (\textit{perfect losers}) create problems in the rating calculation.
@@ -213,11 +219,6 @@ where \filename{anchors.csv} is a file that contains lines like this
 
 telling Ordo to fix Gull 1.1, Glaurung 2.2 JA, and Crafty 23.1 JA to 2350, 2170, and 2000, respectively.
 The name of the anchors should be present in \filename{games.pgn}.
-
-\subsubsection*{Switches}
-
-The list of the switches provided are:
-\inctxt{tmp-switches.txt}
 
 \subsubsection*{Match up information}
 
@@ -282,10 +283,13 @@ If you want to include more specific info, you could say
 
 Here, 160 is the estimation of how much improvement you have by going from 1 core to 16 and 100 represents how uncertain that is. 
 
+\subsubsection*{Switches}
 
+The list of the switches provided are:
+\inctxt{tmp-switches.txt}
 
 \subsubsection*{Memory Limits}
-Currently, the program can handle 3 million games, 50,000 players, and one megabyte of memory for names of the players.
+Currently, the program can handle almost un unlimited number of games and players. It is only limited by the memory of the system.
 
 \subsubsection*{Ordoprep}
 A tool is included to shrink the PGN file to contain only the game results. 
@@ -387,10 +391,9 @@ If we know the strength differences between A$\to$B and B$\to$C, we should be ab
 Then, this should accurately predict the results of a match between A and C. 
 Empirical observations seem to suggests that those estimations are reasonable, at least within a certain range. 
 
-It is important to note that the theoretical model does not take into account the existence of draws. 
-Basically, this means that the performance of two draws equals one win and a loss.
-If the actual draw rate remains similar throughout the rating scale, this assumption should not alter the calculation.
-Empirically, this is a reasonable assumption to make in most cases.
+Certain theoretical assumptions have be done to account the existence of draws. 
+One of the is that the actual draw rate remains similar throughout the rating scale.
+Empirically, this is a reasonable approximation for most cases.
 
 \subsubsection*{White advantage calculation}
 
@@ -580,15 +583,26 @@ Solving this quadratic equation, we obtain the predicted draw rate ($D$) between
 
 Reordering eq. \ref{eq:deq7} we obtain
 
-	\begin{equation} \label{eq:dratewrate1}
+	\begin{equation} \label{eq:draw_rate1}
 	D^2 = \phi^{-2}\: W (1 - W - D)  
 	\end{equation}
 
-Replacing $\phi$ with eq. \ref{eq:deq0b}
+Note that this relationship is equivalent to the basic assumption used by Davidson\footnote{Equation 2.5 in \url{http://stat.fsu.edu/techreports/M169.pdf}} to develop his draw model
 
-	\begin{equation} \label{eq:dratewrate1}
+	\begin{equation} \label{eq:drawrate_davidson}
+	D = \nu\: (W \: L)^{-2}  
+	\end{equation}
+
+Here, $\nu = \phi^{-2}$ and $L = 1 - W - D$. Shawul and Coulom showed that this relationship is superior for chess engines when compared to other alternatives\footnote{\url{https://dl.dropboxusercontent.com/u/55295461/elopapers/elopapers/ChessOutcomes.pdf}}.
+Replacing $\phi$ in eq. \ref{eq:draw_rate1} with eq. \ref{eq:deq0b} we obtain
+
+	\begin{equation} \label{eq:draw_rate2}
 	D^2 = \left(\frac{2 D_{eq}}{1-D_{eq}}\right)^2\: W (1 - W - D)  
 	\end{equation}
+
+Equation \ref{eq:draw_rate2} is the one used by Ordo to obtain the draw rate for any pair of opponents as a function of win probability ($W$) and draw rate for equal opponents ($D_{eq}$).
+
+
 
 \subsubsection*{Rating calculation with prior information}
 
