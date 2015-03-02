@@ -91,7 +91,6 @@ struct GAMES {
 };
 
 struct ENC {
-	// FIXME covert to long ints or int32_t
 	double 	wscore;
 	player_t 	wh;
 	player_t 	bl;
@@ -174,10 +173,10 @@ struct rel_prior_set {
 	struct relprior *x; // this points to an array
 };
 
-
 struct output_qualifiers {
 	bool_t  	mingames_set;
 	gamesnum_t	mingames; 
 };
+
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif
