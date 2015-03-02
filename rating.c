@@ -152,6 +152,7 @@ adjust_rating 	( double delta
 		// find multiplier "y"
 		d = (expected[j] - obtained[j]) / (double)playedby[j];
 		d = d < 0? -d: d;
+
 		y = d / (kappa + d);
 		if (y > ymax) ymax = y;
 
@@ -320,7 +321,7 @@ unfitness_fcenter 	( double excess
 #define MIN_DEVIA 0.000001
 #define MIN_RESOL 0.000001
 #define START_RESOL 10.0
-#define ACCEPTABLE_RESOL 0.000001
+#define ACCEPTABLE_RESOL MIN_RESOL
 #define PRECISIONERROR (1E-16)
 
 static double absol(double x) {return x >= 0? x: -x;}
@@ -424,9 +425,10 @@ calc_rating2 	( bool_t 			quiet
 	double 		olddev, curdev, outputdev;
 	int 		i;
 	int			rounds = 10000;
-	double 		delta = 200.0;
+	double 		delta = START_DELTA;
 	double 		kappa = 0.05;
-	double 		denom = 2;
+	double 		damp_delta = 2;
+	double 		damp_kappa = 2;
 	int 		phase = 0;
 	int 		n = 20;
 	double 		resol = START_RESOL; // big number at the beginning
@@ -467,12 +469,14 @@ player_t		anchored_n 		= plyrs->anchored_n;
 
 		bool_t done = FALSE;
 
+		#define KK_DAMP 200
 		rounds = 10000;
-		delta = 200.0;
+		delta = START_DELTA;
 		kappa = 0.05;
-		denom = 2;
+		damp_delta = 2.0;
+		damp_kappa = 2.0;
 		phase = 0;
-		n = 20;
+		n = 1000;
 
 		min_resol = cycle == 0? START_RESOL: (
 					cycle == 1? START_RESOL/100: (
@@ -568,13 +572,12 @@ player_t		anchored_n 		= plyrs->anchored_n;
 	
 					outputdev = 1000*sqrt(curdev/(double)n_games);
 					done = outputdev < min_devia && (absol(resol)+absol(cd)) < min_resol;
-					//kk *= 0.995;
-					kk *= (1.0-1.0/200);
+					kk *= (1.0-1.0/KK_DAMP); //kk *= 0.995;
 				}
 			}
 
-			delta /= denom;
-			kappa *= denom;
+			delta /= damp_delta;
+			kappa *= damp_kappa;
 			outputdev = 1000*sqrt(curdev/(double)n_games);
 
 			if (!quiet) {
