@@ -850,7 +850,23 @@ int main (int argc, char *argv[])
 		if (textstr == NULL && csvstr == NULL)	{
 			exit(EXIT_SUCCESS);
 		}
- 	}
+ 	} else {
+		long groups_n;
+		bool_t ok;
+		ok = groups_process_to_count (&Encounters, &Players, &groups_n);
+		if (!ok) {
+			fprintf (stderr, "not enough memory for encounters allocation\n");
+			exit(EXIT_FAILURE);
+		}
+		if (groups_n > 1) {
+			fprintf (stderr, "\n\n");
+			fprintf (stderr, "******************** WARNING  ***********************\n");
+			fprintf (stderr, "* Database not well connected by games              * \n");
+			fprintf (stderr, "* Run switch -g to find what groups need more games *\n");
+			fprintf (stderr, "*****************************************************\n");
+			fprintf (stderr, " ====> Groups detected: %ld\n\n\n", groups_n);
+		}
+	}
 
 	/*=====================*/
 

@@ -1304,7 +1304,6 @@ connection_buffer_done(struct CONNECT_BUFFER *x)
 	}
 	x->n = 0;
 }
-
 bool_t
 groups_process (bool_t quiet, const struct ENCOUNTERS *encounters, const struct PLAYERS *players, FILE *groupf) 
 {
@@ -1327,13 +1326,12 @@ groups_process (bool_t quiet, const struct ENCOUNTERS *encounters, const struct 
 			ok = FALSE;
 			memrel(a);
 		} else {
-			ok = TRUE;
-
 			Encounter2 = a;
 			Encounter3 = b;
 
 			if (supporting_groupmem_init (players->n, encounters->n)) {
 				long groups_n;
+				ok = TRUE;
 				scan_encounters(encounters->enc, encounters->n, players->n); 
 				groups_n = convert_to_groups(groupf, players->n, players->name);
 				sieve_encounters(encounters->enc, encounters->n, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
@@ -1344,21 +1342,41 @@ groups_process (bool_t quiet, const struct ENCOUNTERS *encounters, const struct 
 				}
 				supporting_groupmem_done ();
 			} else {
-				fprintf(stderr, "Not enough memory\n");
+				ok = FALSE;
 			}
-
 			memrel(a);
 			memrel(b);
 		}
-
 		supporting_encmem_done ();
 	} 
-
-	if (!ok) {
-		fprintf (stderr, "not enough memory for encounters allocation\n");
-		exit(EXIT_FAILURE);
-	}
-
 	return ok;
 }
 
+bool_t
+groups_process_to_count (const struct ENCOUNTERS *encounters, const struct PLAYERS *players, long *n) 
+{
+	bool_t ok = FALSE;
+
+	if (supporting_encmem_init (encounters->n)) {
+		struct ENC *	a;
+		struct ENC *	b;
+		struct ENC *	Encounter2;
+		struct ENC *	Encounter3;
+		gamesnum_t		N_encounters2 = 0;
+		gamesnum_t 		N_encounters3 = 0;
+		gamesnum_t 		nenc = encounters->n;
+	
+		if (supporting_groupmem_init (players->n, encounters->n)) {
+			long groups_n;
+			ok = TRUE;
+			scan_encounters(encounters->enc, encounters->n, players->n); 
+			groups_n = convert_to_groups(NULL, players->n, players->name);
+			*n = groups_n;
+			supporting_groupmem_done ();
+		} else {
+			ok = FALSE;
+		}
+		supporting_encmem_done ();
+	} 
+	return ok;
+}
