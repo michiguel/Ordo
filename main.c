@@ -135,6 +135,7 @@ static void usage (void);
 		" -o <file>   output file (text format), goes to the screen if not present\n"
 		" -E          output in Elostat format (rating.dat, programs.dat & general.dat)\n"
 		" -g <file>   output file with group connection info (no rating output on screen)\n"
+		" -G          forces program not to check for isolated groups to avoid warnings\n"
 		" -j <file>   output file with head to head information\n"
 		" -s  #       perform # simulations to calculate errors\n"
 		" -e <file>   saves an error matrix, if -s was used\n"
@@ -152,7 +153,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:Eg:j:c:s:w:u:d:k:z:e:C:TF:Xt:N:";
+	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:TF:Xt:N:";
 
 /*
 |
@@ -363,7 +364,7 @@ int main (int argc, char *argv[])
 	const char *head2head_str;
 	const char *ctsmatstr;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
-	bool_t group_is_output, Elostat_output, Ignore_draws;
+	bool_t group_is_output, Elostat_output, Ignore_draws, groups_no_check;
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE, switch_d=FALSE, switch_k=FALSE, switch_D=FALSE;
 
 	/* defaults */
@@ -386,6 +387,7 @@ int main (int argc, char *argv[])
 	priorsstr	 = NULL;
 	relstr		 = NULL;
 	group_is_output = FALSE;
+	groups_no_check = FALSE;
 	groupstr 	 = NULL;
 	Elostat_output = FALSE;
 	head2head_str = NULL;
@@ -408,6 +410,8 @@ int main (int argc, char *argv[])
 						break;
 			case 'g': 	group_is_output = TRUE;
 						groupstr = opt_arg;
+						break;
+			case 'G': 	groups_no_check = TRUE;
 						break;
 			case 'j': 	head2head_str = opt_arg;
 						break;
@@ -598,6 +602,10 @@ int main (int argc, char *argv[])
 	}
 	if (NULL != priorsstr && General_average_set) {
 		fprintf (stderr, "Setting a general average (-a) is incompatible with having a file with rating seeds (-y)\n\n");
+		exit(EXIT_FAILURE);
+	}				
+	if (group_is_output && groups_no_check) {
+		fprintf (stderr, "Switches -g and -G cannot be used at the same time\n\n");
 		exit(EXIT_FAILURE);
 	}				
 
@@ -850,7 +858,7 @@ int main (int argc, char *argv[])
 		if (textstr == NULL && csvstr == NULL)	{
 			exit(EXIT_SUCCESS);
 		}
- 	} else {
+ 	} else if (!groups_no_check) {
 		long groups_n;
 		bool_t ok;
 		ok = groups_process_to_count (&Encounters, &Players, &groups_n);
