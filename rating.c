@@ -138,11 +138,6 @@ adjust_rating 	( double delta
 	|	is controled so y won't be higher than 1.0. It will be asymptotic
 	|	to 1.0, and the parameter that controls how fast this saturation is 
 	|	reached is "kappa". Smaller kappas will allow to reach 1.0 faster.	
-	|
-	|	Uses globals:
-	|	arrays:	Flagged, Prefed, Expected, Obtained, Playedby, Ratingof
-	|	variables: N_players, General_average
-	|	flags:	Multiple_anchors_present, Anchor_use
 	*/
 
 	for (j = 0; j < n_players; j++) {
@@ -413,63 +408,53 @@ calc_rating2 	( bool_t 			quiet
 				, struct RATINGS 	*rat
 				, double			*pWhite_advantage
 				, double			General_average
-
 				, bool_t			Anchor_use
 				, player_t			Anchor
-				
 				, struct GAMES 		*g
-
 				, double			BETA
 //
 				, bool_t 			adjust_white_advantage
-
 				, bool_t			adjust_draw_rate
 				, double			*pDraw_date
 				, double			*ratingtmp_buffer
 )
 {
 	gamesnum_t	n_games = g->n;
+	double 	*	ratingtmp = ratingtmp_buffer;
+	double 		olddev, curdev, outputdev;
+	int 		i;
+	int			rounds = 10000;
+	double 		delta = 200.0;
+	double 		kappa = 0.05;
+	double 		denom = 2;
+	int 		phase = 0;
+	int 		n = 20;
+	double 		resol = START_RESOL; // big number at the beginning
+	bool_t		doneonce = FALSE;
+	int 		max_cycle;
+	int 		cycle;
+	double 		white_adv = *pWhite_advantage;
+	double 		wa_previous = *pWhite_advantage;
+	double 		wa_progress = START_DELTA;
+	double 		min_devia = MIN_DEVIA;
+	double 		min_resol = START_RESOL;
+	double 		draw_rate = *pDraw_date;
+	double *	expected = NULL;
+	size_t 		allocsize;
 
-	double 	*ratingtmp = ratingtmp_buffer;
+// translation variables for refactoring
+player_t		n_players 		= plyrs->n;
+int *			Performance_type= plyrs->performance_type;
+bool_t *		flagged 		= plyrs->flagged;
+bool_t *		prefed  		= plyrs->prefed;
+const char **	name 			= plyrs->name;
+double *		obtained 		= rat->obtained;
+gamesnum_t *	Playedby 		= rat->playedby;
+double *		Ratingof 		= rat->ratingof;
+double *		Ratingbk 		= rat->ratingbk;
+player_t		anchored_n 		= plyrs->anchored_n;
 
-	double 	olddev, curdev, outputdev;
-	int 	i;
-	int		rounds = 10000;
-	double 	delta = 200.0;
-	double 	kappa = 0.05;
-	double 	denom = 2;
-	int 	phase = 0;
-	int 	n = 20;
-	double 	resol = START_RESOL; // big number at the beginning
-	bool_t	doneonce = FALSE;
-
-	int max_cycle;
-	int cycle;
-
-	double white_adv = *pWhite_advantage;
-	double wa_previous = *pWhite_advantage;
-	double wa_progress = START_DELTA;
-	double min_devia = MIN_DEVIA;
-	double min_resol = START_RESOL;
-
-	double draw_rate = *pDraw_date;
-
-	double *expected = NULL;
-	size_t allocsize;
-
-
-player_t	N_players 		= plyrs->n;
-int *		Performance_type= plyrs->performance_type;
-bool_t *	Flagged 		= plyrs->flagged;
-bool_t *	Prefed  		= plyrs->prefed;
-const char **Name 			= plyrs->name;
-double *	Obtained 		= rat->obtained;
-gamesnum_t *Playedby 		= rat->playedby;
-double *	Ratingof 		= rat->ratingof;
-double *	Ratingbk 		= rat->ratingbk;
-player_t	anchored_n 		= plyrs->anchored_n;
-
-	allocsize = sizeof(double) * (size_t)(N_players+1);
+	allocsize = sizeof(double) * (size_t)(n_players+1);
 	expected = memnew(allocsize);
 	if (expected == NULL) {
 		fprintf(stderr, "Not enough memory to allocate all players\n");
@@ -498,10 +483,10 @@ player_t	anchored_n 		= plyrs->anchored_n;
 
 		doneonce = FALSE;
 
-		calc_obtained_playedby(enc, n_enc, N_players, Obtained, Playedby);
-		calc_expected(enc, n_enc, white_adv, N_players, Ratingof, expected, BETA);
+		calc_obtained_playedby(enc, n_enc, n_players, obtained, Playedby);
+		calc_expected(enc, n_enc, white_adv, n_players, Ratingof, expected, BETA);
 
-		olddev = curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);
+		olddev = curdev = deviation(n_players, flagged, expected, obtained, Playedby);
 
 		if (!quiet) printf ("\nConvergence rating calculation (cycle #%d)\n\n", cycle+1);
 		if (!quiet) printf ("%3s %4s %12s%14s\n", "phase", "iteration", "deviation","resolution");
@@ -515,29 +500,29 @@ player_t	anchored_n 		= plyrs->anchored_n;
 
 			for (i = 0; i < rounds && !done && !failed; i++) {
 
-				ratings_backup(N_players, Ratingof, Ratingbk);
+				ratings_backup(n_players, Ratingof, Ratingbk);
 				olddev = curdev;
 
 				resol = adjust_rating 	
 					( delta
 					, kappa*kk
-					, N_players
-					, Flagged
-					, Prefed
+					, n_players
+					, flagged
+					, prefed
 					, expected 
-					, Obtained 
+					, obtained 
 					, Playedby
 					, Ratingof
 					, anchored_n
 				);
 
-				calc_expected(enc, n_enc, white_adv, N_players, Ratingof, expected, BETA);
-				curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);
+				calc_expected(enc, n_enc, white_adv, n_players, Ratingof, expected, BETA);
+				curdev = deviation(n_players, flagged, expected, obtained, Playedby);
 
 				if (curdev >= olddev) {
-					ratings_restore(N_players, Ratingbk, Ratingof);
-					calc_expected(enc, n_enc, white_adv, N_players, Ratingof, expected, BETA);
-					curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
+					ratings_restore(n_players, Ratingbk, Ratingof);
+					calc_expected(enc, n_enc, white_adv, n_players, Ratingof, expected, BETA);
+					curdev = deviation(n_players, flagged, expected, obtained, Playedby);	
 					assert (absol(curdev-olddev) < PRECISIONERROR || 
 								!fprintf(stderr, "curdev=%.10e, olddev=%.10e, diff=%.10e\n", curdev, olddev, olddev-curdev));
 					failed = TRUE;
@@ -552,13 +537,13 @@ player_t	anchored_n 		= plyrs->anchored_n;
 							, min_resol > 0.1? 0.1: min_resol
 							, enc
 							, n_enc
-							, N_players
+							, n_players
 							, Ratingof
-							, Flagged
-							, Prefed
+							, flagged
+							, prefed
 							, white_adv
 							, BETA
-							, Obtained
+							, obtained
 							, expected
 							, Playedby
 							, ratingtmp
@@ -573,13 +558,13 @@ player_t	anchored_n 		= plyrs->anchored_n;
 					last_cd = cd;
 
 					if (absol(cd) > MIN_RESOL) {
-						mobile_center_apply_excess (cd, N_players, Flagged, Prefed, Ratingof);
+						mobile_center_apply_excess (cd, n_players, flagged, prefed, Ratingof);
 					}
 
 					//
 
-					calc_expected(enc, n_enc, white_adv, N_players, Ratingof, expected, BETA);
-					curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
+					calc_expected(enc, n_enc, white_adv, n_players, Ratingof, expected, BETA);
+					curdev = deviation(n_players, flagged, expected, obtained, Playedby);	
 	
 					outputdev = 1000*sqrt(curdev/(double)n_games);
 					done = outputdev < min_devia && (absol(resol)+absol(cd)) < min_resol;
@@ -621,26 +606,26 @@ player_t	anchored_n 		= plyrs->anchored_n;
 		if (!quiet) 
 			printf ("Post-Convergence rating estimation\n");
 
-		n_enc = calc_encounters(ENCOUNTERS_FULL, g, Flagged, enc);
-		calc_obtained_playedby(enc, n_enc, N_players, Obtained, Playedby);
-		rate_super_players(quiet, enc, n_enc, Performance_type, N_players, Ratingof, white_adv, Flagged, Name, draw_rate, BETA); 
-		n_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, Flagged, enc);;
-		calc_obtained_playedby(enc, n_enc, N_players, Obtained, Playedby);
+		n_enc = calc_encounters(ENCOUNTERS_FULL, g, flagged, enc);
+		calc_obtained_playedby(enc, n_enc, n_players, obtained, Playedby);
+		rate_super_players(quiet, enc, n_enc, Performance_type, n_players, Ratingof, white_adv, flagged, name, draw_rate, BETA); 
+		n_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, flagged, enc);;
+		calc_obtained_playedby(enc, n_enc, n_players, obtained, Playedby);
 
 		if (!quiet) 
 			printf ("done\n");
 
-		// printf ("EXCESS =%lf\n", calc_excess	(N_players, Flagged, General_average, Ratingof));
+		// printf ("EXCESS =%lf\n", calc_excess	(n_players, flagged, General_average, Ratingof));
 
 		if (anchored_n == 1 && Anchor_use)
-			adjust_rating_byanchor (Anchor, General_average, N_players, Ratingof);
+			adjust_rating_byanchor (Anchor, General_average, n_players, Ratingof);
 
 	} //end while 
 
 
 	if (anchored_n == 0) {
-		double excess = calc_excess (N_players, Flagged, General_average, Ratingof);
-		correct_excess (N_players, Flagged, excess, Ratingof);
+		double excess = calc_excess (n_players, flagged, General_average, Ratingof);
+		correct_excess (n_players, flagged, excess, Ratingof);
 	}
 
 	*pWhite_advantage = white_adv;
