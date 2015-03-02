@@ -435,7 +435,7 @@ all_report 	( const struct GAMES 	*g
 				if (ok_to_out (j, &outqual, p, r)) {
 
 					char rankbuf[80];
-					showrank = !is_old_version(j, rps); //FIXME size_t
+					showrank = !is_old_version(j, rps); 
 					if (showrank) {
 						rank++;
 						sprintf(rankbuf,"%d",rank);

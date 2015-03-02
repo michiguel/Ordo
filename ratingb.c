@@ -478,7 +478,7 @@ bool_t		multiple_anchors_present = anchored_n > 1; //FIXME check that it should 
 
 	N_enc = calc_encounters(ENCOUNTERS_FULL, g, flagged, enc);
 	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby);
-	rate_super_players(quiet, enc, N_enc, performance_type, (player_t)n_players, ratingof, white_advantage, flagged, name, deq, beta); //FIXME player_t
+	rate_super_players(quiet, enc, N_enc, performance_type, n_players, ratingof, white_advantage, flagged, name, deq, beta); 
 	N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, flagged, enc);
 	calc_obtained_playedby(enc, N_enc, n_players, obtained, playedby); 
 	#endif

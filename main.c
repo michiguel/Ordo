@@ -1151,22 +1151,6 @@ usage (void)
 |
 \**/
 
-#if 0
-static bool_t
-find_player_index (const struct PLAYERS *plyrs, const char *name, int32_t *idx)
-{
-	size_t i;
-	bool_t found = FALSE;
-	for (i = 0; i < plyrs->n; i++) {
-		if (!strcmp(plyrs->name[i], name)) {
-			*idx = (int32_t) i; //FIXME size_t
-			found = TRUE;
-		} 
-	}
-	return found;
-}
-#endif
-
 static ptrdiff_t
 head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y)
 {	

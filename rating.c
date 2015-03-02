@@ -34,7 +34,7 @@
 static bool_t is_nan (double x) {if (x != x) return TRUE; else return FALSE;}
 #endif
 
-static double adjust_drawrate (double start_wadv, const double *ratingof, gamesnum_t N_enc, const struct ENC *enc, double beta);
+static double adjust_drawrate (double start_wadv, const double *ratingof, gamesnum_t n_enc, const struct ENC *enc, double beta);
 
 // no globals
 static void
@@ -201,12 +201,12 @@ adjust_rating_byanchor (player_t anchor, double general_average, player_t n_play
 }
 
 static double
-overallerrorE_fwadv (gamesnum_t N_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv)
+overallerrorE_fwadv (gamesnum_t n_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv)
 {
 	gamesnum_t e;
 	player_t w, b;
 	double dp2, f;
-	for (dp2 = 0, e = 0; e < N_enc; e++) {
+	for (dp2 = 0, e = 0; e < n_enc; e++) {
 		w = enc[e].wh;
 		b = enc[e].bl;
 		f = xpect (ratingof[w] + wadv, ratingof[b], beta);
@@ -221,7 +221,7 @@ overallerrorE_fwadv (gamesnum_t N_enc, const struct ENC *enc, const double *rati
 #define START_DELTA 100
 
 static double
-adjust_wadv (double start_wadv, const double *ratingof, gamesnum_t N_enc, const struct ENC *enc, double beta, double start_delta)
+adjust_wadv (double start_wadv, const double *ratingof, gamesnum_t n_enc, const struct ENC *enc, double beta, double start_delta)
 {
 	double delta, wa, ei, ej, ek;
 
@@ -230,9 +230,9 @@ adjust_wadv (double start_wadv, const double *ratingof, gamesnum_t N_enc, const 
 
 	do {	
 
-		ei = overallerrorE_fwadv (N_enc, enc, ratingof, beta, wa - delta);
-		ej = overallerrorE_fwadv (N_enc, enc, ratingof, beta, wa + 0    );     
-		ek = overallerrorE_fwadv (N_enc, enc, ratingof, beta, wa + delta);
+		ei = overallerrorE_fwadv (n_enc, enc, ratingof, beta, wa - delta);
+		ej = overallerrorE_fwadv (n_enc, enc, ratingof, beta, wa + 0    );     
+		ek = overallerrorE_fwadv (n_enc, enc, ratingof, beta, wa + delta);
 
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 2;
@@ -408,7 +408,7 @@ optimum_centerdelta	( double 			start_delta
 gamesnum_t
 calc_rating2 	( bool_t 			quiet
 				, struct ENC *		enc
-				, gamesnum_t		N_enc
+				, gamesnum_t		n_enc
 				, struct PLAYERS 	*plyrs
 				, struct RATINGS 	*rat
 				, double			*pWhite_advantage
@@ -428,7 +428,7 @@ calc_rating2 	( bool_t 			quiet
 				, double			*ratingtmp_buffer
 )
 {
-	gamesnum_t	N_games = g->n;
+	gamesnum_t	n_games = g->n;
 
 	double 	*ratingtmp = ratingtmp_buffer;
 
@@ -464,7 +464,7 @@ bool_t *	Flagged 		= plyrs->flagged;
 bool_t *	Prefed  		= plyrs->prefed;
 const char **Name 			= plyrs->name;
 double *	Obtained 		= rat->obtained;
-gamesnum_t *		Playedby 		= rat->playedby;
+gamesnum_t *Playedby 		= rat->playedby;
 double *	Ratingof 		= rat->ratingof;
 double *	Ratingbk 		= rat->ratingbk;
 player_t	anchored_n 		= plyrs->anchored_n;
@@ -498,8 +498,8 @@ player_t	anchored_n 		= plyrs->anchored_n;
 
 		doneonce = FALSE;
 
-		calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
-		calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
+		calc_obtained_playedby(enc, n_enc, N_players, Obtained, Playedby);
+		calc_expected(enc, n_enc, white_adv, N_players, Ratingof, expected, BETA);
 
 		olddev = curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);
 
@@ -531,12 +531,12 @@ player_t	anchored_n 		= plyrs->anchored_n;
 					, anchored_n
 				);
 
-				calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
+				calc_expected(enc, n_enc, white_adv, N_players, Ratingof, expected, BETA);
 				curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);
 
 				if (curdev >= olddev) {
 					ratings_restore(N_players, Ratingbk, Ratingof);
-					calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
+					calc_expected(enc, n_enc, white_adv, N_players, Ratingof, expected, BETA);
 					curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
 					assert (absol(curdev-olddev) < PRECISIONERROR || 
 								!fprintf(stderr, "curdev=%.10e, olddev=%.10e, diff=%.10e\n", curdev, olddev, olddev-curdev));
@@ -551,7 +551,7 @@ player_t	anchored_n 		= plyrs->anchored_n;
 							( last_cd
 							, min_resol > 0.1? 0.1: min_resol
 							, enc
-							, N_enc
+							, n_enc
 							, N_players
 							, Ratingof
 							, Flagged
@@ -578,10 +578,10 @@ player_t	anchored_n 		= plyrs->anchored_n;
 
 					//
 
-					calc_expected(enc, N_enc, white_adv, N_players, Ratingof, expected, BETA);
+					calc_expected(enc, n_enc, white_adv, N_players, Ratingof, expected, BETA);
 					curdev = deviation(N_players, Flagged, expected, Obtained, Playedby);	
 	
-					outputdev = 1000*sqrt(curdev/(double)N_games);
+					outputdev = 1000*sqrt(curdev/(double)n_games);
 					done = outputdev < min_devia && (absol(resol)+absol(cd)) < min_resol;
 					//kk *= 0.995;
 					kk *= (1.0-1.0/200);
@@ -590,7 +590,7 @@ player_t	anchored_n 		= plyrs->anchored_n;
 
 			delta /= denom;
 			kappa *= denom;
-			outputdev = 1000*sqrt(curdev/(double)N_games);
+			outputdev = 1000*sqrt(curdev/(double)n_games);
 
 			if (!quiet) {
 				printf ("%3d %7d %16.9f", phase, i, outputdev);
@@ -604,7 +604,7 @@ player_t	anchored_n 		= plyrs->anchored_n;
 		if (!quiet) printf ("done\n");
 
 		if (adjust_white_advantage) {
-				white_adv = adjust_wadv (white_adv, Ratingof, N_enc, enc, BETA, doneonce? resol: START_DELTA);
+				white_adv = adjust_wadv (white_adv, Ratingof, n_enc, enc, BETA, doneonce? resol: START_DELTA);
 				doneonce = TRUE;
 				wa_progress = wa_previous > white_adv? wa_previous - white_adv: white_adv - wa_previous;
 				wa_previous = white_adv;
@@ -613,7 +613,7 @@ player_t	anchored_n 		= plyrs->anchored_n;
 		}
 
 		if (adjust_draw_rate) {
-				draw_rate = adjust_drawrate (white_adv, Ratingof, N_enc, enc, BETA);
+				draw_rate = adjust_drawrate (white_adv, Ratingof, n_enc, enc, BETA);
 				if (!quiet)
 					printf ("Adjusted Draw Rate = %.1f %s\n\n", 100*draw_rate, "%");
 		} 
@@ -621,11 +621,11 @@ player_t	anchored_n 		= plyrs->anchored_n;
 		if (!quiet) 
 			printf ("Post-Convergence rating estimation\n");
 
-		N_enc = calc_encounters(ENCOUNTERS_FULL, g, Flagged, enc);
-		calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
-		rate_super_players(quiet, enc, N_enc, Performance_type, (player_t)N_players, Ratingof, white_adv, Flagged, Name, draw_rate, BETA); //FIXME player_t
-		N_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, Flagged, enc);;
-		calc_obtained_playedby(enc, N_enc, N_players, Obtained, Playedby);
+		n_enc = calc_encounters(ENCOUNTERS_FULL, g, Flagged, enc);
+		calc_obtained_playedby(enc, n_enc, N_players, Obtained, Playedby);
+		rate_super_players(quiet, enc, n_enc, Performance_type, N_players, Ratingof, white_adv, Flagged, Name, draw_rate, BETA); 
+		n_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, Flagged, enc);;
+		calc_obtained_playedby(enc, n_enc, N_players, Obtained, Playedby);
 
 		if (!quiet) 
 			printf ("done\n");
@@ -647,12 +647,12 @@ player_t	anchored_n 		= plyrs->anchored_n;
 	*pDraw_date = draw_rate;
 
 	memrel(expected);
-	return N_enc;
+	return n_enc;
 }
 
 
 static double
-overallerrorE_fdrawrate (gamesnum_t N_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv, double dr0)
+overallerrorE_fdrawrate (gamesnum_t n_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv, double dr0)
 {
 	gamesnum_t e;
 	player_t w, b;
@@ -660,7 +660,7 @@ overallerrorE_fdrawrate (gamesnum_t N_enc, const struct ENC *enc, const double *
 	double dexp;
 
 	dp2 = 0;
-	for (e = 0; e < N_enc; e++) {
+	for (e = 0; e < n_enc; e++) {
 		w = enc[e].wh;
 		b = enc[e].bl;
 		f = xpect (ratingof[w] + wadv, ratingof[b], beta);
@@ -679,7 +679,7 @@ overallerrorE_fdrawrate (gamesnum_t N_enc, const struct ENC *enc, const double *
 #define DRAWRATE_RESOLUTION 0.0001
 
 static double
-adjust_drawrate (double start_wadv, const double *ratingof, gamesnum_t N_enc, const struct ENC *enc, double beta)
+adjust_drawrate (double start_wadv, const double *ratingof, gamesnum_t n_enc, const struct ENC *enc, double beta)
 {
 	double delta, wa, ei, ej, ek, dr;
 	double lo,hi;
@@ -691,9 +691,9 @@ adjust_drawrate (double start_wadv, const double *ratingof, gamesnum_t N_enc, co
 
 	do {	
 
-		ei = overallerrorE_fdrawrate (N_enc, enc, ratingof, beta, wa, dr - delta);
-		ej = overallerrorE_fdrawrate (N_enc, enc, ratingof, beta, wa, dr + 0    );     
-		ek = overallerrorE_fdrawrate (N_enc, enc, ratingof, beta, wa, dr + delta);
+		ei = overallerrorE_fdrawrate (n_enc, enc, ratingof, beta, wa, dr - delta);
+		ej = overallerrorE_fdrawrate (n_enc, enc, ratingof, beta, wa, dr + 0    );     
+		ek = overallerrorE_fdrawrate (n_enc, enc, ratingof, beta, wa, dr + delta);
 
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 2;
