@@ -1356,22 +1356,11 @@ bool_t
 groups_process_to_count (const struct ENCOUNTERS *encounters, const struct PLAYERS *players, long *n) 
 {
 	bool_t ok = FALSE;
-
 	if (supporting_encmem_init (encounters->n)) {
-		struct ENC *	a;
-		struct ENC *	b;
-		struct ENC *	Encounter2;
-		struct ENC *	Encounter3;
-		gamesnum_t		N_encounters2 = 0;
-		gamesnum_t 		N_encounters3 = 0;
-		gamesnum_t 		nenc = encounters->n;
-	
 		if (supporting_groupmem_init (players->n, encounters->n)) {
-			long groups_n;
 			ok = TRUE;
 			scan_encounters(encounters->enc, encounters->n, players->n); 
-			groups_n = convert_to_groups(NULL, players->n, players->name);
-			*n = groups_n;
+			*n = convert_to_groups(NULL, players->n, players->name);
 			supporting_groupmem_done ();
 		} else {
 			ok = FALSE;
