@@ -29,7 +29,8 @@
 
 
 void 
-cegt_output	( const struct GAMES 	*g
+cegt_output	( bool_t 				quiet
+			, const struct GAMES 	*g
 			, const struct PLAYERS 	*p
 			, const struct RATINGS 	*r
 			, struct ENCOUNTERS 	*e  // memory just provided for local calculations
@@ -71,10 +72,17 @@ all_report 	( const struct GAMES 	*g
 			, struct output_qualifiers outqual);
 
 void
-errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out, double confidence_factor);
+errorsout	( const struct PLAYERS *p
+			, const struct RATINGS *r
+			, const struct DEVIATION_ACC *s
+			, const char *out
+			, double confidence_factor);
 
 void
-ctsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out);
+ctsout		( const struct PLAYERS *p
+			, const struct RATINGS *r
+			, const struct DEVIATION_ACC *s
+			, const char *out);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

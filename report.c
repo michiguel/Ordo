@@ -266,7 +266,8 @@ ok_to_out (player_t j, const struct output_qualifiers *poutqual, const struct PL
 //======================
 
 void 
-cegt_output	( const struct GAMES 	*g
+cegt_output	( bool_t quiet
+			, const struct GAMES 	*g
 			, const struct PLAYERS 	*p
 			, const struct RATINGS 	*r
 			, struct ENCOUNTERS 	*e  // memory just provided for local calculations
@@ -308,7 +309,7 @@ cegt_output	( const struct GAMES 	*g
 
 	cegt.outqual = outqual;
 
-	output_cegt_style ("general.dat", "rating.dat", "programs.dat", &cegt);
+	output_cegt_style (quiet, "general.dat", "rating.dat", "programs.dat", &cegt);
 }
 
 

@@ -27,34 +27,34 @@
 #include "mytypes.h"
 
 struct CEGT {
-	struct ENC 			*enc;
-	gamesnum_t			n_enc;
-	long 				simulate;
-
-	player_t			n_players;
-	player_t			*sorted; /* sorted index by rating */
-	double				*ratingof_results;
-	double				*obtained_results;
-	gamesnum_t			*playedby_results;
-	double				*sdev; 
-	bool_t				*flagged;
-	const char			**name;
-
-	double				confidence_factor;
-
-	const struct GAMESTATS 	*gstat;
-
-	const struct DEVIATION_ACC *sim;
-
-	struct output_qualifiers outqual;
- 
+	struct ENC 						*enc;
+	gamesnum_t						n_enc;
+	long 							simulate;
+	player_t						n_players;
+	player_t						*sorted; /* sorted index by rating */
+	double							*ratingof_results;
+	double							*obtained_results;
+	gamesnum_t						*playedby_results;
+	double							*sdev; 
+	bool_t							*flagged;
+	const char						**name;
+	double							confidence_factor;
+	const struct GAMESTATS 			*gstat;
+	const struct DEVIATION_ACC		*sim;
+	struct output_qualifiers 		outqual;
 };
 
 bool_t 
-output_cegt_style (const char *general_name, const char *rating_name, const char *programs_name, struct CEGT *p); 
+output_cegt_style	( bool_t quiet
+					, const char *general_name
+					, const char *rating_name
+					, const char *programs_name
+					, struct CEGT *p); 
 
 bool_t 
-output_report_individual (const char *outindiv_name, struct CEGT *p, int simulate);
+output_report_individual	( const char *outindiv_name
+							, struct CEGT *p
+							, int simulate);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

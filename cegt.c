@@ -73,17 +73,18 @@ ok_to_out (const struct output_qualifiers *poutqual, bool_t flagged, gamesnum_t 
 }
 
 extern bool_t 
-output_cegt_style (const char *general_name, const char *rating_name, const char *programs_name, struct CEGT *p)
+output_cegt_style (bool_t quiet, const char *general_name, const char *rating_name, const char *programs_name, struct CEGT *p)
 {
 	bool_t success;
 	FILE *genf, *ratf, *prgf;
 
-	printf ("\n");
-	printf ("Output (Elostat format):\n");
-	printf ("general file = %s\n",general_name);
-	printf ("rating file = %s\n",rating_name);
-	printf ("programs file = %s\n",programs_name);
-
+	if (!quiet) {
+		printf ("\n");
+		printf ("Output (Elostat format):\n");
+		printf ("general file = %s\n",general_name);
+		printf ("rating file = %s\n",rating_name);
+		printf ("programs file = %s\n",programs_name);
+	}
 
 	if (NULL ==	(genf = fopen (general_name, "w"))) {
 			fprintf(stderr, "Error trying to write on file: %s\n",general_name);		

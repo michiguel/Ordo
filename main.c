@@ -1072,7 +1072,8 @@ int main (int argc, char *argv[])
 
 	// CEGT output style
 	if (Elostat_output) {
-		cegt_output( &Games
+		cegt_output	( QUIET_MODE
+					, &Games
 					, &Players
 					, &RA
 					, &Encounters
