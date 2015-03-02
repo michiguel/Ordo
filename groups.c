@@ -21,9 +21,10 @@
 
 #include <assert.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include "groups.h"
 #include "mytypes.h"
-
 #include "mymem.h"
 
 typedef uint64_t pod_t;
@@ -999,19 +1000,61 @@ final_list_output(FILE *f)
 	fprintf(f,"\n");
 }
 
+static int compare_str (const void * a, const void * b)
+{
+	const char * const *ap = a;
+	const char * const *bp = b;
+	return strcmp(*ap,*bp);
+}
+
+static void
+print_group_participants(FILE *f, participant_t *pstart)
+{
+	size_t group_n, n, i;
+	const char **arr;
+	participant_t *p;
+
+	for (p = pstart, group_n = 0; p != NULL; p = p->next) {
+		group_n++;
+	}
+
+	if (NULL != (arr = memnew (sizeof(char *) * group_n))) {
+		
+		for (p = pstart, n = 0; p != NULL; p = p->next, n++) {
+			arr[n] = p->name;
+		}
+
+		qsort (arr, group_n, sizeof(char *), compare_str);
+
+		for (i = 0; i < group_n; i++) {
+			fprintf (f," | %s\n",arr[i]);
+		}
+
+		memrel(arr);
+	} else {
+		// catch error
+		// not ordered...
+		for (p = pstart; p != NULL; p = p->next) {
+			fprintf (f," | %s\n",p->name);
+		}
+	}
+}
 
 static void
 group_output(FILE *f, group_t *s)
 {		
-	participant_t *p;
+//	participant_t *p;
 	connection_t *c;
 	int own_id;
 	int winconnections = 0, lossconnections = 0;
 	assert(s);
 	own_id = s->id;
-	for (p = s->pstart; p != NULL; p = p->next) {
-		fprintf (f," | %s\n",p->name);
-	}
+//	for (p = s->pstart; p != NULL; p = p->next) {
+//		fprintf (f," | %s\n",p->name);
+//	}
+
+print_group_participants(f,s->pstart);
+
 	for (c = s->cstart; c != NULL; c = c->next) {
 		group_t *gr = group_pointed(c);
 		if (gr != NULL) {
