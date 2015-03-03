@@ -389,11 +389,8 @@ calc_rating_bayes2
 		}
 		phase++;
 
-		if (adjust_white_advantage 
-//			&& wa_prior.set // if !wa_prior set, it will give no error based on the wa
-							// but it will adjust it based on the results. This is useful
-							// for -W
-			) {
+		if (adjust_white_advantage) {
+			assert (wa_prior.isset);
 			white_advantage = adjust_wadv_bayes 
 							( n_enc
 							, enc
@@ -413,7 +410,9 @@ calc_rating_bayes2
 		}
 
 		if (adjust_draw_rate) {
-			double	deqx = adjust_drawrate_bayes 
+			double deqx;
+			assert(dr_prior.isset);
+			deqx = adjust_drawrate_bayes 
 							( n_enc
 							, enc
 							, n_players
