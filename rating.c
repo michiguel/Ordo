@@ -444,6 +444,7 @@ calc_rating2 	( bool_t 			quiet
 	double 		kappa = 0.05;
 	double 		damp_delta = 2;
 	double 		damp_kappa = 2;
+double KK_DAMP = 200.0;
 	int 		phase = 0;
 	int 		n = 20;
 	double 		resol = START_RESOL; // big number at the beginning
@@ -486,7 +487,7 @@ player_t		anchored_n 		= plyrs->anchored_n;
 
 		bool_t done = FALSE;
 
-		#define KK_DAMP 1000
+		KK_DAMP = 1000;
 		rounds = 10000;
 		delta = START_DELTA;
 		kappa = 0.05;
