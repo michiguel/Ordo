@@ -29,6 +29,17 @@
 #include "xpect.h"
 #include "datatype.h"
 #include "mymem.h"
+#include "fit1d.h"
+
+#define START_DELTA           100
+#define MIN_DEVIA             0.0000001
+#define MIN_RESOL             0.000001
+#define START_RESOL        10.0
+#define ACCEPTABLE_RESOL      MIN_RESOL
+#define PRECISIONERROR        (1E-16)
+#define DRAWRATE_RESOLUTION   0.0001
+
+//-------------------------------------------------------------------------
 
 #if !defined(NDEBUG)
 static bool_t is_nan (double x) {if (x != x) return TRUE; else return FALSE;}
@@ -73,7 +84,7 @@ deviation (player_t n_players, const bool_t *flagged, const double *expected, co
 	return accum;
 }
 
-#if 1
+
 static double
 calc_excess		( player_t n_players
 				, const bool_t *flagged
@@ -108,7 +119,6 @@ correct_excess	( player_t n_players
 	return;
 }
 
-#endif
 
 // no globals
 static double
@@ -164,23 +174,6 @@ adjust_rating 	( double delta
 		}
 	}
 
-#if 0
-	// Normalization to a common reference (Global --> General_average)
-	// The average could be normalized, or the rating of an anchor.
-	// Skip in case of multiple anchors present
-
-	if (!multiple_anchors_present) {
-		if (anchor_use) {
-			excess = ratingof[anchor] - general_average;
-		} else {
-			excess = calc_excess (n_players, flagged, general_average, ratingof);
-		}
-		for (j = 0; j < n_players; j++) {
-			if (!flagged[j] && !prefed[j]) ratingof[j] -= excess;
-		}	
-	}	
-#endif
-
 	// Return maximum increase/decrease ==> "resolution"
 	return ymax * delta;
 }
@@ -213,8 +206,6 @@ overallerrorE_fwadv (gamesnum_t n_enc, const struct ENC *enc, const double *rati
 	}
 	return dp2;
 }
-
-#define START_DELTA 100
 
 static double
 adjust_wadv (double start_wadv, const double *ratingof, gamesnum_t n_enc, const struct ENC *enc, double beta, double start_delta)
@@ -318,15 +309,7 @@ unfitness_fcenter 	( double excess
 	return u;
 }
 
-#define MIN_DEVIA 0.0000001
-#define MIN_RESOL 0.000001
-#define START_RESOL 10.0
-#define ACCEPTABLE_RESOL MIN_RESOL
-#define PRECISIONERROR (1E-16)
-
 static double absol(double x) {return x >= 0? x: -x;}
-
-#include "fit1d.h"
 
 struct UNFITPAR {
 	const struct ENC *	enc;
@@ -444,7 +427,7 @@ calc_rating2 	( bool_t 			quiet
 	double 		kappa = 0.05;
 	double 		damp_delta = 2;
 	double 		damp_kappa = 2;
-double KK_DAMP = 200.0;
+	double 		KK_DAMP = 200.0;
 	int 		phase = 0;
 	int 		n = 20;
 	double 		resol = START_RESOL; // big number at the beginning
@@ -460,19 +443,20 @@ double KK_DAMP = 200.0;
 	double *	expected = NULL;
 	size_t 		allocsize;
 
-// translation variables for refactoring
-player_t		n_players 		= plyrs->n;
-int *			Performance_type= plyrs->performance_type;
-bool_t *		flagged 		= plyrs->flagged;
-bool_t *		prefed  		= plyrs->prefed;
-const char **	name 			= plyrs->name;
-double *		obtained 		= rat->obtained;
-gamesnum_t *	playedby 		= rat->playedby;
-double *		ratingof 		= rat->ratingof;
-double *		ratingbk 		= rat->ratingbk;
-player_t		anchored_n 		= plyrs->anchored_n;
+	// translation variables for refactoring ------------------
+	player_t		n_players 		= plyrs->n;
+	int *			Performance_type= plyrs->performance_type;
+	bool_t *		flagged 		= plyrs->flagged;
+	bool_t *		prefed  		= plyrs->prefed;
+	const char **	name 			= plyrs->name;
+	double *		obtained 		= rat->obtained;	
+	gamesnum_t *	playedby 		= rat->playedby;
+	double *		ratingof 		= rat->ratingof;
+	double *		ratingbk 		= rat->ratingbk;
+	player_t		anchored_n 		= plyrs->anchored_n;
+	//----------------------------------------------------------
 
-//double RAT[20000];
+	//double RAT[20000];
 
 	allocsize = sizeof(double) * (size_t)(n_players+1);
 	expected = memnew(allocsize);
@@ -571,10 +555,8 @@ player_t		anchored_n 		= plyrs->anchored_n;
 							, ratingtmp
 							);
 
-					} else if (anchor_use && anchored_n == 1) {
-						cd = 0;
 					} else {
-						cd = 0;
+						cd = 0; // includes the case (anchor_use && anchored_n == 1)
 					}
 
 					last_cd = cd;
@@ -605,7 +587,6 @@ player_t		anchored_n 		= plyrs->anchored_n;
 				printf ("\n");
 			}
 			phase++;
-
 		}
 
 		if (!quiet) printf ("done\n");
@@ -636,9 +617,7 @@ player_t		anchored_n 		= plyrs->anchored_n;
 		correct_excess (n_players, flagged, excess, ratingof);
 	}
 
-
-	if (!quiet) 
-		printf ("Post-Convergence rating estimation\n");
+	if (!quiet) printf ("Post-Convergence rating estimation\n");
 
 	n_enc = calc_encounters(ENCOUNTERS_FULL, g, flagged, enc);
 	calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
@@ -646,8 +625,7 @@ player_t		anchored_n 		= plyrs->anchored_n;
 	n_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, flagged, enc);;
 	calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
 
-	if (!quiet) 
-		printf ("done\n");
+	if (!quiet) printf ("done\n");
 
 	*pWhite_advantage = white_adv;
 	*pDraw_date = draw_rate;
@@ -673,16 +651,12 @@ overallerrorE_fdrawrate (gamesnum_t n_enc, const struct ENC *enc, const double *
 
 		dexp = draw_rate_fperf (f, dr0);
 
-		dp2 +=
-				(double)enc[e].D                   * (1-dexp) * (1-dexp) +
+		dp2 +=	(double)enc[e].D                   * (1-dexp) * (1-dexp) +
 				(double)(enc[e].played - enc[e].D) *    dexp  *    dexp  ;
-		;
 	}
-
 	return dp2;
 }
 
-#define DRAWRATE_RESOLUTION 0.0001
 
 static double
 adjust_drawrate (double start_wadv, const double *ratingof, gamesnum_t n_enc, const struct ENC *enc, double beta)
@@ -696,7 +670,6 @@ adjust_drawrate (double start_wadv, const double *ratingof, gamesnum_t n_enc, co
 	dr = 0.5;
 
 	do {	
-
 		ei = overallerrorE_fdrawrate (n_enc, enc, ratingof, beta, wa, dr - delta);
 		ej = overallerrorE_fdrawrate (n_enc, enc, ratingof, beta, wa, dr + 0    );     
 		ek = overallerrorE_fdrawrate (n_enc, enc, ratingof, beta, wa, dr + delta);
