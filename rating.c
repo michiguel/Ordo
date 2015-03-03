@@ -470,7 +470,9 @@ gamesnum_t *	playedby 		= rat->playedby;
 double *		ratingof 		= rat->ratingof;
 double *		ratingbk 		= rat->ratingbk;
 player_t		anchored_n 		= plyrs->anchored_n;
+
 //double RAT[20000];
+
 	allocsize = sizeof(double) * (size_t)(n_players+1);
 	expected = memnew(allocsize);
 	if (expected == NULL) {
@@ -509,12 +511,12 @@ player_t		anchored_n 		= plyrs->anchored_n;
 
 		if (!quiet) printf ("\nConvergence rating calculation (cycle #%d)\n\n", cycle+1);
 		if (!quiet) printf ("%3s %4s %12s%14s\n", "phase", "iteration", "deviation","resolution");
-// ratings_backup(n_players, ratingof, RAT);
+
 		while (!done && n-->0) {
 			bool_t failed = FALSE;
 			double kk = 1.0;
 			double cd, last_cd;
-	
+// ratings_backup(n_players, ratingof, RAT);
 			last_cd = 100;
 
 			for (i = 0; i < rounds && !done && !failed; i++) {
@@ -633,8 +635,6 @@ player_t		anchored_n 		= plyrs->anchored_n;
 
 		if (!quiet) 
 			printf ("done\n");
-
-		// printf ("EXCESS =%lf\n", calc_excess	(n_players, flagged, general_average, ratingof));
 
 		if (anchored_n == 1 && anchor_use)
 			adjust_rating_byanchor (anchor, general_average, n_players, ratingof);
