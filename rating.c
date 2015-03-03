@@ -318,7 +318,7 @@ unfitness_fcenter 	( double excess
 	return u;
 }
 
-#define MIN_DEVIA 0.000001
+#define MIN_DEVIA 0.0000001
 #define MIN_RESOL 0.000001
 #define START_RESOL 10.0
 #define ACCEPTABLE_RESOL MIN_RESOL
@@ -400,6 +400,21 @@ optimum_centerdelta	( double 			start_delta
 
 //============ center adjustment end
 
+#if 0
+static double
+ratings_rmsd(player_t n, double *a, double *b)
+{
+	player_t i;	
+	double d, res;
+	double acc = 0;
+	for (i = 0; i < n; i ++) {
+		d = a[i] - b[i];
+		acc = d * d;
+	}
+	res = sqrt(acc/(double)n);
+	return res;
+}
+#endif
 
 gamesnum_t
 calc_rating2 	( bool_t 			quiet
@@ -455,7 +470,7 @@ gamesnum_t *	playedby 		= rat->playedby;
 double *		ratingof 		= rat->ratingof;
 double *		ratingbk 		= rat->ratingbk;
 player_t		anchored_n 		= plyrs->anchored_n;
-
+//double RAT[20000];
 	allocsize = sizeof(double) * (size_t)(n_players+1);
 	expected = memnew(allocsize);
 	if (expected == NULL) {
@@ -469,12 +484,12 @@ player_t		anchored_n 		= plyrs->anchored_n;
 
 		bool_t done = FALSE;
 
-		#define KK_DAMP 200
+		#define KK_DAMP 1000
 		rounds = 10000;
 		delta = START_DELTA;
 		kappa = 0.05;
-		damp_delta = 2.0;
-		damp_kappa = 2.0;
+		damp_delta = 1.1;
+		damp_kappa = 1.0;
 		phase = 0;
 		n = 1000;
 
@@ -494,7 +509,7 @@ player_t		anchored_n 		= plyrs->anchored_n;
 
 		if (!quiet) printf ("\nConvergence rating calculation (cycle #%d)\n\n", cycle+1);
 		if (!quiet) printf ("%3s %4s %12s%14s\n", "phase", "iteration", "deviation","resolution");
-
+// ratings_backup(n_players, ratingof, RAT);
 		while (!done && n-->0) {
 			bool_t failed = FALSE;
 			double kk = 1.0;
@@ -583,6 +598,7 @@ player_t		anchored_n 		= plyrs->anchored_n;
 			if (!quiet) {
 				printf ("%3d %7d %16.9f", phase, i, outputdev);
 				printf ("%14.5f",resol);
+//	printf ("%10.5lf",ratings_rmsd(n_players, ratingof, RAT));
 				printf ("\n");
 			}
 			phase++;
