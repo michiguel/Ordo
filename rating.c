@@ -152,6 +152,7 @@ adjust_rating 	( double delta
 		// find multiplier "y"
 		d = (expected[j] - obtained[j]) / (double)playedby[j];
 		d = d < 0? -d: d;
+
 		y = d / (kappa + d);
 		if (y > ymax) ymax = y;
 
@@ -317,10 +318,10 @@ unfitness_fcenter 	( double excess
 	return u;
 }
 
-#define MIN_DEVIA 0.000001
+#define MIN_DEVIA 0.0000001
 #define MIN_RESOL 0.000001
 #define START_RESOL 10.0
-#define ACCEPTABLE_RESOL 0.000001
+#define ACCEPTABLE_RESOL MIN_RESOL
 #define PRECISIONERROR (1E-16)
 
 static double absol(double x) {return x >= 0? x: -x;}
@@ -399,6 +400,21 @@ optimum_centerdelta	( double 			start_delta
 
 //============ center adjustment end
 
+#if 0
+static double
+ratings_rmsd(player_t n, double *a, double *b)
+{
+	player_t i;	
+	double d, res;
+	double acc = 0;
+	for (i = 0; i < n; i ++) {
+		d = a[i] - b[i];
+		acc = d * d;
+	}
+	res = sqrt(acc/(double)n);
+	return res;
+}
+#endif
 
 gamesnum_t
 calc_rating2 	( bool_t 			quiet
@@ -424,9 +440,11 @@ calc_rating2 	( bool_t 			quiet
 	double 		olddev, curdev, outputdev;
 	int 		i;
 	int			rounds = 10000;
-	double 		delta = 200.0;
+	double 		delta = START_DELTA;
 	double 		kappa = 0.05;
-	double 		denom = 2;
+	double 		damp_delta = 2;
+	double 		damp_kappa = 2;
+double KK_DAMP = 200.0;
 	int 		phase = 0;
 	int 		n = 20;
 	double 		resol = START_RESOL; // big number at the beginning
@@ -454,6 +472,8 @@ double *		ratingof 		= rat->ratingof;
 double *		ratingbk 		= rat->ratingbk;
 player_t		anchored_n 		= plyrs->anchored_n;
 
+//double RAT[20000];
+
 	allocsize = sizeof(double) * (size_t)(n_players+1);
 	expected = memnew(allocsize);
 	if (expected == NULL) {
@@ -467,12 +487,14 @@ player_t		anchored_n 		= plyrs->anchored_n;
 
 		bool_t done = FALSE;
 
+		KK_DAMP = 1000;
 		rounds = 10000;
-		delta = 200.0;
+		delta = START_DELTA;
 		kappa = 0.05;
-		denom = 2;
+		damp_delta = 1.1;
+		damp_kappa = 1.0;
 		phase = 0;
-		n = 20;
+		n = 1000;
 
 		min_resol = cycle == 0? START_RESOL: (
 					cycle == 1? START_RESOL/100: (
@@ -495,7 +517,7 @@ player_t		anchored_n 		= plyrs->anchored_n;
 			bool_t failed = FALSE;
 			double kk = 1.0;
 			double cd, last_cd;
-	
+// ratings_backup(n_players, ratingof, RAT);
 			last_cd = 100;
 
 			for (i = 0; i < rounds && !done && !failed; i++) {
@@ -568,18 +590,18 @@ player_t		anchored_n 		= plyrs->anchored_n;
 	
 					outputdev = 1000*sqrt(curdev/(double)n_games);
 					done = outputdev < min_devia && (absol(resol)+absol(cd)) < min_resol;
-					//kk *= 0.995;
-					kk *= (1.0-1.0/200);
+					kk *= (1.0-1.0/KK_DAMP); //kk *= 0.995;
 				}
 			}
 
-			delta /= denom;
-			kappa *= denom;
+			delta /= damp_delta;
+			kappa *= damp_kappa;
 			outputdev = 1000*sqrt(curdev/(double)n_games);
 
 			if (!quiet) {
 				printf ("%3d %7d %16.9f", phase, i, outputdev);
 				printf ("%14.5f",resol);
+//	printf ("%10.5lf",ratings_rmsd(n_players, ratingof, RAT));
 				printf ("\n");
 			}
 			phase++;
@@ -603,20 +625,6 @@ player_t		anchored_n 		= plyrs->anchored_n;
 					printf ("Adjusted Draw Rate = %.1f %s\n\n", 100*draw_rate, "%");
 		} 
 
-		if (!quiet) 
-			printf ("Post-Convergence rating estimation\n");
-
-		n_enc = calc_encounters(ENCOUNTERS_FULL, g, flagged, enc);
-		calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
-		rate_super_players(quiet, enc, n_enc, Performance_type, n_players, ratingof, white_adv, flagged, name, draw_rate, BETA); 
-		n_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, flagged, enc);;
-		calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
-
-		if (!quiet) 
-			printf ("done\n");
-
-		// printf ("EXCESS =%lf\n", calc_excess	(n_players, flagged, general_average, ratingof));
-
 		if (anchored_n == 1 && anchor_use)
 			adjust_rating_byanchor (anchor, general_average, n_players, ratingof);
 
@@ -627,6 +635,19 @@ player_t		anchored_n 		= plyrs->anchored_n;
 		double excess = calc_excess (n_players, flagged, general_average, ratingof);
 		correct_excess (n_players, flagged, excess, ratingof);
 	}
+
+
+	if (!quiet) 
+		printf ("Post-Convergence rating estimation\n");
+
+	n_enc = calc_encounters(ENCOUNTERS_FULL, g, flagged, enc);
+	calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
+	rate_super_players(quiet, enc, n_enc, Performance_type, n_players, ratingof, white_adv, flagged, name, draw_rate, BETA); 
+	n_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, flagged, enc);;
+	calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
+
+	if (!quiet) 
+		printf ("done\n");
 
 	*pWhite_advantage = white_adv;
 	*pDraw_date = draw_rate;
