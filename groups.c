@@ -372,9 +372,14 @@ convert_to_groups(FILE *f, player_t N_plyrs, const char **name)
 
 	simplify_all();
 	finish_it();
-	if (NULL != f)
-		final_list_output(f);
-
+	if (NULL != f) {
+		if (groups_counter() > 1) {
+			final_list_output(f);
+		} else {
+			assert (1 == groups_counter());
+			fprintf (f,"All players are connected into only one group.\n");
+		}	
+	}
 	return groups_counter() ;
 }
 
