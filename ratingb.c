@@ -27,26 +27,13 @@
 #include "ratingb.h"
 #include "encount.h"
 #include "indiv.h"
-
 #include "xpect.h"
-
 #include "mymem.h"
 
-#if 1
-#define CALCIND_SWSL
-#endif
+#define MIN_RESOLUTION           0.000001
+#define MIN_DRAW_RATE_RESOLUTION 0.00001
+#define PRIOR_SMALLEST_SIGMA     0.0000001
 
-#if 1
-	#define DOPRIOR
-#endif
-
-#define MIN_RESOLUTION 0.000001
-#define PRIOR_SMALLEST_SIGMA 0.0000001
-
-#if 0
-static double overallerrorE_fdrawrate (int n_enc, const struct ENC *enc, double *ratingof, double beta, double wadv, double dr0);
-static double adjust_drawrate (double start_wadv, double *ratingof, int n_enc, const struct ENC *enc, double beta);
-#endif
 
 // ================= Bayes concept 
 
@@ -282,19 +269,20 @@ calc_rating_bayes2
 	double 		white_advantage = *pwadv;
 	double *	probarr;
 
-// translation variables for refactoring
-player_t		n_players 		= plyrs->n;
-int *			performance_type= plyrs->performance_type;
-bool_t *		flagged 		= plyrs->flagged;
-bool_t *		prefed  		= plyrs->prefed;
-const char **	name 			= plyrs->name;
-double *		obtained 		= rat->obtained;
-gamesnum_t *	playedby 		= rat->playedby;
-double *		ratingof 		= rat->ratingof;
-double *		ratingbk 		= rat->ratingbk;
-double *		changing 		= rat->changing;
-player_t		anchored_n 		= plyrs->anchored_n;
-bool_t			multiple_anchors_present = anchored_n > 1; 
+	// translation variables for refactoring ------------------
+	player_t		n_players 		= plyrs->n;
+	int *			performance_type= plyrs->performance_type;
+	bool_t *		flagged 		= plyrs->flagged;
+	bool_t *		prefed  		= plyrs->prefed;
+	const char **	name 			= plyrs->name;
+	double *		obtained 		= rat->obtained;
+	gamesnum_t *	playedby 		= rat->playedby;
+	double *		ratingof 		= rat->ratingof;
+	double *		ratingbk 		= rat->ratingbk;
+	double *		changing 		= rat->changing;
+	player_t		anchored_n 		= plyrs->anchored_n;
+	bool_t			multiple_anchors_present = anchored_n > 1; 
+	//----------------------------------------------------------
 
 	probarr = memnew (sizeof(double) * (size_t)n_players * 4);
 
@@ -368,35 +356,27 @@ bool_t			multiple_anchors_present = anchored_n > 1;
 					);
 
 			curdev = calc_bayes_unfitness_full	
-							( n_enc
-							, enc
-							, n_players
-							, pp
-							, white_advantage
-							, wa_prior
-							, n_relative_anchors
-							, ra
-							, ratingof
-							, deq
-							, dr_prior
-							, beta);
+						( n_enc
+						, enc
+						, n_players
+						, pp
+						, white_advantage
+						, wa_prior
+						, n_relative_anchors
+						, ra
+						, ratingof
+						, deq
+						, dr_prior
+						, beta);
 
-			if (
-				(curdev < olddev) 
-	//			&& (curdev/olddev < 0.999999999999999) 
-			) {
+			if (curdev < olddev) {
 				ratings_backup  (n_players, ratingof, ratingbk);
 				olddev = curdev;
 			} else {
-
-				if (!(curdev < olddev)) {
-					ratings_restore (n_players, ratingbk, ratingof);
-					curdev = olddev;
-				}
-
+				ratings_restore (n_players, ratingbk, ratingof);
+				curdev = olddev;
 				break;
 			}
-
 		}
 
 		delta /=  denom;
@@ -456,7 +436,6 @@ bool_t			multiple_anchors_present = anchored_n > 1;
 	if (!quiet) 
 		printf ("done\n\n");
 
-	#ifdef CALCIND_SWSL
 	if (!quiet && super_players_present(n_players, performance_type)) 
 		printf ("Post-Convergence rating estimation for all-wins / all-losses players\n\n");
 
@@ -465,7 +444,6 @@ bool_t			multiple_anchors_present = anchored_n > 1;
 	rate_super_players(quiet, enc, n_enc, performance_type, n_players, ratingof, white_advantage, flagged, name, deq, beta); 
 	n_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, flagged, enc);
 	calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby); 
-	#endif
 
 	if (anchored_n == 1 && priored_n == 0)
 		adjust_rating_byanchor (anchor, general_average, n_players, ratingof);
@@ -579,8 +557,6 @@ adjust_drawrate_bayes
 				, double beta
 )
 {
-	#define MIN_DRAW_RATE_RESOLUTION 0.00001
-
 	double delta, wa, ei, ej, ek, dr, olddr;
 
 	delta = resol > 0.0001? resol: 0.0001;
@@ -633,7 +609,6 @@ adjust_drawrate_bayes
 
 		olddr = dr;
 
-
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 4;
 		} else
@@ -660,8 +635,6 @@ adjust_drawrate_bayes
 	);
 
 	return dr;
-
-	#undef MIN_DRAW_RATE_RESOLUTION
 }
 
 static double
@@ -1141,74 +1114,4 @@ fitexcess 		( player_t n_players
 }
 
 //========================== end bayesian concept
-
-#if 0
-static double
-overallerrorE_fdrawrate (int n_enc, const struct ENC *enc, double *ratingof, double beta, double wadv, double dr0)
-{
-	int e, w, b;
-	double dp, dp2, f, draws_expected;
-
-	dp2 = 0;
-	for (e = 0; e < n_enc; e++) {
-		w = enc[e].wh;
-		b = enc[e].bl;
-		f = xpect (ratingof[w] + wadv, ratingof[b], beta);
-		draws_expected = enc[e].played * draw_rate_fperf (f, dr0);
-		dp = draws_expected - enc[e].D; 
-		dp2 += dp * dp;
-	}
-
-	return dp2;
-}
-
-
-static double
-adjust_drawrate (double start_wadv, double *ratingof, int n_enc, const struct ENC *enc, double beta)
-{
-	double delta, wa, ei, ej, ek, dr, olddr;
-
-	delta = 0.2;
-	wa = start_wadv;
-
-	dr = 0.45;
-
-	do {	
-
-		ei = overallerrorE_fdrawrate (n_enc, enc, ratingof, beta, wa, dr - delta);
-		ej = overallerrorE_fdrawrate (n_enc, enc, ratingof, beta, wa, dr + 0    );     
-		ek = overallerrorE_fdrawrate (n_enc, enc, ratingof, beta, wa, dr + delta);
-
-		olddr = dr;
-
-		if (ei >= ej && ej <= ek) {
-			delta = delta / 2;
-		} else
-		if (ej >= ei && ei <= ek) {
-			dr -= delta;
-		} else
-		if (ei >= ek && ek <= ej) {
-			dr += delta;
-		}
-
-
-		// do not allow the boundaries to go over 1 or below 0
-		if (dr+delta > 1) {
-			dr = (1 + olddr )/2;
-			delta = dr - olddr;			
-		}
-
-		if (dr-delta < 0) {
-			dr = (0 + olddr )/2;
-			delta = olddr - dr;			
-		}
-
-	} while (
-		delta > 0.0001 
-	);
-	
-	return dr;
-}
-#endif
-
 
