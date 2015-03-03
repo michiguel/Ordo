@@ -535,6 +535,7 @@ calclen (long x)
 	return strlen(s);	
 }
 
+
 static void
 all_report_indiv_stats 	( FILE *textf
 						, struct CEGT *p
@@ -565,6 +566,7 @@ all_report_indiv_stats 	( FILE *textf
 	double		*Ratingof_results = p->ratingof_results ;
 	bool_t		*Flagged = p->flagged ;
 	const char	**Name = p->name ;
+	int decimals = p->decimals;
 
 	indent = (int) calclen ((long)N_players+1);
 	
@@ -620,10 +622,11 @@ all_report_indiv_stats 	( FILE *textf
 				gdlen = (int)calclen((long)dra);
 				gllen = (int)calclen((long)los);
 
-				fprintf(f, "%*ld) %-*s %5.0f : %*ld (+%*ld,=%*ld,-%*ld), %5.1f %s\n\n"
+				fprintf(f, "%*ld) %-*s %5.*f : %*ld (+%*ld,=%*ld,-%*ld), %5.1f %s\n\n"
 					, indent
 					, (long)i+1
 					, (int)ml, Name[target]
+					, decimals
 					, Ratingof_results[target]
 					, (int)gl, (long)(won+dra+los)
 					, gwlen, (long)won
@@ -691,11 +694,11 @@ all_report_indiv_stats 	( FILE *textf
 					"%s"
 					"%6s"
 					"%2s"
-					" %6s"
+					" %*s"
 
 					//
 					, indent+2, ""
-					,(int)ml+6, "vs."
+					,(int)ml+6+decimals, "vs."
 					, " : "
 					,(int)gl, "games"
 
@@ -710,13 +713,16 @@ all_report_indiv_stats 	( FILE *textf
 					, "),"
 					, "(%)"
 					, ":" 
+					, 6+decimals
 					, "Diff"
 				);
-
+//
 				if (simulate > 1 && p->sim != NULL) {
 				fprintf(f, 
-					", %3s, %6s"
+					", %*s, %*s"
+					, 4+decimals
 					, "SD"
+					, 6
 					, "CFS (%)"
 
 				);
@@ -740,7 +746,7 @@ all_report_indiv_stats 	( FILE *textf
 						"%*s"
 						"%-*s : %*ld ( %*ld, %*ld, %*ld), %5.1f"
 						, indent+2, ""
-						,(int)ml+6
+						,(int)ml+6+decimals
 						, Name[oth]
 						,(int)gl
 						,(long)(won+dra+los)
@@ -750,7 +756,7 @@ all_report_indiv_stats 	( FILE *textf
 						, 100.0*((double)won+(double)dra/2)/(double)(won+dra+los) 
 					);
 
-					fprintf(f, " : %+6.0f", dr);
+					fprintf(f, " : %+*.*f",6+decimals, decimals, dr);
 
 					if (simulate > 1 && p->sim != NULL) {
 						ptrdiff_t idx;
@@ -761,7 +767,7 @@ all_report_indiv_stats 	( FILE *textf
 						sd = p->sim[idx].sdev;
 						ctrs = 100*gauss_integral(dr/sd);
 
-						fprintf(f, ", %3.0f, %6.1f", sd, ctrs);
+						fprintf(f, ", %*.*f, %6.1f", 4+decimals, decimals, sd, ctrs);
 
 					} 
 					fprintf(f, "\n");

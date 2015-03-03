@@ -1067,6 +1067,7 @@ int main (int argc, char *argv[])
 					, &Game_stats
 					, sim
 					, head2head_str
+					, OUTDECIMALS
 					);
 	}
 

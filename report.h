@@ -43,16 +43,18 @@ cegt_output	( bool_t 				quiet
 
 // Function provided to have all head to head information
 void 
-head2head_output( const struct GAMES 	*g
-				, const struct PLAYERS 	*p
-				, const struct RATINGS 	*r
-				, struct ENCOUNTERS 	*e  // memory just provided for local calculations
-				, double 				*sdev
-				, long 					simulate
-				, double				confidence_factor
-				, const struct GAMESTATS *pgame_stats
-				, const struct DEVIATION_ACC *s
-				, const char *head2head_str);
+head2head_output( const struct GAMES 	*		g
+				, const struct PLAYERS 	*		p
+				, const struct RATINGS 	*		r
+				, struct ENCOUNTERS 	*		e  // memory just provided for local calculations
+				, double 				*		sdev
+				, long 							simulate
+				, double						confidence_factor
+				, const struct GAMESTATS *		pgame_stats
+				, const struct DEVIATION_ACC *	s
+				, const char *					head2head_str
+				, int 							decimals);
+
 
 void
 all_report 	( const struct GAMES 	*g

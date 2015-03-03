@@ -323,16 +323,17 @@ static const char *Percent_str = "(%)";
 // Function provided to have all head to head information
 
 void 
-head2head_output( const struct GAMES 	*g
-				, const struct PLAYERS 	*p
-				, const struct RATINGS 	*r
-				, struct ENCOUNTERS 	*e  // memory just provided for local calculations
-				, double 				*sdev
-				, long 					simulate
-				, double				confidence_factor
-				, const struct GAMESTATS *pgame_stats
-				, const struct DEVIATION_ACC *s
-				, const char *head2head_str)
+head2head_output( const struct GAMES 	*		g
+				, const struct PLAYERS 	*		p
+				, const struct RATINGS 	*		r
+				, struct ENCOUNTERS 	*		e  // memory just provided for local calculations
+				, double 				*		sdev
+				, long 							simulate
+				, double						confidence_factor
+				, const struct GAMESTATS *		pgame_stats
+				, const struct DEVIATION_ACC *	s
+				, const char *					head2head_str
+				, int 							decimals)
 {
 	struct CEGT cegt;
 	player_t j;
@@ -363,6 +364,7 @@ head2head_output( const struct GAMES 	*g
 
 	cegt.sim = s;
 
+	cegt.decimals = decimals;
 	output_report_individual (head2head_str, &cegt, (int)simulate);
 }
 
