@@ -625,18 +625,6 @@ player_t		anchored_n 		= plyrs->anchored_n;
 					printf ("Adjusted Draw Rate = %.1f %s\n\n", 100*draw_rate, "%");
 		} 
 
-		if (!quiet) 
-			printf ("Post-Convergence rating estimation\n");
-
-		n_enc = calc_encounters(ENCOUNTERS_FULL, g, flagged, enc);
-		calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
-		rate_super_players(quiet, enc, n_enc, Performance_type, n_players, ratingof, white_adv, flagged, name, draw_rate, BETA); 
-		n_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, flagged, enc);;
-		calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
-
-		if (!quiet) 
-			printf ("done\n");
-
 		if (anchored_n == 1 && anchor_use)
 			adjust_rating_byanchor (anchor, general_average, n_players, ratingof);
 
@@ -647,6 +635,19 @@ player_t		anchored_n 		= plyrs->anchored_n;
 		double excess = calc_excess (n_players, flagged, general_average, ratingof);
 		correct_excess (n_players, flagged, excess, ratingof);
 	}
+
+
+	if (!quiet) 
+		printf ("Post-Convergence rating estimation\n");
+
+	n_enc = calc_encounters(ENCOUNTERS_FULL, g, flagged, enc);
+	calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
+	rate_super_players(quiet, enc, n_enc, Performance_type, n_players, ratingof, white_adv, flagged, name, draw_rate, BETA); 
+	n_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, flagged, enc);;
+	calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
+
+	if (!quiet) 
+		printf ("done\n");
 
 	*pWhite_advantage = white_adv;
 	*pDraw_date = draw_rate;
