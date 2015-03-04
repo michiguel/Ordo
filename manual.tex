@@ -606,13 +606,17 @@ Equation \ref{eq:draw_rate2} is the one used by Ordo to obtain the draw rate for
 
 \subsubsection*{Rating calculation with prior information}
 
-when user provides Ordo with either \textit{loose anchors}, \textit{relative anchors}, \textit{white advantage} uncertainty, or a \textit{draw rate} uncertainty the calculation is performed by Maximum Likelihood.
+When user provides Ordo with either \textit{loose anchors}, \textit{relative anchors}, \textit{white advantage} uncertainty, or a \textit{draw rate} uncertainty the calculation is performed by a \textit{maximum-likelihood estimation}.
 In those cases, for each game the probability for the given outcome (W, D, or L) is calculated and the logarithm of this value is added and accumulated.
 This will constitute an unfitness score that will need to be minimized.
 In addition, to this score, the logarithm of the probabilities for each loose anchor, relative anchor, white advantage, and draw rate are accumulated.
 An overall minimization brings optimum values for the ratings of each player and each of the above mentioned parameters. 
 Note that adding the logarithm of each of the probabilities is analogous to multiplying the probabilities.
 
+\subsubsection*{Forcing maximum likelihood}
+
+Another option to force Ordo to perform a \textit{maximum-likelihood estimation} to calculate the ratings is by providing the switch \swtch{-M}.
+This option is generally a bit slower and probably not necessary since the output should be nearly identical with perfect convergence, but it is a good feature for comparison an debugging.
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 \subsubsection*{Acknowledgments}

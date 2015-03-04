@@ -1,6 +1,6 @@
 /*
 	Ordo is program for calculating ratings of engine or chess players
-    Copyright 2014 Miguel A. Ballicora
+    Copyright 2015 Miguel A. Ballicora
 
     This file is part of Ordo.
 
@@ -63,7 +63,7 @@
 #include "myopt.h"
 
 const char *license_str = "\n"
-"   Copyright (c) 2014 Miguel A. Ballicora\n"
+"   Copyright (c) 2015 Miguel A. Ballicora\n"
 "   Ordo is program for calculating ratings of engine or chess players\n"
 "\n"
 "   Ordo is free software: you can redistribute it and/or modify\n"
@@ -92,7 +92,7 @@ static void usage (void);
 	static bool_t ADJUST_DRAW_RATE;
 
 	static const char *copyright_str = 
-		"Copyright (c) 2014 Miguel A. Ballicora\n"
+		"Copyright (c) 2015 Miguel A. Ballicora\n"
 		"There is NO WARRANTY of any kind\n"
 		;
 
@@ -144,7 +144,7 @@ static void usage (void);
 		" -X          Ignore draws\n"
 		" -t <value>  threshold of minimum games played for a participant to be included\n"
 		" -N <value>  Output, number of decimals, minimum is 0 (default=1)\n"
-		" -M          Forces Maximum Likelihood algorithm, rather than Ordo's\n"
+		" -M          Forces maximum-likelihood estimation to obtain ratings\n"
 		"\n"
 		;
 
