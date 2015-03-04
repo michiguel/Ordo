@@ -880,7 +880,7 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	/*=====================*/
+	/*==== Ratings Calc ===*/
 
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
@@ -888,14 +888,25 @@ int main (int argc, char *argv[])
 		purge_players (QUIET_MODE, &Players);
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
-	Encounters.n = calc_rating(QUIET_MODE, Forces_ML, Encounters.enc, Encounters.n, &White_advantage
-							, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch, &RPset, &Players, &RA, &Games);
+	Encounters.n = calc_rating	( QUIET_MODE
+								, Forces_ML
+								, Encounters.enc
+								, Encounters.n
+								, &White_advantage
+								, ADJUST_WHITE_ADVANTAGE
+								, &Drawrate_evenmatch
+								, &RPset
+								, &Players
+								, &RA
+								, &Games);
 
-	ratings_results(&Players, &RA);
+	ratings_results (&Players, &RA);
+
+	/*=====================*/
 
 	/* Simulation block, begin */
-	if (Simulate > 1)
-	{	
+	if (Simulate > 1) {
+	
 		ptrdiff_t i,j;
 		ptrdiff_t topn = (ptrdiff_t)Players.n;
 		long z = Simulate;
@@ -910,7 +921,10 @@ int main (int argc, char *argv[])
 		assert(allocsize > 0);
 		sim = memnew(allocsize);
 
-		if (sim != NULL) {
+		if (sim == NULL) {
+			fprintf(stderr, "Memory for simulations could not be allocated\n");
+			exit(EXIT_FAILURE);
+		} else {
 			double fraction = 0.0;
 			double asterisk = (double)Simulate/50.0;
 			int astcount = 0;
@@ -970,8 +984,17 @@ int main (int argc, char *argv[])
 						calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 					}
 					Encounters.n = calc_rating
-									(QUIET_MODE, Forces_ML
-									,Encounters.enc, Encounters.n, &White_advantage, FALSE, &sim_draw_rate, &RPset, &Players, &RA, &Games);
+									( QUIET_MODE
+									, Forces_ML
+									, Encounters.enc
+									, Encounters.n
+									, &White_advantage
+									, FALSE
+									, &sim_draw_rate
+									, &RPset
+									, &Players
+									, &RA
+									, &Games);
 					ratings_for_purged (&Players, &RA);
 
 					relpriors_copy(&RPset_store, &RPset);
@@ -1025,8 +1048,11 @@ int main (int argc, char *argv[])
 			}
 		}
 
-		database_transform(pdaba, &Games, &Players, &Game_stats); /* convert database to global variables, to restore original data */
+		/* retransform database, to restore original data */
+		database_transform(pdaba, &Games, &Players, &Game_stats); 
 		qsort (Games.ga, (size_t)Games.n, sizeof(struct gamei), compare_GAME);
+	
+		/* recalculate encounters */
 		calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 		if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
 			purge_players (QUIET_MODE, &Players);
@@ -1035,7 +1061,8 @@ int main (int argc, char *argv[])
 	}
 	/* Simulation block, end */
 
-	// Reports
+	/*==== Reports ====*/
+
 	all_report 	( &Games
 				, &Players
 				, &RA
@@ -1058,8 +1085,6 @@ int main (int argc, char *argv[])
 	if (Simulate > 1 && NULL != ctsmatstr) {
 		ctsout (&Players, &RA, sim, ctsmatstr);
 	}
-
-	//
 	if (head2head_str != NULL) {
 		head2head_output
 					( &Games
@@ -1091,24 +1116,23 @@ int main (int argc, char *argv[])
 					, outqual);
 	}
 
-	// Cleanup
+	/*==== Clean up ====*/
+
 	if (textf_opened) 	fclose (textf);
 	if (csvf_opened)  	fclose (csvf); 
 	if (groupf_opened) 	fclose(groupf);
 
-	if (sim != NULL) memrel(sim);
+	if (sim != NULL) 
+		memrel(sim);
 
 	if (pdaba != NULL)
-	database_done (pdaba);
+		database_done (pdaba);
 
-	/*==== END CALCULATION ====*/
-
-	// memory done
 	ratings_done (&RA);
 	games_done (&Games);
 	encounters_done (&Encounters);
 	players_done (&Players);
-	supporting_auxmem_done(&Sum1, &Sum2, &Sdev, &PP, &PP_store);
+	supporting_auxmem_done (&Sum1, &Sum2, &Sdev, &PP, &PP_store);
 
 	if (relstr != NULL)
 		relpriors_done (&RPset, &RPset_store);
