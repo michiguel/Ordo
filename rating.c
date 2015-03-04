@@ -580,7 +580,8 @@ calc_rating2 	( bool_t 			quiet
 				printf ("\n");
 			}
 			phase++;
-		}
+
+		} // end while
 
 		if (!quiet) printf ("done\n");
 
