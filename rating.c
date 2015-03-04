@@ -484,8 +484,7 @@ calc_rating2 	( bool_t 			quiet
 					cycle == 1? START_RESOL/100: (
 					cycle == 2? START_RESOL/10000: (
 					MIN_RESOL
-					)))
-		;
+					)));
 
 		doneonce = FALSE;
 
@@ -501,7 +500,7 @@ calc_rating2 	( bool_t 			quiet
 			bool_t failed = FALSE;
 			double kk = 1.0;
 			double cd, last_cd;
-// ratings_backup(n_players, ratingof, RAT);
+			// ratings_backup(n_players, ratingof, RAT);
 			last_cd = 100;
 
 			for (i = 0; i < rounds && !done && !failed; i++) {
@@ -525,19 +524,18 @@ calc_rating2 	( bool_t 			quiet
 				calc_expected(enc, n_enc, white_adv, n_players, ratingof, expected, BETA);
 				curdev = deviation(n_players, flagged, expected, obtained, playedby);
 
-				if (curdev >= olddev) {
+				failed = curdev >= olddev;
+
+				if (failed) {
 					ratings_restore(n_players, ratingbk, ratingof);
 					calc_expected(enc, n_enc, white_adv, n_players, ratingof, expected, BETA);
 					curdev = deviation(n_players, flagged, expected, obtained, playedby);	
 					assert (absol(curdev-olddev) < PRECISIONERROR || 
 								!fprintf(stderr, "curdev=%.10e, olddev=%.10e, diff=%.10e\n", curdev, olddev, olddev-curdev));
-					failed = TRUE;
-				};	
-
-				if (!failed) {
-
+				}	
+				else {
+					cd = 0; // includes the case (anchor_use && anchored_n == 1)
 					if (anchored_n > 1) {
-
 						cd = optimum_centerdelta	
 							( last_cd
 							, min_resol > 0.1? 0.1: min_resol
@@ -554,18 +552,12 @@ calc_rating2 	( bool_t 			quiet
 							, playedby
 							, ratingtmp
 							);
-
-					} else {
-						cd = 0; // includes the case (anchor_use && anchored_n == 1)
-					}
-
+					} 
 					last_cd = cd;
 
 					if (absol(cd) > MIN_RESOL) {
 						mobile_center_apply_excess (cd, n_players, flagged, prefed, ratingof);
 					}
-
-					//
 
 					calc_expected(enc, n_enc, white_adv, n_players, ratingof, expected, BETA);
 					curdev = deviation(n_players, flagged, expected, obtained, playedby);	
@@ -574,7 +566,8 @@ calc_rating2 	( bool_t 			quiet
 					done = outputdev < min_devia && (absol(resol)+absol(cd)) < min_resol;
 					kk *= (1.0-1.0/KK_DAMP); //kk *= 0.995;
 				}
-			}
+
+			} // end for
 
 			delta /= damp_delta;
 			kappa *= damp_kappa;
@@ -583,7 +576,7 @@ calc_rating2 	( bool_t 			quiet
 			if (!quiet) {
 				printf ("%3d %7d %16.9f", phase, i, outputdev);
 				printf ("%14.5f",resol);
-//	printf ("%10.5lf",ratings_rmsd(n_players, ratingof, RAT));
+				//	printf ("%10.5lf",ratings_rmsd(n_players, ratingof, RAT));
 				printf ("\n");
 			}
 			phase++;
