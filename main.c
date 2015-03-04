@@ -144,6 +144,7 @@ static void usage (void);
 		" -X          Ignore draws\n"
 		" -t <value>  threshold of minimum games played for a participant to be included\n"
 		" -N <value>  Output, number of decimals, minimum is 0 (default=1)\n"
+		" -M          Forces Maximum Likelihood algorithm, rather than Ordo's\n"
 		"\n"
 		;
 
@@ -153,7 +154,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:TF:Xt:N:";
+	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:TF:Xt:N:M";
 
 /*
 |
@@ -239,7 +240,7 @@ static void		init_rating (player_t n, double rat0, struct RATINGS *rat /*@out@*/
 static void		reset_rating (double general_average, player_t n_players, const bool_t *prefed, const bool_t *flagged, double *rating);
 static void		ratings_copy (const double *r, player_t n, double *t);
 
-static gamesnum_t	calc_rating ( bool_t quiet, struct ENC *enc, gamesnum_t N_enc, double *pWhite_advantage
+static gamesnum_t	calc_rating ( bool_t quiet, bool_t ml, struct ENC *enc, gamesnum_t N_enc, double *pWhite_advantage
 							, bool_t adjust_wadv, double *pDraw_rate, struct rel_prior_set *rps
 							, struct PLAYERS *plyrs, struct RATINGS *rat, struct GAMES *pGames);
 
@@ -364,7 +365,7 @@ int main (int argc, char *argv[])
 	const char *head2head_str;
 	const char *ctsmatstr;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
-	bool_t group_is_output, Elostat_output, Ignore_draws, groups_no_check;
+	bool_t group_is_output, Elostat_output, Ignore_draws, groups_no_check, Forces_ML;
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE, switch_d=FALSE, switch_k=FALSE, switch_D=FALSE;
 
 	/* defaults */
@@ -390,8 +391,9 @@ int main (int argc, char *argv[])
 	groups_no_check = FALSE;
 	groupstr 	 = NULL;
 	Elostat_output = FALSE;
-	head2head_str = NULL;
+	head2head_str= NULL;
 	Ignore_draws = FALSE;
+	Forces_ML 	 = FALSE;
 
 	while (END_OF_OPTIONS != (op = options (argc, argv, OPTION_LIST))) {
 		switch (op) {
@@ -448,6 +450,8 @@ int main (int argc, char *argv[])
 						}
 						break;
 			case 'V':	Anchor_err_rel2avg = TRUE;
+						break;
+			case 'M':	Forces_ML = TRUE;
 						break;
 			case 's': 	if (1 != sscanf(opt_arg,"%lu", &Simulate) || Simulate < 0) {
 							fprintf(stderr, "wrong simulation parameter\n");
@@ -884,7 +888,7 @@ int main (int argc, char *argv[])
 		purge_players (QUIET_MODE, &Players);
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
-	Encounters.n = calc_rating(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage
+	Encounters.n = calc_rating(QUIET_MODE, Forces_ML, Encounters.enc, Encounters.n, &White_advantage
 							, ADJUST_WHITE_ADVANTAGE, &Drawrate_evenmatch, &RPset, &Players, &RA, &Games);
 
 	ratings_results(&Players, &RA);
@@ -966,7 +970,8 @@ int main (int argc, char *argv[])
 						calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 					}
 					Encounters.n = calc_rating
-									(QUIET_MODE, Encounters.enc, Encounters.n, &White_advantage, FALSE, &sim_draw_rate, &RPset, &Players, &RA, &Games);
+									(QUIET_MODE, Forces_ML
+									,Encounters.enc, Encounters.n, &White_advantage, FALSE, &sim_draw_rate, &RPset, &Players, &RA, &Games);
 					ratings_for_purged (&Players, &RA);
 
 					relpriors_copy(&RPset_store, &RPset);
@@ -1316,14 +1321,14 @@ simulate_scores ( const double 	*ratingof_results
 //==== CALCULATE INDIVIDUAL RATINGS =========================
 
 static gamesnum_t
-calc_rating ( bool_t quiet, struct ENC *enc, gamesnum_t N_enc, double *pWhite_advantage, bool_t adjust_wadv
+calc_rating ( bool_t quiet, bool_t ml, struct ENC *enc, gamesnum_t N_enc, double *pWhite_advantage, bool_t adjust_wadv
 			, double *pDraw_rate, struct rel_prior_set *rps, struct PLAYERS *plyrs, struct RATINGS *rat, struct GAMES *pGames)
 {
 	double dr = *pDraw_rate;
 
 	gamesnum_t ret;
 
-	if (Prior_mode) {
+	if (Prior_mode || ml) {
 
 		ret = calc_rating_bayes2 
 				( quiet
