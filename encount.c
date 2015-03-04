@@ -131,7 +131,13 @@ calc_obtained_playedby (const struct ENC *enc, gamesnum_t N_enc, player_t n_play
 
 // no globals
 void
-calc_expected (const struct ENC *enc, gamesnum_t N_enc, double white_advantage, player_t n_players, const double *ratingof, double *expected, double beta)
+calc_expected 	( const struct ENC *enc
+				, gamesnum_t N_enc
+				, double white_advantage
+				, player_t n_players
+				, const double *ratingof
+				, double *expected
+				, double beta)
 {
 	player_t 	w, b;
 	player_t 	j;
