@@ -390,7 +390,6 @@ calc_rating_bayes2
 		phase++;
 
 		if (adjust_white_advantage) {
-			assert (wa_prior.isset);
 			white_advantage = adjust_wadv_bayes 
 							( n_enc
 							, enc
@@ -411,7 +410,6 @@ calc_rating_bayes2
 
 		if (adjust_draw_rate) {
 			double deqx;
-			assert(dr_prior.isset);
 			deqx = adjust_drawrate_bayes 
 							( n_enc
 							, enc
