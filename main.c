@@ -832,7 +832,7 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	/*==== CALCULATIONS ====*/
+	/*==== BEGIN... =======*/
 
 	randfast_init (1324561);
 
@@ -974,7 +974,7 @@ int main (int argc, char *argv[])
 					}
 					#endif
 
-					// may improve convergence in pathological cases
+					// may improve convergence in pathological cases, it should not be needed.
 					reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingof);
 					reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingbk);
 
