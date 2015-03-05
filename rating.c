@@ -643,19 +643,25 @@ overallerrorE_fdrawrate (gamesnum_t n_enc, const struct ENC *enc, const double *
 	gamesnum_t e;
 	player_t w, b;
 	double dp2, f;
+	double W,D,L;
+	double cal, obt; // calculated, obtained
 	double dexp;
 
-	dp2 = 0;
-	for (e = 0; e < n_enc; e++) {
+	for (cal = 0, obt = 0, e = 0; e < n_enc; e++) {
 		w = enc[e].wh;
 		b = enc[e].bl;
+		W = (double)enc[e].W;
+		D = (double)enc[e].D;
+		L = (double)enc[e].L;
+
 		f = xpect (ratingof[w] + wadv, ratingof[b], beta);
-
 		dexp = draw_rate_fperf (f, dr0);
-
-		dp2 +=	(double)enc[e].D                   * (1-dexp) * (1-dexp) +
-				(double)(enc[e].played - enc[e].D) *    dexp  *    dexp  ;
+		obt += D;
+		cal += dexp * (W + D + L);
 	}
+
+	dp2 = (cal - obt) * (cal - obt);	
+
 	return dp2;
 }
 
