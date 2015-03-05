@@ -717,7 +717,8 @@ calc_bayes_unfitness_full
 
 		accum 	+= 	(ww > 0? (double)ww * log(pw) : 0) 
 				+ 	(dd > 0? (double)dd * log(pd) : 0) 
-				+ 	(ll > 0? (double)ll * log(pl) : 0);
+				+ 	(ll > 0? (double)ll * log(pl) : 0)
+		;
 	}
 	// Priors
 	accum += -prior_unfitness

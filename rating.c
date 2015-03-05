@@ -195,15 +195,23 @@ overallerrorE_fwadv (gamesnum_t n_enc, const struct ENC *enc, const double *rati
 	gamesnum_t e;
 	player_t w, b;
 	double dp2, f;
-	for (dp2 = 0, e = 0; e < n_enc; e++) {
+	double W,D,L;
+	double cal, obt; // calculated, obtained
+
+	for (cal = 0, obt = 0, e = 0; e < n_enc; e++) {
 		w = enc[e].wh;
 		b = enc[e].bl;
+		W = (double)enc[e].W;
+		D = (double)enc[e].D;
+		L = (double)enc[e].L;
+
 		f = xpect (ratingof[w] + wadv, ratingof[b], beta);
-		dp2 +=	(double)enc[e].W * (1.0 - f) * (1.0 - f)
-		+		(double)enc[e].D * (0.5 - f) * (0.5 - f)
-		+		(double)enc[e].L * (0.0 - f) * (0.0 - f)
-		;
+		obt += W + D/2;
+		cal += f * (W + D + L);
 	}
+
+	dp2 = (cal - obt) * (cal - obt);	
+
 	return dp2;
 }
 
