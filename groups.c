@@ -30,9 +30,11 @@
 typedef uint64_t pod_t;
 
 struct BITARRAY {
-	pod_t *pod;
-	player_t max;
+	pod_t *		pod;
+	player_t 	max;
 };
+
+typedef struct BITARRAY bitarray_t;
 
 //---------------------------------------------------------------------
 
@@ -64,19 +66,19 @@ static gamesnum_t	N_se2 = 0;
 
 static player_t		N_players = 0;
 
-static int32_t		*Group_belong;
+static int32_t	*	Group_belong;
 static player_t		N_groups;
 
-struct BITARRAY 	BA;
-struct BITARRAY		BB;
-static int 			*Get_new_id;
+static bitarray_t 	BA;
+static bitarray_t	BB;
+static int 		*	Get_new_id;
 
-static group_t 		**Group_final_list;
+static group_t 	**	Group_final_list;
 static long			Group_final_list_n = 0;
 
-static node_t		*Gnode;
+static node_t	*	Gnode;
 
-static int 			*CHAIN;
+static int 		*	CHAIN;
 
 //----------------------------------------------------------------------
 
@@ -325,13 +327,13 @@ ifisolated2group (player_t x)
 }
 
 static void
-convert_general_init(player_t N_plyrs)
+convert_general_init(player_t n_plyrs)
 {
 	player_t i;
 	connect_init();
 	participant_init();
 	groupset_init();
-	for (i = 0; i < N_plyrs; i++) {
+	for (i = 0; i < n_plyrs; i++) {
 		Gnode[i].group = NULL;
 	}
 	return;
@@ -344,24 +346,24 @@ groups_counter (void)
 }
 
 long
-convert_to_groups(FILE *f, player_t N_plyrs, const char **name)
+convert_to_groups (FILE *f, player_t n_plyrs, const char **name)
 {
 	player_t i;
 	gamesnum_t e;
 
 	Namelist = name;
 
-	convert_general_init (N_plyrs);
+	convert_general_init (n_plyrs);
 
 	for (e = 0 ; e < N_se2; e++) {
 		enc2groups(&SE2[e]);
 	}
 
-	for (i = 0; i < N_plyrs; i++) {
+	for (i = 0; i < n_plyrs; i++) {
 		ifisolated2group(i);
 	}
 
-	for (i = 0; i < N_plyrs; i++) {
+	for (i = 0; i < n_plyrs; i++) {
 		int gb; 
 		group_t *g;
 		gb = Group_belong[i];
@@ -394,7 +396,7 @@ group_belonging(player_t plyr)
 }
 
 void
-sieve_encounters(const struct ENC *enc, gamesnum_t N_enc, struct ENC *enca, gamesnum_t *N_enca, struct ENC *encb, gamesnum_t *N_encb)
+sieve_encounters(const struct ENC *enc, gamesnum_t n_enc, struct ENC *enca, gamesnum_t *N_enca, struct ENC *encb, gamesnum_t *N_encb)
 {
 	gamesnum_t e;
 	player_t w,b;
@@ -403,7 +405,7 @@ sieve_encounters(const struct ENC *enc, gamesnum_t N_enc, struct ENC *enca, game
 	*N_enca = 0;
 	*N_encb = 0;
 
-	for (e = 0; e < N_enc; e++) {
+	for (e = 0; e < n_enc; e++) {
 		w = enc[e].wh; 
 		b = enc[e].bl; 
 		if (group_belonging(w) == group_belonging(b)) {
@@ -427,9 +429,9 @@ group_gocombine(group_t *g, group_t *h)
 	group_t *ne = h->next;
 
 
-if (h->combined == g) {
-	return;
-}
+	if (h->combined == g) {
+		return;
+	}	
 
 	h->prev = NULL;
 	h->next = NULL;
@@ -442,7 +444,7 @@ if (h->combined == g) {
 	if (ne) ne->prev = pr;
 	
 	h->combined = g;
-	//
+	
 	g->plast->next = h->pstart;
 	g->plast = h->plast;
 	h->plast = NULL;
@@ -602,92 +604,92 @@ simplify_shrink__ (group_t *g)
 	connection_t 	*c, *p;
 	int 			id, oid;
 
-	id=-1;
+	id = -1;
 
-		ba_init(&BA, N_players); // it was -1
-		ba_init(&BB, N_players); // it was -2
+	ba_init(&BA, N_players); // it was -1
+	ba_init(&BB, N_players); // it was -2
 
-		oid = g->id; // own id
+	oid = g->id; // own id
 
-		// loop connections, examine id if repeated or self point (delete them)
-		beat_to = NULL;
-		do {
-			c = g->cstart; 
-			if (c && NULL != (beat_to = group_pointed(c))) {
-				id = beat_to->id;
-				if (id == oid) { 
-					// remove connection
-					g->cstart = c->next; //FIXME mem leak? memrel(c)
-				}
+	// loop connections, examine id if repeated or self point (delete them)
+	beat_to = NULL;
+	do {
+		c = g->cstart; 
+		if (c && NULL != (beat_to = group_pointed(c))) {
+			id = beat_to->id;
+			if (id == oid) { 
+				// remove connection
+				g->cstart = c->next; //FIXME mem leak? memrel(c)
 			}
-		} while (c && beat_to && id == oid);
-
-
-		if (c && beat_to) {
-
-			ba_put(&BA, id);
-			p = c;
-			c = c->next;
-
-			while (c != NULL) {
-				beat_to = group_pointed(c);
-				id = beat_to->id;
-				if (id == oid || ba_ison(&BA, id)) {
-					// remove connection and advance
-					c = c->next; //FIXME mem leak? memrel(c)
-					p->next = c; 
-				}
-				else {
-					// remember and advance
-					ba_put(&BA, id);
-					p = c;
-					c = c->next;
-				}
-			}
-
 		}
+	} while (c && beat_to && id == oid);
 
-		// loop connections, examine id if repeated or self point (delete them)
 
-		lost_to = NULL;
+	if (c && beat_to) {
 
-		do {
-			c = g->lstart; 
-			if (c && NULL != (lost_to = group_pointed(c))) {
-				id = lost_to->id;
-				if (id == oid) { 
-					// remove connection
-					g->lstart = c->next; //FIXME mem leak?
-				}
+		ba_put(&BA, id);
+		p = c;
+		c = c->next;
+
+		while (c != NULL) {
+			beat_to = group_pointed(c);
+			id = beat_to->id;
+			if (id == oid || ba_ison(&BA, id)) {
+				// remove connection and advance
+				c = c->next; //FIXME mem leak? memrel(c)
+				p->next = c; 
 			}
-		} while (c && lost_to && id == oid);
-
-
-		if (c && lost_to) {
-
-			ba_put(&BB, id);
-			p = c;
-			c = c->next;
-
-			while (c != NULL) {
-				lost_to = group_pointed(c);
-				id = lost_to->id;
-				if (id == oid || ba_ison(&BB, id)) {
-					// remove connection and advance
-					c = c->next;		
-					p->next = c; //FIXME mem leak?
-				}
-				else {
-					// remember and advance
-					ba_put(&BB, id);
-					p = c;
-					c = c->next;
-				}
+			else {
+				// remember and advance
+				ba_put(&BA, id);
+				p = c;
+				c = c->next;
 			}
 		}
 
-		ba_done(&BA);
-		ba_done(&BB);
+	}
+
+	// loop connections, examine id if repeated or self point (delete them)
+
+	lost_to = NULL;
+
+	do {
+		c = g->lstart; 
+		if (c && NULL != (lost_to = group_pointed(c))) {
+			id = lost_to->id;
+			if (id == oid) { 
+				// remove connection
+				g->lstart = c->next; //FIXME mem leak?
+			}
+		}
+	} while (c && lost_to && id == oid);
+
+
+	if (c && lost_to) {
+
+		ba_put(&BB, id);
+		p = c;
+		c = c->next;
+
+		while (c != NULL) {
+			lost_to = group_pointed(c);
+			id = lost_to->id;
+			if (id == oid || ba_ison(&BB, id)) {
+				// remove connection and advance
+				c = c->next;		
+				p->next = c; //FIXME mem leak?
+			}
+			else {
+				// remember and advance
+				ba_put(&BB, id);
+				p = c;
+				c = c->next;
+			}
+		}
+	}
+
+	ba_done(&BA);
+	ba_done(&BB);
 
 	return;
 }
@@ -846,7 +848,6 @@ simplify (group_t *g)
 		}
 	
 	} while (combined);
-
 
 	//printf("----final----\n");
 	simplify_shrink (g);
@@ -1013,7 +1014,7 @@ static int compare_str (const void * a, const void * b)
 }
 
 static void
-print_group_participants(FILE *f, participant_t *pstart)
+print_group_participants (FILE *f, participant_t *pstart)
 {
 	size_t group_n, n, i;
 	const char **arr;
@@ -1048,17 +1049,13 @@ print_group_participants(FILE *f, participant_t *pstart)
 static void
 group_output(FILE *f, group_t *s)
 {		
-//	participant_t *p;
 	connection_t *c;
 	int own_id;
 	int winconnections = 0, lossconnections = 0;
 	assert(s);
 	own_id = s->id;
-//	for (p = s->pstart; p != NULL; p = p->next) {
-//		fprintf (f," | %s\n",p->name);
-//	}
 
-print_group_participants(f,s->pstart);
+	print_group_participants (f, s->pstart);
 
 	for (c = s->cstart; c != NULL; c = c->next) {
 		group_t *gr = group_pointed(c);
@@ -1080,27 +1077,23 @@ print_group_participants(f,s->pstart);
 		} else
 			fprintf (f,"pointed by node NULL\n");
 	}
-
-		if (winconnections == 0 && lossconnections == 0) {
-			fprintf (f," \\---> this group is isolated from the rest\n");
-		} 
-
+	if (winconnections == 0 && lossconnections == 0) {
+		fprintf (f," \\---> this group is isolated from the rest\n");
+	} 
 }
 
 static bool_t encounter_is_SW(const struct ENC *e) 
 {
 	return e->W > 0 && e->D == 0 && e->L == 0;
-//	return (e->played - e->wscore) < 0.0001;
 }
 
 static bool_t encounter_is_SL(const struct ENC *e) 
 {
 	return e->W == 0 && e->D == 0 && e->L > 0;
-//	return              e->wscore  < 0.0001;
 }
 
 void
-scan_encounters(const struct ENC *enc, gamesnum_t N_enc, player_t N_plyrs)
+scan_encounters(const struct ENC *enc, gamesnum_t n_enc, player_t n_plyrs)
 {
 	player_t i;
 	gamesnum_t e;
@@ -1110,12 +1103,12 @@ scan_encounters(const struct ENC *enc, gamesnum_t N_enc, player_t N_plyrs)
 	assert (SE != NULL);
 	assert (SE2!= NULL);
 
-	N_groups = N_plyrs;
-	for (i = 0; i < N_plyrs; i++) {
+	N_groups = n_plyrs;
+	for (i = 0; i < n_plyrs; i++) {
 		Group_belong[i] = (int32_t)i;
 	}
 
-	for (e = 0; e < N_enc; e++) {
+	for (e = 0; e < n_enc; e++) {
 
 		pe = &enc[e];
 		if (encounter_is_SL(pe) || encounter_is_SW(pe)) {
@@ -1127,7 +1120,7 @@ scan_encounters(const struct ENC *enc, gamesnum_t N_enc, player_t N_plyrs)
 				lowerg   = gw < gb? gw : gb;
 				higherg  = gw > gb? gw : gb;
 				// join
-				for (i = 0; i < N_plyrs; i++) {
+				for (i = 0; i < n_plyrs; i++) {
 					if (Group_belong[i] == higherg) {
 						Group_belong[i] = lowerg;
 					}
@@ -1352,6 +1345,8 @@ connection_buffer_done(struct CONNECT_BUFFER *x)
 	}
 	x->n = 0;
 }
+
+
 bool_t
 groups_process (bool_t quiet, const struct ENCOUNTERS *encounters, const struct PLAYERS *players, FILE *groupf) 
 {
@@ -1399,6 +1394,7 @@ groups_process (bool_t quiet, const struct ENCOUNTERS *encounters, const struct 
 	} 
 	return ok;
 }
+
 
 bool_t
 groups_process_to_count (const struct ENCOUNTERS *encounters, const struct PLAYERS *players, long *n) 

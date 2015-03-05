@@ -24,6 +24,7 @@
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
 #include <stdio.h>
+
 #include "boolean.h"
 #include "ordolim.h"
 #include "mytypes.h"
@@ -82,20 +83,35 @@ struct CONNECT_BUFFER {
 	gamesnum_t			max;
 };
 
-//
+extern void 	scan_encounters	( const struct ENC Encounter[]
+								, gamesnum_t N_encounters
+								, player_t N_players);
 
-extern void scan_encounters(const struct ENC Encounter[], gamesnum_t N_encounters, player_t N_players);
-extern long	convert_to_groups(FILE *f, player_t N_plyers, const char **name);
-extern void	sieve_encounters(const struct ENC *enc, gamesnum_t N_enc, struct ENC *enca, gamesnum_t *N_enca, struct ENC *encb, gamesnum_t *N_encb);
+extern long		convert_to_groups(FILE *f, player_t N_plyers, const char **name);
+
+extern void		sieve_encounters( const struct ENC *enc
+								, gamesnum_t N_enc
+								, struct ENC *enca
+								, gamesnum_t *N_enca
+								, struct ENC *encb
+								, gamesnum_t *N_encb);
 
 extern bool_t 	supporting_encmem_init (gamesnum_t nenc);
+
 extern void 	supporting_encmem_done (void);
 
 extern bool_t 	supporting_groupmem_init (player_t nplayers, gamesnum_t nenc);
+
 extern void 	supporting_groupmem_done (void);
 
-extern bool_t	groups_process (bool_t quiet, const struct ENCOUNTERS *encounters, const struct PLAYERS *players, FILE *groupf);
-extern bool_t	groups_process_to_count (const struct ENCOUNTERS *encounters, const struct PLAYERS *players, long *n);
+extern bool_t	groups_process 	( bool_t quiet
+								, const struct ENCOUNTERS *encounters
+								, const struct PLAYERS *players
+								, FILE *groupf);
+
+extern bool_t	groups_process_to_count ( const struct ENCOUNTERS *encounters
+										, const struct PLAYERS *players
+										, long *n);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif
