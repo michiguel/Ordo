@@ -1095,6 +1095,15 @@ static bool_t encounter_is_SL(const struct ENC *e)
 void
 scan_encounters(const struct ENC *enc, gamesnum_t n_enc, player_t n_plyrs)
 {
+/*
+	static variables modified:
+		N_groups
+		Groups_belong
+		SE
+		N_se
+		SE2
+		N_se2
+*/
 	player_t i;
 	gamesnum_t e;
 	const struct ENC *pe;
@@ -1102,6 +1111,11 @@ scan_encounters(const struct ENC *enc, gamesnum_t n_enc, player_t n_plyrs)
 
 	assert (SE != NULL);
 	assert (SE2!= NULL);
+	assert (N_se  == 0);
+	assert (N_se2 == 0);
+
+	N_se  = 0;
+	N_se2 = 0;
 
 	N_groups = n_plyrs;
 	for (i = 0; i < n_plyrs; i++) {
