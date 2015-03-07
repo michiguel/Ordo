@@ -271,7 +271,8 @@ adjust_wadv (double start_wadv, const double *ratingof, gamesnum_t n_enc, const 
 		ek = unfit_wadv (wa + delta, &p);
 
 		if (ei >= ej && ej <= ek) {
-			delta = delta / 2;
+			wa = quadfit1d	(MIN_RESOL, wa - delta, wa + delta, unfit_wadv, &p);
+			break;
 		} else
 		if (ej >= ei && ei <= ek) {
 			wa -= delta;
