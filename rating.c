@@ -232,19 +232,43 @@ overallerrorE_fwadv (gamesnum_t n_enc, const struct ENC *enc, const double *rati
 	return dp2/(double)tot;
 }
 
+struct UNFITWADV {
+	gamesnum_t n_enc;
+	const struct ENC *enc;
+	const double *ratingof;
+	double beta;
+};
+
+static double
+unfit_wadv (double x, const void *p)
+{
+	double r;
+	const struct UNFITWADV *q = p;
+	assert(!is_nan(x));
+	r = overallerrorE_fwadv (q->n_enc, q->enc, q->ratingof, q->beta, x);
+	assert(!is_nan(r));
+	return r;
+}
+
 static double
 adjust_wadv (double start_wadv, const double *ratingof, gamesnum_t n_enc, const struct ENC *enc, double beta, double start_delta)
 {
 	double delta, wa, ei, ej, ek;
+	struct UNFITWADV p;
 
 	delta = start_delta;
 	wa = start_wadv;
 
+	p.n_enc 	= n_enc;
+	p.enc   	= enc;
+	p.ratingof 	= ratingof;
+	p.beta		= beta;
+
 	do {	
 
-		ei = overallerrorE_fwadv (n_enc, enc, ratingof, beta, wa - delta);
-		ej = overallerrorE_fwadv (n_enc, enc, ratingof, beta, wa + 0    );     
-		ek = overallerrorE_fwadv (n_enc, enc, ratingof, beta, wa + delta);
+		ei = unfit_wadv (wa - delta, &p);
+		ej = unfit_wadv (wa + 0    , &p);     
+		ek = unfit_wadv (wa + delta, &p);
 
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 2;
