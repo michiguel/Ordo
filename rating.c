@@ -645,15 +645,13 @@ calc_rating2 	( bool_t 			quiet
 				doneonce = TRUE;
 				wa_progress = wa_previous > white_adv? wa_previous - white_adv: white_adv - wa_previous;
 				wa_previous = white_adv;
-				if (!quiet)
-					printf ("Adjusted White Advantage = %.1f\n",white_adv);
 		}
-
 		if (adjust_draw_rate) {
 				draw_rate = adjust_drawrate (white_adv, ratingof, n_enc, enc, BETA);
-				if (!quiet)
-					printf ("Adjusted Draw Rate = %.1f %s\n\n", 100*draw_rate, "%");
 		} 
+
+		if (!quiet)	printf ("\nWhite Advantage = %.1f", white_adv);
+		if (!quiet)	printf ("\nDraw Rate (eq.) = %.1f %s\n\n", 100*draw_rate, "%");
 
 		if (anchored_n == 1 && anchor_use)
 			adjust_rating_byanchor (anchor, general_average, n_players, ratingof);

@@ -430,9 +430,11 @@ calc_rating_bayes2
 		}
 	}
 
-	if (!quiet) 
-		printf ("done\n\n");
-
+	if (!quiet) {
+		printf ("done\n");
+		printf ("\nWhite Advantage = %.1f", white_advantage);
+		printf ("\nDraw Rate (eq.) = %.1f %s\n\n", 100*deq, "%");
+	}
 	if (!quiet && super_players_present(n_players, performance_type)) 
 		printf ("Post-Convergence rating estimation for all-wins / all-losses players\n\n");
 
