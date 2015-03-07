@@ -86,5 +86,24 @@ ctsout		( const struct PLAYERS *p
 			, const struct DEVIATION_ACC *s
 			, const char *out);
 
+void
+look_at_predictions 
+			( gamesnum_t n_enc
+			, const struct ENC *enc
+			, const double *ratingof
+			, double beta
+			, double wadv
+			, double dr0);
+
+void 
+look_at_individual_deviation 
+			( player_t 			n_players
+			, const bool_t *	flagged
+			, struct RATINGS *	rat
+			, struct ENC *		enc
+			, gamesnum_t		n_enc
+			, double			white_adv
+			, double			beta);
+
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

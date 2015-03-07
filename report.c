@@ -8,8 +8,10 @@
 #include "string.h"
 #include "gauss.h"
 #include "math.h"
-
 #include "ordolim.h"
+
+#include "xpect.h"
+#include "mymem.h"
 
 #define MINGAMES 1000
 
@@ -683,6 +685,91 @@ ctsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_
 	} else {
 		fprintf(stderr, "Errors with file: %s\n",out);	
 	}
+	return;
+}
+
+
+void
+look_at_individual_deviation 
+			( player_t 			n_players
+			, const bool_t *	flagged
+			, struct RATINGS *	rat
+			, struct ENC *		enc
+			, gamesnum_t		n_enc
+			, double			white_adv
+			, double			beta)
+{
+	double accum = 0;
+	double diff;
+	player_t j;
+	size_t allocsize = sizeof(double) * (size_t)(n_players+1);
+	double *expected = memnew(allocsize);
+
+	if (expected) {
+		printf ("\nResidues\n\n");
+		calc_expected(enc, n_enc, white_adv, n_players, rat->ratingof, expected, beta);
+		for (accum = 0, j = 0; j < n_players; j++) {
+			if (!flagged[j]) {
+				diff = expected[j] - rat->obtained [j];
+				accum += diff * diff / (double)rat->playedby[j];
+				printf ("player[%lu] = %+lf\n", j, diff);
+			}
+		}		
+		free (expected);
+	} else {
+		fprintf(stderr, "Lack of memory to show individual deviations\n");
+	}
+	printf ("\nAverage residues = %lf\n", sqrt(accum));
+	return;
+}
+
+
+void
+look_at_predictions (gamesnum_t n_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv, double dr0)
+{
+	gamesnum_t e;
+	player_t w, b;
+	double W,D,L;
+
+	gamesnum_t white_wins = 0, black_wins = 0, total_draw = 0;
+	double white_win_exp = 0;
+	double white_dra_exp = 0;
+	double white_bla_exp = 0;
+	
+	double pw, pd, pl;
+
+	for (e = 0; e < n_enc; e++) {
+		w = enc[e].wh;
+		b = enc[e].bl;
+		W = (double)enc[e].W;
+		D = (double)enc[e].D;
+		L = (double)enc[e].L;
+
+		get_pWDL(ratingof[w] + wadv - ratingof[b], &pw, &pd, &pl, dr0, beta);
+
+		white_wins += enc[e].W;
+		total_draw += enc[e].D;
+		black_wins += enc[e].L;
+
+		white_win_exp += (W + D + L) * pw;
+		white_dra_exp += (W + D + L) * pd;
+		white_bla_exp += (W + D + L) * pl;
+	}
+
+	printf ("------------------------------------\n");
+	printf ("Draw Rate = %lf\n", dr0);
+	printf ("White Adv = %lf\n", wadv);
+	printf ("\n");
+	printf ("Observed\n");
+	printf ("white wins = %ld\n", white_wins);
+	printf ("total draw = %ld\n", total_draw);
+	printf ("black wins = %ld\n", black_wins);
+	printf ("\n");
+	printf ("Predicted\n");
+	printf ("white wins = %.2lf\n", white_win_exp);
+	printf ("total draw = %.2lf\n", white_dra_exp);
+	printf ("black wins = %.2lf\n", white_bla_exp);
+	printf ("------------------------------------\n");
 	return;
 }
 

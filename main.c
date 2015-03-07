@@ -1079,6 +1079,26 @@ int main (int argc, char *argv[])
 				, OUTDECIMALS
 				, outqual);
 
+	#if 0
+	look_at_predictions 
+				( Encounters.n
+				, Encounters.enc
+				, RA.ratingof
+				, BETA
+				, White_advantage
+				, Drawrate_evenmatch);
+	#endif
+	#if 0
+	look_at_individual_deviation 
+				( Players.n
+				, Players.flagged
+				, &RA
+				, Encounters.enc
+				, Encounters.n
+				, White_advantage
+				, BETA);
+	#endif
+
 	if (Simulate > 1 && NULL != ematstr) {
 		errorsout(&Players, &RA, sim, ematstr, Confidence_factor);
 	}

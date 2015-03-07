@@ -37,7 +37,7 @@
 #define START_RESOL        10.0
 #define ACCEPTABLE_RESOL      MIN_RESOL
 #define PRECISIONERROR        (1E-16)
-#define DRAWRATE_RESOLUTION   0.0001
+#define DRAWRATE_RESOLUTION   0.0000001
 
 //-------------------------------------------------------------------------
 
@@ -240,7 +240,7 @@ adjust_wadv (double start_wadv, const double *ratingof, gamesnum_t n_enc, const 
 		}
 
 	} while (
-		delta > 0.01 
+		delta > MIN_RESOL 
 		&& -1000 < wa && wa < 1000
 	);
 	
