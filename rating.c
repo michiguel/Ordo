@@ -713,21 +713,44 @@ overallerrorE_fdrawrate (gamesnum_t n_enc, const struct ENC *enc, const double *
 }
 
 
+struct UNFITDRAWRATE {
+	gamesnum_t n_enc;
+	const struct ENC *enc;
+	const double *ratingof;
+	double beta;
+	double wadv;
+};
+
+static double
+unfit_drawrate (double x, const void *p)
+{
+	double r;
+	const struct UNFITDRAWRATE *q = p;
+	assert(!is_nan(x));
+	r = overallerrorE_fdrawrate (q->n_enc, q->enc, q->ratingof, q->beta, q->wadv, x);
+	assert(!is_nan(r));
+	return r;
+}
+
 static double
 adjust_drawrate (double start_wadv, const double *ratingof, gamesnum_t n_enc, const struct ENC *enc, double beta)
 {
-	double delta, wa, ei, ej, ek, dr;
+	double delta, ei, ej, ek, dr;
 	double lo,hi;
+	struct UNFITDRAWRATE p;
+	p.n_enc 	= n_enc;
+	p.enc   	= enc;
+	p.ratingof 	= ratingof;
+	p.beta		= beta;
+	p.wadv		= start_wadv;
 
 	delta = 0.5;
-	wa = start_wadv;
-
 	dr = 0.5;
 
 	do {	
-		ei = overallerrorE_fdrawrate (n_enc, enc, ratingof, beta, wa, dr - delta);
-		ej = overallerrorE_fdrawrate (n_enc, enc, ratingof, beta, wa, dr + 0    );     
-		ek = overallerrorE_fdrawrate (n_enc, enc, ratingof, beta, wa, dr + delta);
+		ei = unfit_drawrate (dr - delta, &p);
+		ej = unfit_drawrate (dr + 0    , &p);     
+		ek = unfit_drawrate (dr + delta, &p);
 
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 2;
