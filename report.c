@@ -712,7 +712,7 @@ look_at_individual_deviation
 			if (!flagged[j]) {
 				diff = expected[j] - rat->obtained [j];
 				accum += diff * diff / (double)rat->playedby[j];
-				printf ("player[%lu] = %+lf\n", j, diff);
+				printf ("player[%lu] = %+lf\n", (long unsigned) j, diff);
 			}
 		}		
 		free (expected);
@@ -761,9 +761,9 @@ look_at_predictions (gamesnum_t n_enc, const struct ENC *enc, const double *rati
 	printf ("White Adv = %lf\n", wadv);
 	printf ("\n");
 	printf ("Observed\n");
-	printf ("white wins = %ld\n", white_wins);
-	printf ("total draw = %ld\n", total_draw);
-	printf ("black wins = %ld\n", black_wins);
+	printf ("white wins = %ld\n", (long) white_wins);
+	printf ("total draw = %ld\n", (long) total_draw);
+	printf ("black wins = %ld\n", (long) black_wins);
 	printf ("\n");
 	printf ("Predicted\n");
 	printf ("white wins = %.2lf\n", white_win_exp);
