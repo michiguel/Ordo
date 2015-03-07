@@ -753,7 +753,8 @@ adjust_drawrate (double start_wadv, const double *ratingof, gamesnum_t n_enc, co
 		ek = unfit_drawrate (dr + delta, &p);
 
 		if (ei >= ej && ej <= ek) {
-			delta = delta / 2;
+			dr = quadfit1d	(DRAWRATE_RESOLUTION, dr - delta, dr + delta, unfit_drawrate, &p);
+			break;
 		} else
 		if (ej >= ei && ei <= ek) {
 			dr -= delta;
