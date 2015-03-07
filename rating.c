@@ -189,13 +189,14 @@ adjust_rating_byanchor (player_t anchor, double general_average, player_t n_play
 	}	
 }
 
+
 static double
 overallerrorE_fwadv (gamesnum_t n_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv)
 {
-	gamesnum_t e;
+	gamesnum_t e, t, total=0;
 	player_t w, b;
 	double dp2, f;
-	double W,D,L;
+	double W,D;
 	double cal, obt; // calculated, obtained
 
 	for (cal = 0, obt = 0, e = 0; e < n_enc; e++) {
@@ -203,16 +204,17 @@ overallerrorE_fwadv (gamesnum_t n_enc, const struct ENC *enc, const double *rati
 		b = enc[e].bl;
 		W = (double)enc[e].W;
 		D = (double)enc[e].D;
-		L = (double)enc[e].L;
+		t = enc[e].W + enc[e].D + enc[e].L;
 
 		f = xpect (ratingof[w] + wadv, ratingof[b], beta);
 		obt += W + D/2;
-		cal += f * (W + D + L);
+		cal += f * (double)t;
+		total += t;
 	}
 
 	dp2 = (cal - obt) * (cal - obt);	
 
-	return dp2;
+	return dp2/(double)total;
 }
 
 static double
@@ -267,6 +269,9 @@ unfitness		( const struct ENC *enc
 		double dev;
 		calc_expected (enc, n_enc, white_adv, n_players, ratingof, expected, beta);
 		dev = deviation (n_players, flagged, expected, obtained, playedby);
+
+//		dev += overallerrorE_fwadv (n_enc, enc, ratingof, beta, white_adv);
+
 		assert(!is_nan(dev));
 		return dev;
 }
@@ -518,17 +523,16 @@ calc_rating2 	( bool_t 			quiet
 				olddev = curdev;
 
 				resol = adjust_rating 	
-					( delta
-					, kappa*kk
-					, n_players
-					, flagged
-					, prefed
-					, expected 
-					, obtained 
-					, playedby
-					, ratingof
-					, anchored_n
-				);
+							( delta
+							, kappa*kk
+							, n_players
+							, flagged
+							, prefed
+							, expected 
+							, obtained 
+							, playedby
+							, ratingof
+							, anchored_n);
 
 				//calc_expected(enc, n_enc, white_adv, n_players, ratingof, expected, BETA);
 				//curdev = deviation(n_players, flagged, expected, obtained, playedby);
