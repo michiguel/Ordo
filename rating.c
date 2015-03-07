@@ -190,12 +190,13 @@ adjust_rating_byanchor (player_t anchor, double general_average, player_t n_play
 }
 
 
-static double
-overallerrorE_fwadv (gamesnum_t n_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv)
+static void
+white_cal_obt_tot (gamesnum_t n_enc, const struct ENC *enc, const double *ratingof, double beta
+				, double wadv, double *pcal, double *pobt, gamesnum_t *ptot)
 {
 	gamesnum_t e, t, total=0;
 	player_t w, b;
-	double dp2, f;
+	double f;
 	double W,D;
 	double cal, obt; // calculated, obtained
 
@@ -212,9 +213,23 @@ overallerrorE_fwadv (gamesnum_t n_enc, const struct ENC *enc, const double *rati
 		total += t;
 	}
 
-	dp2 = (cal - obt) * (cal - obt);	
+	*pcal = cal;
+	*pobt = obt;
+	*ptot = total;
 
-	return dp2/(double)total;
+	return;
+}
+
+static double
+overallerrorE_fwadv (gamesnum_t n_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv)
+{
+	gamesnum_t tot;
+	double cal, obt; // calculated, obtained
+	double dp2;
+
+	white_cal_obt_tot (n_enc, enc, ratingof, beta, wadv, &cal, &obt, &tot);
+	dp2 = (cal - obt) * (cal - obt);	
+	return dp2/(double)tot;
 }
 
 static double
