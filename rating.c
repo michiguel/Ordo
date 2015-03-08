@@ -452,6 +452,13 @@ ratings_rmsd(player_t n, double *a, double *b)
 }
 #endif
 
+static double
+get_outputdev (double curdev, gamesnum_t n_games)
+{
+	return 1000*sqrt(curdev/(double)n_games);
+}
+
+
 gamesnum_t
 calc_rating2 	( bool_t 			quiet
 				, struct ENC *		enc
@@ -473,7 +480,7 @@ calc_rating2 	( bool_t 			quiet
 {
 	gamesnum_t	n_games = g->n;
 	double 	*	ratingtmp = ratingtmp_buffer;
-	double 		olddev, curdev, outputdev;
+	double 		olddev, curdev;
 	int 		i;
 	int			rounds;
 	double 		delta;
@@ -609,8 +616,7 @@ calc_rating2 	( bool_t 			quiet
 
 					curdev = unfitness ( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, expected, playedby);
 
-					outputdev = 1000*sqrt(curdev/(double)n_games);
-					done = outputdev < min_devia && (absol(resol)+absol(cd)) < MIN_RESOL;
+					done = get_outputdev (curdev, n_games) < min_devia && (absol(resol)+absol(cd)) < MIN_RESOL;
 					kk *= (1.0-1.0/KK_DAMP); //kk *= 0.995;
 				}
 
@@ -618,11 +624,10 @@ calc_rating2 	( bool_t 			quiet
 
 			delta /= damp_delta;
 			kappa *= damp_kappa;
-			outputdev = 1000*sqrt(curdev/(double)n_games);
 
 			if (!quiet) {
-				printf ("%3d %7d %16.9f", phase, i, outputdev);
-				printf ("%14.5f",resol);
+				printf ("%3d %7d %16.9f", phase, i, get_outputdev (curdev, n_games));
+				printf ("%14.5f", resol);
 				//	printf ("%10.5lf",ratings_rmsd(n_players, ratingof, RAT));
 				printf ("\n");
 			}
