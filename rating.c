@@ -189,6 +189,7 @@ adjust_rating_byanchor (player_t anchor, double general_average, player_t n_play
 	}	
 }
 
+//========================= WHITE ADVANTAGE FUNCTIONS ===========================
 
 static void
 white_cal_obt_tot (gamesnum_t n_enc, const struct ENC *enc, const double *ratingof, double beta
@@ -289,7 +290,98 @@ adjust_wadv (double start_wadv, const double *ratingof, gamesnum_t n_enc, const 
 	return wa;
 }
 
-//============ center adjustment begin
+//=================== DRAW RATE FUNCTIONS ===============================
+
+static double
+overallerrorE_fdrawrate (gamesnum_t n_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv, double dr0)
+{
+	gamesnum_t e;
+	player_t w, b;
+	double dp2, f;
+	double W,D,L;
+	double cal, obt; // calculated, obtained
+	double dexp;
+
+	for (cal = 0, obt = 0, e = 0; e < n_enc; e++) {
+		w = enc[e].wh;
+		b = enc[e].bl;
+		W = (double)enc[e].W;
+		D = (double)enc[e].D;
+		L = (double)enc[e].L;
+
+		f = xpect (ratingof[w] + wadv, ratingof[b], beta);
+		dexp = draw_rate_fperf (f, dr0);
+		obt += D;
+		cal += dexp * (W + D + L);
+	}
+
+	dp2 = (cal - obt) * (cal - obt);	
+
+	return dp2;
+}
+
+
+struct UNFITDRAWRATE {
+	gamesnum_t n_enc;
+	const struct ENC *enc;
+	const double *ratingof;
+	double beta;
+	double wadv;
+};
+
+static double
+unfit_drawrate (double x, const void *p)
+{
+	double r;
+	const struct UNFITDRAWRATE *q = p;
+	assert(!is_nan(x));
+	r = overallerrorE_fdrawrate (q->n_enc, q->enc, q->ratingof, q->beta, q->wadv, x);
+	assert(!is_nan(r));
+	return r;
+}
+
+static double
+adjust_drawrate (double start_wadv, const double *ratingof, gamesnum_t n_enc, const struct ENC *enc, double beta)
+{
+	double delta, ei, ej, ek, dr;
+	double lo,hi;
+	struct UNFITDRAWRATE p;
+	p.n_enc 	= n_enc;
+	p.enc   	= enc;
+	p.ratingof 	= ratingof;
+	p.beta		= beta;
+	p.wadv		= start_wadv;
+
+	delta = 0.5;
+	dr = 0.5;
+
+	do {	
+		ei = unfit_drawrate (dr - delta, &p);
+		ej = unfit_drawrate (dr + 0    , &p);     
+		ek = unfit_drawrate (dr + delta, &p);
+
+		if (ei >= ej && ej <= ek) {
+			dr = quadfit1d	(DRAWRATE_RESOLUTION, dr - delta, dr + delta, unfit_drawrate, &p);
+			break;
+		} else
+		if (ej >= ei && ei <= ek) {
+			dr -= delta;
+		} else
+		if (ei >= ek && ek <= ej) {
+			dr += delta;
+		}
+
+		hi = dr+delta > 1.0? 1.0: dr+delta;
+		lo = dr-delta < 0.0? 0.0: dr-delta;
+		dr = (hi+lo)/2;
+		delta = (hi-lo)/2;
+
+	} while (delta > DRAWRATE_RESOLUTION);
+	
+	return dr;
+}
+
+//============ CENTER ADJUSTMENT FUNCTIONS ==================================
 
 static void ratings_copy (const double *r, player_t n, double *t) {player_t i;	for (i = 0; i < n; i++) {t[i] = r[i];}}
 
@@ -309,9 +401,6 @@ unfitness		( const struct ENC *enc
 		double dev;
 		calc_expected (enc, n_enc, white_adv, n_players, ratingof, expected, beta);
 		dev = deviation (n_players, flagged, expected, obtained, playedby);
-
-//		dev += overallerrorE_fwadv (n_enc, enc, ratingof, beta, white_adv);
-
 		assert(!is_nan(dev));
 		return dev;
 }
@@ -434,7 +523,7 @@ optimum_centerdelta	( double 			start_delta
 	return quadfit1d (resolution, lo_d, hi_d, unfitf, &p);
 }
 
-//============ center adjustment end
+//============ MAIN RATING FUNCTION =========================================
 
 #if 0
 static double
@@ -471,7 +560,6 @@ calc_rating2 	( bool_t 			quiet
 				, player_t			anchor
 				, struct GAMES 		*g
 				, double			BETA
-//
 				, bool_t 			adjust_white_advantage
 				, bool_t			adjust_draw_rate
 				, double			*pDraw_date
@@ -675,95 +763,5 @@ calc_rating2 	( bool_t 			quiet
 
 	memrel(expected);
 	return n_enc;
-}
-
-
-static double
-overallerrorE_fdrawrate (gamesnum_t n_enc, const struct ENC *enc, const double *ratingof, double beta, double wadv, double dr0)
-{
-	gamesnum_t e;
-	player_t w, b;
-	double dp2, f;
-	double W,D,L;
-	double cal, obt; // calculated, obtained
-	double dexp;
-
-	for (cal = 0, obt = 0, e = 0; e < n_enc; e++) {
-		w = enc[e].wh;
-		b = enc[e].bl;
-		W = (double)enc[e].W;
-		D = (double)enc[e].D;
-		L = (double)enc[e].L;
-
-		f = xpect (ratingof[w] + wadv, ratingof[b], beta);
-		dexp = draw_rate_fperf (f, dr0);
-		obt += D;
-		cal += dexp * (W + D + L);
-	}
-
-	dp2 = (cal - obt) * (cal - obt);	
-
-	return dp2;
-}
-
-
-struct UNFITDRAWRATE {
-	gamesnum_t n_enc;
-	const struct ENC *enc;
-	const double *ratingof;
-	double beta;
-	double wadv;
-};
-
-static double
-unfit_drawrate (double x, const void *p)
-{
-	double r;
-	const struct UNFITDRAWRATE *q = p;
-	assert(!is_nan(x));
-	r = overallerrorE_fdrawrate (q->n_enc, q->enc, q->ratingof, q->beta, q->wadv, x);
-	assert(!is_nan(r));
-	return r;
-}
-
-static double
-adjust_drawrate (double start_wadv, const double *ratingof, gamesnum_t n_enc, const struct ENC *enc, double beta)
-{
-	double delta, ei, ej, ek, dr;
-	double lo,hi;
-	struct UNFITDRAWRATE p;
-	p.n_enc 	= n_enc;
-	p.enc   	= enc;
-	p.ratingof 	= ratingof;
-	p.beta		= beta;
-	p.wadv		= start_wadv;
-
-	delta = 0.5;
-	dr = 0.5;
-
-	do {	
-		ei = unfit_drawrate (dr - delta, &p);
-		ej = unfit_drawrate (dr + 0    , &p);     
-		ek = unfit_drawrate (dr + delta, &p);
-
-		if (ei >= ej && ej <= ek) {
-			dr = quadfit1d	(DRAWRATE_RESOLUTION, dr - delta, dr + delta, unfit_drawrate, &p);
-			break;
-		} else
-		if (ej >= ei && ei <= ek) {
-			dr -= delta;
-		} else
-		if (ei >= ek && ek <= ej) {
-			dr += delta;
-		}
-
-		hi = dr+delta > 1.0? 1.0: dr+delta;
-		lo = dr-delta < 0.0? 0.0: dr-delta;
-		dr = (hi+lo)/2;
-		delta = (hi-lo)/2;
-
-	} while (delta > DRAWRATE_RESOLUTION);
-	
-	return dr;
 }
 
