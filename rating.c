@@ -475,23 +475,22 @@ calc_rating2 	( bool_t 			quiet
 	double 	*	ratingtmp = ratingtmp_buffer;
 	double 		olddev, curdev, outputdev;
 	int 		i;
-	int			rounds = 10000;
-	double 		delta = START_DELTA;
-	double 		kappa = 0.05;
-	double 		damp_delta = 2;
-	double 		damp_kappa = 2;
-	double 		KK_DAMP = 200.0;
-	int 		phase = 0;
-	int 		n = 20;
-	double 		resol = START_RESOL; // big number at the beginning
-	bool_t		doneonce = FALSE;
+	int			rounds;
+	double 		delta;
+	double 		kappa;
+	double 		damp_delta;
+	double 		damp_kappa;
+	double 		KK_DAMP;
+	int 		phase;
+	int 		n;
+	double 		resol;
 	int 		max_cycle;
 	int 		cycle;
+
 	double 		white_adv = *pWhite_advantage;
 	double 		wa_previous = *pWhite_advantage;
 	double 		wa_progress = START_DELTA;
 	double 		min_devia = MIN_DEVIA;
-	double 		min_resol = START_RESOL;
 	double 		draw_rate = *pDraw_date;
 	double *	expected = NULL;
 	size_t 		allocsize;
@@ -520,6 +519,7 @@ calc_rating2 	( bool_t 			quiet
 
 	max_cycle = adjust_white_advantage? 4: 1;
 
+	resol = START_RESOL;
 	for (cycle = 0; (cycle < max_cycle && wa_progress > 0.01) || resol > ACCEPTABLE_RESOL; cycle++) {
 
 		bool_t done = FALSE;
@@ -532,14 +532,6 @@ calc_rating2 	( bool_t 			quiet
 		damp_kappa = 1.0;
 		phase = 0;
 		n = 1000;
-
-		min_resol = cycle == 0? START_RESOL: (
-					cycle == 1? START_RESOL/100: (
-					cycle == 2? START_RESOL/10000: (
-					MIN_RESOL
-					)));
-
-		doneonce = FALSE;
 
 		calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
 
@@ -556,8 +548,7 @@ calc_rating2 	( bool_t 			quiet
 			last_cd = 100;
 #if 1
 			if (adjust_white_advantage) {
-					white_adv = adjust_wadv (white_adv, ratingof, n_enc, enc, BETA, doneonce? resol: START_DELTA);
-					doneonce = TRUE;
+					white_adv = adjust_wadv (white_adv, ratingof, n_enc, enc, BETA, resol);
 					wa_progress = wa_previous > white_adv? wa_previous - white_adv: white_adv - wa_previous;
 					wa_previous = white_adv;
 			}
@@ -596,7 +587,7 @@ calc_rating2 	( bool_t 			quiet
 					if (anchored_n > 1) {
 						cd = optimum_centerdelta	
 							( last_cd
-							, min_resol > 0.1? 0.1: min_resol
+							, MIN_RESOL
 							, enc
 							, n_enc
 							, n_players
@@ -620,7 +611,7 @@ calc_rating2 	( bool_t 			quiet
 					curdev = unfitness ( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, expected, playedby);
 
 					outputdev = 1000*sqrt(curdev/(double)n_games);
-					done = outputdev < min_devia && (absol(resol)+absol(cd)) < min_resol;
+					done = outputdev < min_devia && (absol(resol)+absol(cd)) < MIN_RESOL;
 					kk *= (1.0-1.0/KK_DAMP); //kk *= 0.995;
 				}
 
@@ -643,8 +634,7 @@ calc_rating2 	( bool_t 			quiet
 		if (!quiet) printf ("done\n");
 
 		if (adjust_white_advantage) {
-				white_adv = adjust_wadv (white_adv, ratingof, n_enc, enc, BETA, doneonce? resol: START_DELTA);
-				doneonce = TRUE;
+				white_adv = adjust_wadv (white_adv, ratingof, n_enc, enc, BETA, resol);
 				wa_progress = wa_previous > white_adv? wa_previous - white_adv: white_adv - wa_previous;
 				wa_previous = white_adv;
 		}
