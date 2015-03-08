@@ -493,7 +493,6 @@ calc_rating2 	( bool_t 			quiet
 	double 		min_devia = MIN_DEVIA;
 	double 		draw_rate = *pDraw_date;
 	double *	expected = NULL;
-	size_t 		allocsize;
 
 	// translation variables for refactoring ------------------
 	player_t		n_players 		= plyrs->n;
@@ -510,17 +509,16 @@ calc_rating2 	( bool_t 			quiet
 
 	//double RAT[20000];
 
-	allocsize = sizeof(double) * (size_t)(n_players+1);
-	expected = memnew(allocsize);
-	if (expected == NULL) {
+	if (NULL == (expected = memnew(sizeof(double) * (size_t)(n_players+1)))) {
 		fprintf(stderr, "Not enough memory to allocate all players\n");
 		exit(EXIT_FAILURE);
 	}
 
 	max_cycle = adjust_white_advantage? 4: 1;
 
-	resol = START_RESOL;
-	for (cycle = 0; (cycle < max_cycle && wa_progress > 0.01) || resol > ACCEPTABLE_RESOL; cycle++) {
+	for (resol = START_RESOL, cycle = 0; 
+		 resol > ACCEPTABLE_RESOL || (cycle < max_cycle && wa_progress > 0.01); 
+		 cycle++) {
 
 		bool_t done = FALSE;
 
@@ -543,10 +541,12 @@ calc_rating2 	( bool_t 			quiet
 		while (!done && n-->0) {
 			bool_t failed = FALSE;
 			double kk = 1.0;
-			double cd, last_cd;
+			double cd;
+			double last_cd = 100;
+
 			// ratings_backup(n_players, ratingof, RAT);
-			last_cd = 100;
-#if 1
+
+			// adjust white advantage and draw rate at the beginning
 			if (adjust_white_advantage) {
 					white_adv = adjust_wadv (white_adv, ratingof, n_enc, enc, BETA, resol);
 					wa_progress = wa_previous > white_adv? wa_previous - white_adv: white_adv - wa_previous;
@@ -555,7 +555,7 @@ calc_rating2 	( bool_t 			quiet
 			if (adjust_draw_rate) {
 					draw_rate = adjust_drawrate (white_adv, ratingof, n_enc, enc, BETA);
 			} 
-#endif
+
 			for (i = 0; i < rounds && !done && !failed; i++) {
 
 				ratings_backup(n_players, ratingof, ratingbk);
@@ -581,8 +581,7 @@ calc_rating2 	( bool_t 			quiet
 					curdev = unfitness ( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, expected, playedby);
 					assert (absol(curdev-olddev) < PRECISIONERROR || 
 								!fprintf(stderr, "curdev=%.10e, olddev=%.10e, diff=%.10e\n", curdev, olddev, olddev-curdev));
-				}	
-				else {
+				} else {
 					cd = 0; // includes the case (anchor_use && anchored_n == 1)
 					if (anchored_n > 1) {
 						cd = optimum_centerdelta	
@@ -615,7 +614,7 @@ calc_rating2 	( bool_t 			quiet
 					kk *= (1.0-1.0/KK_DAMP); //kk *= 0.995;
 				}
 
-			} // end for
+			} // end rounds
 
 			delta /= damp_delta;
 			kappa *= damp_kappa;
@@ -629,7 +628,7 @@ calc_rating2 	( bool_t 			quiet
 			}
 			phase++;
 
-		} // end while
+		} // end n-->0
 
 		if (!quiet) printf ("done\n");
 
@@ -648,7 +647,7 @@ calc_rating2 	( bool_t 			quiet
 		if (anchored_n == 1 && anchor_use)
 			adjust_rating_byanchor (anchor, general_average, n_players, ratingof);
 
-	} //end while 
+	} //end cycles 
 
 
 	if (anchored_n == 0) {
