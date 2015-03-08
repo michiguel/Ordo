@@ -543,8 +543,6 @@ calc_rating2 	( bool_t 			quiet
 
 		calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
 
-//		calc_expected(enc, n_enc, white_adv, n_players, ratingof, expected, BETA);
-//		olddev = curdev = deviation(n_players, flagged, expected, obtained, playedby);
 		olddev = curdev = unfitness	( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, expected, playedby);
 
 		if (!quiet) printf ("\nConvergence rating calculation (cycle #%d)\n\n", cycle+1);
@@ -584,15 +582,11 @@ calc_rating2 	( bool_t 			quiet
 							, ratingof
 							, anchored_n);
 
-				//calc_expected(enc, n_enc, white_adv, n_players, ratingof, expected, BETA);
-				//curdev = deviation(n_players, flagged, expected, obtained, playedby);
 				curdev = unfitness ( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, expected, playedby);
 				failed = curdev >= olddev;
 
 				if (failed) {
 					ratings_restore(n_players, ratingbk, ratingof);
-					//calc_expected(enc, n_enc, white_adv, n_players, ratingof, expected, BETA);
-					//curdev = deviation(n_players, flagged, expected, obtained, playedby);	
 					curdev = unfitness ( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, expected, playedby);
 					assert (absol(curdev-olddev) < PRECISIONERROR || 
 								!fprintf(stderr, "curdev=%.10e, olddev=%.10e, diff=%.10e\n", curdev, olddev, olddev-curdev));
@@ -623,8 +617,6 @@ calc_rating2 	( bool_t 			quiet
 						mobile_center_apply_excess (cd, n_players, flagged, prefed, ratingof);
 					}
 
-					//calc_expected(enc, n_enc, white_adv, n_players, ratingof, expected, BETA);
-					//curdev = deviation(n_players, flagged, expected, obtained, playedby);	
 					curdev = unfitness ( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, expected, playedby);
 
 					outputdev = 1000*sqrt(curdev/(double)n_games);
