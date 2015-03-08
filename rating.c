@@ -518,9 +518,9 @@ calc_rating2 	( bool_t 			quiet
 		exit(EXIT_FAILURE);
 	}
 
-	max_cycle = adjust_white_advantage? 10: 1;
+	max_cycle = adjust_white_advantage? 4: 1;
 
-	for (cycle = 0; (cycle < max_cycle && wa_progress > 0.01) || min_resol > ACCEPTABLE_RESOL; cycle++) {
+	for (cycle = 0; (cycle < max_cycle && wa_progress > 0.01) || resol > ACCEPTABLE_RESOL; cycle++) {
 
 		bool_t done = FALSE;
 
@@ -556,7 +556,17 @@ calc_rating2 	( bool_t 			quiet
 			double cd, last_cd;
 			// ratings_backup(n_players, ratingof, RAT);
 			last_cd = 100;
-
+#if 1
+			if (adjust_white_advantage) {
+					white_adv = adjust_wadv (white_adv, ratingof, n_enc, enc, BETA, doneonce? resol: START_DELTA);
+					doneonce = TRUE;
+					wa_progress = wa_previous > white_adv? wa_previous - white_adv: white_adv - wa_previous;
+					wa_previous = white_adv;
+			}
+			if (adjust_draw_rate) {
+					draw_rate = adjust_drawrate (white_adv, ratingof, n_enc, enc, BETA);
+			} 
+#endif
 			for (i = 0; i < rounds && !done && !failed; i++) {
 
 				ratings_backup(n_players, ratingof, ratingbk);

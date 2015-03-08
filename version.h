@@ -1,2 +1,2 @@
-#define VERSION "v0.9.9.2-cln9-ml2-gr2-wadv12"
+#define VERSION "v0.9.9.2-cln9-ml2-gr2-wadv13"
 
