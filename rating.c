@@ -686,8 +686,8 @@ calc_rating2 	( bool_t 			quiet
 				if (failed) {
 					ratings_restore(n_players, ratingbk, ratingof);
 					curdev = unfitness ( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, expected, playedby);
-					assert (absol(curdev-olddev) < PRECISIONERROR || 
-								!fprintf(stderr, "curdev=%.10e, olddev=%.10e, diff=%.10e\n", curdev, olddev, olddev-curdev));
+					assert (i == 0 || absol(curdev-olddev) < PRECISIONERROR || 
+								!fprintf(stderr, "i=%d, curdev=%.10e, olddev=%.10e, diff=%.10e\n", i, curdev, olddev, olddev-curdev));
 				} else {
 					cd = 0; // includes the case (anchor_use && anchored_n == 1)
 					if (anchored_n > 1) {
