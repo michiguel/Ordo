@@ -129,6 +129,45 @@ calc_obtained_playedby (const struct ENC *enc, gamesnum_t N_enc, player_t n_play
 	}
 }
 
+#if !defined(NDEBUG)
+static bool_t is_nan (double x) {if (x != x) return TRUE; else return FALSE;}
+#endif
+
+#if !defined(NDEBUG)
+bool_t
+ratings_sanity (player_t n_players, const double *ratingof)
+{
+	player_t 	j;
+	bool_t found_nan = FALSE;
+	for (j = 0; j < n_players && !found_nan; j++) {
+		found_nan = is_nan(ratingof[j]);
+	}
+	if (found_nan) {
+		for (j = 0; j < n_players; j++) {
+			fprintf(stderr, "rating[%ld] = %lf\n",j,ratingof[j]);
+		}
+	}
+	return !found_nan;
+}
+
+
+bool_t
+playedby_sanity (player_t n_players, const gamesnum_t *pb, const bool_t *flagged)
+{
+	player_t 	j;
+	bool_t found_bad = FALSE;
+	for (j = 0; j < n_players && !found_bad; j++) {
+		found_bad = !(pb[j] > 0) && !flagged[j];
+	}
+	if (found_bad) {
+		for (j = 0; j < n_players; j++) {
+			fprintf(stderr, "fl=%d playedby[%ld] = %ld\n",flagged[j],j,(long)pb[j]);
+		}
+	}
+	return !found_bad;
+}
+#endif
+
 // no globals
 void
 calc_expected 	( const struct ENC *enc
@@ -143,13 +182,21 @@ calc_expected 	( const struct ENC *enc
 	player_t 	j;
 	gamesnum_t 	e;
 	double wperf;
+
+	assert(ratings_sanity (n_players, ratingof));
+
 	for (j = 0; j < n_players; j++) {
 		expected[j] = 0.0;	
 	}	
 	for (e = 0; e < N_enc; e++) {
 		w = enc[e].wh;
 		b = enc[e].bl;
+		assert(!is_nan ((double)enc[e].played) );
+		assert(!is_nan (white_advantage)       );
+		assert(!is_nan (ratingof[w])           );
+		assert(!is_nan (ratingof[b])           || !printf("b=%ld\n",(long)b));
 		wperf = (double)enc[e].played * xpect (ratingof[w] + white_advantage, ratingof[b], beta);
+		assert(!is_nan(wperf));
 		expected [b] += (double)enc[e].played - wperf; 
 		expected [w] += wperf; 
 	}

@@ -81,6 +81,7 @@ deviation (player_t n_players, const bool_t *flagged, const double *expected, co
 			accum += diff * diff / (double)playedby[j];
 		}
 	}		
+	assert(!is_nan(accum));
 	return accum;
 }
 
@@ -139,6 +140,7 @@ adjust_rating 	( double delta
 	double 	y = 1.0;
 	double 	ymax = 0;
 
+	assert (kappa > 0);
 	/*
 	|	1) delta and 2) kappa control convergence speed:
 	|	Delta is the standard increase/decrease for each player
@@ -153,12 +155,15 @@ adjust_rating 	( double delta
 	for (j = 0; j < n_players; j++) {
 		assert(flagged[j] == TRUE || flagged[j] == FALSE);
 		assert(prefed [j] == TRUE || prefed [j] == FALSE);
+		if (flagged[j])
+			continue;
 		if (anchored_n > 1)	{
 			if (	flagged[j]	// player previously removed
 				|| 	prefed[j]	// already set, one of the multiple anchors
 			) continue; 
 		}
 
+		assert(playedby[j] > 0);
 		// find multiplier "y"
 		d = (expected[j] - obtained[j]) / (double)playedby[j];
 		d = d < 0? -d: d;
@@ -172,6 +177,7 @@ adjust_rating 	( double delta
 		} else {
 			ratingof[j] += delta * y;
 		}
+		assert(!is_nan(ratingof[j]));
 	}
 
 	// Return maximum increase/decrease ==> "resolution"
@@ -604,6 +610,7 @@ calc_rating2 	( bool_t 			quiet
 
 	//double RAT[20000];
 
+	assert(ratings_sanity (n_players, ratingof));
 	if (NULL == (expected = memnew(sizeof(double) * (size_t)(n_players+1)))) {
 		fprintf(stderr, "Not enough memory to allocate all players\n");
 		exit(EXIT_FAILURE);
@@ -627,6 +634,7 @@ calc_rating2 	( bool_t 			quiet
 		n = 1000;
 
 		calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
+		assert(playedby_sanity (n_players, playedby, flagged));
 
 		olddev = curdev = unfitness	( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, expected, playedby);
 
@@ -641,6 +649,7 @@ calc_rating2 	( bool_t 			quiet
 
 			// ratings_backup(n_players, ratingof, RAT);
 
+			assert(ratings_sanity (n_players, ratingof)); //%%
 			// adjust white advantage and draw rate at the beginning
 			if (adjust_white_advantage) {
 					white_adv = adjust_wadv (white_adv, ratingof, n_enc, enc, BETA, resol);
@@ -655,6 +664,9 @@ calc_rating2 	( bool_t 			quiet
 
 				ratings_backup(n_players, ratingof, ratingbk);
 				olddev = curdev;
+
+				assert(ratings_sanity (n_players, ratingof)); //%%
+				assert(playedby_sanity (n_players, playedby, flagged)); //%%
 
 				resol = adjust_rating 	
 							( delta

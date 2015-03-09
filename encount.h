@@ -56,5 +56,13 @@ calc_expected 	( const struct ENC *enc
 				, double *expected
 				, double beta);
 
+#if !defined(NDEBUG)
+extern bool_t
+ratings_sanity (player_t n_players, const double *ratingof);
+
+extern bool_t
+playedby_sanity (player_t n_players, const gamesnum_t *pb, const bool_t *flagged);
+#endif
+
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

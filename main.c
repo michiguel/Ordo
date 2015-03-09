@@ -977,6 +977,8 @@ int main (int argc, char *argv[])
 					// may improve convergence in pathological cases, it should not be needed.
 					reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingof);
 					reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingbk);
+					assert(ratings_sanity (Players.n, RA.ratingof));
+					assert(ratings_sanity (Players.n, RA.ratingbk));
 
 					calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 					if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
@@ -1412,6 +1414,8 @@ calc_rating ( bool_t quiet, bool_t ml, struct ENC *enc, gamesnum_t N_enc, double
 
 		assert(plyrs->n > 0);
 		if (NULL != (ratingtmp_memory = memnew (sizeof(double) * (size_t)plyrs->n))) {
+
+			assert(ratings_sanity (plyrs->n, rat->ratingof)); //%%
 
 			ret = calc_rating2 	
 					( quiet
