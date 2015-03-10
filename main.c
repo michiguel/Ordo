@@ -956,41 +956,39 @@ int main (int argc, char *argv[])
 					}
 					players_clear_flagged (&Players);
 
-do {
-					simulate_scores ( RA.ratingof_results
-									, Drawrate_evenmatch
-									, White_advantage
-									, BETA
-									, &Games //out
-					);
+					failed_sim = 0;
+					do {
+						simulate_scores ( RA.ratingof_results
+										, Drawrate_evenmatch
+										, White_advantage
+										, BETA
+										, &Games //out
+						);
 
-					relpriors_copy(&RPset, &RPset_store); 
-					priors_copy(PP, Players.n, PP_store);
-					relpriors_shuffle(&RPset);
-					priors_shuffle(PP, Players.n);
+						relpriors_copy(&RPset, &RPset_store); 
+						priors_copy(PP, Players.n, PP_store);
+						relpriors_shuffle(&RPset);
+						priors_shuffle(PP, Players.n);
 
-					#if defined(SAVE_SIMULATION)
-					if ((Simulate-z) == SAVE_SIMULATION_N) {
-						save_simulated(&Players, &Games, (int)(Simulate-z)); 
-					}
-					#endif
+						#if defined(SAVE_SIMULATION)
+						if ((Simulate-z) == SAVE_SIMULATION_N) {
+							save_simulated(&Players, &Games, (int)(Simulate-z)); 
+						}
+						#endif
 
-					// may improve convergence in pathological cases, it should not be needed.
-					reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingof);
-					reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingbk);
-					assert(ratings_sanity (Players.n, RA.ratingof));
-					assert(ratings_sanity (Players.n, RA.ratingbk));
+						// may improve convergence in pathological cases, it should not be needed.
+						reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingof);
+						reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingbk);
+						assert(ratings_sanity (Players.n, RA.ratingof));
+						assert(ratings_sanity (Players.n, RA.ratingbk));
 
-					calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
-					if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
-						purge_players (QUIET_MODE, &Players);
-						calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
-					}
+						calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
+						if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
+							purge_players (QUIET_MODE, &Players);
+							calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
+						}
 
-} while (
-	failed_sim++ < 100) &&
-	!group_is_problematic (&Encounters, &Players)
-);
+					} while (failed_sim++ < 100 && group_is_problematic (&Encounters, &Players));
 
 					Encounters.n = calc_rating
 									( QUIET_MODE

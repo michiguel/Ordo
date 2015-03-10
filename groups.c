@@ -1477,7 +1477,6 @@ group_is_problematic(const struct ENCOUNTERS *encounters, const struct PLAYERS *
 	bool_t ok = FALSE;
 	if (supporting_encmem_init (encounters->n)) {
 		if (supporting_groupmem_init (players->n, encounters->n)) {
-			ok = TRUE;
 			scan_encounters(encounters->enc, encounters->n, players->n); 
 			n = convert_to_groups(NULL, players->n, players->name);
 			if (n == 1) {
@@ -1493,5 +1492,5 @@ group_is_problematic(const struct ENCOUNTERS *encounters, const struct PLAYERS *
 		}
 		supporting_encmem_done ();
 	} 
-	return ok;
+	return !ok;
 }
