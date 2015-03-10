@@ -662,6 +662,8 @@ calc_rating2 	( bool_t 			quiet
 
 			for (i = 0; i < rounds && !done && !failed; i++) {
 
+				cd = 0;
+
 				ratings_backup(n_players, ratingof, ratingbk);
 				olddev = curdev;
 
@@ -715,10 +717,10 @@ calc_rating2 	( bool_t 			quiet
 					}
 
 					curdev = unfitness ( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, expected, playedby);
-
-					done = get_outputdev (curdev, n_games) < min_devia && (absol(resol)+absol(cd)) < MIN_RESOL;
 					kk *= (1.0-1.0/KK_DAMP); //kk *= 0.995;
 				}
+
+				done = get_outputdev (curdev, n_games) < min_devia && (absol(resol)+absol(cd)) < MIN_RESOL;
 
 			} // end rounds
 

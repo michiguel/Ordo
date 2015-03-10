@@ -137,7 +137,7 @@ quadfit1d_2 (double limit,
 	assert(!is_nan(limit));
 	assert(!is_nan(x1) && !is_nan(x2) && !is_nan(x3) && !is_nan(ya) && !is_nan(yb) && !is_nan(yc));
 	assert (yc >= yb && ya >= yb);
-	assert (x3 > x2 && x2 > x1);
+	assert ((x3 > x2 && x2 > x1) || !fprintf(stderr, "x1=%lf, x2=%lf, x3=%lf\n",x1,x2,x3));
 
 	x[1] = x1;
 	x[2] = x2;
@@ -259,8 +259,10 @@ quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const 
 	ei = unfitnessf	(xi, p);
 	ej = unfitnessf	(xj, p);
 	ek = unfitnessf	(xk, p);
-
 	// find if the input is quasi-flat, the return center
+
+	if (!(ej > 0)) 
+		return xj;
 	r1 = (ei <= ej)? ej/ei: ei/ej;
 	r2 = (ej <= ek)? ek/ej: ej/ek;
 	if (r1 < 1.0000001 && r2 < 1.0000001) {
@@ -272,7 +274,6 @@ quadfit1d	(double limit, double a, double b, double (*unfitnessf)(double, const 
 		assert(!is_nan(ei));
 		assert(!is_nan(ej));
 		assert(!is_nan(ek));
-
 		if (ei >= ej && ej <= ek) {
 			double r;
 			assert(!is_nan(xi));
