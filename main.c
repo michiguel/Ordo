@@ -906,7 +906,7 @@ int main (int argc, char *argv[])
 
 	/* Simulation block, begin */
 	if (Simulate > 1) {
-	
+		int failed_sim = 0;
 		ptrdiff_t i,j;
 		ptrdiff_t topn = (ptrdiff_t)Players.n;
 		long z = Simulate;
@@ -988,7 +988,8 @@ do {
 					}
 
 } while (
-!group_is_problematic (&Encounters, &Players)
+	failed_sim++ < 100) &&
+	!group_is_problematic (&Encounters, &Players)
 );
 
 					Encounters.n = calc_rating
