@@ -1013,6 +1013,46 @@ static int compare_str (const void * a, const void * b)
 	return strcmp(*ap,*bp);
 }
 
+static size_t
+participants_list_population (participant_t *pstart)
+{
+	size_t group_n;
+	participant_t *p;
+
+	for (p = pstart, group_n = 0; p != NULL; p = p->next) {
+		group_n++;
+	}
+	return group_n;
+}
+
+static size_t
+group_population (group_t *s)
+{		
+	return	participants_list_population (s->pstart);
+}
+
+static size_t
+final_list_population_min(void)
+{
+	group_t *g;
+	int i;
+	size_t x, min = 0;
+
+	for (i = 0; i < Group_final_list_n; i++) {
+		g = Group_final_list[i];
+		simplify_shrink (g);
+		x = group_population(g);
+		if (i == 0) {
+			min = x;
+		} else {
+			min = x < min? x: min;
+		}
+	}
+	assert(min != 0);
+	return min;
+}
+
+
 static void
 print_group_participants (FILE *f, participant_t *pstart)
 {
@@ -1020,9 +1060,11 @@ print_group_participants (FILE *f, participant_t *pstart)
 	const char **arr;
 	participant_t *p;
 
-	for (p = pstart, group_n = 0; p != NULL; p = p->next) {
-		group_n++;
-	}
+	group_n = participants_list_population (pstart);
+
+//	for (p = pstart, group_n = 0; p != NULL; p = p->next) {
+//		group_n++;
+//	}
 
 	if (NULL != (arr = memnew (sizeof(char *) * group_n))) {
 		
@@ -1419,6 +1461,32 @@ groups_process_to_count (const struct ENCOUNTERS *encounters, const struct PLAYE
 			ok = TRUE;
 			scan_encounters(encounters->enc, encounters->n, players->n); 
 			*n = convert_to_groups(NULL, players->n, players->name);
+			supporting_groupmem_done ();
+		} else {
+			ok = FALSE;
+		}
+		supporting_encmem_done ();
+	} 
+	return ok;
+}
+
+bool_t
+group_is_problematic(const struct ENCOUNTERS *encounters, const struct PLAYERS *players)
+{
+	long n;
+	bool_t ok = FALSE;
+	if (supporting_encmem_init (encounters->n)) {
+		if (supporting_groupmem_init (players->n, encounters->n)) {
+			ok = TRUE;
+			scan_encounters(encounters->enc, encounters->n, players->n); 
+			n = convert_to_groups(NULL, players->n, players->name);
+			if (n == 1) {
+				ok = TRUE;
+			} else if (n == 2) {
+				ok = 1 == final_list_population_min();
+			} else {
+				ok = FALSE;
+			}
 			supporting_groupmem_done ();
 		} else {
 			ok = FALSE;

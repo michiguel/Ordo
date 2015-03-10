@@ -267,7 +267,7 @@ static void 		ratings_center_to_zero (player_t n_players, const bool_t *flagged,
 
 #if 0
 #define SAVE_SIMULATION
-#define SAVE_SIMULATION_N 29
+#define SAVE_SIMULATION_N 407
 #endif
 
 #if defined(SAVE_SIMULATION)
@@ -278,7 +278,7 @@ static const char *Result_string[4] = {"1-0","1/2-1/2","0-1","*"};
 static void
 save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num)
 {
-	size_t i;
+	gamesnum_t i;
 	const char *name_w;
 	const char *name_b;
 	const char *result;
@@ -956,6 +956,7 @@ int main (int argc, char *argv[])
 					}
 					players_clear_flagged (&Players);
 
+do {
 					simulate_scores ( RA.ratingof_results
 									, Drawrate_evenmatch
 									, White_advantage
@@ -985,6 +986,11 @@ int main (int argc, char *argv[])
 						purge_players (QUIET_MODE, &Players);
 						calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 					}
+
+} while (
+!group_is_problematic (&Encounters, &Players)
+);
+
 					Encounters.n = calc_rating
 									( QUIET_MODE
 									, Forces_ML

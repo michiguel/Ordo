@@ -113,5 +113,8 @@ extern bool_t	groups_process_to_count ( const struct ENCOUNTERS *encounters
 										, const struct PLAYERS *players
 										, long *n);
 
+extern bool_t	group_is_problematic	( const struct ENCOUNTERS *encounters
+										, const struct PLAYERS *players);
+
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif
