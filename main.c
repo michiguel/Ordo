@@ -241,7 +241,7 @@ static void		reset_rating (double general_average, player_t n_players, const boo
 static void		ratings_copy (const double *r, player_t n, double *t);
 
 static gamesnum_t	calc_rating ( bool_t quiet, bool_t ml, struct ENC *enc, gamesnum_t N_enc, double *pWhite_advantage
-							, bool_t adjust_wadv, double *pDraw_rate, struct rel_prior_set *rps
+							, bool_t adjust_wadv, bool_t adjust_drate, double *pDraw_rate, struct rel_prior_set *rps
 							, struct PLAYERS *plyrs, struct RATINGS *rat, struct GAMES *pGames);
 
 static void 	ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat);
@@ -894,6 +894,7 @@ int main (int argc, char *argv[])
 								, Encounters.n
 								, &White_advantage
 								, ADJUST_WHITE_ADVANTAGE
+								, ADJUST_DRAW_RATE
 								, &Drawrate_evenmatch
 								, &RPset
 								, &Players
@@ -996,7 +997,8 @@ int main (int argc, char *argv[])
 									, Encounters.enc
 									, Encounters.n
 									, &White_advantage
-									, FALSE
+									, FALSE //ADJUST_WHITE_ADVANTAGE
+									, ADJUST_DRAW_RATE
 									, &sim_draw_rate
 									, &RPset
 									, &Players
@@ -1372,7 +1374,7 @@ simulate_scores ( const double 	*ratingof_results
 //==== CALCULATE INDIVIDUAL RATINGS =========================
 
 static gamesnum_t
-calc_rating ( bool_t quiet, bool_t ml, struct ENC *enc, gamesnum_t N_enc, double *pWhite_advantage, bool_t adjust_wadv
+calc_rating ( bool_t quiet, bool_t ml, struct ENC *enc, gamesnum_t N_enc, double *pWhite_advantage, bool_t adjust_wadv, bool_t adjust_drate
 			, double *pDraw_rate, struct rel_prior_set *rps, struct PLAYERS *plyrs, struct RATINGS *rat, struct GAMES *pGames)
 {
 	double dr = *pDraw_rate;
@@ -1409,7 +1411,7 @@ calc_rating ( bool_t quiet, bool_t ml, struct ENC *enc, gamesnum_t N_enc, double
 
 				, adjust_wadv
 
-				, ADJUST_DRAW_RATE
+				, adjust_drate
 				, &dr
 		);
 
@@ -1440,7 +1442,7 @@ calc_rating ( bool_t quiet, bool_t ml, struct ENC *enc, gamesnum_t N_enc, double
 
 					, adjust_wadv
 
-					, ADJUST_DRAW_RATE
+					, adjust_drate
 					, &dr
 					, ratingtmp_memory
 			);
