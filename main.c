@@ -267,7 +267,7 @@ static void 		ratings_center_to_zero (player_t n_players, const bool_t *flagged,
 
 #if 0
 #define SAVE_SIMULATION
-#define SAVE_SIMULATION_N 407
+#define SAVE_SIMULATION_N 13
 #endif
 
 #if defined(SAVE_SIMULATION)

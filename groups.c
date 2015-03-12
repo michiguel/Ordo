@@ -140,6 +140,20 @@ static void groupset_init (void)
 static group_t * groupset_tail (void) {return group_buffer.tail;}
 static group_t * groupset_head (void) {return group_buffer.prehead->next;}
 
+#if 0
+// for debuggin purposes
+static void groupset_print(void)
+{
+	group_t * s;
+	printf("ID added {\n");
+	for (s = groupset_head(); s != NULL; s = s->next) {
+		printf("  id=%d\n",s->id);
+	}
+	printf("}\n");
+	return;
+}
+#endif
+
 static void groupset_add (group_t *a) 
 {
 	group_t *t = groupset_tail();
@@ -184,10 +198,12 @@ static group_t * group_combined(group_t *g)
 static void
 add_participant (group_t *g, player_t i)
 {
-	participant_t *nw = participant_new();
+	participant_t *nw;
+	nw = participant_new();
 	nw->next = NULL;
 	nw->name = Namelist[i];
 	nw->id = i; 
+
 	if (g->pstart == NULL) {
 		g->pstart = nw; 
 		g->plast = nw;	
@@ -358,7 +374,6 @@ convert_to_groups (FILE *f, player_t n_plyrs, const char **name)
 	for (e = 0 ; e < N_se2; e++) {
 		enc2groups(&SE2[e]);
 	}
-
 	for (i = 0; i < n_plyrs; i++) {
 		ifisolated2group(i);
 	}
@@ -1195,6 +1210,9 @@ scan_encounters(const struct ENC *enc, gamesnum_t n_enc, player_t n_plyrs)
 		}
 	}
 
+	// SE:  list of "Super" encounters
+	// SE2: list of "Super" encounters that do not belong to the same group
+
 	return;
 }
 
@@ -1329,7 +1347,8 @@ static bool_t
 group_buffer_init(struct GROUP_BUFFER *g, player_t n)
 {
 	group_t *p;
-	if (NULL != (p = memnew (sizeof(group_t) * (size_t)n))) {
+	size_t elements = (size_t)n + 1; //one extra added for the head
+	if (NULL != (p = memnew (sizeof(group_t) * elements))) {
 		g->list = p;		
 		g->tail = NULL;
 		g->prehead = NULL;
