@@ -348,6 +348,9 @@ int main (int argc, char *argv[])
 	struct RATINGS 		RA;
 	struct ENCOUNTERS 	Encounters;
 
+	double white_advantage_result;
+	double drawrate_evenmatch_result;
+
 //
 	struct output_qualifiers outqual = {FALSE, 0};
 	long int mingames = 0;
@@ -902,6 +905,8 @@ int main (int argc, char *argv[])
 								, &Games);
 
 	ratings_results (&Players, &RA);
+	white_advantage_result = White_advantage;
+	drawrate_evenmatch_result = Drawrate_evenmatch;
 
 	/*=====================*/
 
@@ -997,7 +1002,7 @@ int main (int argc, char *argv[])
 									, Encounters.enc
 									, Encounters.n
 									, &White_advantage
-									, FALSE //ADJUST_WHITE_ADVANTAGE
+									, ADJUST_WHITE_ADVANTAGE
 									, ADJUST_DRAW_RATE
 									, &sim_draw_rate
 									, &RPset
@@ -1083,8 +1088,8 @@ int main (int argc, char *argv[])
 				, Confidence_factor
 				, csvf
 				, textf
-				, White_advantage
-				, Drawrate_evenmatch
+				, white_advantage_result
+				, drawrate_evenmatch_result
 				, OUTDECIMALS
 				, outqual);
 
