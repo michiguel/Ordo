@@ -331,6 +331,14 @@ calc_encounters__
 
 }
 
+static double
+get_sdev (double s1, double s2, double n)
+{
+	double xx = n*s2 - s1 * s1;
+	xx = sqrt(xx*xx); // removes problems with -0.00000000000;
+	return sqrt( xx ) /n;
+}
+
 /*
 |
 |	MAIN
@@ -350,6 +358,12 @@ int main (int argc, char *argv[])
 
 	double white_advantage_result;
 	double drawrate_evenmatch_result;
+	double wa_sum1;
+	double wa_sum2;				
+	double dr_sum1;
+	double dr_sum2; 
+	double wa_sdev = 0;				
+	double dr_sdev = 0;
 
 //
 	struct output_qualifiers outqual = {FALSE, 0};
@@ -850,6 +864,10 @@ int main (int argc, char *argv[])
 			Sdev[i] = 0;
 		}
 	}
+	wa_sum1 = 0;				
+	dr_sum1 = 0;
+	wa_sum2 = 0;				
+	dr_sum2 = 0;
 
 	/*===== GROUPS ========*/
 
@@ -907,6 +925,11 @@ int main (int argc, char *argv[])
 	ratings_results (&Players, &RA);
 	white_advantage_result = White_advantage;
 	drawrate_evenmatch_result = Drawrate_evenmatch;
+
+	wa_sum1 += White_advantage;
+	wa_sum2 += White_advantage * White_advantage;				
+	dr_sum1 += Drawrate_evenmatch;
+	dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;
 
 	/*=====================*/
 
@@ -1029,7 +1052,12 @@ int main (int argc, char *argv[])
 						Sum1[i] += RA.ratingof[i];
 						Sum2[i] += RA.ratingof[i]*RA.ratingof[i];
 					}
-	
+					wa_sum1 += White_advantage;
+					wa_sum2 += White_advantage * White_advantage;				
+					dr_sum1 += sim_draw_rate;
+					dr_sum2 += sim_draw_rate * sim_draw_rate;	
+
+
 					for (i = 0; i < topn; i++) {
 						for (j = 0; j < i; j++) {
 							//idx = (i*i-i)/2+j;
@@ -1059,6 +1087,8 @@ int main (int argc, char *argv[])
 					sim[i].sdev = sqrt( xx ) /n;
 				}
 
+				wa_sdev = get_sdev (wa_sum1, wa_sum2, n+1);
+				dr_sdev = get_sdev (dr_sum1, dr_sum2, n+1);
 			}
 		}
 
@@ -1091,7 +1121,10 @@ int main (int argc, char *argv[])
 				, white_advantage_result
 				, drawrate_evenmatch_result
 				, OUTDECIMALS
-				, outqual);
+				, outqual
+				, wa_sdev
+				, dr_sdev
+				);
 
 	#if 0
 	look_at_predictions 

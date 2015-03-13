@@ -395,7 +395,10 @@ all_report 	( const struct GAMES 	*g
 			, double 				white_advantage
 			, double 				drawrate_evenmatch
 			, int					decimals
-			, struct output_qualifiers	outqual)
+			, struct output_qualifiers	outqual
+			, double				wa_sdev				
+			, double				dr_sdev
+			)
 {
 	FILE *f;
 	player_t i;
@@ -539,8 +542,8 @@ all_report 	( const struct GAMES 	*g
 		}
 
 		fprintf (f,"\n");
-		fprintf (f,"White advantage = %.2f\n",white_advantage);
-		fprintf (f,"Draw rate (equal opponents) = %.2f %s\n",100*drawrate_evenmatch, "%");
+		fprintf (f,"White advantage = %.2f +/- %.2f\n",white_advantage, wa_sdev);
+		fprintf (f,"Draw rate (equal opponents) = %.2f %s +/- %.2f\n",100*drawrate_evenmatch, "%", 100*dr_sdev);
 		fprintf (f,"\n");
 
 	} /*if*/

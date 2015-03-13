@@ -71,7 +71,10 @@ all_report 	( const struct GAMES 	*g
 			, double 				white_advantage
 			, double 				drawrate_evenmatch
 			, int					decimals
-			, struct output_qualifiers outqual);
+			, struct output_qualifiers	outqual
+			, double				wa_sdev				
+			, double				dr_sdev
+			);
 
 void
 errorsout	( const struct PLAYERS *p
