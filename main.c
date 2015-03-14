@@ -230,9 +230,9 @@ static bool_t	Prior_mode;
 
 /*------------------------------------------------------------------------*/
 
-static void		purge_players (bool_t quiet, struct PLAYERS *pl);
+static void		players_purge (bool_t quiet, struct PLAYERS *pl);
 static bool_t	players_have_clear_flags (struct PLAYERS *pl);
-static void		players_clear_flagged (struct PLAYERS *pl);
+static void		players_flags_reset (struct PLAYERS *pl);
 
 static player_t	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl);
 
@@ -910,7 +910,7 @@ int main (int argc, char *argv[])
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 	if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
-		purge_players (QUIET_MODE, &Players);
+		players_purge (QUIET_MODE, &Players);
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
 	Encounters.n = calc_rating	( QUIET_MODE
@@ -992,7 +992,7 @@ int main (int argc, char *argv[])
 					do {
 						if (!QUIET_MODE && failed_sim > 0) printf("--> Simulation: [Rejected]\n\n");
 
-						players_clear_flagged (&Players);
+						players_flags_reset (&Players);
 
 						simulate_scores ( RA.ratingof_results
 										, Drawrate_evenmatch
@@ -1015,7 +1015,7 @@ int main (int argc, char *argv[])
 						assert(players_have_clear_flags(&Players));
 						calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 						if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
-							purge_players (QUIET_MODE, &Players);
+							players_purge (QUIET_MODE, &Players);
 							calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 						}
 
@@ -1109,7 +1109,7 @@ int main (int argc, char *argv[])
 		/* recalculate encounters */
 		calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 		if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
-			purge_players (QUIET_MODE, &Players);
+			players_purge (QUIET_MODE, &Players);
 			calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 		}
 	}
@@ -1307,7 +1307,7 @@ ratings_copy (const double *r, player_t n, double *t)
 
 // no globals
 static void
-purge_players (bool_t quiet, struct PLAYERS *pl)
+players_purge (bool_t quiet, struct PLAYERS *pl)
 {
 	player_t n_players = pl->n;
 	const int *performance_type = pl->performance_type;
@@ -1376,7 +1376,7 @@ ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat)
 }
 
 static void
-players_clear_flagged (struct PLAYERS *pl)
+players_flags_reset (struct PLAYERS *pl)
 {
 	player_t 	j;
 	player_t 	n;
