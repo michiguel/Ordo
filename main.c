@@ -231,6 +231,7 @@ static bool_t	Prior_mode;
 /*------------------------------------------------------------------------*/
 
 static void		purge_players (bool_t quiet, struct PLAYERS *pl);
+static bool_t	players_have_clear_flags (struct PLAYERS *pl);
 
 static player_t	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl);
 
@@ -267,7 +268,7 @@ static void 		ratings_center_to_zero (player_t n_players, const bool_t *flagged,
 
 #if 0
 #define SAVE_SIMULATION
-#define SAVE_SIMULATION_N 13
+#define SAVE_SIMULATION_N 3
 #endif
 
 #if defined(SAVE_SIMULATION)
@@ -678,6 +679,7 @@ int main (int argc, char *argv[])
 	} 
 
 	}
+	assert(players_have_clear_flags(&Players));
 	/**/
 
 	database_transform(pdaba, &Games, &Players, &Game_stats); /* convert database to global variables */
@@ -723,6 +725,7 @@ int main (int argc, char *argv[])
 			return EXIT_FAILURE; 
 	}
 
+	assert(players_have_clear_flags(&Players));
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 	if (0 == Encounters.n) {
@@ -871,6 +874,7 @@ int main (int argc, char *argv[])
 
 	/*===== GROUPS ========*/
 
+	assert(players_have_clear_flags(&Players));
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 	if (group_is_output) {
@@ -903,6 +907,7 @@ int main (int argc, char *argv[])
 
 	/*==== Ratings Calc ===*/
 
+	assert(players_have_clear_flags(&Players));
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 	if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
@@ -983,10 +988,13 @@ int main (int argc, char *argv[])
 							printf ("*"); fflush(stdout);
 						}
 					}
-					players_clear_flagged (&Players);
 
 					failed_sim = 0;
 					do {
+						if (!quiet && failed_sim > 0) printf("Rejected simulation ----> %d\n",failed_sim);
+
+						players_clear_flagged (&Players);
+
 						simulate_scores ( RA.ratingof_results
 										, Drawrate_evenmatch
 										, White_advantage
@@ -999,18 +1007,13 @@ int main (int argc, char *argv[])
 						relpriors_shuffle(&RPset);
 						priors_shuffle(PP, Players.n);
 
-						#if defined(SAVE_SIMULATION)
-						if ((Simulate-z) == SAVE_SIMULATION_N) {
-							save_simulated(&Players, &Games, (int)(Simulate-z)); 
-						}
-						#endif
-
 						// may improve convergence in pathological cases, it should not be needed.
 						reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingof);
 						reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingbk);
 						assert(ratings_sanity (Players.n, RA.ratingof));
 						assert(ratings_sanity (Players.n, RA.ratingbk));
 
+						assert(players_have_clear_flags(&Players));
 						calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 						if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
 							purge_players (QUIET_MODE, &Players);
@@ -1018,6 +1021,12 @@ int main (int argc, char *argv[])
 						}
 
 					} while (failed_sim++ < 100 && group_is_problematic (&Encounters, &Players));
+
+					#if defined(SAVE_SIMULATION)
+					if ((Simulate-z) == SAVE_SIMULATION_N) {
+						save_simulated(&Players, &Games, (int)(Simulate-z)); 
+					}
+					#endif
 
 					Encounters.n = calc_rating
 									( QUIET_MODE
@@ -1315,6 +1324,29 @@ purge_players (bool_t quiet, struct PLAYERS *pl)
 	}
 }
 
+static bool_t
+players_have_clear_flags (struct PLAYERS *pl)
+{
+	bool_t		found;
+	player_t 	j;
+	player_t 	n_players;
+	bool_t *	flagged;
+
+	assert(pl);
+	n_players = pl->n;
+	flagged = pl->flagged;
+	assert(flagged);
+	found = FALSE;
+	for (j = 0; j < n_players; j++) {
+		if (flagged[j]) {
+			printf("flagged --> %ld\n",j);
+			found = TRUE; 
+			break;
+		}
+	}
+	return !found;
+}
+
 static void
 ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat)
 {
@@ -1345,10 +1377,16 @@ ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat)
 static void
 players_clear_flagged (struct PLAYERS *p)
 {
-	player_t j;
-	player_t n = p->n;
+	player_t 	j;
+	player_t 	n;
+	bool_t *	flagged;
+
+	assert(pl);
+	n = pl->n;
+	flagged = pl->flagged;
+	assert(flagged);
 	for (j = 0; j < n; j++) {
-		p->flagged[j] = FALSE;
+		flagged[j] = FALSE;
 	}	
 }
 
