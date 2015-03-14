@@ -541,10 +541,17 @@ all_report 	( const struct GAMES 	*g
 			}
 		}
 
-		fprintf (f,"\n");
-		fprintf (f,"White advantage = %.2f +/- %.2f\n",white_advantage, wa_sdev);
-		fprintf (f,"Draw rate (equal opponents) = %.2f %s +/- %.2f\n",100*drawrate_evenmatch, "%", 100*dr_sdev);
-		fprintf (f,"\n");
+		if (simulate < 2) {
+			fprintf (f,"\n");
+			fprintf (f,"White advantage = %.2f\n", white_advantage);
+			fprintf (f,"Draw rate (equal opponents) = %.2f %s\n",100*drawrate_evenmatch, "%");
+			fprintf (f,"\n");
+		} else {
+			fprintf (f,"\n");
+			fprintf (f,"White advantage = %.2f +/- %.2f\n",white_advantage, wa_sdev);
+			fprintf (f,"Draw rate (equal opponents) = %.2f %s +/- %.2f\n",100*drawrate_evenmatch, "%", 100*dr_sdev);
+			fprintf (f,"\n");
+		}
 
 	} /*if*/
 
