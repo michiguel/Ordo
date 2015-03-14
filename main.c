@@ -232,10 +232,9 @@ static bool_t	Prior_mode;
 
 static void		purge_players (bool_t quiet, struct PLAYERS *pl);
 static bool_t	players_have_clear_flags (struct PLAYERS *pl);
+static void		players_clear_flagged (struct PLAYERS *pl);
 
 static player_t	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl);
-
-static void		players_clear_flagged (struct PLAYERS *p);
 
 static void		init_rating (player_t n, double rat0, struct RATINGS *rat /*@out@*/);
 static void		reset_rating (double general_average, player_t n_players, const bool_t *prefed, const bool_t *flagged, double *rating);
@@ -991,7 +990,7 @@ int main (int argc, char *argv[])
 
 					failed_sim = 0;
 					do {
-						if (!quiet && failed_sim > 0) printf("Rejected simulation ----> %d\n",failed_sim);
+						if (!QUIET_MODE && failed_sim > 0) printf("--> Simulation: [Rejected]\n\n");
 
 						players_clear_flagged (&Players);
 
@@ -1021,6 +1020,8 @@ int main (int argc, char *argv[])
 						}
 
 					} while (failed_sim++ < 100 && group_is_problematic (&Encounters, &Players));
+
+					if (!QUIET_MODE) printf("--> Simulation: [Accepted]\n");
 
 					#if defined(SAVE_SIMULATION)
 					if ((Simulate-z) == SAVE_SIMULATION_N) {
@@ -1375,7 +1376,7 @@ ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat)
 }
 
 static void
-players_clear_flagged (struct PLAYERS *p)
+players_clear_flagged (struct PLAYERS *pl)
 {
 	player_t 	j;
 	player_t 	n;
