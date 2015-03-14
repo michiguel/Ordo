@@ -997,8 +997,8 @@ int main (int argc, char *argv[])
 						players_flags_reset (&Players);
 
 						simulate_scores ( RA.ratingof_results
-										, Drawrate_evenmatch
-										, White_advantage
+										, drawrate_evenmatch_result
+										, white_advantage_result
 										, BETA
 										, &Games //out
 						);
