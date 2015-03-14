@@ -135,7 +135,7 @@ static void usage (void);
 		" -o <file>   output file (text format), goes to the screen if not present\n"
 		" -E          output in Elostat format (rating.dat, programs.dat & general.dat)\n"
 		" -g <file>   output file with group connection info (no rating output on screen)\n"
-		" -G          forces program not to check for isolated groups to avoid warnings\n"
+		" -G          forces program to run and ignore warnings for isolated groups \n"
 		" -j <file>   output file with head to head information\n"
 		" -s  #       perform # simulations to calculate errors\n"
 		" -e <file>   saves an error matrix, if -s was used\n"
@@ -898,8 +898,8 @@ int main (int argc, char *argv[])
 		}
 		if (groups_n > 1) {
 			fprintf (stderr, "\n\n");
-			fprintf (stderr, "******************** WARNING  ***********************\n");
-			fprintf (stderr, "* Database not well connected by games              * \n");
+			fprintf (stderr, "********************[ WARNING ]**********************\n");
+			fprintf (stderr, "*     Database is not well connected by games       *\n");
 			fprintf (stderr, "* Run switch -g to find what groups need more games *\n");
 			fprintf (stderr, "*****************************************************\n");
 			fprintf (stderr, " ====> Groups detected: %ld\n\n\n", groups_n);
@@ -915,6 +915,20 @@ int main (int argc, char *argv[])
 		players_purge (QUIET_MODE, &Players);
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
+
+	if (!groups_no_check && group_is_problematic (&Encounters, &Players)) {
+			fprintf (stderr, "\n\n");
+			fprintf (stderr, "*************************[ WARNING ]*************************\n");
+			fprintf (stderr, "*        Database is not well connected by games...         *\n");
+			fprintf (stderr, "*  ...even after purging players with all-wins/all-losses   *\n");
+			fprintf (stderr, "*                                                           *\n");
+			fprintf (stderr, "*     Run switch -g to find what groups need more games     *\n");
+			fprintf (stderr, "*    Run switch -G to ignore warnings and force calculation *\n");
+			fprintf (stderr, "*     (Attempting this may be very slow and not converge)   *\n");
+			fprintf (stderr, "*************************************************************\n");
+			exit(EXIT_FAILURE);
+	}
+
 	Encounters.n = calc_rating	( QUIET_MODE
 								, Forces_ML
 								, Encounters.enc
