@@ -231,8 +231,10 @@ static bool_t	Prior_mode;
 /*------------------------------------------------------------------------*/
 
 static void		players_purge (bool_t quiet, struct PLAYERS *pl);
-static bool_t	players_have_clear_flags (struct PLAYERS *pl);
 static void		players_flags_reset (struct PLAYERS *pl);
+#if !defined(NDEBUG)
+static bool_t	players_have_clear_flags (struct PLAYERS *pl);
+#endif
 
 static player_t	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl);
 
@@ -1325,6 +1327,7 @@ players_purge (bool_t quiet, struct PLAYERS *pl)
 	}
 }
 
+#if !defined(NDEBUG)
 static bool_t
 players_have_clear_flags (struct PLAYERS *pl)
 {
@@ -1340,13 +1343,13 @@ players_have_clear_flags (struct PLAYERS *pl)
 	found = FALSE;
 	for (j = 0; j < n_players; j++) {
 		if (flagged[j]) {
-			printf("flagged --> %ld\n",j);
 			found = TRUE; 
 			break;
 		}
 	}
 	return !found;
 }
+#endif
 
 static void
 ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat)
