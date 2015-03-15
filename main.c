@@ -269,7 +269,7 @@ static void 		ratings_center_to_zero (player_t n_players, const bool_t *flagged,
 
 #if 0
 #define SAVE_SIMULATION
-#define SAVE_SIMULATION_N 3
+#define SAVE_SIMULATION_N 2
 #endif
 
 #if defined(SAVE_SIMULATION)
@@ -924,7 +924,7 @@ int main (int argc, char *argv[])
 			fprintf (stderr, "*                                                           *\n");
 			fprintf (stderr, "*     Run switch -g to find what groups need more games     *\n");
 			fprintf (stderr, "*    Run switch -G to ignore warnings and force calculation *\n");
-			fprintf (stderr, "*     (Attempting this may be very slow and not converge)   *\n");
+			fprintf (stderr, "*    (Attempting it may be very slow and may not converge)  *\n");
 			fprintf (stderr, "*************************************************************\n");
 			exit(EXIT_FAILURE);
 	}
@@ -1468,8 +1468,17 @@ simulate_scores ( const double 	*ratingof_results
 //==== CALCULATE INDIVIDUAL RATINGS =========================
 
 static gamesnum_t
-calc_rating ( bool_t quiet, bool_t ml, struct ENC *enc, gamesnum_t N_enc, double *pWhite_advantage, bool_t adjust_wadv, bool_t adjust_drate
-			, double *pDraw_rate, struct rel_prior_set *rps, struct PLAYERS *plyrs, struct RATINGS *rat, struct GAMES *pGames)
+calc_rating ( bool_t quiet
+			, bool_t ml
+			, struct ENC *enc, gamesnum_t N_enc
+			, double *pWhite_advantage
+			, bool_t adjust_wadv
+			, bool_t adjust_drate
+			, double *pDraw_rate
+			, struct rel_prior_set *rps
+			, struct PLAYERS *plyrs
+			, struct RATINGS *rat
+			, struct GAMES *pGames)
 {
 	double dr = *pDraw_rate;
 
@@ -1483,31 +1492,22 @@ calc_rating ( bool_t quiet, bool_t ml, struct ENC *enc, gamesnum_t N_enc, double
 				, N_enc
 				, plyrs
 				, rat
-
 				, pWhite_advantage
 				, General_average
-
 				, Anchor_use && !Anchor_err_rel2avg
 				, Anchor
 				, Priored_n
-				
 				, pGames
-
 				, BETA
-
 				, rps->n
 				, PP
-
 				, rps->x
 				, Some_prior_set
 				, Wa_prior
 				, Dr_prior
-
 				, adjust_wadv
-
 				, adjust_drate
-				, &dr
-		);
+				, &dr);
 
 	} else {
 
@@ -1526,20 +1526,14 @@ calc_rating ( bool_t quiet, bool_t ml, struct ENC *enc, gamesnum_t N_enc, double
 					, rat
 					, pWhite_advantage
 					, General_average
-	
 					, Anchor_use && !Anchor_err_rel2avg
 					, Anchor
-					
 					, pGames
-	
 					, BETA
-
 					, adjust_wadv
-
 					, adjust_drate
 					, &dr
-					, ratingtmp_memory
-			);
+					, ratingtmp_memory);
 
 			memrel(ratingtmp_memory);
 
