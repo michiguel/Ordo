@@ -291,6 +291,8 @@ calc_rating_bayes2
 		exit(EXIT_FAILURE);
 	}
 
+	assert(deq <= 1 && deq >= 0);
+
 	// initial deviation
 	olddev = curdev = calc_bayes_unfitness_full	
 							( n_enc
@@ -475,6 +477,7 @@ adjust_wadv_bayes
 )
 {
 	double delta, wa, ei, ej, ek;
+	assert(deq <= 1 && deq >= 0);
 
 	delta = resol;
 	wa = start_wadv;
@@ -556,13 +559,37 @@ adjust_drawrate_bayes
 				, double beta
 )
 {
-	double delta, wa, ei, ej, ek, dr, olddr;
+	double delta, wa, ei, ej, ek, dr;
+	double di, dj, dk;
+
+	assert(deq <= 1 && deq >= 0);
 
 	delta = resol > 0.0001? resol: 0.0001;
 	wa = start_wadv;
 	dr = deq;
-
 	do {	
+		di = dr - delta;
+		dj = dr        ;
+		dk = dr + delta;
+
+		// do not allow the boundaries to go over 1 or below 0
+		if (dk >= 1) {
+			// di: untouched
+			dj = (1 + di)/2;
+			dk = 1;
+			dr = dj;
+			delta = dj - di;			
+		}
+
+		if (di <= 0) {
+			di = 0;
+			dj = (0 + dk)/2;
+			// dk: untouched
+			dr = dj;
+			delta = dj - di;			
+		}
+
+		assert(dk <= 1 && di >=0);
 
 		ei = calc_bayes_unfitness_full	
 							( n_enc
@@ -574,7 +601,7 @@ adjust_drawrate_bayes
 							, n_relative_anchors
 							, ra
 							, ratingof
-							, dr - delta
+							, di
 							, dr_prior
 							, beta);
 
@@ -588,7 +615,7 @@ adjust_drawrate_bayes
 							, n_relative_anchors
 							, ra
 							, ratingof
-							, dr
+							, dj
 							, dr_prior
 							, beta);
 
@@ -602,11 +629,9 @@ adjust_drawrate_bayes
 							, n_relative_anchors
 							, ra
 							, ratingof
-							, dr + delta
+							, dk
 							, dr_prior
 							, beta);
-
-		olddr = dr;
 
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 4;
@@ -616,17 +641,6 @@ adjust_drawrate_bayes
 		} else
 		if (ei >= ek && ek <= ej) {
 			dr += delta;
-		}
-
-		// do not allow the boundaries to go over 1 or below 0
-		if (dr+delta > 1) {
-			dr = (1 + olddr )/2;
-			delta = dr - olddr;			
-		}
-
-		if (dr-delta < 0) {
-			dr = (0 + olddr )/2;
-			delta = olddr - dr;			
 		}
 
 	} while (
@@ -706,6 +720,8 @@ calc_bayes_unfitness_full
 	gamesnum_t ww,dd,ll;
 	gamesnum_t e;
 
+	assert(deq <= 1 && deq >= 0);
+
 	for (accum = 0, e = 0; e < n_enc; e++) {
 	
 		w = enc[e].wh;
@@ -784,6 +800,7 @@ probarray_build	( gamesnum_t n_enc
 	double p;
 	player_t w,b;
 	gamesnum_t e;
+	assert(deq <= 1 && deq >= 0);
 
 	for (e = 0; e < n_enc; e++) {
 		w = enc[e].wh;	b = enc[e].bl;

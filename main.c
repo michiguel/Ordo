@@ -1454,6 +1454,7 @@ simulate_scores ( const double 	*ratingof_results
 	player_t w, b;
 	const double *rating = ratingof_results;
 	double pwin, pdraw, plos;
+	assert(deq <= 1 && deq >= 0);
 
 	for (i = 0; i < n_games; i++) {
 		if (gam[i].score != DISCARD) {

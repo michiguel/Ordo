@@ -134,6 +134,7 @@ prob2absolute_result (int perftype, double myrating, double *rtng, double *weig,
 	double pwin, pdraw, ploss;
 	assert(n);
 	assert(perftype == PERF_SUPERWINNER || perftype == PERF_SUPERLOSER);
+	assert(deq <= 1 && deq >= 0);
 
 	cume = 1.0;
 	if (PERF_SUPERWINNER == perftype) {

@@ -19,6 +19,7 @@
 */
 
 #include <math.h>
+#include <assert.h>
 
 #include "boolean.h"
 #include "xpect.h"
@@ -35,6 +36,7 @@ xpect (double a, double b, double beta)
 	return 1.0 / (1.0 + exp((b-a)*beta));
 }
 
+#if 0
 void
 get_pWDL(double delta_rating /*delta rating*/, double *pw, double *pd, double *pl, double drawrate0, double beta)
 {
@@ -60,6 +62,7 @@ get_pWDL(double delta_rating /*delta rating*/, double *pw, double *pd, double *p
 	}
 	return;
 }
+#endif
 
 static double Abs(double a) { return a > 0? a: -a;}
  
@@ -98,3 +101,88 @@ draw_rate_fperf (double p, double d0)
 }
 
 
+static double 
+draw_rate_fperf_calc (double p, double d0)
+{
+	double	fi, a, c;
+	double ret;
+
+	assert (d0 <= 1.0 && d0 >= 0);
+	assert (p  <= 1.0 && p  >= 0);
+	assert(!(!(d0 < 0.4999) && d0 < 0.5001));
+
+	fi = (1-d0)/(2*d0);
+	c = 4*(p*p-p);
+	a = 4*fi*fi-1;
+	ret = ( sqrt(1-a*c)-1 ) / a; // because b = 2
+	return ret;
+}
+
+static double 
+draw_rate_fperf_iter (double p, double d0)
+{
+	double	fi, a, b, c, x, y, dy, newx;
+
+	assert (d0 <= 1.0 && d0 >= 0);
+	assert (p  <= 1.0 && p  >= 0);
+	assert(!(d0 < 0.4999) && d0 < 0.5001);
+
+	fi = (1-d0)/(2*d0);
+	c = 4*(p*p-p);
+	b = 2;
+	a = 4*fi*fi-1;
+
+	newx = 0;
+	do {
+		x = newx;
+		y  = c + b * x + a * x * x;
+		dy = b + 2*a*x;
+		newx = x - y/dy;
+
+	} while (Abs(newx - x) > 0.0000001);
+ 
+	return newx;
+}
+
+void
+get_pWDL (double delta_rating /*delta rating*/, double *pw, double *pd, double *pl, double d0, double beta)
+{
+	double perf, pdra, pwin, plos;
+	bool_t switched;
+	
+	switched = delta_rating < 0;
+	if (switched) delta_rating = -delta_rating;
+
+	perf = xpect (delta_rating,0,beta);
+
+	if (d0 < 0.0001) {
+		pdra = 2*d0*sqrt(perf-perf*perf)-d0*d0;
+		plos = 1 - perf - pdra/2;
+		pwin = 1 - plos - pdra;	
+	} else
+	if (d0 < 0.4999) {
+		pdra = draw_rate_fperf_calc (perf, d0);
+		plos = 1 - perf - pdra/2;
+		pwin = 1 - plos - pdra;	
+	} else
+	if (d0 < 0.5001) {
+		pdra = draw_rate_fperf_iter (perf, d0);
+		plos = 1 - perf - pdra/2;
+		pwin = 1 - plos - pdra;	
+	} else {
+		pdra = draw_rate_fperf_calc (perf, d0);
+		plos = 1 - perf - pdra/2;
+		pwin = 1 - plos - pdra;	
+	}	
+
+	if (switched) {
+		*pw = plos;
+		*pd = pdra;
+		*pl = pwin;
+	} else {
+		*pw = pwin;
+		*pd = pdra;
+		*pl = plos;
+	}
+	return;
+}
