@@ -38,7 +38,7 @@
 
 \title{ORDO \input{version.txt} \\ Ratings for chess and other games} 
 \author{Copyright \cpyrht{} 2015 Miguel A. Ballicora\\e-mail: mballicora (at gmail dot com)}
-\date{February 2015}
+\date{March 2015}
 \parindent 0mm 
 \parskip 2mm 
 \begin{document}
@@ -157,8 +157,9 @@ Each of the numbers is an answer to the question \textit{"What is the maximum co
 The matrix file is in \textit{comma separated values} format, and it could be opened by any spreadsheet program if it was saved with the *.csv extension.
 
 \subsubsection*{Draw rate (for equal opponents)}
-By default, Ordo considers that the draw rate for evenly matched players is 50\% and internally calculates what draw rate will correspond for matches in which a player is stronger than the other.
-This parameter does not change the rating results, but it may affect the errors calculated after the simulation.
+By default, Ordo considers that the draw rate for evenly matched players is 50\%.
+Internally, it calculates the draw for matches in which a player is stronger than the other.
+This parameter does not change the rating results, but it will affect the errors calculated after simulations.
 Two switches can control this parameter. 
 First, \swtch{-d} sets the draw rate (which is assumed to be constant throughout the database). 
 Alternatively, the (highly recommended) switch \swtch{-D} lets Ordo calculate it automatically. 
@@ -167,42 +168,50 @@ For instance:
 
 \cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W -s1000 -e errors.csv -V -D}
 
-Will calculate the draw rate and outputs it on screen. 
+Will calculate the draw rate and outputs it at the end of \cmdln{ratings.txt} (or the screen, if the switch \swtch{-o} is omitted). 
 Similarly to the calculation of the white advantage, the user can provide prior information for the draw rate.
-A combination of switches \swtch{-d <value>} and \swtch{-k <deviation>} may provide a prior information to Ordo to calculate the \textit{draw rate}.
-Again, when as the number of games increases, this information will have less contribution.
+A combination of switches \swtch{-d <value>} and \swtch{-k <deviation>} will do that.
 Ordo assumes a Gaussian distribution centered in \swtch{<value>} with a standard \swtch{<deviation>}.
+When as the number of games increases, this information will have less and less impact on the final result.
 
 \subsubsection*{Ignore draws (\swtch{-X} switch)}
 
-This switch internally ignores all draws from the database, like they have not been played.
+This switch internally ignores all draws from the database as they have not been played.
 This is only present for experimentation, not for a serious rating calculation.
-
-\subsubsection*{Group connections}
-
-Sometimes, a data set contains players or groups/pools of players that did not play enough games against the rest. 
-These \textit{isolated} groups produce meaningless ratings when compared to the general pool. 
-The \swtch{-g} switch saves a report of how many groups are in this situation.
-This information may help to properly link those groups with extra games and stabilize the ranking.
 
 \subsubsection*{Minimum games}
 
-In certain cases, the use may not want to include in the rating certain players with very few games played. 
+In certain cases, the user may not want to include certain players with very few games played in the rating. 
 For that reason, the switch \swtch{-t <value>} provides to the program a threshold of minimum games played for a participant to be included in the final list.
 The games are still included for calculation.
 
 \subsubsection*{Perfect winners and losers}
 
 Players who won all games (\textit{perfect winners}) or lost all of them (\textit{perfect losers}) create problems in the rating calculation.
-It is impossible to estimate those rating accurately because winning all and losing all correspond to a $+\infty$ or $-\infty$ rating, respectively.
+It is impossible to estimate those rating accurately because winning all or losing all correspond to a $+\infty$ or $-\infty$ rating, respectively.
 In addition, the calculation slows down considerably because of the impossibility to converge.
 Ordo removes these players automatically during the calculation, and place them back after convergence has been reached.
-The rating assigned to them is a minimum for \textit{perfect winners} and a maximum for \textit{perfect losers}.
+The rating assigned to them is a minimum ("floor") for \textit{perfect winners} and a maximum ("ceiling") for \textit{perfect losers}.
 This is indicated by a > or < symbol in the output text.
-These limits are established by calculating the rating they would have if one of the games was a draw.
+These limits are established by calculating the rating they would have had if one of the games was a draw.
 For example, if player had a performance of 10/10, a proper rating estimation lays between ($+\infty$) and the one corresponding to a performance of 9.5/10.
 A nice side effect of this technique is that distinguishes players with perfect score that had different type of opposition or played different number of games.
 It is not the same to have been undefeated for three games than twenty.
+
+\subsubsection*{Group connections and pathological data}
+
+Sometimes, a data set contains players or groups/pools of players that did not play enough games against the rest. 
+These \textit{isolated} groups produce meaningless ratings when compared to the general pool. 
+The \swtch{-g} switch saves a report of how many groups are in this situation.
+The information in this report may guide the user to properly link those groups with extra games.
+Doing so will stabilize the whole ranking.
+When the data set is "ill" connected, Ordo will attempt to run by purging \textit{perfect winners} and \textit{perfect losers}.
+Their ceiling or floor rating will be estimated at the end (see above). 
+However, a warning will be diplayed.
+When purging those players is not enough to guarantee a proper connection, a second warning will be issued.
+But, this time the program will stop and exit with an error code (i.e. non-zero).
+To force the calculation even in these conditions, the switch \swtch{-G} should be used.
+Be careful, this could be slow and the algorithm may not converge.
  
 \subsubsection*{Multiple anchors}
 
@@ -290,6 +299,11 @@ The list of the switches provided are:
 
 \subsubsection*{Memory Limits}
 Currently, the program can handle almost un unlimited number of games and players. It is only limited by the memory of the system.
+
+\subsubsection*{Exit code}
+When Ordo ran successfully, it will exit with a code = 0. 
+When problems arose (insufficient memory, database not well connected, empty input, wrong parameters, etc.), Ordo will return a number that is guaranteed to be non-zero.
+This could be used in scripts to know whether the process reached its goal or not.
 
 \subsubsection*{Ordoprep}
 A tool is included to shrink the PGN file to contain only the game results. 
