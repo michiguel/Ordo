@@ -34,6 +34,9 @@
 #define MIN_DRAW_RATE_RESOLUTION 0.00001
 #define PRIOR_SMALLEST_SIGMA     0.0000001
 
+#if !defined(NDEBUG)
+static bool_t is_nan (double x) {if (x != x) return TRUE; else return FALSE;}
+#endif
 
 // ================= Bayes concept 
 
@@ -526,6 +529,10 @@ adjust_wadv_bayes
 							, dr_prior
 							, beta);
 
+		assert (!is_nan(ei));
+		assert (!is_nan(ej));
+		assert (!is_nan(ek));
+
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 4;
 		} else
@@ -738,6 +745,9 @@ calc_bayes_unfitness_full
 				+ 	(ll > 0? (double)ll * log(pl) : 0)
 		;
 	}
+	
+	assert(!is_nan(accum));
+
 	// Priors
 	accum += -prior_unfitness
 				( n_players
@@ -750,6 +760,8 @@ calc_bayes_unfitness_full
 				, deq
 				, dr_prior
 				);
+
+	assert(!is_nan(accum));
 
 	return -accum;
 }
