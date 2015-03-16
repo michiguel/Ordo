@@ -283,9 +283,11 @@ adjust_wadv (double start_wadv, const double *ratingof, gamesnum_t n_enc, const 
 		} else
 		if (ej >= ei && ei <= ek) {
 			wa -= delta;
+			delta *= 1.5;
 		} else
 		if (ei >= ek && ek <= ej) {
 			wa += delta;
+			delta *= 1.5;
 		}
 
 	} while (
@@ -372,9 +374,11 @@ adjust_drawrate (double start_wadv, const double *ratingof, gamesnum_t n_enc, co
 		} else
 		if (ej >= ei && ei <= ek) {
 			dr -= delta;
+			delta *= 1.1;
 		} else
 		if (ei >= ek && ek <= ej) {
 			dr += delta;
+			delta *= 1.1;
 		}
 
 		hi = dr+delta > 1.0? 1.0: dr+delta;
