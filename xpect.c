@@ -151,6 +151,8 @@ draw_rate_fperf_iter (double p, double d0)
 void
 get_pWDL (double delta_rating /*delta rating*/, double *pw, double *pd, double *pl, double d0, double beta)
 {
+#define MINPROB 1E-32
+
 	double perf, pdra, pwin, plos;
 	bool_t switched;
 	
@@ -159,31 +161,37 @@ get_pWDL (double delta_rating /*delta rating*/, double *pw, double *pd, double *
 
 	perf = xpect (delta_rating,0,beta);
 
-	if (d0 < 0.0001) {
+	if (d0 < 0.00001) {
 		pdra = 2*d0*sqrt(perf-perf*perf)-d0*d0;
 		plos = 1 - perf - pdra/2;
 		pwin = 1 - plos - pdra;	
 	} else
-	if (d0 < 0.4999) {
+	if (d0 < 0.49999) {
 		pdra = draw_rate_fperf_calc (perf, d0);
 		plos = 1 - perf - pdra/2;
 		pwin = 1 - plos - pdra;	
 	} else
-	if (d0 < 0.5001) {
+	if (d0 < 0.50001) {
 		pdra = draw_rate_fperf_iter (perf, d0);
 		plos = 1 - perf - pdra/2;
 		pwin = 1 - plos - pdra;	
-	} else {
+	} else 
+	if (d0 < 0.99000) {
 		pdra = draw_rate_fperf_calc (perf, d0);
 		plos = 1 - perf - pdra/2;
 		pwin = 1 - plos - pdra;	
-	}	
+	} else {
+		double x = perf - 0.5;
+		double a = (1 - 2*d0)/(d0*d0);
+		plos =	0.5 - x + 0.5 * (	(1-sqrt(1+a-4*a*x*x))/a 	);
+		if (plos < MINPROB) plos = MINPROB;
+		pdra = 2 * (1 - perf - plos);
+		pwin = 1 - plos - pdra;	
+	}
 
-#define MINPROB 1E-32
-
-if (plos < MINPROB) plos = MINPROB;
-if (pdra < MINPROB) pdra = MINPROB;
-if (pdra < MINPROB) pdra = MINPROB;
+	if (plos < MINPROB) plos = MINPROB;
+	if (pdra < MINPROB) pdra = MINPROB;
+	if (pdra < MINPROB) pdra = MINPROB;
 
 	if (switched) {
 		*pw = plos;
