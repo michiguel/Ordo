@@ -175,6 +175,12 @@ get_pWDL (double delta_rating /*delta rating*/, double *pw, double *pd, double *
 		pwin = 1 - plos - pdra;	
 	}	
 
+#define MINPROB 1E-32
+
+if (plos < MINPROB) plos = MINPROB;
+if (pdra < MINPROB) pdra = MINPROB;
+if (pdra < MINPROB) pdra = MINPROB;
+
 	if (switched) {
 		*pw = plos;
 		*pd = pdra;
