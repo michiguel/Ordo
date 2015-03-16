@@ -104,16 +104,20 @@ draw_rate_fperf (double p, double d0)
 static double 
 draw_rate_fperf_calc (double p, double d0)
 {
-	double	fi, a, c;
+//	double fi;
+	double a, c;
 	double ret;
 
 	assert (d0 <= 1.0 && d0 >= 0);
 	assert (p  <= 1.0 && p  >= 0);
 	assert(!(!(d0 < 0.4999) && d0 < 0.5001));
 
-	fi = (1-d0)/(2*d0);
+//	fi = (1-d0)/(2*d0);
 	c = 4*(p*p-p);
-	a = 4*fi*fi-1;
+//	a = 4*fi*fi-1;
+
+a = (1 - 2*d0)/(d0*d0);
+
 	ret = ( sqrt(1-a*c)-1 ) / a; // because b = 2
 	return ret;
 }
