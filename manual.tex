@@ -304,6 +304,20 @@ Currently, the program can handle almost un unlimited number of games and player
 When Ordo ran successfully, it will exit with a code = 0. 
 When problems arose (insufficient memory, database not well connected, empty input, wrong parameters, etc.), Ordo will return a number that is guaranteed to be non-zero.
 This could be used in scripts to know whether the process reached its goal or not.
+For instance, the following script in bash (linux) will catch if processing games.pgn was correct or not.
+
+\begin{verbatim}
+#!/bin/sh
+
+./ordo -p games.pgn
+exit_code=$?
+
+if [ $exit_code = 0 ]; then
+    echo Ordo run properly
+else
+    echo Ordo returned with error: $exit_code
+fi
+\end{verbatim}
 
 \subsubsection*{Ordoprep}
 A tool is included to shrink the PGN file to contain only the game results. 
