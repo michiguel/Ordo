@@ -986,6 +986,28 @@ unfit_wadv (double x, const void *p)
 	return r;
 }
 
+static double
+unfit_drra (double x, const void *p)
+{
+	double r;
+	const struct UNFITNESS_WA_DR *q = p;
+	assert(!is_nan(x));
+	r = calc_bayes_unfitness_full	
+							( q->n_enc
+							, q->enc
+							, q->n_players
+							, q->p
+							, q->wadv
+							, q->wa_prior
+							, q->n_relative_anchors
+							, q->ra
+							, q->ratingof
+							, x
+							, q->dr_prior
+							, q->beta);
+	assert(!is_nan(r));
+	return r;
+}
 
 // no globals
 static double
@@ -1069,13 +1091,26 @@ adjust_drawrate_bayes
 				, double beta
 )
 {
-	double delta, wa, ei, ej, ek, dr;
+	double delta, ei, ej, ek, dr;
 	double di, dj, dk;
+	struct UNFITNESS_WA_DR su;
+
+	su.n_enc 				= n_enc;
+	su.enc 					= enc;
+	su.n_players			= n_players;
+	su.p 					= p;
+	su.wadv					= start_wadv;
+	su.wa_prior 			= wa_prior;
+	su.n_relative_anchors 	= n_relative_anchors;
+	su.ra 					= ra;
+	su.ratingof 			= ratingof;
+	su.deq 					= deq;
+	su.dr_prior 			= dr_prior;
+	su.beta 				= beta;
 
 	assert(deq <= 1 && deq >= 0);
 
 	delta = resol > 0.0001? resol: 0.0001;
-	wa = start_wadv;
 	dr = deq;
 	do {	
 		di = dr - delta;
@@ -1101,47 +1136,9 @@ adjust_drawrate_bayes
 
 		assert(dk <= 1 && di >=0);
 
-		ei = calc_bayes_unfitness_full	
-							( n_enc
-							, enc
-							, n_players
-							, p
-							, wa 
-							, wa_prior
-							, n_relative_anchors
-							, ra
-							, ratingof
-							, di
-							, dr_prior
-							, beta);
-
-		ej = calc_bayes_unfitness_full	
-							( n_enc
-							, enc
-							, n_players
-							, p
-							, wa        
-							, wa_prior
-							, n_relative_anchors
-							, ra
-							, ratingof
-							, dj
-							, dr_prior
-							, beta);
-
-		ek = calc_bayes_unfitness_full	
-							( n_enc
-							, enc
-							, n_players
-							, p
-							, wa 
-							, wa_prior
-							, n_relative_anchors
-							, ra
-							, ratingof
-							, dk
-							, dr_prior
-							, beta);
+		ei = unfit_drra (di, &su);
+		ej = unfit_drra (dj, &su);
+		ek = unfit_drra (dk, &su);
 
 		if (ei >= ej && ej <= ek) {
 			delta = delta / 4;
