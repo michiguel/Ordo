@@ -461,202 +461,6 @@ calc_rating_bayes2
 }
 
 
-// no globals
-static double
-adjust_wadv_bayes 
-				( gamesnum_t n_enc
-				, const struct ENC *enc
-				, player_t n_players
-				, const struct prior *p
-				, double start_wadv
-				, struct prior wa_prior
-				, player_t n_relative_anchors
-				, const struct relprior *ra
-				, const double *ratingof
-				, double resol
-				, double deq
-				, struct prior dr_prior
-				, double beta
-)
-{
-	double delta, wa, ei, ej, ek;
-	assert(deq <= 1 && deq >= 0);
-
-	delta = resol;
-	wa = start_wadv;
-
-	do {	
-
-		ei = calc_bayes_unfitness_full	
-							( n_enc
-							, enc
-							, n_players
-							, p
-							, wa - delta //
-							, wa_prior
-							, n_relative_anchors
-							, ra
-							, ratingof
-							, deq
-							, dr_prior
-							, beta);
-
-		ej = calc_bayes_unfitness_full	
-							( n_enc
-							, enc
-							, n_players
-							, p
-							, wa         //
-							, wa_prior
-							, n_relative_anchors
-							, ra
-							, ratingof
-							, deq
-							, dr_prior
-							, beta);
-
-		ek = calc_bayes_unfitness_full	
-							( n_enc
-							, enc
-							, n_players
-							, p
-							, wa + delta //
-							, wa_prior
-							, n_relative_anchors
-							, ra
-							, ratingof
-							, deq
-							, dr_prior
-							, beta);
-
-		assert (!is_nan(ei));
-		assert (!is_nan(ej));
-		assert (!is_nan(ek));
-
-		if (ei >= ej && ej <= ek) {
-			delta = delta / 4;
-		} else
-		if (ej >= ei && ei <= ek) {
-			wa -= delta;
-		} else
-		if (ei >= ek && ek <= ej) {
-			wa += delta;
-		}
-
-	} while (delta > resol/10 && -1000 < wa && wa < 1000);
-	
-	return wa;
-}
-
-// no globals
-static double
-adjust_drawrate_bayes 
-				( gamesnum_t n_enc
-				, const struct ENC *enc
-				, player_t n_players
-				, const struct prior *p
-				, double start_wadv
-				, struct prior wa_prior
-				, player_t n_relative_anchors
-				, const struct relprior *ra
-				, const double *ratingof
-				, double resol
-				, double deq
-				, struct prior dr_prior
-				, double beta
-)
-{
-	double delta, wa, ei, ej, ek, dr;
-	double di, dj, dk;
-
-	assert(deq <= 1 && deq >= 0);
-
-	delta = resol > 0.0001? resol: 0.0001;
-	wa = start_wadv;
-	dr = deq;
-	do {	
-		di = dr - delta;
-		dj = dr        ;
-		dk = dr + delta;
-
-		// do not allow the boundaries to go over 1 or below 0
-		if (dk >= 1) {
-			// di: untouched
-			dj = (1 + di)/2;
-			dk = 1;
-			dr = dj;
-			delta = dj - di;			
-		}
-
-		if (di <= 0) {
-			di = 0;
-			dj = (0 + dk)/2;
-			// dk: untouched
-			dr = dj;
-			delta = dj - di;			
-		}
-
-		assert(dk <= 1 && di >=0);
-
-		ei = calc_bayes_unfitness_full	
-							( n_enc
-							, enc
-							, n_players
-							, p
-							, wa 
-							, wa_prior
-							, n_relative_anchors
-							, ra
-							, ratingof
-							, di
-							, dr_prior
-							, beta);
-
-		ej = calc_bayes_unfitness_full	
-							( n_enc
-							, enc
-							, n_players
-							, p
-							, wa        
-							, wa_prior
-							, n_relative_anchors
-							, ra
-							, ratingof
-							, dj
-							, dr_prior
-							, beta);
-
-		ek = calc_bayes_unfitness_full	
-							( n_enc
-							, enc
-							, n_players
-							, p
-							, wa 
-							, wa_prior
-							, n_relative_anchors
-							, ra
-							, ratingof
-							, dk
-							, dr_prior
-							, beta);
-
-		if (ei >= ej && ej <= ek) {
-			delta = delta / 4;
-		} else
-		if (ej >= ei && ei <= ek) {
-			dr -= delta;
-		} else
-		if (ei >= ek && ek <= ej) {
-			dr += delta;
-		}
-
-	} while (
-		delta > MIN_DRAW_RATE_RESOLUTION
-	);
-
-	return dr;
-}
-
 static double
 wdl_probabilities (gamesnum_t ww, gamesnum_t dd, gamesnum_t ll, double pw, double pd, double pl)
 {
@@ -1143,4 +947,216 @@ fitexcess 		( player_t n_players
 }
 
 //========================== end bayesian concept
+
+struct UNFITNESS_WA_DR  
+		{ gamesnum_t n_enc
+		; const struct ENC *enc
+		; player_t n_players
+		; const struct prior *p
+		; double wadv
+		; struct prior wa_prior
+		; player_t n_relative_anchors
+		; const struct relprior *ra
+		; const double *ratingof
+		; double deq
+		; struct prior dr_prior
+		; double beta;
+};
+
+static double
+unfit_wadv (double x, const void *p)
+{
+	double r;
+	const struct UNFITNESS_WA_DR *q = p;
+	assert(!is_nan(x));
+	r = calc_bayes_unfitness_full	
+							( q->n_enc
+							, q->enc
+							, q->n_players
+							, q->p
+							, x
+							, q->wa_prior
+							, q->n_relative_anchors
+							, q->ra
+							, q->ratingof
+							, q->deq
+							, q->dr_prior
+							, q->beta);
+	assert(!is_nan(r));
+	return r;
+}
+
+
+// no globals
+static double
+adjust_wadv_bayes 
+				( gamesnum_t n_enc
+				, const struct ENC *enc
+				, player_t n_players
+				, const struct prior *p
+				, double start_wadv
+				, struct prior wa_prior
+				, player_t n_relative_anchors
+				, const struct relprior *ra
+				, const double *ratingof
+				, double resol
+				, double deq
+				, struct prior dr_prior
+				, double beta
+)
+{
+	double delta, wa, ei, ej, ek;
+	struct UNFITNESS_WA_DR su;
+
+	su.n_enc 				= n_enc;
+	su.enc 					= enc;
+	su.n_players			= n_players;
+	su.p 					= p;
+	su.wadv					= 0;
+	su.wa_prior 			= wa_prior;
+	su.n_relative_anchors 	= n_relative_anchors;
+	su.ra 					= ra;
+	su.ratingof 			= ratingof;
+	su.deq 					= deq;
+	su.dr_prior 			= dr_prior;
+	su.beta 				= beta;
+
+	assert(deq <= 1 && deq >= 0);
+
+	delta = resol;
+	wa = start_wadv;
+
+	do {	
+
+		ei = unfit_wadv (wa - delta, &su);
+		ej = unfit_wadv (wa - 0    , &su);
+		ek = unfit_wadv (wa + delta, &su);
+
+		assert (!is_nan(ei));
+		assert (!is_nan(ej));
+		assert (!is_nan(ek));
+
+		if (ei >= ej && ej <= ek) {
+			delta = delta / 4;
+		} else
+		if (ej >= ei && ei <= ek) {
+			wa -= delta;
+		} else
+		if (ei >= ek && ek <= ej) {
+			wa += delta;
+		}
+
+	} while (delta > resol/10 && -1000 < wa && wa < 1000);
+	
+	return wa;
+}
+
+// no globals
+static double
+adjust_drawrate_bayes 
+				( gamesnum_t n_enc
+				, const struct ENC *enc
+				, player_t n_players
+				, const struct prior *p
+				, double start_wadv
+				, struct prior wa_prior
+				, player_t n_relative_anchors
+				, const struct relprior *ra
+				, const double *ratingof
+				, double resol
+				, double deq
+				, struct prior dr_prior
+				, double beta
+)
+{
+	double delta, wa, ei, ej, ek, dr;
+	double di, dj, dk;
+
+	assert(deq <= 1 && deq >= 0);
+
+	delta = resol > 0.0001? resol: 0.0001;
+	wa = start_wadv;
+	dr = deq;
+	do {	
+		di = dr - delta;
+		dj = dr        ;
+		dk = dr + delta;
+
+		// do not allow the boundaries to go over 1 or below 0
+		if (dk >= 1) {
+			// di: untouched
+			dj = (1 + di)/2;
+			dk = 1;
+			dr = dj;
+			delta = dj - di;			
+		}
+
+		if (di <= 0) {
+			di = 0;
+			dj = (0 + dk)/2;
+			// dk: untouched
+			dr = dj;
+			delta = dj - di;			
+		}
+
+		assert(dk <= 1 && di >=0);
+
+		ei = calc_bayes_unfitness_full	
+							( n_enc
+							, enc
+							, n_players
+							, p
+							, wa 
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof
+							, di
+							, dr_prior
+							, beta);
+
+		ej = calc_bayes_unfitness_full	
+							( n_enc
+							, enc
+							, n_players
+							, p
+							, wa        
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof
+							, dj
+							, dr_prior
+							, beta);
+
+		ek = calc_bayes_unfitness_full	
+							( n_enc
+							, enc
+							, n_players
+							, p
+							, wa 
+							, wa_prior
+							, n_relative_anchors
+							, ra
+							, ratingof
+							, dk
+							, dr_prior
+							, beta);
+
+		if (ei >= ej && ej <= ek) {
+			delta = delta / 4;
+		} else
+		if (ej >= ei && ei <= ek) {
+			dr -= delta;
+		} else
+		if (ei >= ek && ek <= ej) {
+			dr += delta;
+		}
+
+	} while (
+		delta > MIN_DRAW_RATE_RESOLUTION
+	);
+
+	return dr;
+}
 
