@@ -54,6 +54,8 @@
 #include "relprior.h"
 #include "inidone.h"
 
+#include "rtngcalc.h"
+
 /*
 |
 |	GENERAL OPTIONS
@@ -241,10 +243,6 @@ static player_t	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, str
 static void		init_rating (player_t n, double rat0, struct RATINGS *rat /*@out@*/);
 static void		reset_rating (double general_average, player_t n_players, const bool_t *prefed, const bool_t *flagged, double *rating);
 static void		ratings_copy (const double *r, player_t n, double *t);
-
-static gamesnum_t	calc_rating ( bool_t quiet, bool_t ml, struct ENC *enc, gamesnum_t N_enc, double *pWhite_advantage
-							, bool_t adjust_wadv, bool_t adjust_drate, double *pDraw_rate, struct rel_prior_set *rps
-							, struct PLAYERS *plyrs, struct RATINGS *rat, struct GAMES *pGames);
 
 static void 	ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat);
 static void		ratings_for_purged (const struct PLAYERS *p, struct RATINGS *r /*@out@*/);
@@ -929,7 +927,7 @@ int main (int argc, char *argv[])
 			exit(EXIT_FAILURE);
 	}
 
-	Encounters.n = calc_rating	( QUIET_MODE
+	Encounters.n = calc_rating 	( QUIET_MODE
 								, Forces_ML
 								, Encounters.enc
 								, Encounters.n
@@ -940,7 +938,19 @@ int main (int argc, char *argv[])
 								, &RPset
 								, &Players
 								, &RA
-								, &Games);
+								, &Games
+								, Prior_mode
+								, General_average
+								, Anchor_use
+								, Anchor_err_rel2avg
+								, Anchor
+								, Priored_n
+								, Some_prior_set
+								, BETA
+								, PP
+								, Wa_prior
+								, Dr_prior
+								);
 
 	ratings_results (&Players, &RA);
 	white_advantage_result = White_advantage;
@@ -1045,19 +1055,32 @@ int main (int argc, char *argv[])
 					}
 					#endif
 
-					Encounters.n = calc_rating
-									( QUIET_MODE
-									, Forces_ML
-									, Encounters.enc
-									, Encounters.n
-									, &White_advantage
-									, ADJUST_WHITE_ADVANTAGE
-									, ADJUST_DRAW_RATE
-									, &sim_draw_rate
-									, &RPset
-									, &Players
-									, &RA
-									, &Games);
+					Encounters.n = calc_rating 
+								( QUIET_MODE
+								, Forces_ML
+								, Encounters.enc
+								, Encounters.n
+								, &White_advantage
+								, ADJUST_WHITE_ADVANTAGE
+								, ADJUST_DRAW_RATE
+								, &Drawrate_evenmatch
+								, &RPset
+								, &Players
+								, &RA
+								, &Games
+								, Prior_mode
+								, General_average
+								, Anchor_use
+								, Anchor_err_rel2avg
+								, Anchor
+								, Priored_n
+								, Some_prior_set
+								, BETA
+								, PP
+								, Wa_prior
+								, Dr_prior
+								);
+
 					ratings_for_purged (&Players, &RA);
 
 					relpriors_copy(&RPset_store, &RPset);
@@ -1466,88 +1489,8 @@ simulate_scores ( const double 	*ratingof_results
 	}
 }
 
-//==== CALCULATE INDIVIDUAL RATINGS =========================
+//=============================
 
-static gamesnum_t
-calc_rating ( bool_t quiet
-			, bool_t ml
-			, struct ENC *enc, gamesnum_t N_enc
-			, double *pWhite_advantage
-			, bool_t adjust_wadv
-			, bool_t adjust_drate
-			, double *pDraw_rate
-			, struct rel_prior_set *rps
-			, struct PLAYERS *plyrs
-			, struct RATINGS *rat
-			, struct GAMES *pGames)
-{
-	double dr = *pDraw_rate;
-
-	gamesnum_t ret;
-
-	if (Prior_mode || ml) {
-
-		ret = calc_rating_bayes2 
-				( quiet
-				, enc
-				, N_enc
-				, plyrs
-				, rat
-				, pWhite_advantage
-				, General_average
-				, Anchor_use && !Anchor_err_rel2avg
-				, Anchor
-				, Priored_n
-				, pGames
-				, BETA
-				, rps->n
-				, PP
-				, rps->x
-				, Some_prior_set
-				, Wa_prior
-				, Dr_prior
-				, adjust_wadv
-				, adjust_drate
-				, &dr);
-
-	} else {
-
-		double *ratingtmp_memory;
-
-		assert(plyrs->n > 0);
-		if (NULL != (ratingtmp_memory = memnew (sizeof(double) * (size_t)plyrs->n))) {
-
-			assert(ratings_sanity (plyrs->n, rat->ratingof)); //%%
-
-			ret = calc_rating2 	
-					( quiet
-					, enc
-					, N_enc
-					, plyrs
-					, rat
-					, pWhite_advantage
-					, General_average
-					, Anchor_use && !Anchor_err_rel2avg
-					, Anchor
-					, pGames
-					, BETA
-					, adjust_wadv
-					, adjust_drate
-					, &dr
-					, ratingtmp_memory);
-
-			memrel(ratingtmp_memory);
-
-		} else {
-			fprintf(stderr, "Not enough memory available\n");
-			exit(EXIT_FAILURE);
-		}	
-	}
-
-	*pDraw_rate = dr;
-
-	return ret;
-}
 
 // no globals
 static void
