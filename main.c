@@ -137,16 +137,16 @@ static void usage (void);
 		" -o <file>   output file (text format), goes to the screen if not present\n"
 		" -E          output in Elostat format (rating.dat, programs.dat & general.dat)\n"
 		" -g <file>   output file with group connection info (no rating output on screen)\n"
-		" -G          forces program to run and ignore warnings for isolated groups \n"
+		" -G          force program to run and ignore warnings for isolated groups \n"
 		" -j <file>   output file with head to head information\n"
 		" -s  #       perform # simulations to calculate errors\n"
-		" -e <file>   saves an error matrix, if -s was used\n"
-		" -C <file>   saves a matrix (.csv) with confidence for superiority (-s was used)\n"
+		" -e <file>   save an error matrix, if -s was used\n"
+		" -C <file>   save a matrix (.csv) with confidence for superiority (-s was used)\n"
 		" -F <value>  confidence (%) to estimate error margins. Default is 95.0\n"
-		" -X          Ignore draws\n"
+		" -X          ignore draws\n"
 		" -t <value>  threshold of minimum games played for a participant to be included\n"
-		" -N <value>  Output, number of decimals, minimum is 0 (default=1)\n"
-		" -M          Forces maximum-likelihood estimation to obtain ratings\n"
+		" -N <value>  number of decimals in output, minimum is 0 (default=1)\n"
+		" -M          force maximum-likelihood estimation to obtain ratings\n"
 		"\n"
 		;
 
@@ -182,7 +182,7 @@ static int compare_GAME (const void * a, const void * b)
 enum 			AnchorSZ	{MAX_ANCHORSIZE=256};
 static bool_t	Anchor_use = FALSE;
 static player_t	Anchor = 0;
-static char		Anchor_name[MAX_ANCHORSIZE] = "";
+static char	Anchor_name[MAX_ANCHORSIZE] = "";
 
 static bool_t	Anchor_err_rel2avg = FALSE;
 
@@ -232,20 +232,21 @@ static bool_t	Prior_mode;
 
 /*------------------------------------------------------------------------*/
 
-static void		players_purge (bool_t quiet, struct PLAYERS *pl);
-static void		players_flags_reset (struct PLAYERS *pl);
+static void	players_purge (bool_t quiet, struct PLAYERS *pl);
+static void	players_flags_reset (struct PLAYERS *pl);
+
 #if !defined(NDEBUG)
 static bool_t	players_have_clear_flags (struct PLAYERS *pl);
 #endif
 
 static player_t	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl);
 
-static void		init_rating (player_t n, double rat0, struct RATINGS *rat /*@out@*/);
-static void		reset_rating (double general_average, player_t n_players, const bool_t *prefed, const bool_t *flagged, double *rating);
-static void		ratings_copy (const double *r, player_t n, double *t);
+static void	init_rating (player_t n, double rat0, struct RATINGS *rat /*@out@*/);
+static void	reset_rating (double general_average, player_t n_players, const bool_t *prefed, const bool_t *flagged, double *rating);
+static void	ratings_copy (const double *r, player_t n, double *t);
 
 static void 	ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat);
-static void		ratings_for_purged (const struct PLAYERS *p, struct RATINGS *r /*@out@*/);
+static void	ratings_for_purged (const struct PLAYERS *p, struct RATINGS *r /*@out@*/);
 
 static void
 simulate_scores ( const double 	*ratingof_results
@@ -258,9 +259,7 @@ simulate_scores ( const double 	*ratingof_results
 /*------------------------------------------------------------------------*/
 
 static void 		table_output(double Rtng_76);
-
 static ptrdiff_t	head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y);
-
 static void 		ratings_center_to_zero (player_t n_players, const bool_t *flagged, double *ratingof);
 
 /*------------------------------------------------------------------------*/
@@ -328,7 +327,6 @@ calc_encounters__
 					, g
 					, flagged
 					, e->enc);
-
 }
 
 static double
@@ -917,12 +915,12 @@ int main (int argc, char *argv[])
 	if (!groups_no_check && group_is_problematic (&Encounters, &Players)) {
 			fprintf (stderr, "\n\n");
 			fprintf (stderr, "*************************[ WARNING ]*************************\n");
-			fprintf (stderr, "*        Database is not well connected by games...         *\n");
-			fprintf (stderr, "*  ...even after purging players with all-wins/all-losses   *\n");
+			fprintf (stderr, "*       Database is not well connected by games...          *\n");
+			fprintf (stderr, "* ...even after purging players with all-wins/all-losses    *\n");
 			fprintf (stderr, "*                                                           *\n");
-			fprintf (stderr, "*     Run switch -g to find what groups need more games     *\n");
-			fprintf (stderr, "*    Run switch -G to ignore warnings and force calculation *\n");
-			fprintf (stderr, "*    (Attempting it may be very slow and may not converge)  *\n");
+			fprintf (stderr, "*    Run switch -g to find what groups need more games      *\n");
+			fprintf (stderr, "*   Run switch -G to ignore warnings and force calculation  *\n");
+			fprintf (stderr, "*   (Attempting it may be very slow and may not converge)   *\n");
 			fprintf (stderr, "*************************************************************\n");
 			exit(EXIT_FAILURE);
 	}
@@ -1105,7 +1103,6 @@ int main (int argc, char *argv[])
 					wa_sum2 += White_advantage * White_advantage;				
 					dr_sum1 += sim_draw_rate;
 					dr_sum2 += sim_draw_rate * sim_draw_rate;	
-
 
 					for (i = 0; i < topn; i++) {
 						for (j = 0; j < i; j++) {
