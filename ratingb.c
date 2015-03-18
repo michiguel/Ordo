@@ -1061,7 +1061,9 @@ adjust_wadv_bayes
 		assert (!is_nan(ek));
 
 		if (ei >= ej && ej <= ek) {
-			delta = delta / 4;
+			//delta = delta / 4;
+			wa = quadfit1d	(resol/10, wa - delta, wa + delta, unfit_wadv, &su);
+			break;
 		} else
 		if (ej >= ei && ei <= ek) {
 			wa -= delta;
