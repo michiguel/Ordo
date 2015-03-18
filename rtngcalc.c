@@ -30,29 +30,30 @@
 #include "relprior.h"
 
 extern gamesnum_t
-calc_rating ( bool_t quiet
-			, bool_t ml
-			, struct ENC *enc, gamesnum_t N_enc
-			, double *pWhite_advantage
-			, bool_t adjust_wadv
-			, bool_t adjust_drate
-			, double *pDraw_rate
-			, struct rel_prior_set *rps
-			, struct PLAYERS *plyrs
-			, struct RATINGS *rat
-			, struct GAMES *pGames
+calc_rating ( bool_t 					quiet
+			, bool_t 					ml
+			, struct ENC *				enc
+			, gamesnum_t 				n_enc
+			, double *					pWhite_advantage
+			, bool_t 					adjust_wadv
+			, bool_t 					adjust_drate
+			, double *					pDraw_rate
+			, struct rel_prior_set *	rps
+			, struct PLAYERS *			plyrs
+			, struct RATINGS *			rat
+			, struct GAMES *			pGames
 			//
-			, bool_t	Prior_mode
-			, double	General_average
-			, bool_t	Anchor_use
-			, bool_t	Anchor_err_rel2avg
-			, player_t 	Anchor
-			, int 		priored_n
-			, bool_t 	some_prior_set
-			, double	BETA
-			, struct prior *PP
-			, struct prior Wa_prior
-			, struct prior Dr_prior
+			, bool_t					prior_mode
+			, double					general_average
+			, bool_t					anchor_use
+			, bool_t					anchor_err_rel2avg
+			, player_t 					anchor
+			, int 						priored_n
+			, bool_t 					some_prior_set
+			, double					beta
+			, struct prior *			pPrior
+			, struct prior 				wa_prior
+			, struct prior 				dr_prior
 )
 
 {
@@ -60,27 +61,27 @@ calc_rating ( bool_t quiet
 
 	gamesnum_t ret;
 
-	if (Prior_mode || ml) {
+	if (prior_mode || ml) {
 
 		ret = calc_rating_bayes2 
 				( quiet
 				, enc
-				, N_enc
+				, n_enc
 				, plyrs
 				, rat
 				, pWhite_advantage
-				, General_average
-				, Anchor_use && !Anchor_err_rel2avg
-				, Anchor
+				, general_average
+				, anchor_use && !anchor_err_rel2avg
+				, anchor
 				, priored_n
 				, pGames
-				, BETA
+				, beta
 				, rps->n
-				, PP
+				, pPrior
 				, rps->x
 				, some_prior_set
-				, Wa_prior
-				, Dr_prior
+				, wa_prior
+				, dr_prior
 				, adjust_wadv
 				, adjust_drate
 				, &dr);
@@ -97,15 +98,15 @@ calc_rating ( bool_t quiet
 			ret = calc_rating2 	
 					( quiet
 					, enc
-					, N_enc
+					, n_enc
 					, plyrs
 					, rat
 					, pWhite_advantage
-					, General_average
-					, Anchor_use && !Anchor_err_rel2avg
-					, Anchor
+					, general_average
+					, anchor_use && !anchor_err_rel2avg
+					, anchor
 					, pGames
-					, BETA
+					, beta
 					, adjust_wadv
 					, adjust_drate
 					, &dr
