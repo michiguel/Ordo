@@ -1067,9 +1067,11 @@ adjust_wadv_bayes
 		} else
 		if (ej >= ei && ei <= ek) {
 			wa -= delta;
+			delta *= 1.5;
 		} else
 		if (ei >= ek && ek <= ej) {
 			wa += delta;
+			delta *= 1.5;
 		}
 
 	} while (delta > resol/10 && -1000 < wa && wa < 1000);
@@ -1151,9 +1153,11 @@ adjust_drawrate_bayes
 		} else
 		if (ej >= ei && ei <= ek) {
 			dr -= delta;
+			delta *= 1.1;
 		} else
 		if (ei >= ek && ek <= ej) {
 			dr += delta;
+			delta *= 1.1;
 		}
 
 	} while (
