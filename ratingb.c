@@ -948,6 +948,8 @@ fitexcess 		( player_t n_players
 
 //========================== end bayesian concept
 
+#include "fit1d.h"
+
 struct UNFITNESS_WA_DR  
 		{ gamesnum_t n_enc
 		; const struct ENC *enc
@@ -1141,7 +1143,9 @@ adjust_drawrate_bayes
 		ek = unfit_drra (dk, &su);
 
 		if (ei >= ej && ej <= ek) {
-			delta = delta / 4;
+			//delta = delta / 4;
+			dr = quadfit1d	(MIN_DRAW_RATE_RESOLUTION, di, dk, unfit_drra, &su);
+			break;
 		} else
 		if (ej >= ei && ei <= ek) {
 			dr -= delta;
