@@ -927,23 +927,24 @@ int main (int argc, char *argv[])
 
 	Encounters.n = calc_rating 	( QUIET_MODE
 								, Forces_ML
+								, ADJUST_WHITE_ADVANTAGE
+								, ADJUST_DRAW_RATE
+								, Prior_mode
+								, Anchor_use
+								, Anchor_err_rel2avg
+								, Some_prior_set
+
 								, Encounters.enc
 								, Encounters.n
 								, &White_advantage
-								, ADJUST_WHITE_ADVANTAGE
-								, ADJUST_DRAW_RATE
 								, &Drawrate_evenmatch
 								, &RPset
 								, &Players
 								, &RA
 								, &Games
-								, Prior_mode
 								, General_average
-								, Anchor_use
-								, Anchor_err_rel2avg
 								, Anchor
 								, Priored_n
-								, Some_prior_set
 								, BETA
 								, PP
 								, Wa_prior
@@ -1056,23 +1057,24 @@ int main (int argc, char *argv[])
 					Encounters.n = calc_rating 
 								( QUIET_MODE
 								, Forces_ML
+								, ADJUST_WHITE_ADVANTAGE
+								, ADJUST_DRAW_RATE
+								, Prior_mode
+								, Anchor_use
+								, Anchor_err_rel2avg
+								, Some_prior_set
+
 								, Encounters.enc
 								, Encounters.n
 								, &White_advantage
-								, ADJUST_WHITE_ADVANTAGE
-								, ADJUST_DRAW_RATE
 								, &Drawrate_evenmatch
 								, &RPset
 								, &Players
 								, &RA
 								, &Games
-								, Prior_mode
 								, General_average
-								, Anchor_use
-								, Anchor_err_rel2avg
 								, Anchor
 								, Priored_n
-								, Some_prior_set
 								, BETA
 								, PP
 								, Wa_prior

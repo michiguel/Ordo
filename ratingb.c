@@ -231,7 +231,7 @@ adjust_rating_bayes
 
 // no globals
 gamesnum_t
-calc_rating_bayes2 	
+calc_rating_bayes
 			( bool_t 			quiet
 			, struct ENC *		enc
 			, gamesnum_t		n_enc
@@ -241,11 +241,10 @@ calc_rating_bayes2
 			, double			general_average
 			, bool_t			anchor_use
 			, player_t			anchor
-			, int 				priored_n
+			, player_t			priored_n
 			, struct GAMES *	g
 			, double			beta
-
-			// different from non bayes calc
+			// 
 			, player_t 			n_relative_anchors
 			, struct prior *	pp
 			, struct relprior *	ra

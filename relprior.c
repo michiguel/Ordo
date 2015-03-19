@@ -278,8 +278,8 @@ relpriors_done (struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *rps_b
 
 #include <math.h>
 
-bool_t 	Some_prior_set = FALSE;
-int 	Priored_n = 0;
+bool_t		Some_prior_set = FALSE;
+player_t 	Priored_n = 0;
 
 bool_t 
 has_a_prior(struct prior *pr, player_t j) {return pr[j].isset;}

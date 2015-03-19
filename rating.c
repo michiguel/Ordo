@@ -328,7 +328,6 @@ overallerrorE_fdrawrate (gamesnum_t n_enc, const struct ENC *enc, const double *
 	return dp2;
 }
 
-
 struct UNFITDRAWRATE {
 	gamesnum_t n_enc;
 	const struct ENC *enc;

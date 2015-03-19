@@ -28,39 +28,27 @@
 #include "ordolim.h"
 
 extern gamesnum_t
-calc_rating_bayes2 	
-			( bool_t 		quiet
-			, struct ENC *	enc
-			, gamesnum_t	N_enc
-
-			, struct PLAYERS *plyrs
-			, struct RATINGS *rat
-
-			, double		*pwadv
-			, double		general_average
-
-			, bool_t		anchor_use
-
-			, player_t		anchor
-			, int 			priored_n
-				
-			, struct GAMES *g
-
-//			, const char *	name[]
-			, double		beta
-
-			// different from non bayes calc
-
+calc_rating_bayes
+			( bool_t 			quiet
+			, struct ENC *		enc
+			, gamesnum_t		N_enc
+			, struct PLAYERS *	plyrs
+			, struct RATINGS *	rat
+			, double *			pwadv
+			, double			general_average
+			, bool_t			anchor_use
+			, player_t			anchor
+			, player_t			priored_n
+			, struct GAMES *	g
+			, double			beta
+			// 
 			, player_t 			n_relative_anchors
 			, struct prior *	pp
-//			, double 			probarray [MAXPLAYERS] [4]
 			, struct relprior *	ra
 			, bool_t 			some_prior_set
 			, struct prior 		wa_prior
 			, struct prior 		dr_prior
-
 			, bool_t 			adjust_white_advantage
-
 			, bool_t			adjust_draw_rate
 			, double *			pDraw_date
 );

@@ -29,24 +29,25 @@
 gamesnum_t
 calc_rating ( bool_t 					quiet
 			, bool_t 					ml
+			, bool_t 					adjust_wadv
+			, bool_t 					adjust_drate
+			, bool_t					prior_mode
+			, bool_t					anchor_use
+			, bool_t					anchor_err_rel2avg
+			, bool_t 					some_prior_set
+
 			, struct ENC *				enc
 			, gamesnum_t 				n_enc
 			, double *					pWhite_advantage
-			, bool_t 					adjust_wadv
-			, bool_t 					adjust_drate
 			, double *					pDraw_rate
 			, struct rel_prior_set *	rps
 			, struct PLAYERS *			plyrs
 			, struct RATINGS *			rat
 			, struct GAMES *			pGames
 			//
-			, bool_t					prior_mode
 			, double					general_average
-			, bool_t					anchor_use
-			, bool_t					anchor_err_rel2avg
 			, player_t 					anchor
-			, int 						priored_n
-			, bool_t 					some_prior_set
+			, player_t					priored_n
 			, double					beta
 			, struct prior *			pPrior
 			, struct prior 				wa_prior
