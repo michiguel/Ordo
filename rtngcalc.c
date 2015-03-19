@@ -96,7 +96,7 @@ calc_rating ( bool_t 					quiet
 
 			assert(ratings_sanity (plyrs->n, rat->ratingof)); //%%
 
-			ret = calc_rating2 	
+			ret = calc_rating_ordo
 					( quiet
 					, enc
 					, n_enc

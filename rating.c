@@ -543,9 +543,9 @@ get_outputdev (double curdev, gamesnum_t n_games)
 	return 1000*sqrt(curdev/(double)n_games);
 }
 
-
 gamesnum_t
-calc_rating2 	( bool_t 			quiet
+calc_rating_ordo 	
+				( bool_t 			quiet
 				, struct ENC *		enc
 				, gamesnum_t		n_enc
 				, struct PLAYERS 	*plyrs
