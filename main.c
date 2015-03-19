@@ -974,7 +974,6 @@ int main (int argc, char *argv[])
 		ptrdiff_t idx;
 		size_t allocsize = sizeof(struct DEVIATION_ACC) * (size_t)est;
 		double diff;
-		double sim_draw_rate = Drawrate_evenmatch; // temporarily used and modified
 
 		assert(allocsize > 0);
 		sim = memnew(allocsize);
@@ -1103,8 +1102,8 @@ int main (int argc, char *argv[])
 					}
 					wa_sum1 += White_advantage;
 					wa_sum2 += White_advantage * White_advantage;				
-					dr_sum1 += sim_draw_rate;
-					dr_sum2 += sim_draw_rate * sim_draw_rate;	
+					dr_sum1 += Drawrate_evenmatch;
+					dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;	
 
 					for (i = 0; i < topn; i++) {
 						for (j = 0; j < i; j++) {
@@ -1180,8 +1179,8 @@ int main (int argc, char *argv[])
 				, Encounters.enc
 				, RA.ratingof
 				, BETA
-				, White_advantage
-				, Drawrate_evenmatch);
+				, white_advantage_result
+				, drawrate_evenmatch_result);
 	#endif
 	#if 0
 	look_at_individual_deviation 
@@ -1190,7 +1189,7 @@ int main (int argc, char *argv[])
 				, &RA
 				, Encounters.enc
 				, Encounters.n
-				, White_advantage
+				, white_advantage_result
 				, BETA);
 	#endif
 
