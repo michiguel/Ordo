@@ -381,8 +381,6 @@ adjust_drawrate (double start_wadv, const double *ratingof, gamesnum_t n_enc, co
 
 //============ CENTER ADJUSTMENT FUNCTIONS ==================================
 
-static void ratings_copy (const double *r, player_t n, double *t) {player_t i;	for (i = 0; i < n; i++) {t[i] = r[i];}}
-
 static double 
 unfitness		( const struct ENC *enc
 				, gamesnum_t	n_enc
@@ -433,7 +431,7 @@ unfitness_fcenter 	( double excess
 {
 	double u;
 	assert(!is_nan(excess));
-	ratings_copy (ratingof, n_players, ratingtmp);
+	ratings_copyto (n_players, ratingof, ratingtmp);
 	mobile_center_apply_excess (excess, n_players, flagged, prefed, ratingtmp);
 	u = unfitness	( enc
 					, n_enc
