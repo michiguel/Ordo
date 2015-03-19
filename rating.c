@@ -47,23 +47,12 @@ static bool_t is_nan (double x) {if (x != x) return TRUE; else return FALSE;}
 
 static double adjust_drawrate (double start_wadv, const double *ratingof, gamesnum_t n_enc, const struct ENC *enc, double beta);
 
-// no globals
 static void
-ratings_restore (player_t n_players, const double *r_bk, double *r_of)
+ratings_copyto (player_t n_players, const double *r_fr, double *r_to)
 {
 	player_t j;
 	for (j = 0; j < n_players; j++) {
-		r_of[j] = r_bk[j];
-	}	
-}
-
-// no globals
-static void
-ratings_backup (player_t n_players, const double *r_of, double *r_bk)
-{
-	player_t j;
-	for (j = 0; j < n_players; j++) {
-		r_bk[j] = r_of[j];
+		r_to[j] = r_fr[j];
 	}	
 }
 
@@ -650,8 +639,6 @@ calc_rating2 	( bool_t 			quiet
 			double cd;
 			double last_cd = 100;
 
-			// ratings_backup(n_players, ratingof, RAT);
-
 			assert(ratings_sanity (n_players, ratingof)); //%%
 			// adjust white advantage and draw rate at the beginning
 			if (adjust_white_advantage) {
@@ -667,7 +654,7 @@ calc_rating2 	( bool_t 			quiet
 
 				cd = 0;
 
-				ratings_backup(n_players, ratingof, ratingbk);
+				ratings_copyto (n_players, ratingof, ratingbk); // backup
 				olddev = curdev;
 
 				assert(ratings_sanity (n_players, ratingof)); //%%
@@ -689,7 +676,7 @@ calc_rating2 	( bool_t 			quiet
 				failed = curdev >= olddev;
 
 				if (failed) {
-					ratings_restore(n_players, ratingbk, ratingof);
+					ratings_copyto (n_players, ratingbk, ratingof); // restore
 					curdev = unfitness ( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, expected, playedby);
 					assert (i == 0 || absol(curdev-olddev) < PRECISIONERROR || 
 								!fprintf(stderr, "i=%d, curdev=%.10e, olddev=%.10e, diff=%.10e\n", i, curdev, olddev, olddev-curdev));
