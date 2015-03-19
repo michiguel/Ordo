@@ -1123,15 +1123,11 @@ int main (int argc, char *argv[])
 				}
 
 				for (i = 0; i < topn; i++) {
-					double xx = n*Sum2[i] - Sum1[i] * Sum1[i];
-					xx = sqrt(xx*xx); // removes problems with -0.00000000000;
-					Sdev[i] = sqrt( xx ) /n;
+					Sdev[i] = get_sdev (Sum1[i], Sum2[i], n);
 				}
 	
 				for (i = 0; i < est; i++) {
-					double xx = n*sim[i].sum2 - sim[i].sum1 * sim[i].sum1;
-					xx = sqrt(xx*xx); // removes problems with -0.00000000000;
-					sim[i].sdev = sqrt( xx ) /n;
+					sim[i].sdev = get_sdev (sim[i].sum1, sim[i].sum2, n);
 				}
 
 				wa_sdev = get_sdev (wa_sum1, wa_sum2, n+1);
