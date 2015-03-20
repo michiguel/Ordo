@@ -39,25 +39,29 @@ calc_rating ( bool_t 					quiet
 			, bool_t					anchor_err_rel2avg
 			, bool_t 					some_prior_set
 
-			, struct ENC *				enc
-			, gamesnum_t 				n_enc
-			, double *					pWhite_advantage
-			, double *					pDraw_rate
-			, struct rel_prior_set *	rps
-			, struct PLAYERS *			plyrs
-			, struct RATINGS *			rat
-			, struct GAMES *			pGames
-			//
 			, double					general_average
 			, player_t 					anchor
 			, player_t					priored_n
 			, double					beta
+
+			, struct ENCOUNTERS	*		encount
+			, struct rel_prior_set *	rps
+			, struct PLAYERS *			plyrs
+			, struct RATINGS *			rat
+			, struct GAMES *			pGames
+
 			, struct prior *			pPrior
 			, struct prior 				wa_prior
 			, struct prior 				dr_prior
+
+			, double *					pWhite_advantage
+			, double *					pDraw_rate
 )
 
 {
+	struct ENC *	enc   = encount->enc;
+	gamesnum_t 		n_enc = encount->n;
+
 	double dr = *pDraw_rate;
 
 	gamesnum_t ret;
@@ -105,8 +109,7 @@ calc_rating ( bool_t 					quiet
 					, beta
 					, general_average
 					, anchor
-					, enc
-					, n_enc
+					, encount
 					, plyrs
 					, pGames
 					, rat

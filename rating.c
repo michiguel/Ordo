@@ -556,8 +556,7 @@ calc_rating_ordo
 				, double			general_average
 				, player_t			anchor
 
-				, struct ENC *		enc
-				, gamesnum_t		n_enc
+				, struct ENCOUNTERS *encount
 				, struct PLAYERS 	*plyrs
 				, struct GAMES 		*g
 				, struct RATINGS 	*rat
@@ -590,6 +589,8 @@ calc_rating_ordo
 	double *	expected = NULL;
 
 	// translation variables for refactoring ------------------
+	struct ENC *	enc   			= encount->enc;
+	gamesnum_t		n_enc 			= encount->n;
 	player_t		n_players 		= plyrs->n;
 	int *			Performance_type= plyrs->performance_type;
 	bool_t *		flagged 		= plyrs->flagged;

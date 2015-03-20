@@ -934,21 +934,24 @@ int main (int argc, char *argv[])
 								, Anchor_err_rel2avg
 								, Some_prior_set
 
-								, Encounters.enc
-								, Encounters.n
-								, &White_advantage
-								, &Drawrate_evenmatch
-								, &RPset
-								, &Players
-								, &RA
-								, &Games
 								, General_average
 								, Anchor
 								, Priored_n
 								, BETA
+
+								, &Encounters
+								, &RPset
+								, &Players
+								, &RA
+								, &Games
+
 								, PP
 								, Wa_prior
 								, Dr_prior
+
+								, &White_advantage
+								, &Drawrate_evenmatch
+
 								);
 
 	ratings_results (&Players, &RA);
@@ -1063,21 +1066,24 @@ int main (int argc, char *argv[])
 								, Anchor_err_rel2avg
 								, Some_prior_set
 
-								, Encounters.enc
-								, Encounters.n
-								, &White_advantage
-								, &Drawrate_evenmatch
-								, &RPset
-								, &Players
-								, &RA
-								, &Games
 								, General_average
 								, Anchor
 								, Priored_n
 								, BETA
+
+								, &Encounters
+								, &RPset
+								, &Players
+								, &RA
+								, &Games
+
 								, PP
 								, Wa_prior
 								, Dr_prior
+
+								, &White_advantage
+								, &Drawrate_evenmatch
+
 								);
 
 					ratings_for_purged (&Players, &RA);

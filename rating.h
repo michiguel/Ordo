@@ -38,8 +38,7 @@ calc_rating_ordo
 				, double			general_average
 				, player_t			anchor
 
-				, struct ENC *		enc
-				, gamesnum_t		n_enc
+				, struct ENCOUNTERS *encount
 				, struct PLAYERS 	*plyrs
 				, struct GAMES 		*g
 				, struct RATINGS 	*rat
