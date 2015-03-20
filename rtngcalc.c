@@ -98,20 +98,21 @@ calc_rating ( bool_t 					quiet
 
 			ret = calc_rating_ordo
 					( quiet
+					, adjust_wadv
+					, adjust_drate
+					, anchor_use && !anchor_err_rel2avg
+					, ratingtmp_memory
+					, beta
+					, general_average
+					, anchor
 					, enc
 					, n_enc
 					, plyrs
+					, pGames
 					, rat
 					, pWhite_advantage
-					, general_average
-					, anchor_use && !anchor_err_rel2avg
-					, anchor
-					, pGames
-					, beta
-					, adjust_wadv
-					, adjust_drate
 					, &dr
-					, ratingtmp_memory);
+					);
 
 			memrel(ratingtmp_memory);
 

@@ -546,20 +546,24 @@ get_outputdev (double curdev, gamesnum_t n_games)
 gamesnum_t
 calc_rating_ordo 	
 				( bool_t 			quiet
+				, bool_t 			adjust_white_advantage
+				, bool_t			adjust_draw_rate
+				, bool_t			anchor_use
+
+				, double			*ratingtmp_buffer
+
+				, double			BETA
+				, double			general_average
+				, player_t			anchor
+
 				, struct ENC *		enc
 				, gamesnum_t		n_enc
 				, struct PLAYERS 	*plyrs
-				, struct RATINGS 	*rat
-				, double			*pWhite_advantage
-				, double			general_average
-				, bool_t			anchor_use
-				, player_t			anchor
 				, struct GAMES 		*g
-				, double			BETA
-				, bool_t 			adjust_white_advantage
-				, bool_t			adjust_draw_rate
+				, struct RATINGS 	*rat
+
+				, double			*pWhite_advantage
 				, double			*pDraw_date
-				, double			*ratingtmp_buffer
 )
 {
 	gamesnum_t	n_games = g->n;
