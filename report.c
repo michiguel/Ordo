@@ -1,3 +1,23 @@
+/*
+	Ordo is program for calculating ratings of engine or chess players
+    Copyright 2013 Miguel A. Ballicora
+
+    This file is part of Ordo.
+
+    Ordo is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Ordo is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Ordo.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
 #include <stddef.h>
 #include <assert.h>
 
@@ -9,11 +29,8 @@
 #include "gauss.h"
 #include "math.h"
 #include "ordolim.h"
-
 #include "xpect.h"
 #include "mymem.h"
-
-#define MINGAMES 1000
 
 //=== duplicated in main.c =========
 
@@ -28,7 +45,7 @@ head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y)
 	return idx;
 }
 
-//==================
+//==================================
 
 static void
 calc_encounters__
@@ -38,14 +55,12 @@ calc_encounters__
 				, struct ENCOUNTERS	*e
 ) 
 {
-	e->n = 
-	calc_encounters	( selectivity
+	e->n = calc_encounters	
+					( selectivity
 					, g
 					, flagged
 					, e->enc);
-
 }
-
 
 static int
 compare__ (const player_t *a, const player_t *b, const double *reference )
@@ -59,7 +74,6 @@ compare__ (const player_t *a, const player_t *b, const double *reference )
 
 	return (da < db) - (da > db);
 }
-
 
 static void
 insertion_sort (const double *reference, size_t n, player_t *vect)
@@ -172,17 +186,6 @@ find_maxlen (const char *nm[], size_t n)
 	return maxl;
 }
 
-#if 0
-static bool_t 
-is_super_player(size_t j, const struct PLAYERS *pPlayers)
-{
-	assert(pPlayers->perf_set);
-	return pPlayers->performance_type[j] == PERF_SUPERLOSER 
-		|| pPlayers->performance_type[j] == PERF_SUPERWINNER
-		|| pPlayers->performance_type[j] == PERF_NOGAMES
-	;		
-}
-#endif
 
 #define MAXSYMBOLS_STR 5
 static const char *SP_symbolstr[MAXSYMBOLS_STR] = {"<",">","*"," ","X"};
@@ -241,19 +244,6 @@ get_sdev_str (double sdev, double confidence_factor, char *str, int decimals)
 	return str;
 }
 
-#if 0
-static void
-flag_lowfrequency_players 	( const struct PLAYERS 	*p
-							, const struct RATINGS 	*r
-							, gamesnum_t mingames)
-{
-	size_t j;
-	for (j = 0; j < p->n; j++) {
-		if (r->playedby_results[j] < mingames)
-			p->flagged[j] = TRUE;
-	}
-}
-#endif
 
 static bool_t
 ok_to_out (player_t j, const struct output_qualifiers *poutqual, const struct PLAYERS *p, const struct RATINGS *r)
@@ -289,7 +279,6 @@ cegt_output	( bool_t quiet
 		r->sorted[j] = j;
 	}
 
-//	insertion_sort (r->ratingof_results, p->n, r->sorted);
 	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
 
 	cegt.n_enc = e->n; 
@@ -346,7 +335,6 @@ head2head_output( const struct GAMES 	*		g
 		r->sorted[j] = j; 
 	}
 
-//	insertion_sort (r->ratingof_results, p->n, r->sorted);
 	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
 
 	cegt.n_enc = e->n;
@@ -418,7 +406,6 @@ all_report 	( const struct GAMES 	*g
 		r->sorted[j] = j; 
 	}
 
-//	insertion_sort (r->ratingof_results, p->n, r->sorted);
 	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
 
 	/* output in text format */
@@ -496,7 +483,6 @@ all_report 	( const struct GAMES 	*g
 					if (showrank
 						|| !hide_old_ver
 					){
-
 						fprintf(f, "%4s %-*s %s :%7.*f %s %8.1f %7ld %6.1f%s\n", 
 						rankbuf,
 						(int)ml+1, 
@@ -511,33 +497,7 @@ all_report 	( const struct GAMES 	*g
 						"%"
 						);
 					}
-
 				}
-#if 0
-				 else if (!is_super_player(j,p)) {
-					fprintf(f, "%4lu %-*s   :%7.*f %s %8.1f %7ld %6.1f%s\n", 
-						i+1,
-						(int)ml+1, 
-						p->name[j], 
-						decimals,
-						rating_round(r->ratingof_results[j], decimals), 
-						"  ****", 
-						r->obtained_results[j], 
-						(long)r->playedby_results[j], 
-						r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/(double)r->playedby_results[j], 
-						"%"
-					);
-				} else {
-
-					fprintf(f, "%4lu %-*s   :%7s %s %8s %7s %6s%s\n", 
-						i+1,
-						(int)ml+1,
-						p->name[j], 
-						"----", "  ----", "----", "----", "----","%"
-					);
-				}
-#endif
-
 			}
 		}
 
@@ -611,7 +571,6 @@ all_report 	( const struct GAMES 	*g
 }
 
 
-
 void
 errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out, double confidence_factor)
 {
@@ -622,32 +581,22 @@ errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATI
 	player_t j;
 
 	if (NULL != (f = fopen (out, "w"))) {
-
 		fprintf(f, "\"N\",\"NAME\"");	
 		for (i = 0; i < p->n; i++) {
 			fprintf(f, ",%ld", (long) i);		
 		}
 		fprintf(f, "\n");	
-
 		for (i = 0; i < p->n; i++) {
 			y = r->sorted[i];
-
 			fprintf(f, "%ld,\"%21s\"", (long) i, p->name[y]);
-
 			for (j = 0; j < i; j++) {
 				x = r->sorted[j];
-
 				idx = head2head_idx_sdev ((ptrdiff_t)x, (ptrdiff_t)y);
-
 				fprintf(f,",%.1f", s[idx].sdev * confidence_factor);
 			}
-
 			fprintf(f, "\n");
-
 		}
-
 		fclose(f);
-
 	} else {
 		fprintf(stderr, "Errors with file: %s\n",out);	
 	}
