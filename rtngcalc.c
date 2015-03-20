@@ -59,9 +59,6 @@ calc_rating ( bool_t 					quiet
 )
 
 {
-	struct ENC *	enc   = encount->enc;
-	gamesnum_t 		n_enc = encount->n;
-
 	double dr = *pDraw_rate;
 
 	gamesnum_t ret;
@@ -70,26 +67,30 @@ calc_rating ( bool_t 					quiet
 
 		ret = calc_rating_bayes 
 				( quiet
-				, enc
-				, n_enc
-				, plyrs
-				, rat
-				, pWhite_advantage
-				, general_average
-				, anchor_use && !anchor_err_rel2avg
-				, anchor
-				, priored_n
-				, pGames
-				, beta
-				, rps->n
-				, pPrior
-				, rps->x
-				, some_prior_set
-				, wa_prior
-				, dr_prior
 				, adjust_wadv
 				, adjust_drate
-				, &dr);
+				, some_prior_set
+				, anchor_use && !anchor_err_rel2avg
+
+				, beta
+				, general_average
+				, anchor
+				, priored_n
+				, rps->n
+
+				, encount
+				, plyrs
+				, pGames
+				, rat
+
+				, pPrior
+				, rps->x
+				, wa_prior
+				, dr_prior
+
+				, pWhite_advantage
+				, &dr
+				);
 
 	} else {
 
@@ -98,7 +99,7 @@ calc_rating ( bool_t 					quiet
 		assert(plyrs->n > 0);
 		if (NULL != (ratingtmp_memory = memnew (sizeof(double) * (size_t)plyrs->n))) {
 
-			assert(ratings_sanity (plyrs->n, rat->ratingof)); //%%
+			assert(ratings_sanity (plyrs->n, rat->ratingof));
 
 			ret = calc_rating_ordo
 					( quiet

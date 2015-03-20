@@ -232,28 +232,30 @@ adjust_rating_bayes
 // no globals
 gamesnum_t
 calc_rating_bayes
-			( bool_t 			quiet
-			, struct ENC *		enc
-			, gamesnum_t		n_enc
-			, struct PLAYERS *	plyrs
-			, struct RATINGS *	rat
-			, double *			pwadv
-			, double			general_average
-			, bool_t			anchor_use
-			, player_t			anchor
-			, player_t			priored_n
-			, struct GAMES *	g
-			, double			beta
-			// 
-			, player_t 			n_relative_anchors
-			, struct prior *	pp
-			, struct relprior *	ra
-			, bool_t 			some_prior_set
-			, struct prior 		wa_prior
-			, struct prior		dr_prior
-			, bool_t 			adjust_white_advantage
-			, bool_t			adjust_draw_rate
-			, double *			pDraw_date
+			( bool_t 				quiet
+			, bool_t 				adjust_white_advantage
+			, bool_t				adjust_draw_rate
+			, bool_t 				some_prior_set
+			, bool_t				anchor_use
+
+			, double				beta
+			, double				general_average
+			, player_t				anchor
+			, player_t				priored_n
+			, player_t 				n_relative_anchors
+
+			, struct ENCOUNTERS *	encount
+			, struct PLAYERS *		plyrs
+			, struct GAMES *		g
+			, struct RATINGS *		rat
+
+			, struct prior *		pp
+			, struct relprior *		ra
+			, struct prior 			wa_prior
+			, struct prior			dr_prior
+
+			, double *				pwadv
+			, double *				pDraw_date
 )
 {
 	gamesnum_t  n_games = g->n;
@@ -272,6 +274,8 @@ calc_rating_bayes
 	double *	probarr;
 
 	// translation variables for refactoring ------------------
+	struct ENC *	enc 			= encount->enc;
+	gamesnum_t		n_enc 			= encount->n;
 	player_t		n_players 		= plyrs->n;
 	int *			performance_type= plyrs->performance_type;
 	bool_t *		flagged 		= plyrs->flagged;
