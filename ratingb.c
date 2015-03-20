@@ -503,7 +503,7 @@ prior_unfitness	( player_t n_players
 	}
 
 	//FIXME this could be slow!
-	accum += relative_anchors_unfitness_full (n_relative_anchors, ra, ratingof); //~~
+	accum += relative_anchors_unfitness_full (n_relative_anchors, ra, ratingof); 
 
 	return accum;
 }
@@ -583,7 +583,7 @@ get_extra_unfitness_j (double R, player_t j, const struct prior *p, double *rati
 	} 
 
 	//FIXME this could be slow!
-	u += relative_anchors_unfitness_j(R, j, ratingof, n_relative_anchors, ra); //~~
+	u += relative_anchors_unfitness_j(R, j, ratingof, n_relative_anchors, ra); 
 
 	return u;
 }
