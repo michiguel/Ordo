@@ -66,20 +66,40 @@ deviation (player_t n_players, const bool_t *flagged, const double *expected, co
 
 	for (accum = 0, j = 0; j < n_players; j++) {
 		if (!flagged[j]) {
-			diff = expected[j] - obtained [j];
-			accum += diff * diff / (double)playedby[j];
+				diff = expected[j] - obtained [j];
+				accum += diff * diff / (double)playedby[j];
 		}
 	}		
 	assert(!is_nan(accum));
 	return accum;
 }
 
+// no globals
+static double 
+unfitness		( const struct ENC *enc
+				, gamesnum_t		n_enc
+				, player_t			n_players
+				, const double *	ratingof
+				, const bool_t *	flagged
+				, double			white_adv
+				, double			beta
+				, const double *	obtained
+				, const gamesnum_t *playedby
+				, double *			expected /*@out@*/
+)
+{
+		double dev;
+		calc_expected (enc, n_enc, white_adv, n_players, ratingof, expected, beta);
+		dev = deviation (n_players, flagged, expected, obtained, playedby);
+		assert(!is_nan(dev));
+		return dev;
+}
 
 static double
 calc_excess		( player_t n_players
 				, const bool_t *flagged
 				, double general_average
-				, double *ratingof)
+				, const double *ratingof)
 {
 	player_t 	j, notflagged;
 	double 	accum, average, excess;
@@ -115,13 +135,13 @@ static double
 adjust_rating 	( double delta
 				, double kappa
 				, player_t n_players
+				, player_t anchored_n
 				, const bool_t *flagged
 				, const bool_t *prefed
 				, const double *expected 
 				, const double *obtained 
-				, gamesnum_t *playedby
-				, double *ratingof
-				, player_t anchored_n
+				, const gamesnum_t *playedby
+				, double *ratingof /*@out@*/
 )
 {
 	player_t 	j;
@@ -175,7 +195,7 @@ adjust_rating 	( double delta
 
 // no globals
 static void
-adjust_rating_byanchor (player_t anchor, double general_average, player_t n_players, double *ratingof)
+adjust_rating_byanchor (player_t anchor, double general_average, player_t n_players, double *ratingof /*@out@*/)
 {
 	player_t j;
 	double excess = ratingof[anchor] - general_average;	
@@ -187,8 +207,15 @@ adjust_rating_byanchor (player_t anchor, double general_average, player_t n_play
 //========================= WHITE ADVANTAGE FUNCTIONS ===========================
 
 static void
-white_cal_obt_tot (gamesnum_t n_enc, const struct ENC *enc, const double *ratingof, double beta
-				, double wadv, double *pcal, double *pobt, gamesnum_t *ptot)
+white_cal_obt_tot 	( gamesnum_t n_enc
+					, const struct ENC *enc	
+					, const double *ratingof
+					, double beta
+					, double wadv
+					, double *pcal 		/*@out@*/
+					, double *pobt		/*@out@*/
+					, gamesnum_t *ptot 	/*@out@*/
+					)
 {
 	gamesnum_t e, t, total=0;
 	player_t w, b;
@@ -381,25 +408,7 @@ adjust_drawrate (double start_wadv, const double *ratingof, gamesnum_t n_enc, co
 
 //============ CENTER ADJUSTMENT FUNCTIONS ==================================
 
-static double 
-unfitness		( const struct ENC *enc
-				, gamesnum_t	n_enc
-				, player_t		n_players
-				, const double *ratingof
-				, const bool_t *flagged
-				, double		white_adv
-				, double		beta
-				, double *		obtained
-				, double *		expected
-				, gamesnum_t *	playedby
-)
-{
-		double dev;
-		calc_expected (enc, n_enc, white_adv, n_players, ratingof, expected, beta);
-		dev = deviation (n_players, flagged, expected, obtained, playedby);
-		assert(!is_nan(dev));
-		return dev;
-}
+
 
 static void
 mobile_center_apply_excess (double excess, player_t n_players, const bool_t *flagged, const bool_t *prefed, double *ratingof)
@@ -441,8 +450,9 @@ unfitness_fcenter 	( double excess
 					, white_adv
 					, beta
 					, obtained
+					, playedby
 					, expected
-					, playedby);
+					);
 	assert(!is_nan(u));
 	return u;
 }
@@ -631,7 +641,7 @@ calc_rating_ordo
 		calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
 		assert(playedby_sanity (n_players, playedby, flagged));
 
-		olddev = curdev = unfitness	( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, expected, playedby);
+		olddev = curdev = unfitness	( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, playedby, expected);
 
 		if (!quiet) printf ("\nConvergence rating calculation (cycle #%d)\n\n", cycle+1);
 		if (!quiet) printf ("%3s %4s %12s%14s\n", "phase", "iteration", "deviation","resolution");
@@ -667,20 +677,21 @@ calc_rating_ordo
 							( delta
 							, kappa*kk
 							, n_players
+							, anchored_n
 							, flagged
 							, prefed
 							, expected 
 							, obtained 
 							, playedby
 							, ratingof
-							, anchored_n);
+							);
 
-				curdev = unfitness ( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, expected, playedby);
+				curdev = unfitness ( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, playedby, expected);
 				failed = curdev >= olddev;
 
 				if (failed) {
 					ratings_copyto (n_players, ratingbk, ratingof); // restore
-					curdev = unfitness ( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, expected, playedby);
+					curdev = unfitness ( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, playedby, expected);
 					assert (i == 0 || absol(curdev-olddev) < PRECISIONERROR || 
 								!fprintf(stderr, "i=%d, curdev=%.10e, olddev=%.10e, diff=%.10e\n", i, curdev, olddev, olddev-curdev));
 				} else {
@@ -709,7 +720,7 @@ calc_rating_ordo
 						mobile_center_apply_excess (cd, n_players, flagged, prefed, ratingof);
 					}
 
-					curdev = unfitness ( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, expected, playedby);
+					curdev = unfitness ( enc, n_enc, n_players, ratingof, flagged, white_adv, BETA, obtained, playedby, expected);
 					kk *= (1.0-1.0/KK_DAMP); //kk *= 0.995;
 				}
 
