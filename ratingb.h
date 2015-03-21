@@ -32,7 +32,6 @@ calc_rating_bayes
 			( bool_t 				quiet
 			, bool_t 				adjust_white_advantage
 			, bool_t				adjust_draw_rate
-			, bool_t 				some_prior_set
 			, bool_t				anchor_use
 
 			, double				beta

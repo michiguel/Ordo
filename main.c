@@ -929,7 +929,6 @@ int main (int argc, char *argv[])
 								, Prior_mode
 								, Anchor_use
 								, Anchor_err_rel2avg
-								, Some_prior_set
 
 								, General_average
 								, Anchor
@@ -1061,7 +1060,6 @@ int main (int argc, char *argv[])
 								, Prior_mode
 								, Anchor_use
 								, Anchor_err_rel2avg
-								, Some_prior_set
 
 								, General_average
 								, Anchor

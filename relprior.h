@@ -38,7 +38,6 @@ extern void		relpriors_done 		( struct rel_prior_set *rps /*@out@*/
 
 //----------------------------------
 
-extern bool_t 	Some_prior_set;
 extern player_t	Priored_n;
 
 //----------------------------------

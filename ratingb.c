@@ -207,25 +207,25 @@ calc_bayes_unfitness_full
 // no globals
 static double
 adjust_rating_bayes 
-				( double delta
-				, bool_t multiple_anchors_present
-				, bool_t some_prior_set
-				, bool_t anchor_use
-				, player_t anchor
-				, double general_average 
-				, player_t n_players 
-				, const struct prior *p
-				, double white_advantage
-				, struct prior wa_prior
-				, double deq
-				, struct prior dr_prior
-				, player_t n_relative_anchors
-				, const struct relprior *ra
-				, const double *change_vector
-				, const bool_t *flagged
-				, const bool_t *prefed
-				, double *ratingof // out 
-				, double *ratingbk // out 
+		( double 					delta
+		, bool_t 					multiple_anchors_present
+		, bool_t 					some_prior_has_been_set
+		, bool_t 					anchor_use
+		, player_t 					anchor
+		, double 					general_average 
+		, player_t 					n_players 
+		, const struct prior *		p
+		, double 					white_advantage
+		, struct 					prior wa_prior
+		, double 					deq
+		, struct prior 				dr_prior
+		, player_t 					n_relative_anchors
+		, const struct relprior *	ra
+		, const double *			change_vector
+		, const bool_t *			flagged
+		, const bool_t *			prefed
+		, double *					ratingof // out 
+		, double *					ratingbk // out 
 )
 ;
 
@@ -235,7 +235,6 @@ calc_rating_bayes
 			( bool_t 				quiet
 			, bool_t 				adjust_white_advantage
 			, bool_t				adjust_draw_rate
-			, bool_t 				some_prior_set
 			, bool_t				anchor_use
 
 			, double				beta
@@ -344,7 +343,7 @@ calc_rating_bayes
 			resol = adjust_rating_bayes 
 						( delta
 						, multiple_anchors_present
-						, some_prior_set
+						, priored_n > 0 // some_prior_set
 						, anchor_use
 						, anchor
 						, general_average 
@@ -726,25 +725,25 @@ static double absol(double x) {return x < 0? -x: x;}
 // no globals
 static double
 adjust_rating_bayes 
-				( double delta
-				, bool_t multiple_anchors_present
-				, bool_t some_prior_set
-				, bool_t anchor_use
-				, player_t anchor
-				, double general_average 
-				, player_t n_players 
-				, const struct prior *p
-				, double white_advantage
-				, struct prior wa_prior
-				, double deq
-				, struct prior dr_prior
-				, player_t n_relative_anchors
-				, const struct relprior *ra
-				, const double *change_vector
-				, const bool_t *flagged
-				, const bool_t *prefed
-				, double *ratingof // out 
-				, double *ratingbk // out 
+		( double 					delta
+		, bool_t 					multiple_anchors_present
+		, bool_t 					some_prior_has_been_set
+		, bool_t 					anchor_use
+		, player_t 					anchor
+		, double 					general_average 
+		, player_t 					n_players 
+		, const struct prior *		p
+		, double 					white_advantage
+		, struct 					prior wa_prior
+		, double 					deq
+		, struct prior 				dr_prior
+		, player_t 					n_relative_anchors
+		, const struct relprior *	ra
+		, const double *			change_vector
+		, const bool_t *			flagged
+		, const bool_t *			prefed
+		, double *					ratingof // out 
+		, double *					ratingbk // out 
 )
 {
 	player_t notflagged;
@@ -775,7 +774,7 @@ adjust_rating_bayes
 
 		excess = 0; // do nothing, was done before
 
-	} else if (some_prior_set) {
+	} else if (some_prior_has_been_set) {
  
 		excess = fitexcess
 					( n_players

@@ -37,7 +37,6 @@ calc_rating ( bool_t 					quiet
 			, bool_t					prior_mode
 			, bool_t					anchor_use
 			, bool_t					anchor_err_rel2avg
-			, bool_t 					some_prior_set
 
 			, double					general_average
 			, player_t 					anchor
@@ -69,7 +68,6 @@ calc_rating ( bool_t 					quiet
 				( quiet
 				, adjust_wadv
 				, adjust_drate
-				, some_prior_set
 				, anchor_use && !anchor_err_rel2avg
 
 				, beta

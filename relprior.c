@@ -278,7 +278,6 @@ relpriors_done (struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *rps_b
 
 #include <math.h>
 
-bool_t		Some_prior_set = FALSE;
 player_t 	Priored_n = 0;
 
 bool_t 
@@ -292,7 +291,6 @@ priors_reset(struct prior *p, player_t n)
 		p[i].sigma = 1;
 		p[i].isset = FALSE;
 	}
-	Some_prior_set = FALSE;
 	Priored_n = 0;
 }
 
@@ -346,7 +344,6 @@ set_prior (const struct PLAYERS *plyrs, const char *player_name, double x, doubl
 		pr[j].value = x;
 		pr[j].sigma = sigma;
 		pr[j].isset = TRUE;
-		Some_prior_set = TRUE;
 		Priored_n++;
 	}
 	return found;
