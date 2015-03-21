@@ -202,7 +202,6 @@ static long 	Simulate = 0;
 static double	White_advantage = 0;
 static double	White_advantage_SD = 0;
 static double	Rtng_76 = 202;
-static double	Inv_beta = INVBETA;
 static double	BETA = 1.0/INVBETA;
 static double	Confidence_factor = 1.0;
 
@@ -853,10 +852,8 @@ int main (int argc, char *argv[])
 
 	randfast_init (1324561);
 
-	Inv_beta = Rtng_76/(-log(1.0/0.76-1.0));
+	BETA = (-log(1.0/0.76-1.0)) / Rtng_76;
 
-	BETA = 1.0/Inv_beta;
-	
 	{	player_t i;
 		for (i = 0; i < Players.n; i++) {
 			Sum1[i] = 0;
