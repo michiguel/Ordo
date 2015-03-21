@@ -923,10 +923,9 @@ int main (int argc, char *argv[])
 	}
 
 	Encounters.n = calc_rating 	( QUIET_MODE
-								, Forces_ML
+								, Forces_ML || Prior_mode
 								, ADJUST_WHITE_ADVANTAGE
 								, ADJUST_DRAW_RATE
-								, Prior_mode
 								, Anchor_use
 								, Anchor_err_rel2avg
 
@@ -1054,10 +1053,9 @@ int main (int argc, char *argv[])
 
 					Encounters.n = calc_rating 
 								( QUIET_MODE
-								, Forces_ML
+								, Forces_ML || Prior_mode
 								, ADJUST_WHITE_ADVANTAGE
 								, ADJUST_DRAW_RATE
-								, Prior_mode
 								, Anchor_use
 								, Anchor_err_rel2avg
 

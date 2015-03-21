@@ -28,10 +28,9 @@
 
 gamesnum_t
 calc_rating ( bool_t 					quiet
-			, bool_t 					ml
+			, bool_t					prior_mode
 			, bool_t 					adjust_wadv
 			, bool_t 					adjust_drate
-			, bool_t					prior_mode
 			, bool_t					anchor_use
 			, bool_t					anchor_err_rel2avg
 
