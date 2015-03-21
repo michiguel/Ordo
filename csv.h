@@ -25,13 +25,13 @@
 
 #include "boolean.h"
 
-//FIXME make MAXSIZETOKEN dynamic
-#define MAXSIZETOKEN 1024
+//FIXME make dynamic
+#define MAXSIZE_CSVLINE 4096
 
 struct csv_line {
 	int 	n;
 	char 	*mem; // points to block of memory
-	char 	*s[MAXSIZETOKEN]; //FIXME make it dynamic
+	char 	*s[MAXSIZE_CSVLINE]; //FIXME make it dynamic
 };
 
 typedef struct csv_line csv_line_t;

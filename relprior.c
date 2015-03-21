@@ -28,12 +28,15 @@
 #include "ordolim.h"
 #include "csv.h"
 #include "randfast.h"
-
 #include "relpman.h"
 #include "plyrs.h"
 #include "mymem.h"
+#include "mystr.h"
+
+#define MAX_MYLINE MAXSIZE_CSVLINE
 
 static char *skipblanks(char *p) {while (isspace(*p)) p++; return p;}
+
 static bool_t getnum(char *p, double *px) 
 { 	float x;
 	bool_t ok = 1 == sscanf( p, "%f", &x );
@@ -44,7 +47,7 @@ static bool_t getnum(char *p, double *px)
 //====================== RELATIVE PRIORS ====================================================================
 
 void
-relpriors_shuffle(struct rel_prior_set *rps /*@out@*/)
+relpriors_shuffle (struct rel_prior_set *rps /*@out@*/)
 {
 	player_t i;
 	double value, sigma;
@@ -62,7 +65,7 @@ relpriors_shuffle(struct rel_prior_set *rps /*@out@*/)
 }
 
 void
-relpriors_copy(const struct rel_prior_set *r, struct rel_prior_set *s /*@out@*/)
+relpriors_copy (const struct rel_prior_set *r, struct rel_prior_set *s /*@out@*/)
 {	
 	player_t i;
 	player_t n = r->n;
@@ -157,11 +160,13 @@ rman_assign_relative_prior__ (const struct PLAYERS *plyrs, char *s, char *z, dou
 }
 
 void
-relpriors_init (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_name
-				, struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *bak /*@out@*/)
+relpriors_init 	( bool_t quietmode
+				, const struct PLAYERS *plyrs
+				, const char *f_name
+				, struct rel_prior_set *rps /*@out@*/
+				, struct rel_prior_set *bak /*@out@*/
+				)
 {
-	#define MAX_MYLINE 1024
-
 	struct rpmanager rpmanager = {NULL, NULL, NULL, 0};
 
 	FILE *fil;
@@ -201,8 +206,8 @@ relpriors_init (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_nam
 				if (csv_line_init(&csvln, myline)) {
 					success = csvln.n == 4 && getnum(csvln.s[2], &x) && getnum(csvln.s[3], &y);
 					if (success) {
-						strcpy(s, csvln.s[0]); //FIXME
-						strcpy(z, csvln.s[1]); //FIXME
+						mystrncpy(s, csvln.s[0], MAX_MYLINE-1);
+						mystrncpy(z, csvln.s[1], MAX_MYLINE-1);
 					}
 					csv_line_done(&csvln);		
 				} else {
@@ -254,11 +259,6 @@ relpriors_init (bool_t quietmode, const struct PLAYERS *plyrs, const char *f_nam
 
 	return;
 }
-
-
-
-//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
 
 void
 relpriors_done (struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *rps_backup /*@out@*/)
@@ -388,7 +388,6 @@ assign_prior (char *name_prior, double x, double y, bool_t quiet, struct RATINGS
 void
 priors_load (bool_t quietmode, const char *fpriors_name, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/, struct prior *pr /*@out@*/)
 {
-	#define MAX_MYLINE 1024
 	FILE *fpriors;
 	char myline[MAX_MYLINE];
 	char name_prior[MAX_MYLINE];
@@ -420,7 +419,7 @@ priors_load (bool_t quietmode, const char *fpriors_name, struct RATINGS *rat /*@
 			if (csv_line_init(&csvln, myline)) {
 				success = csvln.n >= 3 && getnum(csvln.s[1], &x) && getnum(csvln.s[2], &y);
 				if (success) {
-					strcpy(name_prior, csvln.s[0]); //FIXME
+					mystrncpy(name_prior, csvln.s[0], MAX_MYLINE-1); 
 				}
 				if (success && csvln.n > 3) {
 					int i;
@@ -496,7 +495,6 @@ assign_anchor (char *name_pinned, double x, bool_t quiet, struct RATINGS *rat /*
 void
 init_manchors (bool_t quietmode, const char *fpins_name, struct RATINGS *rat /*@out@*/, struct PLAYERS *plyrs /*@out@*/)
 {
-	#define MAX_MYLINE 1024
 	FILE *fpins;
 	char myline[MAX_MYLINE];
 	char name_pinned[MAX_MYLINE];
@@ -528,7 +526,7 @@ init_manchors (bool_t quietmode, const char *fpins_name, struct RATINGS *rat /*@
 			if (csv_line_init(&csvln, myline)) {
 				success = csvln.n >= 2 && getnum(csvln.s[1], &x);
 				if (success) {
-					strcpy(name_pinned, csvln.s[0]); //FIXME
+					mystrncpy(name_pinned, csvln.s[0], MAX_MYLINE-1); 
 				}
 				csv_line_done(&csvln);		
 			} else {
