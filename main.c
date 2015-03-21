@@ -179,10 +179,10 @@ static int compare_GAME (const void * a, const void * b)
 
 /*------------------------------------------------------------------------*/
 
-enum 			AnchorSZ	{MAX_ANCHORSIZE=256};
+enum 			AnchorSZ	{MAX_ANCHORSIZE=1024};
 static bool_t	Anchor_use = FALSE;
 static player_t	Anchor = 0;
-static char	Anchor_name[MAX_ANCHORSIZE] = "";
+static char		Anchor_name[MAX_ANCHORSIZE] = "";
 
 static bool_t	Anchor_err_rel2avg = FALSE;
 
@@ -457,7 +457,7 @@ int main (int argc, char *argv[])
 						}
 						break;
 			case 'A': 	if (strlen(opt_arg) < MAX_ANCHORSIZE-1) {
-							strcpy (Anchor_name, opt_arg); //FIXME
+							mystrncpy (Anchor_name, opt_arg, MAX_ANCHORSIZE-1);
 							Anchor_use = TRUE;
 						} else {
 							fprintf(stderr, "ERROR: anchor name is too long\n");
