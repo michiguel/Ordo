@@ -35,52 +35,52 @@ typedef struct NODE 		node_t;
 typedef struct PARTICIPANT 	participant_t;
 
 struct GROUP {
-	group_t 		*next;
-	group_t 		*prev;
-	group_t 		*combined;
-	participant_t 	*pstart;
-	participant_t 	*plast;
-	connection_t	*cstart; // beat to
-	connection_t	*clast;
-	connection_t	*lstart; // lost to
-	connection_t	*llast;
-	int				id;
+	group_t *		next;
+	group_t *		prev;
+	group_t *		combined;
+	participant_t *	pstart;
+	participant_t *	plast;
+	connection_t *	cstart; // beat to
+	connection_t *	clast;
+	connection_t *	lstart; // lost to
+	connection_t *	llast;
+	player_t		id;
 	bool_t			isolated;
 };
 
 struct CONNECT {
-	connection_t 	*next;
-	node_t			*node;
+	connection_t *	next;
+	node_t	*		node;
 };
 
 struct NODE {
-	group_t 		*group;
+	group_t *		group;
 };
 
 struct PARTICIPANT {
-	participant_t 	*next;
-	const char		*name;
+	participant_t *	next;
+	const char	*	name;
 	player_t		id;
 };
 
 struct GROUP_BUFFER {
-	group_t		*list; //buffer
-	group_t		*tail;
-	group_t		*prehead;
-	player_t	n;
-	player_t	max;
+	group_t	*		list; //buffer
+	group_t	*		tail;
+	group_t	*		prehead;
+	player_t		n;
+	player_t		max;
 };
 
 struct PARTICIPANT_BUFFER {
-	participant_t		*list; //buffer
-	player_t			n;
-	player_t			max;
+	participant_t *	list; //buffer
+	player_t		n;
+	player_t		max;
 };
 
 struct CONNECT_BUFFER {
-	connection_t		*list; //buffer
-	gamesnum_t			n;
-	gamesnum_t			max;
+	connection_t *	list; //buffer
+	gamesnum_t		n;
+	gamesnum_t		max;
 };
 
 extern void 	scan_encounters	( const struct ENC Encounter[]

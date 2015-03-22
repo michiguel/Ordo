@@ -71,14 +71,14 @@ static player_t		N_groups;
 
 static bitarray_t 	BA;
 static bitarray_t	BB;
-static int 		*	Get_new_id;
+static long *		Get_new_id;
 
 static group_t 	**	Group_final_list;
 static long			Group_final_list_n = 0;
 
 static node_t	*	Gnode;
 
-static int 		*	CHAIN;
+static player_t	*	CHAIN;
 
 //----------------------------------------------------------------------
 
@@ -216,7 +216,7 @@ add_participant (group_t *g, player_t i)
 static void
 add_connection (group_t *g, player_t i)
 {
-	int group_id;
+	player_t group_id;
 	connection_t *nw = connection_new();
 	nw->next = NULL;
 	nw->node = &Gnode[i];
@@ -245,7 +245,7 @@ add_connection (group_t *g, player_t i)
 static void
 add_revconn (group_t *g, player_t i)
 {
-	int group_id;
+	player_t group_id;
 	connection_t *nw = connection_new();
 	nw->next = NULL;
 	nw->node = &Gnode[i];
@@ -400,7 +400,7 @@ convert_to_groups (FILE *f, player_t n_plyrs, const char **name)
 	return groups_counter() ;
 }
 
-static int
+static player_t
 group_belonging(player_t plyr)
 {
 	group_t *ggg = group_pointed_by_node(&Gnode[plyr]);
@@ -617,7 +617,7 @@ simplify_shrink__ (group_t *g)
 {
 	group_t 		*beat_to, *lost_to;
 	connection_t 	*c, *p;
-	int 			id, oid;
+	player_t		id, oid;
 
 	id = -1;
 
@@ -726,7 +726,7 @@ simplify (group_t *g)
 {
 	group_t 		*beat_to, *lost_to, *combine_with=NULL;
 	connection_t 	*c, *p;
-	int 			id, oid;
+	player_t		id, oid;
 	bool_t 			gotta_combine = FALSE;
 	bool_t			combined = FALSE;
 
@@ -895,7 +895,7 @@ group_next_pointed_by_beat(group_t *g)
 {
 	group_t *gp;
 	connection_t *b;
-	int own_id;
+	player_t own_id;
 	if (g == NULL)	return NULL; 
 	own_id = g->id;
 	b = group_beathead(g);
@@ -914,11 +914,11 @@ group_next_pointed_by_beat(group_t *g)
 static void
 finish_it(void)
 {
-	int *chain_end;
+	player_t *chain_end;
 	group_t *g, *h, *gp;
 	connection_t *b;
-	int own_id, bi;
-	int *chain;
+	player_t own_id, bi;
+	player_t *chain;
 	bool_t startover;
 	bool_t combined;
 
@@ -962,7 +962,7 @@ finish_it(void)
 	
 					if (ba_ison(&BA, bi)) {
 						//	findprevious bi, combine... remember to include own id;
-						int *p;
+						player_t *p;
 						chain_end = chain;
 						while (chain-->CHAIN) {
 							if (*chain == bi) break;
@@ -994,8 +994,8 @@ static void
 final_list_output(FILE *f)
 {
 	group_t *g;
-	int i;
-	int new_id;
+	player_t i;
+	long new_id;
 
 	for (i = 0; i < N_players; i++) {
 		Get_new_id[i] = -1;
@@ -1010,7 +1010,7 @@ final_list_output(FILE *f)
 
 	for (i = 0; i < Group_final_list_n; i++) {
 		g = Group_final_list[i];
-		fprintf (f,"\nGroup %d\n",Get_new_id[g->id]);
+		fprintf (f,"\nGroup %ld\n",Get_new_id[g->id]);
 
 		//printf("-post-final--\n");
 		simplify_shrink (g);
@@ -1107,7 +1107,7 @@ static void
 group_output(FILE *f, group_t *s)
 {		
 	connection_t *c;
-	int own_id;
+	player_t own_id;
 	int winconnections = 0, lossconnections = 0;
 	assert(s);
 	own_id = s->id;
@@ -1118,7 +1118,7 @@ group_output(FILE *f, group_t *s)
 		group_t *gr = group_pointed(c);
 		if (gr != NULL) {
 			if (gr->id != own_id) {
-				fprintf (f," \\---> there are (only) wins against group: %d\n",Get_new_id[gr->id]);
+				fprintf (f," \\---> there are (only) wins against group: %ld\n",Get_new_id[gr->id]);
 				winconnections++;
 			}
 		} else
@@ -1128,7 +1128,7 @@ group_output(FILE *f, group_t *s)
 		group_t *gr = group_pointed(c);
 		if (gr != NULL) {
 			if (gr->id != own_id) {
-				fprintf (f," \\---> there are (only) losses against group: %d\n",Get_new_id[gr->id]);
+				fprintf (f," \\---> there are (only) losses against group: %ld\n",Get_new_id[gr->id]);
 				lossconnections++;
 			}
 		} else
@@ -1253,16 +1253,16 @@ bool_t
 supporting_groupmem_init (player_t nplayers, gamesnum_t nenc)
 {
 	int32_t 	*a;
-	int 		*b;
+	long 		*b;
 	group_t *	*c;
 	node_t 		*d;
-	int			*e;
+	player_t	*e;
 
 	size_t		sa = sizeof(int32_t );
-	size_t		sb = sizeof(int);
+	size_t		sb = sizeof(long);
 	size_t		sc = sizeof(group_t *);
 	size_t		sd = sizeof(node_t);
-	size_t		se = sizeof(int);
+	size_t		se = sizeof(player_t);
 
 	if (NULL == (a = memnew (sa * (size_t)nplayers))) {
 		return FALSE;
