@@ -140,10 +140,11 @@ struct PLAYERS {
 	player_t	n; 
 	player_t	size;
 	player_t	anchored_n;
-	bool_t		perf_set;
 	const char  **name;
+	bool_t		perf_set;
 	bool_t		*flagged;
 	bool_t		*prefed;
+	bool_t		*priored;
 	int			*performance_type; 
 };
 

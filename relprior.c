@@ -280,8 +280,7 @@ relpriors_done (struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *rps_b
 
 player_t 	Priored_n = 0;
 
-bool_t 
-has_a_prior(struct prior *pr, player_t j) {return pr[j].isset;}
+bool_t has_a_prior(struct prior *pr, player_t j) {return pr[j].isset;}
 
 void
 priors_reset(struct prior *p, player_t n)

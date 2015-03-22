@@ -232,6 +232,7 @@ static bool_t	Prior_mode;
 /*------------------------------------------------------------------------*/
 
 static void	players_purge (bool_t quiet, struct PLAYERS *pl);
+static void	players_set_priored_info (const struct prior *pr, const struct rel_prior_set *rps, struct PLAYERS *pl /*@out@*/);
 static void	players_flags_reset (struct PLAYERS *pl);
 
 #if !defined(NDEBUG)
@@ -780,6 +781,7 @@ int main (int argc, char *argv[])
 		priors_show(&Players, PP, Players.n);
 		relpriors_show(&Players, &RPset);
 	//FIXME do not allow relpriors to be purged
+		players_set_priored_info (PP, &RPset, &Players);
 	}
 
 	if (switch_w && switch_u) {
@@ -1357,6 +1359,27 @@ players_purge (bool_t quiet, struct PLAYERS *pl)
 	}
 }
 
+// no globals
+static void
+players_set_priored_info (const struct prior *pr, const struct rel_prior_set *rps, struct PLAYERS *pl /*@out@*/)
+{
+	player_t 			i, j;
+	player_t 			n_players = pl->n;
+	struct relprior *	rp = rps->x;;
+	player_t 			rn = rps->n;;
+
+	// priors
+	for (j = 0; j < n_players; j++) {
+		pl->priored[j] = pr[j].isset;
+	}
+
+	// relative priors
+	for (i = 0; i < rn; i++) {
+		pl->priored[rp[i].player_a] = TRUE;
+		pl->priored[rp[i].player_b] = TRUE;
+	}
+}
+
 #if !defined(NDEBUG)
 static bool_t
 players_have_clear_flags (struct PLAYERS *pl)
@@ -1556,6 +1579,7 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl)
 	// players
 	player_t n_players = pl->n;
 	int *perftype  = pl->performance_type;
+	bool_t *ispriored = pl->priored; 
 	const char **name    = pl->name;
 
 	double 		*obt;

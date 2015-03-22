@@ -144,7 +144,7 @@ encounters_done (struct ENCOUNTERS *e)
 bool_t 
 players_init (player_t n, struct PLAYERS *x)
 {
-	enum VARIAB {NV = 4};
+	enum VARIAB {NV = 5};
 	bool_t failed;
 	size_t sz[NV];
 	void * pv[NV];
@@ -157,6 +157,7 @@ players_init (player_t n, struct PLAYERS *x)
 	sz[1] = sizeof(bool_t);
 	sz[2] = sizeof(bool_t);
 	sz[3] = sizeof(int);
+	sz[4] = sizeof(bool_t);
 
 	for (failed = FALSE, i = 0; !failed && i < NV; i++) {
 		if (NULL == (pv[i] = memnew (sz[i] * (size_t)n))) {
@@ -173,6 +174,7 @@ players_init (player_t n, struct PLAYERS *x)
 	x->flagged			= pv[1];
 	x->prefed			= pv[2];
 	x->performance_type = pv[3]; 
+	x->priored			= pv[4]; 
 
 	x->perf_set = FALSE;
 
@@ -185,12 +187,14 @@ players_done (struct PLAYERS *x)
 	memrel(x->name);
 	memrel(x->flagged);
 	memrel(x->prefed);
+	memrel(x->priored);
 	memrel(x->performance_type);
 	x->n = 0;
 	x->size	= 0;
 	x->name = NULL;
 	x->flagged = NULL;
 	x->prefed = NULL;
+	x->priored = NULL;
 	x->performance_type = NULL;
 } 
 

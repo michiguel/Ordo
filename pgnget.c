@@ -226,6 +226,7 @@ database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, st
 		p->name[j] = database_getname(db,j);
 		p->flagged[j] = FALSE;
 		p->prefed [j] = FALSE;
+		p->priored[j] = FALSE;
 		p->performance_type[j] = PERF_NORMAL;
 	}
 
