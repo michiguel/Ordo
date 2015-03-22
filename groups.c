@@ -27,6 +27,8 @@
 #include "mytypes.h"
 #include "mymem.h"
 
+//------------- Bit array begin --------------------------------------- 
+
 typedef uint64_t pod_t;
 
 struct BITARRAY {
@@ -35,6 +37,50 @@ struct BITARRAY {
 };
 
 typedef struct BITARRAY bitarray_t;
+
+static void
+ba_put(struct BITARRAY *ba, player_t x)
+{
+	if (x < ba->max) {
+		ba->pod[x/64] |= (uint64_t)1 << (x & 63);
+	}
+}
+
+static bool_t
+ba_ison(struct BITARRAY *ba, player_t x)
+{
+	uint64_t y;
+	bool_t ret;
+	y = (uint64_t)1 & (ba->pod[x/64] >> (x & 63));	
+	ret = y == 1;
+	return ret;
+}
+
+static bool_t
+ba_init(struct BITARRAY *ba, player_t max)
+{
+	bool_t ok;
+	uint64_t *ptr;
+	size_t i;
+	size_t max_p = (size_t)max/64 + (max % 64 > 0?1:0);
+
+	ok = NULL != (ptr = memnew (sizeof(pod_t)*max_p));
+	if (ok) {
+		ba->max = max;
+		ba->pod = ptr;
+		for (i = 0; i < max_p; i++) ba->pod[i] = 0;
+	} 
+	return ok;
+}
+
+static void
+ba_done(struct BITARRAY *ba)
+{
+	assert(ba->pod);
+	if (ba->pod) memrel (ba->pod);
+	ba->pod = NULL;
+	ba->max = 0;
+}
 
 //---------------------------------------------------------------------
 
@@ -82,18 +128,17 @@ static player_t	*	CHAIN;
 
 //----------------------------------------------------------------------
 
-static void			simplify_all(void);
-static void			finish_it(void);
-static void 		connect_init (void) {connection_buffer.n = 0;}
-static connection_t * 
-					connection_new (void) 
+static void				simplify_all(void);
+static void				finish_it(void);
+static void 			connect_init (void) {connection_buffer.n = 0;}
+static connection_t *	connection_new (void) 
 {
 	assert (connection_buffer.n < connection_buffer.max);
 	return &connection_buffer.list[connection_buffer.n++];
 }
-static void 		participant_init (void) {participant_buffer.n = 0;}
-static participant_t * 
-					participant_new (void) 
+
+static void 			participant_init (void) {participant_buffer.n = 0;}
+static participant_t *	participant_new (void) 
 {
 	assert (participant_buffer.n < participant_buffer.max);	
 	return &participant_buffer.list[participant_buffer.n++];
@@ -173,19 +218,23 @@ static group_t * groupset_find(int id)
 
 //===
 
-static group_t * group_new  (void) {return &group_buffer.list[group_buffer.n++];}
+static group_t * group_new  (void) 
+{
+	return &group_buffer.list[group_buffer.n++];
+}
 
 static group_t * group_reset(group_t *g)
-{		if (g == NULL) return NULL;
-		g->next = NULL;	
-		g->prev = NULL; 
-		g->combined = NULL;
-		g->pstart = NULL; g->plast = NULL; 	
-		g->cstart = NULL; g->clast = NULL;
-		g->lstart = NULL; g->llast = NULL;
-		g->id = -1;
-		g->isolated = FALSE;
-		return g;
+{		
+	if (g == NULL) return NULL;
+	g->next = NULL;	
+	g->prev = NULL; 
+	g->combined = NULL;
+	g->pstart = NULL; g->plast = NULL; 	
+	g->cstart = NULL; g->clast = NULL;
+	g->lstart = NULL; g->llast = NULL;
+	g->id = -1;
+	g->isolated = FALSE;
+	return g;
 }
 
 static group_t * group_combined(group_t *g)
@@ -443,7 +492,6 @@ group_gocombine(group_t *g, group_t *h)
 	group_t *pr = h->prev;
 	group_t *ne = h->next;
 
-
 	if (h->combined == g) {
 		return;
 	}	
@@ -476,53 +524,7 @@ group_gocombine(group_t *g, group_t *h)
 	h->lstart = NULL;
 }
 
-//======================
-
-
-static void
-ba_put(struct BITARRAY *ba, player_t x)
-{
-	if (x < ba->max) {
-		ba->pod[x/64] |= (uint64_t)1 << (x & 63);
-	}
-}
-
-static bool_t
-ba_ison(struct BITARRAY *ba, player_t x)
-{
-	uint64_t y;
-	bool_t ret;
-	y = (uint64_t)1 & (ba->pod[x/64] >> (x & 63));	
-	ret = y == 1;
-	return ret;
-}
-
-static bool_t
-ba_init(struct BITARRAY *ba, player_t max)
-{
-	bool_t ok;
-	uint64_t *ptr;
-	size_t i;
-	size_t max_p = (size_t)max/64 + (max % 64 > 0?1:0);
-
-	ok = NULL != (ptr = memnew (sizeof(pod_t)*max_p));
-	if (ok) {
-		ba->max = max;
-		ba->pod = ptr;
-		for (i = 0; i < max_p; i++) ba->pod[i] = 0;
-	} 
-	return ok;
-}
-
-static void
-ba_done(struct BITARRAY *ba)
-{
-	assert(ba->pod);
-	if (ba->pod) memrel (ba->pod);
-	ba->pod = NULL;
-	ba->max = 0;
-}
-
+//-----------------------------------------------
 
 static group_t *
 group_pointed(connection_t *c)
@@ -1247,8 +1249,6 @@ supporting_encmem_done (void)
 	return;
 }
 
-
-
 bool_t
 supporting_groupmem_init (player_t nplayers, gamesnum_t nenc)
 {
@@ -1341,7 +1341,6 @@ supporting_groupmem_done (void)
 }
 
 //==
-
 
 static bool_t
 group_buffer_init(struct GROUP_BUFFER *g, player_t n)
