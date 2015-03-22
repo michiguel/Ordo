@@ -148,7 +148,7 @@ static participant_t *	participant_new (void)
 static group_t * 	group_new(void);
 static group_t * 	group_reset(group_t *g);
 static group_t * 	group_combined(group_t *g);
-static group_t * 	group_pointed(connection_t *c);
+static group_t * 	group_pointed_by_conn(connection_t *c);
 static group_t *	group_pointed_by_node(node_t *nd);
 static void			final_list_output(FILE *f);
 static void			group_output(FILE *f, group_t *s);
@@ -527,7 +527,7 @@ group_gocombine(group_t *g, group_t *h)
 //-----------------------------------------------
 
 static group_t *
-group_pointed(connection_t *c)
+group_pointed_by_conn(connection_t *c)
 {
 	node_t *nd; 
 	if (c == NULL) return NULL;
@@ -593,7 +593,7 @@ beat_lost_output (group_t *g)
 		beat_to = NULL;
 		c = g->cstart; 
 		do {
-			if (c && NULL != (beat_to = group_pointed(c))) {
+			if (c && NULL != (beat_to = group_pointed_by_conn(c))) {
 				printf ("%d, ",beat_to->id);
 				c = c->next;
 			}
@@ -605,7 +605,7 @@ beat_lost_output (group_t *g)
 		lost_to = NULL;
 		c = g->lstart; 
 		do {
-			if (c && NULL != (lost_to = group_pointed(c))) {
+			if (c && NULL != (lost_to = group_pointed_by_conn(c))) {
 				printf ("%d, ",lost_to->id);
 				c = c->next;
 			}
@@ -632,7 +632,7 @@ simplify_shrink__ (group_t *g)
 	beat_to = NULL;
 	do {
 		c = g->cstart; 
-		if (c && NULL != (beat_to = group_pointed(c))) {
+		if (c && NULL != (beat_to = group_pointed_by_conn(c))) {
 			id = beat_to->id;
 			if (id == oid) { 
 				// remove connection
@@ -649,7 +649,7 @@ simplify_shrink__ (group_t *g)
 		c = c->next;
 
 		while (c != NULL) {
-			beat_to = group_pointed(c);
+			beat_to = group_pointed_by_conn(c);
 			id = beat_to->id;
 			if (id == oid || ba_ison(&BA, id)) {
 				// remove connection and advance
@@ -672,7 +672,7 @@ simplify_shrink__ (group_t *g)
 
 	do {
 		c = g->lstart; 
-		if (c && NULL != (lost_to = group_pointed(c))) {
+		if (c && NULL != (lost_to = group_pointed_by_conn(c))) {
 			id = lost_to->id;
 			if (id == oid) { 
 				// remove connection
@@ -689,7 +689,7 @@ simplify_shrink__ (group_t *g)
 		c = c->next;
 
 		while (c != NULL) {
-			lost_to = group_pointed(c);
+			lost_to = group_pointed_by_conn(c);
 			id = lost_to->id;
 			if (id == oid || ba_ison(&BB, id)) {
 				// remove connection and advance
@@ -750,7 +750,7 @@ simplify (group_t *g)
 		beat_to = NULL;
 		do {
 			c = g->cstart; 
-			if (c && NULL != (beat_to = group_pointed(c))) {
+			if (c && NULL != (beat_to = group_pointed_by_conn(c))) {
 				id = beat_to->id;
 				if (id == oid) { 
 					// remove connection
@@ -767,7 +767,7 @@ simplify (group_t *g)
 			c = c->next;
 
 			while (c != NULL) {
-				beat_to = group_pointed(c);
+				beat_to = group_pointed_by_conn(c);
 				id = beat_to->id;
 				if (id == oid || ba_ison(&BA, id)) {
 					// remove connection and advance
@@ -793,7 +793,7 @@ simplify (group_t *g)
 
 		do {
 			c = g->lstart; 
-			if (c && NULL != (lost_to = group_pointed(c))) {
+			if (c && NULL != (lost_to = group_pointed_by_conn(c))) {
 				id = lost_to->id;
 				if (id == oid) { 
 					// remove connection
@@ -825,7 +825,7 @@ simplify (group_t *g)
 			assert(groupset_sanity_check());
 
 			while (c != NULL && !gotta_combine) {
-				lost_to = group_pointed(c);
+				lost_to = group_pointed_by_conn(c);
 				id = lost_to->id;
 				if (id == oid || ba_ison(&BB, id)) {
 					// remove connection and advance
@@ -903,11 +903,11 @@ group_next_pointed_by_beat(group_t *g)
 	b = group_beathead(g);
 	if (b == NULL)	return NULL; 
 
-	gp = group_pointed(b);
+	gp = group_pointed_by_conn(b);
 	while (gp == NULL || gp->isolated || gp->id == own_id) {
 		b = beat_next(b);
 		if (b == NULL) return NULL;
-		gp = group_pointed(b);
+		gp = group_pointed_by_conn(b);
 	} 
 
 	return gp;
@@ -959,7 +959,7 @@ finish_it(void)
 
 				for (b = group_beathead(g); b != NULL; b = beat_next(b)) {
 
-					gp = group_pointed(b);
+					gp = group_pointed_by_conn(b);
 					bi = gp->id;
 	
 					if (ba_ison(&BA, bi)) {
@@ -1117,7 +1117,7 @@ group_output(FILE *f, group_t *s)
 	print_group_participants (f, s->pstart);
 
 	for (c = s->cstart; c != NULL; c = c->next) {
-		group_t *gr = group_pointed(c);
+		group_t *gr = group_pointed_by_conn(c);
 		if (gr != NULL) {
 			if (gr->id != own_id) {
 				fprintf (f," \\---> there are (only) wins against group: %ld\n",Get_new_id[gr->id]);
@@ -1127,7 +1127,7 @@ group_output(FILE *f, group_t *s)
 			fprintf (f,"point to node NULL\n");
 	}
 	for (c = s->lstart; c != NULL; c = c->next) {
-		group_t *gr = group_pointed(c);
+		group_t *gr = group_pointed_by_conn(c);
 		if (gr != NULL) {
 			if (gr->id != own_id) {
 				fprintf (f," \\---> there are (only) losses against group: %ld\n",Get_new_id[gr->id]);
