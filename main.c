@@ -780,7 +780,6 @@ int main (int argc, char *argv[])
 	if (!QUIET_MODE) {
 		priors_show(&Players, PP, Players.n);
 		relpriors_show(&Players, &RPset);
-	//FIXME do not allow relpriors to be purged
 		players_set_priored_info (PP, &RPset, &Players);
 	}
 
@@ -906,6 +905,7 @@ int main (int argc, char *argv[])
 	assert(players_have_clear_flags(&Players));
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
+	players_set_priored_info (PP, &RPset, &Players);
 	if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
 		players_purge (QUIET_MODE, &Players);
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
@@ -1038,6 +1038,8 @@ int main (int argc, char *argv[])
 
 						assert(players_have_clear_flags(&Players));
 						calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
+
+						players_set_priored_info (PP, &RPset, &Players);
 						if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
 							players_purge (QUIET_MODE, &Players);
 							calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
@@ -1142,6 +1144,8 @@ int main (int argc, char *argv[])
 	
 		/* recalculate encounters */
 		calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
+
+		players_set_priored_info (PP, &RPset, &Players);
 		if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
 			players_purge (QUIET_MODE, &Players);
 			calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
@@ -1365,8 +1369,8 @@ players_set_priored_info (const struct prior *pr, const struct rel_prior_set *rp
 {
 	player_t 			i, j;
 	player_t 			n_players = pl->n;
-	struct relprior *	rp = rps->x;;
-	player_t 			rn = rps->n;;
+	struct relprior *	rp = rps->x;
+	player_t 			rn = rps->n;
 
 	// priors
 	for (j = 0; j < n_players; j++) {
@@ -1614,18 +1618,20 @@ set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl)
 
 	}
 	for (j = 0; j < n_players; j++) {
+		//bool_t gotprior = has_a_prior(PP,j);
+		bool_t gotprior = ispriored[j];
 		perftype[j] = PERF_NORMAL;
 		if (pla[j] == 0) {
 			perftype[j] = PERF_NOGAMES;			
 			if (!quiet) printf ("detected (player without games) --> %s\n", name[j]);
 		} else {
 			if (obt[j] < 0.001) {
-				perftype[j] = has_a_prior(PP,j)? PERF_NORMAL: PERF_SUPERLOSER;			
-				if (!quiet) printf ("detected (all-losses player) --> %s: seed rating present = %s\n", name[j], has_a_prior(PP,j)? "Yes":"No");
+				perftype[j] = gotprior? PERF_NORMAL: PERF_SUPERLOSER;			
+				if (!quiet) printf ("detected (all-losses player) --> %s: seed rating present = %s\n", name[j], gotprior? "Yes":"No");
 			}	
 			if ((double)pla[j] - obt[j] < 0.001) {
-				perftype[j] = has_a_prior(PP,j)? PERF_NORMAL: PERF_SUPERWINNER;
-				if (!quiet) printf ("detected (all-wins player)   --> %s: seed rating present = %s\n", name[j], has_a_prior(PP,j)? "Yes":"No");
+				perftype[j] = gotprior? PERF_NORMAL: PERF_SUPERWINNER;
+				if (!quiet) printf ("detected (all-wins player)   --> %s: seed rating present = %s\n", name[j], gotprior? "Yes":"No");
 			}
 		}
 		if (perftype[j] != PERF_NORMAL) super++;
