@@ -644,7 +644,7 @@ simplify_shrink__ (group_t *g)
 			id = beat_to->id;
 			if (id == oid) { 
 				// remove connection
-				g->cstart = c->next; //FIXME mem leak? memrel(c)
+				g->cstart = c->next; //no mem leak, allocated buffer
 			}
 		}
 	} while (c && beat_to && id == oid);
@@ -661,7 +661,7 @@ simplify_shrink__ (group_t *g)
 			id = beat_to->id;
 			if (id == oid || ba_ison(&BA, id)) {
 				// remove connection and advance
-				c = c->next; //FIXME mem leak? memrel(c)
+				c = c->next; //no mem leak, allocated buffer
 				p->next = c; 
 			}
 			else {
@@ -684,7 +684,7 @@ simplify_shrink__ (group_t *g)
 			id = lost_to->id;
 			if (id == oid) { 
 				// remove connection
-				g->lstart = c->next; //FIXME mem leak?
+				g->lstart = c->next; //no mem leak, allocated buffer
 			}
 		}
 	} while (c && lost_to && id == oid);
@@ -702,7 +702,7 @@ simplify_shrink__ (group_t *g)
 			if (id == oid || ba_ison(&BB, id)) {
 				// remove connection and advance
 				c = c->next;		
-				p->next = c; //FIXME mem leak?
+				p->next = c; //no mem leak, allocated buffer
 			}
 			else {
 				// remember and advance
@@ -762,7 +762,7 @@ simplify (group_t *g)
 				id = beat_to->id;
 				if (id == oid) { 
 					// remove connection
-					g->cstart = c->next; //FIXME mem leak? memrel(c)
+					g->cstart = c->next; //no mem leak, allocated buffer
 				}
 			}
 		} while (c && beat_to && id == oid);
@@ -779,7 +779,7 @@ simplify (group_t *g)
 				id = beat_to->id;
 				if (id == oid || ba_ison(&BA, id)) {
 					// remove connection and advance
-					c = c->next; //FIXME mem leak? memrel(c)
+					c = c->next; //no mem leak, allocated buffer
 					p->next = c; 
 				}
 				else {
@@ -805,7 +805,7 @@ simplify (group_t *g)
 				id = lost_to->id;
 				if (id == oid) { 
 					// remove connection
-					g->lstart = c->next; //FIXME mem leak?
+					g->lstart = c->next; //no mem leak, allocated buffer
 				}
 			}
 		} while (c && lost_to && id == oid);
@@ -838,7 +838,7 @@ simplify (group_t *g)
 				if (id == oid || ba_ison(&BB, id)) {
 					// remove connection and advance
 					c = c->next;		
-					p->next = c; //FIXME mem leak?
+					p->next = c; //no mem leak, allocated buffer
 				}
 				else {
 					// remember and advance
