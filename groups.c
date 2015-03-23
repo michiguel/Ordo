@@ -92,12 +92,12 @@ static struct GROUP_BUFFER 			group_buffer;
 static struct PARTICIPANT_BUFFER	participant_buffer;
 static struct CONNECT_BUFFER		connection_buffer;
 
-static bool_t	group_buffer_init(struct GROUP_BUFFER *g, player_t n);
-static void		group_buffer_done(struct GROUP_BUFFER *g);
-static bool_t	participant_buffer_init(struct PARTICIPANT_BUFFER *x, player_t n);
-static void		participant_buffer_done(struct PARTICIPANT_BUFFER *x);
-static bool_t	connection_buffer_init(struct CONNECT_BUFFER *x, gamesnum_t n);
-static void		connection_buffer_done(struct CONNECT_BUFFER *x);
+static bool_t	group_buffer_init (struct GROUP_BUFFER *g, player_t n);
+static void		group_buffer_done (struct GROUP_BUFFER *g);
+static bool_t	participant_buffer_init (struct PARTICIPANT_BUFFER *x, player_t n);
+static void		participant_buffer_done (struct PARTICIPANT_BUFFER *x);
+static bool_t	connection_buffer_init (struct CONNECT_BUFFER *x, gamesnum_t n);
+static void		connection_buffer_done (struct CONNECT_BUFFER *x);
 
 //---------------------------------------------------------------------
 
