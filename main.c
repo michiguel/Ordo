@@ -883,7 +883,7 @@ int main (int argc, char *argv[])
 			exit(EXIT_SUCCESS);
 		}
  	} else if (!groups_no_check) {
-		long groups_n;
+		player_t groups_n;
 		bool_t ok;
 		ok = groups_process_to_count (&Encounters, &Players, &groups_n);
 		if (!ok) {
@@ -896,7 +896,7 @@ int main (int argc, char *argv[])
 			fprintf (stderr, "*     Database is not well connected by games       *\n");
 			fprintf (stderr, "* Run switch -g to find what groups need more games *\n");
 			fprintf (stderr, "*****************************************************\n");
-			fprintf (stderr, " ====> Groups detected: %ld\n\n\n", groups_n);
+			fprintf (stderr, " ====> Groups detected: %ld\n\n\n", (long) groups_n);
 		}
 	}
 

@@ -117,15 +117,15 @@ static gamesnum_t	N_se2 = 0;
 
 static player_t		N_players = 0;
 
-static int32_t	*	Group_belong;
+static player_t	*	Group_belong;
 static player_t		N_groups;
 
 static bitarray_t 	BA;
 static bitarray_t	BB;
-static long *		Get_new_id;
+static player_t *	Get_new_id;
 
 static group_t 	**	Group_final_list;
-static long			Group_final_list_n = 0;
+static player_t		Group_final_list_n = 0;
 
 static node_t	*	Gnode;
 
@@ -212,7 +212,7 @@ static void groupset_add (group_t *a)
 	group_buffer.tail = a;
 }
 
-static group_t * groupset_find (int id)
+static group_t * groupset_find (player_t id)
 {
 	group_t * s;
 	for (s = groupset_head(); s != NULL; s = s->next) {
@@ -409,13 +409,13 @@ convert_general_init (player_t n_plyrs)
 	return;
 }
 
-static long
+static player_t
 groups_counter (void)
 {
 	return Group_final_list_n;
 }
 
-long
+player_t
 convert_to_groups (FILE *f, player_t n_plyrs, const char **name)
 {
 	player_t i;
@@ -433,7 +433,7 @@ convert_to_groups (FILE *f, player_t n_plyrs, const char **name)
 	}
 
 	for (i = 0; i < n_plyrs; i++) {
-		int gb; 
+		player_t gb; 
 		group_t *g;
 		gb = Group_belong[i];
 		g = groupset_find(gb);
@@ -1018,7 +1018,7 @@ final_list_output (FILE *f)
 
 	for (i = 0; i < Group_final_list_n; i++) {
 		g = Group_final_list[i];
-		fprintf (f,"\nGroup %ld\n",Get_new_id[g->id]);
+		fprintf (f,"\nGroup %ld\n",(long)Get_new_id[g->id]);
 
 		//printf("-post-final--\n");
 		simplify_shrink (g);
@@ -1121,7 +1121,7 @@ group_output (FILE *f, group_t *s)
 		group_t *gr = group_pointed_by_conn(c);
 		if (gr != NULL) {
 			if (gr->id != own_id) {
-				fprintf (f," \\---> there are (only) wins against group: %ld\n",Get_new_id[gr->id]);
+				fprintf (f," \\---> there are (only) wins against group: %ld\n",(long)Get_new_id[gr->id]);
 				winconnections++;
 			}
 		} else
@@ -1131,7 +1131,7 @@ group_output (FILE *f, group_t *s)
 		group_t *gr = group_pointed_by_conn(c);
 		if (gr != NULL) {
 			if (gr->id != own_id) {
-				fprintf (f," \\---> there are (only) losses against group: %ld\n",Get_new_id[gr->id]);
+				fprintf (f," \\---> there are (only) losses against group: %ld\n",(long)Get_new_id[gr->id]);
 				lossconnections++;
 			}
 		} else
@@ -1167,7 +1167,7 @@ scan_encounters (const struct ENC *enc, gamesnum_t n_enc, player_t n_plyrs)
 	player_t i;
 	gamesnum_t e;
 	const struct ENC *pe;
-	int gw, gb, lowerg, higherg;
+	player_t gw, gb, lowerg, higherg;
 
 	assert (SE != NULL);
 	assert (SE2!= NULL);
@@ -1253,14 +1253,14 @@ supporting_encmem_done (void)
 bool_t
 supporting_groupmem_init (player_t nplayers, gamesnum_t nenc)
 {
-	int32_t 	*a;
-	long 		*b;
+	player_t 	*a;
+	player_t	*b;
 	group_t *	*c;
 	node_t 		*d;
 	player_t	*e;
 
-	size_t		sa = sizeof(int32_t );
-	size_t		sb = sizeof(long);
+	size_t		sa = sizeof(player_t);
+	size_t		sb = sizeof(player_t);
 	size_t		sc = sizeof(group_t *);
 	size_t		sd = sizeof(node_t);
 	size_t		se = sizeof(player_t);
@@ -1451,13 +1451,13 @@ groups_process	( bool_t quiet
 			Encounter3 = b;
 
 			if (supporting_groupmem_init (players->n, encounters->n)) {
-				long groups_n;
+				player_t groups_n;
 				ok = TRUE;
-				scan_encounters(encounters->enc, encounters->n, players->n); 
-				groups_n = convert_to_groups(groupf, players->n, players->name);
-				sieve_encounters(encounters->enc, encounters->n, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
+				scan_encounters (encounters->enc, encounters->n, players->n); 
+				groups_n = convert_to_groups (groupf, players->n, players->name);
+				sieve_encounters (encounters->enc, encounters->n, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
 				if (!quiet) {
-					printf ("Groups=%ld\n", groups_n);
+					printf ("Groups=%ld\n", (long)groups_n);
 					printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n"
 								,(long)encounters->n, (long)N_encounters2, (long)N_encounters3);
 				}
@@ -1475,7 +1475,7 @@ groups_process	( bool_t quiet
 
 
 bool_t
-groups_process_to_count (const struct ENCOUNTERS *encounters, const struct PLAYERS *players, long *n) 
+groups_process_to_count (const struct ENCOUNTERS *encounters, const struct PLAYERS *players, player_t *n) 
 {
 	bool_t ok = FALSE;
 	if (supporting_encmem_init (encounters->n)) {
@@ -1495,7 +1495,7 @@ groups_process_to_count (const struct ENCOUNTERS *encounters, const struct PLAYE
 bool_t
 group_is_problematic(const struct ENCOUNTERS *encounters, const struct PLAYERS *players)
 {
-	long n;
+	player_t n;
 	bool_t ok = FALSE;
 	if (supporting_encmem_init (encounters->n)) {
 		if (supporting_groupmem_init (players->n, encounters->n)) {
