@@ -83,29 +83,6 @@ players_set_priored_info (const struct prior *pr, const struct rel_prior_set *rp
 	}
 }
 
-#if !defined(NDEBUG)
-bool_t
-players_have_clear_flags (struct PLAYERS *pl)
-{
-	bool_t		found;
-	player_t 	j;
-	player_t 	n_players;
-	bool_t *	flagged;
-
-	assert(pl);
-	n_players = pl->n;
-	flagged = pl->flagged;
-	assert(flagged);
-	found = FALSE;
-	for (j = 0; j < n_players; j++) {
-		if (flagged[j]) {
-			found = TRUE; 
-			break;
-		}
-	}
-	return !found;
-}
-#endif
 
 void
 players_flags_reset (struct PLAYERS *pl)
@@ -197,4 +174,31 @@ players_set_super (bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl
 	memrel(pla);
 	return super;
 }
+
+// debug routines
+
+#if !defined(NDEBUG)
+bool_t
+players_have_clear_flags (struct PLAYERS *pl)
+{
+	bool_t		found;
+	player_t 	j;
+	player_t 	n_players;
+	bool_t *	flagged;
+
+	assert(pl);
+	n_players = pl->n;
+	flagged = pl->flagged;
+	assert(flagged);
+	found = FALSE;
+	for (j = 0; j < n_players; j++) {
+		if (flagged[j]) {
+			found = TRUE; 
+			break;
+		}
+	}
+	return !found;
+}
+#endif
+
 
