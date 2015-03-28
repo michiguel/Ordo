@@ -241,12 +241,13 @@ static bool_t	players_have_clear_flags (struct PLAYERS *pl);
 
 static player_t	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl);
 
-static void	init_rating (player_t n, double rat0, struct RATINGS *rat /*@out@*/);
-static void	reset_rating (double general_average, player_t n_players, const bool_t *prefed, const bool_t *flagged, double *rating);
-static void	ratings_copy (const double *r, player_t n, double *t);
+static void	ratings_starting_point (player_t n, double rat0, struct RATINGS *rat /*@out@*/);
+static void	ratings_set (player_t n_players, double general_average, const bool_t *prefed, const bool_t *flagged, double *rating);
+static void	ratings_copy (player_t n, const double *r, double *t);
+static void ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat);
+static void	ratings_cleared_for_purged (const struct PLAYERS *p, struct RATINGS *r /*@out@*/);
+static void ratings_center_to_zero (player_t n_players, const bool_t *flagged, double *ratingof);
 
-static void 	ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat);
-static void	ratings_for_purged (const struct PLAYERS *p, struct RATINGS *r /*@out@*/);
 
 static void
 simulate_scores ( const double 	*ratingof_results
@@ -260,7 +261,6 @@ simulate_scores ( const double 	*ratingof_results
 
 static void 		table_output(double Rtng_76);
 static ptrdiff_t	head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y);
-static void 		ratings_center_to_zero (player_t n_players, const bool_t *flagged, double *ratingof);
 
 /*------------------------------------------------------------------------*/
 
@@ -651,35 +651,34 @@ int main (int argc, char *argv[])
 
 	/*==== memory initialization ====*/
 	{
-	player_t mpr 	= pdaba->n_players; 
-	player_t mpp 	= pdaba->n_players; 
-	gamesnum_t mg  	= pdaba->n_games;
-	gamesnum_t me  	= pdaba->n_games;
+		player_t mpr 	= pdaba->n_players; 
+		player_t mpp 	= pdaba->n_players; 
+		gamesnum_t mg  	= pdaba->n_games;
+		gamesnum_t me  	= pdaba->n_games;
 
-	if (!ratings_init (mpr, &RA)) {
-		fprintf (stderr, "Could not initialize rating memory\n"); exit(0);	
-	} else 
-	if (!games_init (mg, &Games)) {
-		ratings_done (&RA);
-		fprintf (stderr, "Could not initialize Games memory\n"); exit(0);
-	} else 
-	if (!encounters_init (me, &Encounters)) {
-		ratings_done (&RA);
-		games_done (&Games);
-		fprintf (stderr, "Could not initialize Encounters memory\n"); exit(0);
-	} else 
-	if (!players_init (mpp, &Players)) {
-		ratings_done (&RA);
-		games_done (&Games);
-		encounters_done (&Encounters);
-		fprintf (stderr, "Could not initialize Players memory\n"); exit(0);
-	} 
-
+		if (!ratings_init (mpr, &RA)) {
+			fprintf (stderr, "Could not initialize rating memory\n"); exit(0);	
+		} else 
+		if (!games_init (mg, &Games)) {
+			ratings_done (&RA);
+			fprintf (stderr, "Could not initialize Games memory\n"); exit(0);
+		} else 
+		if (!encounters_init (me, &Encounters)) {
+			ratings_done (&RA);
+			games_done (&Games);
+			fprintf (stderr, "Could not initialize Encounters memory\n"); exit(0);
+		} else 
+		if (!players_init (mpp, &Players)) {
+			ratings_done (&RA);
+			games_done (&Games);
+			encounters_done (&Encounters);
+			fprintf (stderr, "Could not initialize Players memory\n"); exit(0);
+		} 
 	}
 	assert(players_have_clear_flags(&Players));
 	/**/
 
-	database_transform(pdaba, &Games, &Players, &Game_stats); /* convert database to global variables */
+	database_transform (pdaba, &Games, &Players, &Game_stats); /* convert database to global variables */
 	if (0 == Games.n) {
 		fprintf (stderr, "ERROR: Input file contains no games\n");
 		return EXIT_FAILURE; 			
@@ -758,23 +757,23 @@ int main (int argc, char *argv[])
 
 	Confidence_factor = confidence2x(Confidence/100.0);
 
-	init_rating(Players.n, General_average, &RA);
+	ratings_starting_point(Players.n, General_average, &RA);
 
 	// PRIORS
 	priors_reset(PP, Players.n);
 
 	if (priorsstr != NULL) {
-		priors_load(QUIET_MODE, priorsstr, &RA, &Players, PP);
+		priors_load (QUIET_MODE, priorsstr, &RA, &Players, PP);
 	}
 
 	// multiple anchors here
 	if (pinsstr != NULL) {
-		init_manchors(QUIET_MODE, pinsstr, &RA, &Players); 
+		init_manchors (QUIET_MODE, pinsstr, &RA, &Players); 
 	}
 	// multiple anchors done
 
 	if (relstr != NULL) {
-		relpriors_init(QUIET_MODE, &Players, relstr, &RPset, &RPset_store); 
+		relpriors_init (QUIET_MODE, &Players, relstr, &RPset, &RPset_store); 
 	}
 
 	if (!QUIET_MODE) {
@@ -869,8 +868,8 @@ int main (int argc, char *argv[])
 
 	/*===== GROUPS ========*/
 
-	assert(players_have_clear_flags(&Players));
-	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
+	assert(players_have_clear_flags (&Players));
+	calc_encounters__ (ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 	if (group_is_output) {
 		bool_t ok;
@@ -906,7 +905,7 @@ int main (int argc, char *argv[])
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 	players_set_priored_info (PP, &RPset, &Players);
-	if (0 < set_super_players(QUIET_MODE, &Encounters, &Players)) {
+	if (0 < set_super_players (QUIET_MODE, &Encounters, &Players)) {
 		players_purge (QUIET_MODE, &Players);
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
@@ -1031,8 +1030,8 @@ int main (int argc, char *argv[])
 						priors_shuffle(PP, Players.n);
 
 						// may improve convergence in pathological cases, it should not be needed.
-						reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingof);
-						reset_rating (General_average, Players.n, Players.prefed, Players.flagged, RA.ratingbk);
+						ratings_set (Players.n, General_average, Players.prefed, Players.flagged, RA.ratingof);
+						ratings_set (Players.n, General_average, Players.prefed, Players.flagged, RA.ratingbk);
 						assert(ratings_sanity (Players.n, RA.ratingof));
 						assert(ratings_sanity (Players.n, RA.ratingbk));
 
@@ -1083,7 +1082,7 @@ int main (int argc, char *argv[])
 
 								);
 
-					ratings_for_purged (&Players, &RA);
+					ratings_cleared_for_purged (&Players, &RA);
 
 					relpriors_copy(&RPset_store, &RPset);
 					priors_copy(PP_store, Players.n, PP);
@@ -1095,7 +1094,7 @@ int main (int argc, char *argv[])
 					}
 
 					if (Anchor_err_rel2avg) {
-						ratings_copy (RA.ratingof, Players.n, RA.ratingbk);
+						ratings_copy (Players.n, RA.ratingof, RA.ratingbk);
 						ratings_center_to_zero (Players.n, Players.flagged, RA.ratingof);
 					}
 
@@ -1121,7 +1120,7 @@ int main (int argc, char *argv[])
 					}
 
 					if (Anchor_err_rel2avg) {
-						ratings_copy (RA.ratingbk, Players.n, RA.ratingof); //restore
+						ratings_copy (Players.n, RA.ratingbk, RA.ratingof); //restore
 					}
 				}
 
@@ -1310,7 +1309,7 @@ head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y)
 //=====================================
 
 static void
-init_rating (player_t n, double rat0, struct RATINGS *rat)
+ratings_starting_point (player_t n, double rat0, struct RATINGS *rat)
 {
 	player_t i;
 	for (i = 0; i < n; i++) {
@@ -1323,7 +1322,7 @@ init_rating (player_t n, double rat0, struct RATINGS *rat)
 
 // no globals
 static void
-reset_rating (double general_average, player_t n_players, const bool_t *prefed, const bool_t *flagged, double *rating)
+ratings_set (player_t n_players, double general_average, const bool_t *prefed, const bool_t *flagged, double *rating)
 {
 	player_t i;
 	for (i = 0; i < n_players; i++) {
@@ -1333,11 +1332,82 @@ reset_rating (double general_average, player_t n_players, const bool_t *prefed, 
 }
 
 static void
-ratings_copy (const double *r, player_t n, double *t)
+ratings_copy (player_t n, const double *r, double *t)
 {
 	player_t i;
 	for (i = 0; i < n; i++) {
 		t[i] = r[i];
+	}
+}
+
+static void
+ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat)
+{
+	double excess;
+
+	player_t j;
+	ratings_cleared_for_purged (plyrs, rat);
+	for (j = 0; j < plyrs->n; j++) {
+		rat->ratingof_results[j] = rat->ratingof[j];
+		rat->obtained_results[j] = rat->obtained[j];
+		rat->playedby_results[j] = rat->playedby[j];
+	}
+
+	// shifting ratings to fix the anchor.
+	// Only done if the error is relative to the average.
+	// Otherwise, it is taken care in the rating calculation already.
+	// If Anchor_err_rel2avg is set, shifting in the calculation (later) is deactivated.
+	excess = 0.0;
+	if (Anchor_err_rel2avg && Anchor_use) {
+		excess = General_average - rat->ratingof_results[Anchor];		
+		for (j = 0; j < plyrs->n; j++) {
+			rat->ratingof_results[j] += excess;
+		}
+	}
+}
+
+static void
+ratings_cleared_for_purged (const struct PLAYERS *p, struct RATINGS *r /*@out@*/)
+{
+	player_t j;
+	player_t n = p->n;
+	for (j = 0; j < n; j++) {
+		if (p->flagged[j]) {
+			r->ratingof[j] = 0;
+		}
+	}	
+}
+
+// no globals
+static void
+ratings_apply_excess_correction (double excess, player_t n_players, const bool_t *flagged, double *ratingof /*out*/)
+{
+	player_t j;
+	for (j = 0; j < n_players; j++) {
+		if (!flagged[j])
+			ratingof[j] -= excess;
+	}
+}
+
+static void
+ratings_center_to_zero (player_t n_players, const bool_t *flagged, double *ratingof)
+{
+	player_t 	j, notflagged;
+	double 	excess, average;
+	double 	accum = 0;
+
+	// general average
+	for (notflagged = 0, accum = 0, j = 0; j < n_players; j++) {
+		if (!flagged[j]) {
+			notflagged++;
+			accum += ratingof[j];
+		}
+	}
+	if (notflagged > 0) {
+		average = accum / (double) notflagged;
+		excess  = average;
+		// Correct the excess
+		ratings_apply_excess_correction(excess, n_players, flagged, ratingof);
 	}
 }
 
@@ -1408,32 +1478,6 @@ players_have_clear_flags (struct PLAYERS *pl)
 }
 #endif
 
-static void
-ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat)
-{
-	double excess;
-
-	player_t j;
-	ratings_for_purged(plyrs, rat);
-	for (j = 0; j < plyrs->n; j++) {
-		rat->ratingof_results[j] = rat->ratingof[j];
-		rat->obtained_results[j] = rat->obtained[j];
-		rat->playedby_results[j] = rat->playedby[j];
-	}
-
-	// shifting ratings to fix the anchor.
-	// Only done if the error is relative to the average.
-	// Otherwise, it is taken care in the rating calculation already.
-	// If Anchor_err_rel2avg is set, shifting in the calculation (later) is deactivated.
-	excess = 0.0;
-	if (Anchor_err_rel2avg && Anchor_use) {
-		excess = General_average - rat->ratingof_results[Anchor];		
-		for (j = 0; j < plyrs->n; j++) {
-			rat->ratingof_results[j] += excess;
-		}
-	}
-
-}
 
 static void
 players_flags_reset (struct PLAYERS *pl)
@@ -1451,17 +1495,6 @@ players_flags_reset (struct PLAYERS *pl)
 	}	
 }
 
-static void
-ratings_for_purged (const struct PLAYERS *p, struct RATINGS *r /*@out@*/)
-{
-	player_t j;
-	player_t n = p->n;
-	for (j = 0; j < n; j++) {
-		if (p->flagged[j]) {
-			r->ratingof[j] = 0;
-		}
-	}	
-}
 
 static int
 rand_threeway_wscore(double pwin, double pdraw)
@@ -1509,41 +1542,6 @@ simulate_scores ( const double 	*ratingof_results
 	}
 }
 
-//=============================
-
-
-// no globals
-static void
-ratings_apply_excess_correction(double excess, player_t n_players, const bool_t *flagged, double *ratingof /*out*/)
-{
-	player_t j;
-	for (j = 0; j < n_players; j++) {
-		if (!flagged[j])
-			ratingof[j] -= excess;
-	}
-}
-
-static void
-ratings_center_to_zero (player_t n_players, const bool_t *flagged, double *ratingof)
-{
-	player_t 	j, notflagged;
-	double 	excess, average;
-	double 	accum = 0;
-
-	// general average
-	for (notflagged = 0, accum = 0, j = 0; j < n_players; j++) {
-		if (!flagged[j]) {
-			notflagged++;
-			accum += ratingof[j];
-		}
-	}
-	average = accum / (double) notflagged;
-	excess  = average;
-
-	// Correct the excess
-	ratings_apply_excess_correction(excess, n_players, flagged, ratingof);
-}
-
 /*==================================================================*/
 
 static void
@@ -1573,8 +1571,7 @@ table_output(double rtng_76)
 
 // no globals
 static player_t	
-set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl)
-
+set_super_players (bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl)
 {
 	// encounters
 	gamesnum_t N_enc = ee->n;
