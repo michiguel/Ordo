@@ -326,7 +326,6 @@ get_sdev (double s1, double s2, double n)
 \*--------------------------------------------------------------*/
 
 
-
 int main (int argc, char *argv[])
 {
 	struct DATA *pdaba;
@@ -538,8 +537,8 @@ int main (int argc, char *argv[])
 		}		
 	}
 
-	/*----------------------------------*\
-	|	Return version
+	/*
+	|	Deal with switches & input
 	\*----------------------------------*/
 
 	if (version_mode) {
@@ -589,6 +588,8 @@ int main (int argc, char *argv[])
 		inputf = argv[opt_index++];
 	}
 
+	/*==== Incorrect combination of switches ====*/
+
 	if (NULL != pinsstr && (General_average_set || Anchor_use)) {
 		fprintf (stderr, "Setting a general average (-a) or a single anchor (-A) is incompatible with multiple anchors (-m)\n\n");
 		exit(EXIT_FAILURE);
@@ -613,12 +614,13 @@ int main (int argc, char *argv[])
 	Prior_mode = switch_k || switch_u || NULL != relstr || NULL != priorsstr;
 
 	/*==== mem init ====*/
+
 	if (!name_storage_init()) {
 		fprintf (stderr, "Problem initializing buffers for reading names, probably lack of memory.\n");	
 		exit(EXIT_FAILURE);
 	}
 
-	/*==== SET INPUT ====*/
+	/*==== set input ====*/
 
 	if (NULL != (pdaba = database_init_frompgn(inputf, QUIET_MODE))) {
 		if (0 == pdaba->n_players || 0 == pdaba->n_games) {
@@ -658,7 +660,8 @@ int main (int argc, char *argv[])
 		} 
 	}
 	assert(players_have_clear_flags(&Players));
-	/**/
+
+	/*==== data translation ====*/
 
 	database_transform (pdaba, &Games, &Players, &Game_stats); /* convert database to global variables */
 	if (0 == Games.n) {
@@ -667,6 +670,7 @@ int main (int argc, char *argv[])
 	}
 	qsort (Games.ga, (size_t)Games.n, sizeof(struct gamei), compare_GAME);
 
+	/*==== more memory initialization ====*/
 
 	if (!supporting_auxmem_init (Players.n, &Sum1, &Sum2, &Sdev, &PP, &PP_store)) {
 		ratings_done (&RA);
@@ -675,6 +679,8 @@ int main (int argc, char *argv[])
 		players_done(&Players);
 		fprintf (stderr, "Could not initialize auxiliary Players memory\n"); exit(0);
 	}
+
+	/*==== process anchor ====*/
 
 	if (Anchor_use) {
 		player_t anch_idx;
@@ -688,19 +694,21 @@ int main (int argc, char *argv[])
 		} 
 	}
 
+	/*==== more wrong input ====*/
+
 	if (Drawrate_evenmatch < 0.0 || Drawrate_evenmatch > 1.0) {
-			fprintf (stderr, "ERROR: Invalide draw rate set\n");
-			return EXIT_FAILURE; 		
+		fprintf (stderr, "ERROR: Invalide draw rate set\n");
+		return EXIT_FAILURE; 		
 	}
 
 	if (!(Drawrate_evenmatch > 0.0) && Game_stats.draws > 0 && Prior_mode) {
-			fprintf (stderr, "ERROR: Draws present in the database but -d switch specified an invalid number\n");
-			return EXIT_FAILURE; 
+		fprintf (stderr, "ERROR: Draws present in the database but -d switch specified an invalid number\n");
+		return EXIT_FAILURE; 
 	}
 
 	if (Drawrate_evenmatch > 0.999) {
-			fprintf (stderr, "ERROR: Draw rate set with -d switch is too high, > 99.9%s\n", "%");
-			return EXIT_FAILURE; 
+		fprintf (stderr, "ERROR: Draw rate set with -d switch is too high, > 99.9%s\n", "%");
+		return EXIT_FAILURE; 
 	}
 
 	assert(players_have_clear_flags(&Players));
@@ -710,6 +718,8 @@ int main (int argc, char *argv[])
 		fprintf (stderr, "ERROR: Input file contains no games to process\n");
 		return EXIT_FAILURE; 			
 	}
+
+	/*==== report, input checked ====*/
 
 	if (!QUIET_MODE) {
 		printf ("Total games         %8ld\n",(long)
@@ -739,11 +749,10 @@ int main (int argc, char *argv[])
 
 	Confidence_factor = confidence2x(Confidence/100.0);
 
-	ratings_starting_point(Players.n, General_average, &RA);
+	ratings_starting_point (Players.n, General_average, &RA);
 
-	// PRIORS
-	priors_reset(PP, Players.n);
-
+	// priors
+	priors_reset (PP, Players.n);
 	if (priorsstr != NULL) {
 		priors_load (QUIET_MODE, priorsstr, &RA, &Players, PP);
 	}
@@ -752,18 +761,20 @@ int main (int argc, char *argv[])
 	if (pinsstr != NULL) {
 		init_manchors (QUIET_MODE, pinsstr, &RA, &Players); 
 	}
-	// multiple anchors done
 
+	// relative priors
 	if (relstr != NULL) {
 		relpriors_init (QUIET_MODE, &Players, relstr, &RPset, &RPset_store); 
 	}
 
+	// show priored information
 	if (!QUIET_MODE) {
 		priors_show(&Players, PP, Players.n);
 		relpriors_show(&Players, &RPset);
 		players_set_priored_info (PP, &RPset, &Players);
 	}
 
+	// process draw and white adv. switches
 	if (switch_w && switch_u) {
 		if (White_advantage_SD > PRIOR_SMALLEST_SIGMA) {
 			Wa_prior.isset = TRUE; 
@@ -792,6 +803,7 @@ int main (int argc, char *argv[])
 		}
 	}
 
+	// open files
 	textf = NULL;
 	textf_opened = FALSE;
 	if (textstr == NULL) {
@@ -830,7 +842,9 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	/*==== BEGIN... =======*/
+	/*
+	|  BEGIN...
+	\*----------------------------------*/
 
 	randfast_init (1324561);
 
@@ -848,7 +862,7 @@ int main (int argc, char *argv[])
 	wa_sum2 = 0;				
 	dr_sum2 = 0;
 
-	/*===== GROUPS ========*/
+	/*===== groups ========*/
 
 	assert(players_have_clear_flags (&Players));
 	calc_encounters__ (ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
@@ -881,7 +895,7 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	/*==== Ratings Calc ===*/
+	/*==== ratings calc ===*/
 
 	assert(players_have_clear_flags(&Players));
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
@@ -947,7 +961,7 @@ int main (int argc, char *argv[])
 	dr_sum1 += Drawrate_evenmatch;
 	dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;
 
-	/*=====================*/
+	/*== simulation ========*/
 
 	/* Simulation block, begin */
 	if (Simulate > 1) {
@@ -1140,7 +1154,7 @@ int main (int argc, char *argv[])
 	}
 	/* Simulation block, end */
 
-	/*==== Reports ====*/
+	/*==== reports ====*/
 
 	all_report 	( &Games
 				, &Players
@@ -1218,7 +1232,7 @@ int main (int argc, char *argv[])
 					, outqual);
 	}
 
-	/*==== Clean up ====*/
+	/*==== clean up ====*/
 
 	if (textf_opened) 	fclose (textf);
 	if (csvf_opened)  	fclose (csvf); 
@@ -1369,6 +1383,5 @@ table_output(double rtng_76)
 	printf("\n");
 }
 
-//**************************************************************
-
+//*==================================================================*/
 
