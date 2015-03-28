@@ -244,7 +244,14 @@ static player_t	set_super_players(bool_t quiet, const struct ENCOUNTERS *ee, str
 static void	ratings_starting_point (player_t n, double rat0, struct RATINGS *rat /*@out@*/);
 static void	ratings_set (player_t n_players, double general_average, const bool_t *prefed, const bool_t *flagged, double *rating);
 static void	ratings_copy (player_t n, const double *r, double *t);
-static void ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat);
+static void ratings_results	
+				( bool_t anchor_err_rel2avg
+				, bool_t anchor_use 
+				, player_t anchor
+				, double general_average				
+				, struct PLAYERS *plyrs
+				, struct RATINGS *rat
+);
 static void	ratings_cleared_for_purged (const struct PLAYERS *p, struct RATINGS *r /*@out@*/);
 static void ratings_center_to_zero (player_t n_players, const bool_t *flagged, double *ratingof);
 
@@ -950,7 +957,13 @@ int main (int argc, char *argv[])
 
 								);
 
-	ratings_results (&Players, &RA);
+	ratings_results	( Anchor_err_rel2avg
+					, Anchor_use 
+					, Anchor
+					, General_average				
+					, &Players
+					, &RA);
+
 	white_advantage_result = White_advantage;
 	drawrate_evenmatch_result = Drawrate_evenmatch;
 
@@ -1341,7 +1354,13 @@ ratings_copy (player_t n, const double *r, double *t)
 }
 
 static void
-ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat)
+ratings_results	( bool_t anchor_err_rel2avg
+				, bool_t anchor_use 
+				, player_t anchor
+				, double general_average				
+				, struct PLAYERS *plyrs
+				, struct RATINGS *rat
+)
 {
 	double excess;
 
@@ -1358,8 +1377,8 @@ ratings_results (struct PLAYERS *plyrs, struct RATINGS *rat)
 	// Otherwise, it is taken care in the rating calculation already.
 	// If Anchor_err_rel2avg is set, shifting in the calculation (later) is deactivated.
 	excess = 0.0;
-	if (Anchor_err_rel2avg && Anchor_use) {
-		excess = General_average - rat->ratingof_results[Anchor];		
+	if (anchor_err_rel2avg && anchor_use) {
+		excess = general_average - rat->ratingof_results[anchor];		
 		for (j = 0; j < plyrs->n; j++) {
 			rat->ratingof_results[j] += excess;
 		}
