@@ -957,8 +957,6 @@ int main (int argc, char *argv[])
 									, RPset 
 									, RPset_store );
 
-				if (!quiet_mode) printf("--> Simulation: [Accepted]\n");
-
 				#if defined(SAVE_SIMULATION)
 				if ((Simulate-z) == SAVE_SIMULATION_N) {
 					save_simulated(&Players, &Games, (int)(Simulate-z)); 
@@ -1020,7 +1018,6 @@ int main (int argc, char *argv[])
 
 				for (i = 0; i < topn; i++) {
 					for (j = 0; j < i; j++) {
-						//idx = (i*i-i)/2+j;
 						idx = head2head_idx_sdev ((ptrdiff_t)i, (ptrdiff_t)j);
 						assert(idx < est || !printf("idx=%ld est=%ld\n",(long)idx,(long)est));
 						diff = RA.ratingof[i] - RA.ratingof[j];	
