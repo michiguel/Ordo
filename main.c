@@ -909,12 +909,16 @@ int main (int argc, char *argv[])
 		ptrdiff_t i,j;
 		ptrdiff_t topn = (ptrdiff_t)Players.n;
 		long z = Simulate;
-		double n = (double) (z);
+		double n = (double) (Simulate);
 		ptrdiff_t np = topn;
 		ptrdiff_t est = (ptrdiff_t)((np*np-np)/2); /* elements of simulation table */
 		ptrdiff_t idx;
 		size_t allocsize = sizeof(struct DEVIATION_ACC) * (size_t)est;
 		double diff;
+
+		double fraction = 0.0;
+		double asterisk = n/50.0;
+		int astcount = 0;
 
 		assert(allocsize > 0);
 		sim = memnew(allocsize);
@@ -923,11 +927,7 @@ int main (int argc, char *argv[])
 			fprintf(stderr, "Memory for simulations could not be allocated\n");
 			exit(EXIT_FAILURE);
 		} else {
-			double fraction = 0.0;
-			double asterisk = (double)Simulate/50.0;
-			int astcount = 0;
-
-			if (sim_updates && z > 1) {
+			if (sim_updates) {
 				printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
 				printf ("|----|----|----|----|----|----|----|----|----|----|\n");
 			}
@@ -937,66 +937,65 @@ int main (int argc, char *argv[])
 				sim[idx].sum2 = 0;
 				sim[idx].sdev = 0;
 			}
-	
-			if (z > 1) {
-				while (z-->0) {
-					if (!quiet_mode) {		
-						printf ("\n==> Simulation:%ld/%ld\n",Simulate-z,Simulate);
-					} 
 
-					if (sim_updates) {
-						fraction += 1.0;
-						while (fraction > asterisk) {
-							fraction -= asterisk;
-							astcount++;
-							printf ("*"); fflush(stdout);
-						}
+			assert(z > 1);
+			while (z-->0) {
+				if (!quiet_mode) {		
+					printf ("\n==> Simulation:%ld/%ld\n", Simulate-z, Simulate);
+				} 
+
+				if (sim_updates) {
+					fraction += 1.0;
+					while (fraction > asterisk) {
+						fraction -= asterisk;
+						astcount++;
+						printf ("*"); fflush(stdout);
+					}
+				}
+
+				failed_sim = 0;
+				do {
+					if (!quiet_mode && failed_sim > 0) 
+						printf("--> Simulation: [Rejected]\n\n");
+
+					players_flags_reset (&Players);
+					simulate_scores ( RA.ratingof_results
+									, drawrate_evenmatch_result
+									, white_advantage_result
+									, BETA
+									, &Games /*out*/);
+
+					relpriors_copy(&RPset, &RPset_store); 
+					priors_copy(PP, Players.n, PP_store);
+					relpriors_shuffle(&RPset);
+					priors_shuffle(PP, Players.n);
+
+					// may improve convergence in pathological cases, it should not be needed.
+					ratings_set (Players.n, General_average, Players.prefed, Players.flagged, RA.ratingof);
+					ratings_set (Players.n, General_average, Players.prefed, Players.flagged, RA.ratingbk);
+					assert(ratings_sanity (Players.n, RA.ratingof));
+					assert(ratings_sanity (Players.n, RA.ratingbk));
+
+					assert(players_have_clear_flags(&Players));
+					calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
+
+					players_set_priored_info (PP, &RPset, &Players);
+					if (0 < players_set_super (quiet_mode, &Encounters, &Players)) {
+						players_purge (quiet_mode, &Players);
+						calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 					}
 
-					failed_sim = 0;
-					do {
-						if (!quiet_mode && failed_sim > 0) printf("--> Simulation: [Rejected]\n\n");
+				} while (failed_sim++ < 100 && group_is_problematic (&Encounters, &Players));
 
-						players_flags_reset (&Players);
+				if (!quiet_mode) printf("--> Simulation: [Accepted]\n");
 
-						simulate_scores ( RA.ratingof_results
-										, drawrate_evenmatch_result
-										, white_advantage_result
-										, BETA
-										, &Games //out
-						);
+				#if defined(SAVE_SIMULATION)
+				if ((Simulate-z) == SAVE_SIMULATION_N) {
+					save_simulated(&Players, &Games, (int)(Simulate-z)); 
+				}
+				#endif
 
-						relpriors_copy(&RPset, &RPset_store); 
-						priors_copy(PP, Players.n, PP_store);
-						relpriors_shuffle(&RPset);
-						priors_shuffle(PP, Players.n);
-
-						// may improve convergence in pathological cases, it should not be needed.
-						ratings_set (Players.n, General_average, Players.prefed, Players.flagged, RA.ratingof);
-						ratings_set (Players.n, General_average, Players.prefed, Players.flagged, RA.ratingbk);
-						assert(ratings_sanity (Players.n, RA.ratingof));
-						assert(ratings_sanity (Players.n, RA.ratingbk));
-
-						assert(players_have_clear_flags(&Players));
-						calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
-
-						players_set_priored_info (PP, &RPset, &Players);
-						if (0 < players_set_super (quiet_mode, &Encounters, &Players)) {
-							players_purge (quiet_mode, &Players);
-							calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
-						}
-
-					} while (failed_sim++ < 100 && group_is_problematic (&Encounters, &Players));
-
-					if (!quiet_mode) printf("--> Simulation: [Accepted]\n");
-
-					#if defined(SAVE_SIMULATION)
-					if ((Simulate-z) == SAVE_SIMULATION_N) {
-						save_simulated(&Players, &Games, (int)(Simulate-z)); 
-					}
-					#endif
-
-					Encounters.n = calc_rating 
+				Encounters.n = calc_rating 
 								( quiet_mode
 								, Forces_ML || Prior_mode
 								, adjust_white_advantage
@@ -1024,59 +1023,58 @@ int main (int argc, char *argv[])
 
 								);
 
-					ratings_cleared_for_purged (&Players, &RA);
+				ratings_cleared_for_purged (&Players, &RA);
 
-					relpriors_copy(&RPset_store, &RPset);
-					priors_copy(PP_store, Players.n, PP);
+				relpriors_copy(&RPset_store, &RPset);
+				priors_copy(PP_store, Players.n, PP);
 
-					if (sim_updates && z == 0) {
-						int x = 51-astcount;
-						while (x-->0) {printf ("*"); fflush(stdout);}
-						printf ("\n");
-					}
+				if (sim_updates && z == 0) {
+					int x = 51-astcount;
+					while (x-->0) {printf ("*"); fflush(stdout);}
+					printf ("\n");
+				}
 
-					if (Anchor_err_rel2avg) {
-						ratings_copy (Players.n, RA.ratingof, RA.ratingbk);
-						ratings_center_to_zero (Players.n, Players.flagged, RA.ratingof);
-					}
-
-					for (i = 0; i < topn; i++) {
-						Sum1[i] += RA.ratingof[i];
-						Sum2[i] += RA.ratingof[i]*RA.ratingof[i];
-					}
-					wa_sum1 += White_advantage;
-					wa_sum2 += White_advantage * White_advantage;				
-					dr_sum1 += Drawrate_evenmatch;
-					dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;	
-
-					for (i = 0; i < topn; i++) {
-						for (j = 0; j < i; j++) {
-							//idx = (i*i-i)/2+j;
-							idx = head2head_idx_sdev ((ptrdiff_t)i, (ptrdiff_t)j);
-							assert(idx < est || !printf("idx=%ld est=%ld\n",(long)idx,(long)est));
-							diff = RA.ratingof[i] - RA.ratingof[j];	
-
-							sim[idx].sum1 += diff; 
-							sim[idx].sum2 += diff * diff;
-						}
-					}
-
-					if (Anchor_err_rel2avg) {
-						ratings_copy (Players.n, RA.ratingbk, RA.ratingof); //restore
-					}
+				if (Anchor_err_rel2avg) {
+					ratings_copy (Players.n, RA.ratingof, RA.ratingbk);
+					ratings_center_to_zero (Players.n, Players.flagged, RA.ratingof);
 				}
 
 				for (i = 0; i < topn; i++) {
-					Sdev[i] = get_sdev (Sum1[i], Sum2[i], n);
+					Sum1[i] += RA.ratingof[i];
+					Sum2[i] += RA.ratingof[i]*RA.ratingof[i];
 				}
-	
-				for (i = 0; i < est; i++) {
-					sim[i].sdev = get_sdev (sim[i].sum1, sim[i].sum2, n);
+				wa_sum1 += White_advantage;
+				wa_sum2 += White_advantage * White_advantage;				
+				dr_sum1 += Drawrate_evenmatch;
+				dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;	
+
+				for (i = 0; i < topn; i++) {
+					for (j = 0; j < i; j++) {
+						//idx = (i*i-i)/2+j;
+						idx = head2head_idx_sdev ((ptrdiff_t)i, (ptrdiff_t)j);
+						assert(idx < est || !printf("idx=%ld est=%ld\n",(long)idx,(long)est));
+						diff = RA.ratingof[i] - RA.ratingof[j];	
+
+						sim[idx].sum1 += diff; 
+						sim[idx].sum2 += diff * diff;
+					}
 				}
 
-				wa_sdev = get_sdev (wa_sum1, wa_sum2, n+1);
-				dr_sdev = get_sdev (dr_sum1, dr_sum2, n+1);
+				if (Anchor_err_rel2avg) {
+					ratings_copy (Players.n, RA.ratingbk, RA.ratingof); //restore
+				}
 			}
+
+			for (i = 0; i < topn; i++) {
+				Sdev[i] = get_sdev (Sum1[i], Sum2[i], n);
+			}
+	
+			for (i = 0; i < est; i++) {
+				sim[i].sdev = get_sdev (sim[i].sum1, sim[i].sum2, n);
+			}
+
+			wa_sdev = get_sdev (wa_sum1, wa_sum2, n+1);
+			dr_sdev = get_sdev (dr_sum1, dr_sum2, n+1);
 		}
 
 		/* retransform database, to restore original data */
