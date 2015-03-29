@@ -62,6 +62,11 @@
 |
 \*--------------------------------------------------------------*/
 
+#if 0
+#define SAVE_SIMULATION
+#define SAVE_SIMULATION_N 2
+#endif
+
 #include "myopt.h"
 
 const char *license_str = "\n"
@@ -87,11 +92,6 @@ static void example (void);
 static void usage (void);
 
 /* VARIABLES */
-
-	static bool_t QUIET_MODE;
-	static bool_t SIM_UPDATES;
-	static bool_t ADJUST_WHITE_ADVANTAGE;
-	static bool_t ADJUST_DRAW_RATE;
 
 	static const char *copyright_str = 
 		"Copyright (c) 2015 Miguel A. Ballicora\n"
@@ -164,21 +164,6 @@ static void usage (void);
 |
 \*--------------------------------------------------------------*/
 
-static int compare_GAME (const void * a, const void * b)
-{
-	const struct gamei *ap = a;
-	const struct gamei *bp = b;
-	if (ap->whiteplayer == bp->whiteplayer && ap->blackplayer == bp->blackplayer) return 0;
-	if (ap->whiteplayer == bp->whiteplayer) {
-		if (ap->blackplayer > bp->blackplayer) return 1; else return -1;
-	} else {	 
-		if (ap->whiteplayer > bp->whiteplayer) return 1; else return -1;
-	}
-	return 0;	
-}
-
-/*------------------------------------------------------------------------*/
-
 enum 			AnchorSZ	{MAX_ANCHORSIZE=1024};
 static bool_t	Anchor_use = FALSE;
 static player_t	Anchor = 0;
@@ -229,9 +214,13 @@ static struct rel_prior_set		RPset_store = {0, NULL};;
 static bool_t 	Hide_old_ver = FALSE;
 static bool_t	Prior_mode;
 
-/*------------------------------------------------------------------------*/
+/*---- static functions --------------------------------------------------*/
 
-static void
+#if defined(SAVE_SIMULATION)
+static void save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num)
+#endif
+
+static void 
 simulate_scores ( const double 	*ratingof_results
 				, double 		deq
 				, double 		wadv
@@ -239,62 +228,9 @@ simulate_scores ( const double 	*ratingof_results
 				, struct GAMES *g
 );
 
-/*------------------------------------------------------------------------*/
-
 static void 		table_output(double Rtng_76);
 static ptrdiff_t	head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y);
-
-/*------------------------------------------------------------------------*/
-
-#if 0
-#define SAVE_SIMULATION
-#define SAVE_SIMULATION_N 2
-#endif
-
-#if defined(SAVE_SIMULATION)
-// This section is to save simulated results for debugging purposes
-
-static const char *Result_string[4] = {"1-0","1/2-1/2","0-1","*"};
-
-static void
-save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num)
-{
-	gamesnum_t i;
-	const char *name_w;
-	const char *name_b;
-	const char *result;
-	char filename[256] = "";	
-	FILE *fout;
-
-	sprintf (filename, "simulated_%04d.pgn", num);
-
-	printf ("\n--> filename=%s\n\n",filename);
-
-	if (NULL != (fout = fopen (filename, "w"))) {
-
-		for (i = 0; i < pGames->n; i++) {
-
-			int32_t score_i = pGames->ga[i].score;
-			player_t wp_i = pGames->ga[i].whiteplayer;
-			player_t bp_i = pGames->ga[i].blackplayer;
-
-			if (score_i == DISCARD) continue;
-	
-			name_w = pPlayers->name [wp_i];
-			name_b = pPlayers->name [bp_i];		
-			result = Result_string[score_i];
-
-			fprintf(fout,"[White \"%s\"]\n",name_w);
-			fprintf(fout,"[Black \"%s\"]\n",name_b);
-			fprintf(fout,"[Result \"%s\"]\n",result);
-			fprintf(fout,"%s\n\n",result);
-		}
-
-		fclose(fout);
-	}
-}
-#endif
-
+static int 			compare_GAME (const void * a, const void * b);
 
 static void
 calc_encounters__
@@ -344,7 +280,6 @@ int main (int argc, char *argv[])
 	double wa_sdev = 0;				
 	double dr_sdev = 0;
 
-//
 	struct output_qualifiers outqual = {FALSE, 0};
 	long int mingames = 0;
 
@@ -354,6 +289,11 @@ int main (int argc, char *argv[])
 	FILE *csvf;
 	FILE *textf;
 	FILE *groupf;
+
+	bool_t quiet_mode;
+	bool_t sim_updates;
+	bool_t adjust_white_advantage;
+	bool_t adjust_draw_rate;
 
 	int op;
 	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr;
@@ -365,31 +305,31 @@ int main (int argc, char *argv[])
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE, switch_d=FALSE, switch_k=FALSE, switch_D=FALSE;
 
 	/* defaults */
-	version_mode = FALSE;
-	license_mode = FALSE;
-	help_mode    = FALSE;
-	switch_mode  = FALSE;
-	input_mode   = FALSE;
-	table_mode   = FALSE;
-	QUIET_MODE   = FALSE;
-	SIM_UPDATES  = FALSE;
-	ADJUST_WHITE_ADVANTAGE = FALSE;
-	ADJUST_DRAW_RATE = FALSE;
-	inputf       = NULL;
-	textstr 	 = NULL;
-	csvstr       = NULL;
-	ematstr 	 = NULL;
-	ctsmatstr	 = NULL;
-	pinsstr		 = NULL;
-	priorsstr	 = NULL;
-	relstr		 = NULL;
+	adjust_white_advantage = FALSE;
+	adjust_draw_rate = FALSE;
+	quiet_mode   	= FALSE;
+	sim_updates  	= FALSE;
+	version_mode 	= FALSE;
+	license_mode 	= FALSE;
+	help_mode    	= FALSE;
+	switch_mode  	= FALSE;
+	input_mode   	= FALSE;
+	table_mode   	= FALSE;
+	inputf       	= NULL;
+	textstr 	 	= NULL;
+	csvstr       	= NULL;
+	ematstr 	 	= NULL;
+	ctsmatstr	 	= NULL;
+	pinsstr		 	= NULL;
+	priorsstr	 	= NULL;
+	relstr		 	= NULL;
 	group_is_output = FALSE;
 	groups_no_check = FALSE;
-	groupstr 	 = NULL;
-	Elostat_output = FALSE;
-	head2head_str= NULL;
-	Ignore_draws = FALSE;
-	Forces_ML 	 = FALSE;
+	groupstr 	 	= NULL;
+	Elostat_output 	= FALSE;
+	head2head_str	= NULL;
+	Ignore_draws 	= FALSE;
+	Forces_ML 	 	= FALSE;
 
 	while (END_OF_OPTIONS != (op = options (argc, argv, OPTION_LIST))) {
 		switch (op) {
@@ -458,7 +398,7 @@ int main (int argc, char *argv[])
 							fprintf(stderr, "wrong white advantage parameter\n");
 							exit(EXIT_FAILURE);
 						} else {
-							ADJUST_WHITE_ADVANTAGE = FALSE;	
+							adjust_white_advantage = FALSE;	
 							Wa_prior.isset = FALSE;
 							switch_w = TRUE;
 						}
@@ -474,7 +414,7 @@ int main (int argc, char *argv[])
 							fprintf(stderr, "wrong white drawrate parameter\n");
 							exit(EXIT_FAILURE);
 						} else {
-							ADJUST_DRAW_RATE = FALSE;	
+							adjust_draw_rate = FALSE;	
 							Dr_prior.isset = FALSE;
 							switch_d = TRUE;
 						}
@@ -498,16 +438,16 @@ int main (int argc, char *argv[])
 						}
 						break;
 			case 'T':	table_mode = TRUE;	break;
-			case 'q':	QUIET_MODE = TRUE;	break;
-			case 'Q':	QUIET_MODE = TRUE;	SIM_UPDATES = TRUE; break;
+			case 'q':	quiet_mode = TRUE;	break;
+			case 'Q':	quiet_mode = TRUE;	sim_updates = TRUE; break;
 			case 'R':	Hide_old_ver=TRUE;	break;
-			case 'W':	ADJUST_WHITE_ADVANTAGE = TRUE;	
+			case 'W':	adjust_white_advantage = TRUE;	
 						Wa_prior.isset = FALSE;	
 						Wa_prior.value = 0; 	 
 						Wa_prior.sigma = 200.0; 
 						switch_W = TRUE;
 						break;
-			case 'D':	ADJUST_DRAW_RATE = TRUE;	
+			case 'D':	adjust_draw_rate = TRUE;	
 						Dr_prior.isset = FALSE;	
 						Dr_prior.value = 0.5; 	 
 						Dr_prior.sigma = 0.5; 
@@ -622,7 +562,7 @@ int main (int argc, char *argv[])
 
 	/*==== set input ====*/
 
-	if (NULL != (pdaba = database_init_frompgn(inputf, QUIET_MODE))) {
+	if (NULL != (pdaba = database_init_frompgn(inputf, quiet_mode))) {
 		if (0 == pdaba->n_players || 0 == pdaba->n_games) {
 			fprintf (stderr, "ERROR: Input file contains no games\n");
 			return EXIT_FAILURE; 			
@@ -721,7 +661,7 @@ int main (int argc, char *argv[])
 
 	/*==== report, input checked ====*/
 
-	if (!QUIET_MODE) {
+	if (!quiet_mode) {
 		printf ("Total games         %8ld\n",(long)
 											 (Game_stats.white_wins
 											 +Game_stats.draws
@@ -754,21 +694,21 @@ int main (int argc, char *argv[])
 	// priors
 	priors_reset (PP, Players.n);
 	if (priorsstr != NULL) {
-		priors_load (QUIET_MODE, priorsstr, &RA, &Players, PP);
+		priors_load (quiet_mode, priorsstr, &RA, &Players, PP);
 	}
 
 	// multiple anchors here
 	if (pinsstr != NULL) {
-		init_manchors (QUIET_MODE, pinsstr, &RA, &Players); 
+		init_manchors (quiet_mode, pinsstr, &RA, &Players); 
 	}
 
 	// relative priors
 	if (relstr != NULL) {
-		relpriors_init (QUIET_MODE, &Players, relstr, &RPset, &RPset_store); 
+		relpriors_init (quiet_mode, &Players, relstr, &RPset, &RPset_store); 
 	}
 
 	// show priored information
-	if (!QUIET_MODE) {
+	if (!quiet_mode) {
 		priors_show(&Players, PP, Players.n);
 		relpriors_show(&Players, &RPset);
 		players_set_priored_info (PP, &RPset, &Players);
@@ -780,12 +720,12 @@ int main (int argc, char *argv[])
 			Wa_prior.isset = TRUE; 
 			Wa_prior.value = White_advantage; 
 			Wa_prior.sigma = White_advantage_SD; 
-			ADJUST_WHITE_ADVANTAGE = TRUE;	
+			adjust_white_advantage = TRUE;	
 		} else {
 			Wa_prior.isset = FALSE; 
 			Wa_prior.value = White_advantage; 
 			Wa_prior.sigma = White_advantage_SD; 
-			ADJUST_WHITE_ADVANTAGE = FALSE;	
+			adjust_white_advantage = FALSE;	
 		}
 	}
 
@@ -794,12 +734,12 @@ int main (int argc, char *argv[])
 			Dr_prior.isset = TRUE; 
 			Dr_prior.value = Drawrate_evenmatch_percent/100.0; 
 			Dr_prior.sigma = Drawrate_evenmatch_percent_SD/100.0;  
-			ADJUST_DRAW_RATE = TRUE;	
+			adjust_draw_rate = TRUE;	
 		} else {
 			Dr_prior.isset = FALSE; 
 			Dr_prior.value = Drawrate_evenmatch_percent/100.0;  
 			Dr_prior.sigma = Drawrate_evenmatch_percent_SD/100.0;  
-			ADJUST_DRAW_RATE = FALSE;	
+			adjust_draw_rate = FALSE;	
 		}
 	}
 
@@ -869,7 +809,7 @@ int main (int argc, char *argv[])
 
 	if (group_is_output) {
 		bool_t ok;
-		ok = groups_process (QUIET_MODE, &Encounters, &Players, groupf);
+		ok = groups_process (quiet_mode, &Encounters, &Players, groupf);
 		if (!ok) {
 			fprintf (stderr, "not enough memory for encounters allocation\n");
 			exit(EXIT_FAILURE);
@@ -901,8 +841,8 @@ int main (int argc, char *argv[])
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 	players_set_priored_info (PP, &RPset, &Players);
-	if (0 < players_set_super (QUIET_MODE, &Encounters, &Players)) {
-		players_purge (QUIET_MODE, &Players);
+	if (0 < players_set_super (quiet_mode, &Encounters, &Players)) {
+		players_purge (quiet_mode, &Players);
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
 
@@ -919,10 +859,10 @@ int main (int argc, char *argv[])
 			exit(EXIT_FAILURE);
 	}
 
-	Encounters.n = calc_rating 	( QUIET_MODE
+	Encounters.n = calc_rating 	( quiet_mode
 								, Forces_ML || Prior_mode
-								, ADJUST_WHITE_ADVANTAGE
-								, ADJUST_DRAW_RATE
+								, adjust_white_advantage
+								, adjust_draw_rate
 								, Anchor_use
 								, Anchor_err_rel2avg
 
@@ -987,7 +927,7 @@ int main (int argc, char *argv[])
 			double asterisk = (double)Simulate/50.0;
 			int astcount = 0;
 
-			if (SIM_UPDATES && z > 1) {
+			if (sim_updates && z > 1) {
 				printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
 				printf ("|----|----|----|----|----|----|----|----|----|----|\n");
 			}
@@ -1000,11 +940,11 @@ int main (int argc, char *argv[])
 	
 			if (z > 1) {
 				while (z-->0) {
-					if (!QUIET_MODE) {		
+					if (!quiet_mode) {		
 						printf ("\n==> Simulation:%ld/%ld\n",Simulate-z,Simulate);
 					} 
 
-					if (SIM_UPDATES) {
+					if (sim_updates) {
 						fraction += 1.0;
 						while (fraction > asterisk) {
 							fraction -= asterisk;
@@ -1015,7 +955,7 @@ int main (int argc, char *argv[])
 
 					failed_sim = 0;
 					do {
-						if (!QUIET_MODE && failed_sim > 0) printf("--> Simulation: [Rejected]\n\n");
+						if (!quiet_mode && failed_sim > 0) printf("--> Simulation: [Rejected]\n\n");
 
 						players_flags_reset (&Players);
 
@@ -1041,14 +981,14 @@ int main (int argc, char *argv[])
 						calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 						players_set_priored_info (PP, &RPset, &Players);
-						if (0 < players_set_super (QUIET_MODE, &Encounters, &Players)) {
-							players_purge (QUIET_MODE, &Players);
+						if (0 < players_set_super (quiet_mode, &Encounters, &Players)) {
+							players_purge (quiet_mode, &Players);
 							calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 						}
 
 					} while (failed_sim++ < 100 && group_is_problematic (&Encounters, &Players));
 
-					if (!QUIET_MODE) printf("--> Simulation: [Accepted]\n");
+					if (!quiet_mode) printf("--> Simulation: [Accepted]\n");
 
 					#if defined(SAVE_SIMULATION)
 					if ((Simulate-z) == SAVE_SIMULATION_N) {
@@ -1057,10 +997,10 @@ int main (int argc, char *argv[])
 					#endif
 
 					Encounters.n = calc_rating 
-								( QUIET_MODE
+								( quiet_mode
 								, Forces_ML || Prior_mode
-								, ADJUST_WHITE_ADVANTAGE
-								, ADJUST_DRAW_RATE
+								, adjust_white_advantage
+								, adjust_draw_rate
 								, Anchor_use
 								, Anchor_err_rel2avg
 
@@ -1089,7 +1029,7 @@ int main (int argc, char *argv[])
 					relpriors_copy(&RPset_store, &RPset);
 					priors_copy(PP_store, Players.n, PP);
 
-					if (SIM_UPDATES && z == 0) {
+					if (sim_updates && z == 0) {
 						int x = 51-astcount;
 						while (x-->0) {printf ("*"); fflush(stdout);}
 						printf ("\n");
@@ -1147,8 +1087,8 @@ int main (int argc, char *argv[])
 		calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 		players_set_priored_info (PP, &RPset, &Players);
-		if (0 < players_set_super (QUIET_MODE, &Encounters, &Players)) {
-			players_purge (QUIET_MODE, &Players);
+		if (0 < players_set_super (quiet_mode, &Encounters, &Players)) {
+			players_purge (quiet_mode, &Players);
 			calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 		}
 	}
@@ -1219,7 +1159,7 @@ int main (int argc, char *argv[])
 
 	// CEGT output style
 	if (Elostat_output) {
-		cegt_output	( QUIET_MODE
+		cegt_output	( quiet_mode
 					, &Games
 					, &Players
 					, &RA
@@ -1384,4 +1324,61 @@ table_output(double rtng_76)
 }
 
 //*==================================================================*/
+
+static int compare_GAME (const void * a, const void * b)
+{
+	const struct gamei *ap = a;
+	const struct gamei *bp = b;
+	if (ap->whiteplayer == bp->whiteplayer && ap->blackplayer == bp->blackplayer) return 0;
+	if (ap->whiteplayer == bp->whiteplayer) {
+		if (ap->blackplayer > bp->blackplayer) return 1; else return -1;
+	} else {	 
+		if (ap->whiteplayer > bp->whiteplayer) return 1; else return -1;
+	}
+	return 0;	
+}
+
+#if defined(SAVE_SIMULATION)
+// This section is to save simulated results for debugging purposes
+
+static const char *Result_string[4] = {"1-0","1/2-1/2","0-1","*"};
+
+static void
+save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num)
+{
+	gamesnum_t i;
+	const char *name_w;
+	const char *name_b;
+	const char *result;
+	char filename[256] = "";	
+	FILE *fout;
+
+	sprintf (filename, "simulated_%04d.pgn", num);
+
+	printf ("\n--> filename=%s\n\n",filename);
+
+	if (NULL != (fout = fopen (filename, "w"))) {
+
+		for (i = 0; i < pGames->n; i++) {
+
+			int32_t score_i = pGames->ga[i].score;
+			player_t wp_i = pGames->ga[i].whiteplayer;
+			player_t bp_i = pGames->ga[i].blackplayer;
+
+			if (score_i == DISCARD) continue;
+	
+			name_w = pPlayers->name [wp_i];
+			name_b = pPlayers->name [bp_i];		
+			result = Result_string[score_i];
+
+			fprintf(fout,"[White \"%s\"]\n",name_w);
+			fprintf(fout,"[Black \"%s\"]\n",name_b);
+			fprintf(fout,"[Result \"%s\"]\n",result);
+			fprintf(fout,"%s\n\n",result);
+		}
+
+		fclose(fout);
+	}
+}
+#endif
 
