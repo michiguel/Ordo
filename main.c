@@ -55,6 +55,7 @@
 #include "inidone.h"
 #include "rtngcalc.h"
 #include "ra.h"
+#include "sim.h"
 
 /*
 |
@@ -62,7 +63,7 @@
 |
 \*--------------------------------------------------------------*/
 
-#if 0
+#if 1
 #define SAVE_SIMULATION
 #define SAVE_SIMULATION_N 2
 #endif
@@ -215,18 +216,6 @@ static bool_t 	Hide_old_ver = FALSE;
 static bool_t	Prior_mode;
 
 /*---- static functions --------------------------------------------------*/
-
-#if defined(SAVE_SIMULATION)
-static void save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num)
-#endif
-
-static void 
-simulate_scores ( const double 	*ratingof_results
-				, double 		deq
-				, double 		wadv
-				, double 		beta
-				, struct GAMES *g
-);
 
 static void 		table_output(double Rtng_76);
 static ptrdiff_t	head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y);
@@ -905,7 +894,7 @@ int main (int argc, char *argv[])
 
 	/* Simulation block, begin */
 	if (Simulate > 1) {
-		int failed_sim = 0;
+
 		ptrdiff_t i,j;
 		ptrdiff_t topn = (ptrdiff_t)Players.n;
 		long z = Simulate;
@@ -953,39 +942,20 @@ int main (int argc, char *argv[])
 					}
 				}
 
-				failed_sim = 0;
-				do {
-					if (!quiet_mode && failed_sim > 0) 
-						printf("--> Simulation: [Rejected]\n\n");
-
-					players_flags_reset (&Players);
-					simulate_scores ( RA.ratingof_results
+				get_a_simulated_run	( 100
+									, General_average
+									, quiet_mode
+									, Players
+									, RA
+									, Encounters // output
 									, drawrate_evenmatch_result
 									, white_advantage_result
 									, BETA
-									, &Games /*out*/);
-
-					relpriors_copy(&RPset, &RPset_store); 
-					priors_copy(PP, Players.n, PP_store);
-					relpriors_shuffle(&RPset);
-					priors_shuffle(PP, Players.n);
-
-					// may improve convergence in pathological cases, it should not be needed.
-					ratings_set (Players.n, General_average, Players.prefed, Players.flagged, RA.ratingof);
-					ratings_set (Players.n, General_average, Players.prefed, Players.flagged, RA.ratingbk);
-					assert(ratings_sanity (Players.n, RA.ratingof));
-					assert(ratings_sanity (Players.n, RA.ratingbk));
-
-					assert(players_have_clear_flags(&Players));
-					calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
-
-					players_set_priored_info (PP, &RPset, &Players);
-					if (0 < players_set_super (quiet_mode, &Encounters, &Players)) {
-						players_purge (quiet_mode, &Players);
-						calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
-					}
-
-				} while (failed_sim++ < 100 && group_is_problematic (&Encounters, &Players));
+									, Games	// output
+									, PP
+									, PP_store
+									, RPset 
+									, RPset_store );
 
 				if (!quiet_mode) printf("--> Simulation: [Accepted]\n");
 
@@ -1246,54 +1216,6 @@ head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y)
 	return idx;
 }
 
-/*=== simulation routines ==========================================*/
-
-static int
-rand_threeway_wscore(double pwin, double pdraw)
-{	
-	long z,x,y;
-	z = (long)((unsigned)(pwin * (0xffff+1)));
-	x = (long)((unsigned)((pwin+pdraw) * (0xffff+1)));
-	y = randfast32() & 0xffff;
-
-	if (y < z) {
-		return WHITE_WIN;
-	} else if (y < x) {
-		return RESULT_DRAW;
-	} else {
-		return BLACK_WIN;		
-	}
-}
-
-
-// no globals
-static void
-simulate_scores ( const double 	*ratingof_results
-				, double 		deq
-				, double 		wadv
-				, double 		beta
-				, struct GAMES *g	// output
-)
-{
-	gamesnum_t n_games = g->n;
-	struct gamei *gam = g->ga;
-
-	gamesnum_t i;
-	player_t w, b;
-	const double *rating = ratingof_results;
-	double pwin, pdraw, plos;
-	assert(deq <= 1 && deq >= 0);
-
-	for (i = 0; i < n_games; i++) {
-		if (gam[i].score != DISCARD) {
-			w = gam[i].whiteplayer;
-			b = gam[i].blackplayer;
-			get_pWDL(rating[w] + wadv - rating[b], &pwin, &pdraw, &plos, deq, beta);
-			gam[i].score = rand_threeway_wscore(pwin,pdraw);
-		}
-	}
-}
-
 /*==================================================================*/
 
 static void
@@ -1336,47 +1258,4 @@ static int compare_GAME (const void * a, const void * b)
 	return 0;	
 }
 
-#if defined(SAVE_SIMULATION)
-// This section is to save simulated results for debugging purposes
-
-static const char *Result_string[4] = {"1-0","1/2-1/2","0-1","*"};
-
-static void
-save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num)
-{
-	gamesnum_t i;
-	const char *name_w;
-	const char *name_b;
-	const char *result;
-	char filename[256] = "";	
-	FILE *fout;
-
-	sprintf (filename, "simulated_%04d.pgn", num);
-
-	printf ("\n--> filename=%s\n\n",filename);
-
-	if (NULL != (fout = fopen (filename, "w"))) {
-
-		for (i = 0; i < pGames->n; i++) {
-
-			int32_t score_i = pGames->ga[i].score;
-			player_t wp_i = pGames->ga[i].whiteplayer;
-			player_t bp_i = pGames->ga[i].blackplayer;
-
-			if (score_i == DISCARD) continue;
-	
-			name_w = pPlayers->name [wp_i];
-			name_b = pPlayers->name [bp_i];		
-			result = Result_string[score_i];
-
-			fprintf(fout,"[White \"%s\"]\n",name_w);
-			fprintf(fout,"[Black \"%s\"]\n",name_b);
-			fprintf(fout,"[Result \"%s\"]\n",result);
-			fprintf(fout,"%s\n\n",result);
-		}
-
-		fclose(fout);
-	}
-}
-#endif
 
