@@ -63,7 +63,7 @@
 |
 \*--------------------------------------------------------------*/
 
-#if 1
+#if 0
 #define SAVE_SIMULATION
 #define SAVE_SIMULATION_N 2
 #endif

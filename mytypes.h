@@ -136,6 +136,20 @@ struct DEVIATION_ACC {
 	double sdev;
 };
 
+
+struct summations {
+	struct DEVIATION_ACC *relative; // to be dynamically assigned
+	double	*sum1; // to be dynamically assigned
+	double	*sum2; // to be dynamically assigned
+	double	*sdev; // to be dynamically assigned 
+	double wa_sum1;
+	double wa_sum2;				
+	double dr_sum1;
+	double dr_sum2; 
+	double wa_sdev;				
+	double dr_sdev;
+};
+
 //
 
 struct PLAYERS {
