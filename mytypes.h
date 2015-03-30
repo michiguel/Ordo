@@ -74,9 +74,18 @@
 
 #include "boolean.h"
 
+enum Player_Performance_Type {
+	PERF_NORMAL = 0,
+	PERF_SUPERWINNER = 1,
+	PERF_SUPERLOSER = 2,
+	PERF_NOGAMES = 3
+};
+
 typedef int64_t gamesnum_t;
 
 typedef int64_t player_t;
+
+
 
 struct gamei {
 	player_t 	whiteplayer;
@@ -106,13 +115,6 @@ struct GAMESTATS {
 		draws,
 		black_wins,
 		noresult;
-};
-
-enum 			Player_Performance_Type {
-				PERF_NORMAL = 0,
-				PERF_SUPERWINNER = 1,
-				PERF_SUPERLOSER = 2,
-				PERF_NOGAMES = 3
 };
 
 struct prior {
