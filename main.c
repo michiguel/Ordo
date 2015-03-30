@@ -1038,7 +1038,7 @@ sfe.dr_sdev = 0;
 					idx = head2head_idx_sdev ((ptrdiff_t)i, (ptrdiff_t)j);
 					assert(idx < est || !printf("idx=%ld est=%ld\n",(long)idx,(long)est));
 					diff = RA.ratingof[i] - RA.ratingof[j];	
-						sim[idx].sum1 += diff; 
+					sim[idx].sum1 += diff; 
 					sim[idx].sum2 += diff * diff;
 				}
 			}
