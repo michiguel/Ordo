@@ -794,9 +794,9 @@ struct summations sfe; // summations for errors
 	dr_sum2 = 0;
 
 sfe.relative = NULL;
-sfe.sum1 = NULL;
-sfe.sum2 = NULL;
-sfe.sdev = NULL;
+sfe.sum1 = Sum1;
+sfe.sum2 = Sum2;
+sfe.sdev = Sdev;
 sfe.wa_sum1 = 0;
 sfe.wa_sum2 = 0;                               
 sfe.dr_sum1 = 0;
@@ -941,7 +941,6 @@ sfe.dr_sum2 = 0;
 sfe.wa_sdev = 0;                               
 sfe.dr_sdev = 0;
 
-
 		if (sim_updates) {
 			printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
 			printf ("|----|----|----|----|----|----|----|----|----|----|\n");
@@ -1056,11 +1055,11 @@ sfe.dr_sdev = 0;
 		} // while
 
 		for (i = 0; i < topn; i++) {
-			Sdev[i] = get_sdev (Sum1[i], Sum2[i], n);
+			sfe.sdev[i] = get_sdev (sfe.sum1[i], sfe.sum2[i], n);
 		}
 	
 		for (i = 0; i < est; i++) {
-			sim[i].sdev = get_sdev (sim[i].sum1, sim[i].sum2, n);
+			sfe.relative[i].sdev = get_sdev (sfe.relative[i].sum1, sfe.relative[i].sum2, n);
 		}
 
 		wa_sdev = get_sdev (wa_sum1, wa_sum2, n+1);
@@ -1081,6 +1080,8 @@ sfe.dr_sdev = 0;
 	}
 	/* Simulation block, end */
 
+	assert (Sdev == sfe.sdev);
+
 	/*==== reports ====*/
 
 	all_report 	( &Games
@@ -1088,7 +1089,7 @@ sfe.dr_sdev = 0;
 				, &RA
 				, &RPset
 				, &Encounters
-				, Sdev
+				, sfe.sdev
 				, Simulate
 				, Hide_old_ver
 				, Confidence_factor
@@ -1128,13 +1129,16 @@ sfe.dr_sdev = 0;
 	if (Simulate > 1 && NULL != ctsmatstr) {
 		ctsout (&Players, &RA, sfe.relative, ctsmatstr);
 	}
+
+assert (Sdev == sfe.sdev);
+
 	if (head2head_str != NULL) {
 		head2head_output
 					( &Games
 					, &Players
 					, &RA
 					, &Encounters
-					, Sdev
+					, sfe.sdev
 					, Simulate
 					, Confidence_factor
 					, &Game_stats
@@ -1151,7 +1155,7 @@ sfe.dr_sdev = 0;
 					, &Players
 					, &RA
 					, &Encounters
-					, Sdev
+					, sfe.sdev
 					, Simulate
 					, Confidence_factor
 					, &Game_stats

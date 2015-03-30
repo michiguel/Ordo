@@ -273,6 +273,13 @@ cegt_output	( bool_t quiet
 	struct CEGT cegt;
 	player_t j;
 
+	assert (g);
+	assert (p);
+	assert (r);
+	assert (e);
+	assert (sdev);
+	assert (pgame_stats);
+
 	calc_encounters__(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
 	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
 	for (j = 0; j < p->n; j++) {
@@ -328,6 +335,14 @@ head2head_output( const struct GAMES 	*		g
 {
 	struct CEGT cegt;
 	player_t j;
+
+	assert (g);
+	assert (p);
+	assert (r);
+	assert (e);
+	assert (sdev);
+	assert (pgame_stats);
+	assert (s);
 
 	calc_encounters__(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
 	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
@@ -394,9 +409,15 @@ all_report 	( const struct GAMES 	*g
 	size_t ml;
 	char sdev_str_buffer[80];
 	const char *sdev_str;
-
 	int rank = 0;
 	bool_t showrank = TRUE;
+
+	assert (g);
+	assert (p);
+	assert (r);
+	assert (e);
+	assert (sdev);
+	assert (rps);
 
 	calc_encounters__(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
 
@@ -580,6 +601,10 @@ errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATI
 	player_t i;
 	player_t j;
 
+	assert (p);
+	assert (r);
+	assert (s);
+
 	if (NULL != (f = fopen (out, "w"))) {
 		fprintf(f, "\"N\",\"NAME\"");	
 		for (i = 0; i < p->n; i++) {
@@ -612,6 +637,10 @@ ctsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_
 	player_t y;
 	player_t x;
 	player_t i,j;
+
+	assert (p);
+	assert (r);
+	assert (s);
 
 	if (NULL != (f = fopen (out, "w"))) {
 
