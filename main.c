@@ -253,6 +253,8 @@ get_sdev (double s1, double s2, double n)
 
 int main (int argc, char *argv[])
 {
+struct summations sfe; // summations for errors
+
 	struct DATA *pdaba;
 
 	struct GAMES 		Games;
@@ -791,6 +793,17 @@ int main (int argc, char *argv[])
 	wa_sum2 = 0;				
 	dr_sum2 = 0;
 
+sfe.relative = NULL;
+sfe.sum1 = NULL;
+sfe.sum2 = NULL;
+sfe.sdev = NULL;
+sfe.wa_sum1 = 0;
+sfe.wa_sum2 = 0;                               
+sfe.dr_sum1 = 0;
+sfe.dr_sum2 = 0; 
+sfe.wa_sdev = 0;                               
+sfe.dr_sdev = 0;
+
 	/*===== groups ========*/
 
 	assert(players_have_clear_flags (&Players));
@@ -916,6 +929,18 @@ int main (int argc, char *argv[])
 			fprintf(stderr, "Memory for simulations could not be allocated\n");
 			exit(EXIT_FAILURE);
 		} 
+
+sfe.relative = sim;
+sfe.sum1 = Sum1;
+sfe.sum2 = Sum2;
+sfe.sdev = Sdev;
+sfe.wa_sum1 = 0;
+sfe.wa_sum2 = 0;                               
+sfe.dr_sum1 = 0;
+sfe.dr_sum2 = 0; 
+sfe.wa_sdev = 0;                               
+sfe.dr_sdev = 0;
+
 
 		if (sim_updates) {
 			printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
@@ -1098,10 +1123,10 @@ int main (int argc, char *argv[])
 	#endif
 
 	if (Simulate > 1 && NULL != ematstr) {
-		errorsout(&Players, &RA, sim, ematstr, Confidence_factor);
+		errorsout(&Players, &RA, sfe.relative, ematstr, Confidence_factor);
 	}
 	if (Simulate > 1 && NULL != ctsmatstr) {
-		ctsout (&Players, &RA, sim, ctsmatstr);
+		ctsout (&Players, &RA, sfe.relative, ctsmatstr);
 	}
 	if (head2head_str != NULL) {
 		head2head_output
@@ -1113,7 +1138,7 @@ int main (int argc, char *argv[])
 					, Simulate
 					, Confidence_factor
 					, &Game_stats
-					, sim
+					, sfe.relative
 					, head2head_str
 					, OUTDECIMALS
 					);
@@ -1130,7 +1155,7 @@ int main (int argc, char *argv[])
 					, Simulate
 					, Confidence_factor
 					, &Game_stats
-					, sim
+					, sfe.relative
 					, outqual);
 	}
 
