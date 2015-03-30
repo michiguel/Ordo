@@ -915,134 +915,131 @@ int main (int argc, char *argv[])
 		if (sim == NULL) {
 			fprintf(stderr, "Memory for simulations could not be allocated\n");
 			exit(EXIT_FAILURE);
-		} else {
-			if (sim_updates) {
-				printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
-				printf ("|----|----|----|----|----|----|----|----|----|----|\n");
-			}
+		} 
+
+		if (sim_updates) {
+			printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
+			printf ("|----|----|----|----|----|----|----|----|----|----|\n");
+		}
 			
-			for (idx = 0; idx < est; idx++) {
-				sim[idx].sum1 = 0;
-				sim[idx].sum2 = 0;
-				sim[idx].sdev = 0;
+		for (idx = 0; idx < est; idx++) {
+			sim[idx].sum1 = 0;
+			sim[idx].sum2 = 0;
+			sim[idx].sdev = 0;
+		}
+
+		assert(z > 1);
+		while (z-->0) {
+			if (!quiet_mode) {		
+				printf ("\n==> Simulation:%ld/%ld\n", Simulate-z, Simulate);
+			} 
+
+			if (sim_updates) {
+				fraction += 1.0;
+				while (fraction > asterisk) {
+					fraction -= asterisk;
+					astcount++;
+					printf ("*"); fflush(stdout);
+				}
 			}
 
-			assert(z > 1);
-			while (z-->0) {
-				if (!quiet_mode) {		
-					printf ("\n==> Simulation:%ld/%ld\n", Simulate-z, Simulate);
-				} 
-
-				if (sim_updates) {
-					fraction += 1.0;
-					while (fraction > asterisk) {
-						fraction -= asterisk;
-						astcount++;
-						printf ("*"); fflush(stdout);
-					}
-				}
-
-				get_a_simulated_run	( 100
-									, General_average
-									, quiet_mode
-									, Players
-									, RA
-									, Encounters // output
-									, drawrate_evenmatch_result
-									, white_advantage_result
-									, BETA
-									, Games	// output
-									, PP
-									, PP_store
-									, RPset 
-									, RPset_store );
-
-				#if defined(SAVE_SIMULATION)
-				if ((Simulate-z) == SAVE_SIMULATION_N) {
-					save_simulated(&Players, &Games, (int)(Simulate-z)); 
-				}
-				#endif
-
-				Encounters.n = calc_rating 
-								( quiet_mode
-								, Forces_ML || Prior_mode
-								, adjust_white_advantage
-								, adjust_draw_rate
-								, Anchor_use
-								, Anchor_err_rel2avg
-
+			get_a_simulated_run	( 100
 								, General_average
-								, Anchor
-								, Priored_n
+								, quiet_mode
+								, Players
+								, RA
+								, Encounters // output
+								, drawrate_evenmatch_result
+								, white_advantage_result
 								, BETA
-
-								, &Encounters
-								, &RPset
-								, &Players
-								, &RA
-								, &Games
-
+								, Games	// output
 								, PP
-								, Wa_prior
-								, Dr_prior
+								, PP_store
+								, RPset 
+								, RPset_store );
 
-								, &White_advantage
-								, &Drawrate_evenmatch
+			#if defined(SAVE_SIMULATION)
+			if ((Simulate-z) == SAVE_SIMULATION_N) {
+				save_simulated(&Players, &Games, (int)(Simulate-z)); 
+			}
+			#endif
 
-								);
+			Encounters.n = calc_rating 
+							( quiet_mode
+							, Forces_ML || Prior_mode
+							, adjust_white_advantage
+							, adjust_draw_rate
+							, Anchor_use
+							, Anchor_err_rel2avg
 
-				ratings_cleared_for_purged (&Players, &RA);
+							, General_average
+							, Anchor
+							, Priored_n
+							, BETA
 
-				relpriors_copy(&RPset_store, &RPset);
-				priors_copy(PP_store, Players.n, PP);
+							, &Encounters
+							, &RPset
+							, &Players
+							, &RA
+							, &Games
 
-				if (Anchor_err_rel2avg) {
-					ratings_copy (Players.n, RA.ratingof, RA.ratingbk);	// ** save
-					ratings_center_to_zero (Players.n, Players.flagged, RA.ratingof);
-				}
+							, PP
+							, Wa_prior
+							, Dr_prior
 
-				// update summations for errors
-				wa_sum1 += White_advantage;
-				wa_sum2 += White_advantage * White_advantage;				
-				dr_sum1 += Drawrate_evenmatch;
-				dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;	
-				for (i = 0; i < topn; i++) {
-					Sum1[i] += RA.ratingof[i];
-					Sum2[i] += RA.ratingof[i]*RA.ratingof[i];
-					for (j = 0; j < i; j++) {
-						idx = head2head_idx_sdev ((ptrdiff_t)i, (ptrdiff_t)j);
-						assert(idx < est || !printf("idx=%ld est=%ld\n",(long)idx,(long)est));
-						diff = RA.ratingof[i] - RA.ratingof[j];	
+							, &White_advantage
+							, &Drawrate_evenmatch
+							);
 
-						sim[idx].sum1 += diff; 
-						sim[idx].sum2 += diff * diff;
-					}
-				}
+			ratings_cleared_for_purged (&Players, &RA);
 
-				if (Anchor_err_rel2avg) {
-					ratings_copy (Players.n, RA.ratingbk, RA.ratingof); // ** restore
-				}
+			relpriors_copy(&RPset_store, &RPset);
+			priors_copy(PP_store, Players.n, PP);
 
-				if (sim_updates && z == 0) {
-					int x = 51-astcount;
-					while (x-->0) {printf ("*"); fflush(stdout);}
-					printf ("\n");
-				}
+			if (Anchor_err_rel2avg) {
+				ratings_copy (Players.n, RA.ratingof, RA.ratingbk);	// ** save
+				ratings_center_to_zero (Players.n, Players.flagged, RA.ratingof);
+			}
 
-			} // while
-
+			// update summations for errors
+			wa_sum1 += White_advantage;
+			wa_sum2 += White_advantage * White_advantage;				
+			dr_sum1 += Drawrate_evenmatch;
+			dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;	
 			for (i = 0; i < topn; i++) {
-				Sdev[i] = get_sdev (Sum1[i], Sum2[i], n);
+				Sum1[i] += RA.ratingof[i];
+				Sum2[i] += RA.ratingof[i]*RA.ratingof[i];
+				for (j = 0; j < i; j++) {
+					idx = head2head_idx_sdev ((ptrdiff_t)i, (ptrdiff_t)j);
+					assert(idx < est || !printf("idx=%ld est=%ld\n",(long)idx,(long)est));
+					diff = RA.ratingof[i] - RA.ratingof[j];	
+						sim[idx].sum1 += diff; 
+					sim[idx].sum2 += diff * diff;
+				}
 			}
+
+			if (Anchor_err_rel2avg) {
+				ratings_copy (Players.n, RA.ratingbk, RA.ratingof); // ** restore
+			}
+
+			if (sim_updates && z == 0) {
+				int x = 51-astcount;
+				while (x-->0) {printf ("*"); fflush(stdout);}
+				printf ("\n");
+			}
+
+		} // while
+
+		for (i = 0; i < topn; i++) {
+			Sdev[i] = get_sdev (Sum1[i], Sum2[i], n);
+		}
 	
-			for (i = 0; i < est; i++) {
-				sim[i].sdev = get_sdev (sim[i].sum1, sim[i].sum2, n);
-			}
+		for (i = 0; i < est; i++) {
+			sim[i].sdev = get_sdev (sim[i].sum1, sim[i].sum2, n);
+		}
 
-			wa_sdev = get_sdev (wa_sum1, wa_sum2, n+1);
-			dr_sdev = get_sdev (dr_sum1, dr_sum2, n+1);
-
-		} // if
+		wa_sdev = get_sdev (wa_sum1, wa_sum2, n+1);
+		dr_sdev = get_sdev (dr_sum1, dr_sum2, n+1);
 
 		/* retransform database, to restore original data */
 		database_transform(pdaba, &Games, &Players, &Game_stats); 
