@@ -996,27 +996,19 @@ int main (int argc, char *argv[])
 				relpriors_copy(&RPset_store, &RPset);
 				priors_copy(PP_store, Players.n, PP);
 
-				if (sim_updates && z == 0) {
-					int x = 51-astcount;
-					while (x-->0) {printf ("*"); fflush(stdout);}
-					printf ("\n");
-				}
-
 				if (Anchor_err_rel2avg) {
-					ratings_copy (Players.n, RA.ratingof, RA.ratingbk);
+					ratings_copy (Players.n, RA.ratingof, RA.ratingbk);	// ** save
 					ratings_center_to_zero (Players.n, Players.flagged, RA.ratingof);
 				}
 
-				for (i = 0; i < topn; i++) {
-					Sum1[i] += RA.ratingof[i];
-					Sum2[i] += RA.ratingof[i]*RA.ratingof[i];
-				}
+				// update summations for errors
 				wa_sum1 += White_advantage;
 				wa_sum2 += White_advantage * White_advantage;				
 				dr_sum1 += Drawrate_evenmatch;
 				dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;	
-
 				for (i = 0; i < topn; i++) {
+					Sum1[i] += RA.ratingof[i];
+					Sum2[i] += RA.ratingof[i]*RA.ratingof[i];
 					for (j = 0; j < i; j++) {
 						idx = head2head_idx_sdev ((ptrdiff_t)i, (ptrdiff_t)j);
 						assert(idx < est || !printf("idx=%ld est=%ld\n",(long)idx,(long)est));
@@ -1028,9 +1020,16 @@ int main (int argc, char *argv[])
 				}
 
 				if (Anchor_err_rel2avg) {
-					ratings_copy (Players.n, RA.ratingbk, RA.ratingof); //restore
+					ratings_copy (Players.n, RA.ratingbk, RA.ratingof); // ** restore
 				}
-			}
+
+				if (sim_updates && z == 0) {
+					int x = 51-astcount;
+					while (x-->0) {printf ("*"); fflush(stdout);}
+					printf ("\n");
+				}
+
+			} // while
 
 			for (i = 0; i < topn; i++) {
 				Sdev[i] = get_sdev (Sum1[i], Sum2[i], n);
@@ -1042,7 +1041,8 @@ int main (int argc, char *argv[])
 
 			wa_sdev = get_sdev (wa_sum1, wa_sum2, n+1);
 			dr_sdev = get_sdev (dr_sum1, dr_sum2, n+1);
-		}
+
+		} // if
 
 		/* retransform database, to restore original data */
 		database_transform(pdaba, &Games, &Players, &Game_stats); 
