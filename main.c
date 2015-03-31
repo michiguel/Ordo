@@ -941,15 +941,17 @@ sfe.dr_sum2 = 0;
 sfe.wa_sdev = 0;                               
 sfe.dr_sdev = 0;
 
+summations_init(&sfe, Players.n);
+
 		if (sim_updates) {
 			printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
 			printf ("|----|----|----|----|----|----|----|----|----|----|\n");
 		}
 			
 		for (idx = 0; idx < est; idx++) {
-			sim[idx].sum1 = 0;
-			sim[idx].sum2 = 0;
-			sim[idx].sdev = 0;
+			sfe.relative[idx].sum1 = 0;
+			sfe.relative[idx].sum2 = 0;
+			sfe.relative[idx].sdev = 0;
 		}
 
 		assert(z > 1);
@@ -1031,14 +1033,14 @@ sfe.dr_sdev = 0;
 			dr_sum1 += Drawrate_evenmatch;
 			dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;	
 			for (i = 0; i < topn; i++) {
-				Sum1[i] += RA.ratingof[i];
-				Sum2[i] += RA.ratingof[i]*RA.ratingof[i];
+				sfe.sum1[i] += RA.ratingof[i];
+				sfe.sum2[i] += RA.ratingof[i]*RA.ratingof[i];
 				for (j = 0; j < i; j++) {
 					idx = head2head_idx_sdev ((ptrdiff_t)i, (ptrdiff_t)j);
 					assert(idx < est || !printf("idx=%ld est=%ld\n",(long)idx,(long)est));
 					diff = RA.ratingof[i] - RA.ratingof[j];	
-					sim[idx].sum1 += diff; 
-					sim[idx].sum2 += diff * diff;
+					sfe.relative[idx].sum1 += diff; 
+					sfe.relative[idx].sum2 += diff * diff;
 				}
 			}
 
