@@ -794,7 +794,7 @@ struct summations sfe; // summations for errors
 sfe.relative = NULL;
 sfe.sum1 = Crun1;
 sfe.sum2 = Crun2;
-sfe.sdev = Crevv;
+sfe.sdev = Crevv; //FIXME try to make it NULL
 sfe.wa_sum1 = 0;
 sfe.wa_sum2 = 0;                               
 sfe.dr_sum1 = 0;
