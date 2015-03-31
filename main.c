@@ -195,8 +195,6 @@ static int		OUTDECIMALS = 1;
 
 static struct GAMESTATS	Game_stats;
 
-static struct DEVIATION_ACC *sim = NULL;
-
 static double 	Drawrate_evenmatch = STANDARD_DRAWRATE; //default
 static double 	Drawrate_evenmatch_percent = 100*STANDARD_DRAWRATE; //default
 static double 	Drawrate_evenmatch_percent_SD = 0;
@@ -923,17 +921,7 @@ sfe.dr_sdev = 0;
 		int astcount = 0;
 
 		assert(allocsize > 0);
-		sim = memnew(allocsize);
 
-		if (sim == NULL) {
-			fprintf(stderr, "Memory for simulations could not be allocated\n");
-			exit(EXIT_FAILURE);
-		} 
-
-sfe.relative = sim;
-sfe.sum1 = Sum1;
-sfe.sum2 = Sum2;
-sfe.sdev = Sdev;
 sfe.wa_sum1 = 0;
 sfe.wa_sum2 = 0;                               
 sfe.dr_sum1 = 0;
@@ -941,7 +929,10 @@ sfe.dr_sum2 = 0;
 sfe.wa_sdev = 0;                               
 sfe.dr_sdev = 0;
 
-summations_init(&sfe, Players.n);
+if(!summations_init(&sfe, Players.n)) {
+			fprintf(stderr, "Memory for simulations could not be allocated\n");
+			exit(EXIT_FAILURE);
+}
 
 		if (sim_updates) {
 			printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
@@ -1082,8 +1073,6 @@ summations_init(&sfe, Players.n);
 	}
 	/* Simulation block, end */
 
-	assert (Sdev == sfe.sdev);
-
 	/*==== reports ====*/
 
 	all_report 	( &Games
@@ -1132,8 +1121,6 @@ summations_init(&sfe, Players.n);
 		ctsout (&Players, &RA, sfe.relative, ctsmatstr);
 	}
 
-assert (Sdev == sfe.sdev);
-
 	if (head2head_str != NULL) {
 		head2head_output
 					( &Games
@@ -1170,9 +1157,6 @@ assert (Sdev == sfe.sdev);
 	if (textf_opened) 	fclose (textf);
 	if (csvf_opened)  	fclose (csvf); 
 	if (groupf_opened) 	fclose(groupf);
-
-	if (sim != NULL) 
-		memrel(sim);
 
 	if (pdaba != NULL)
 		database_done (pdaba);
