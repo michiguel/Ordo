@@ -56,5 +56,9 @@ extern void 	supporting_auxmem_done
 						, struct prior **pPP
 						, struct prior **pPP_store);
 
+extern bool_t 	summations_init (struct summations *sm, player_t nplayers);
+
+extern void 	summations_done (struct summations *sm);
+
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

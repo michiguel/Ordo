@@ -18,6 +18,7 @@
     along with Ordo.  If not, see <http://www.gnu.org/licenses/>.
 */
 
+#include <stddef.h>
 #include <assert.h>
 
 #include "inidone.h"
@@ -290,3 +291,68 @@ supporting_auxmem_done 	( double **pSum1
 }
 
 
+bool_t 
+summations_init (struct summations *sm, player_t nplayers)
+{
+	ptrdiff_t np = nplayers;
+	ptrdiff_t est = (ptrdiff_t)((np*np-np)/2); /* elements of simulation table */
+	size_t allocsize = sizeof(struct DEVIATION_ACC) * (size_t)est;
+
+	double					*a;
+	double 					*b;
+	double 					*c;
+	struct DEVIATION_ACC	*d;
+
+	size_t		sa = sizeof(double);
+	size_t		sb = sizeof(double);
+	size_t		sc = sizeof(double);
+	size_t		sd = allocsize;
+
+	assert (sm);
+	assert(nplayers > 0);
+
+	if (NULL == (a = memnew (sa * (size_t)nplayers))) {
+		return FALSE;
+	} else 
+	if (NULL == (b = memnew (sb * (size_t)nplayers))) {
+		memrel(a);
+		return FALSE;
+	} else 
+	if (NULL == (c = memnew (sc * (size_t)nplayers))) {
+		memrel(a);
+		memrel(b);
+		return FALSE;
+	} else 
+	if (NULL == (d = memnew (sd))) {
+		memrel(a);
+		memrel(b);
+		memrel(c);
+		return FALSE;
+	} 
+
+	sm->sum1 	 	= a; 
+	sm->sum2 	 	= b; 
+	sm->sdev	 	= c; 
+	sm->relative 	= d; 
+
+	return TRUE;
+}
+
+
+void 
+summations_done (struct summations *sm)
+{
+	assert (sm);
+
+	if (sm->sum1) 		memrel (sm->sum1);
+	if (sm->sum2) 		memrel (sm->sum2);
+	if (sm->sdev)	 	memrel (sm->sdev);
+	if (sm->relative) 	memrel (sm->relative);
+
+	sm->sum1 	 	= NULL; 
+	sm->sum2 	 	= NULL; 
+	sm->sdev	 	= NULL; 
+	sm->relative 	= NULL; 
+
+	return;
+}
