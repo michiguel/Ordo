@@ -177,9 +177,9 @@ static bool_t	General_average_set = FALSE;
 static double	Confidence = 95;
 static double	General_average = 2300.0;
 
-static double	*Sum1; // to be dynamically assigned
-static double	*Sum2; // to be dynamically assigned
-static double	*Sdev; // to be dynamically assigned 
+static double	*Crun1; // to be dynamically assigned
+static double	*Crun2; // to be dynamically assigned
+static double	*Crevv; // to be dynamically assigned 
 
 static long 	Simulate = 0;
 
@@ -601,7 +601,7 @@ struct summations sfe; // summations for errors
 
 	/*==== more memory initialization ====*/
 
-	if (!supporting_auxmem_init (Players.n, &Sum1, &Sum2, &Sdev, &PP, &PP_store)) {
+	if (!supporting_auxmem_init (Players.n, &Crun1, &Crun2, &Crevv, &PP, &PP_store)) {
 		ratings_done (&RA);
 		games_done (&Games);
 		encounters_done (&Encounters);
@@ -781,9 +781,9 @@ struct summations sfe; // summations for errors
 
 	{	player_t i;
 		for (i = 0; i < Players.n; i++) {
-			Sum1[i] = 0;
-			Sum2[i] = 0;
-			Sdev[i] = 0;
+			Crun1[i] = 0;
+			Crun2[i] = 0;
+			Crevv[i] = 0;
 		}
 	}
 	wa_sum1 = 0;				
@@ -792,9 +792,9 @@ struct summations sfe; // summations for errors
 	dr_sum2 = 0;
 
 sfe.relative = NULL;
-sfe.sum1 = Sum1;
-sfe.sum2 = Sum2;
-sfe.sdev = Sdev;
+sfe.sum1 = Crun1;
+sfe.sum2 = Crun2;
+sfe.sdev = Crevv;
 sfe.wa_sum1 = 0;
 sfe.wa_sum2 = 0;                               
 sfe.dr_sum1 = 0;
@@ -922,17 +922,16 @@ sfe.dr_sdev = 0;
 
 		assert(allocsize > 0);
 
+if(!summations_init(&sfe, Players.n)) {
+			fprintf(stderr, "Memory for simulations could not be allocated\n");
+			exit(EXIT_FAILURE);
+}
 sfe.wa_sum1 = 0;
 sfe.wa_sum2 = 0;                               
 sfe.dr_sum1 = 0;
 sfe.dr_sum2 = 0; 
 sfe.wa_sdev = 0;                               
 sfe.dr_sdev = 0;
-
-if(!summations_init(&sfe, Players.n)) {
-			fprintf(stderr, "Memory for simulations could not be allocated\n");
-			exit(EXIT_FAILURE);
-}
 
 		if (sim_updates) {
 			printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
@@ -1158,6 +1157,8 @@ if(!summations_init(&sfe, Players.n)) {
 	if (csvf_opened)  	fclose (csvf); 
 	if (groupf_opened) 	fclose(groupf);
 
+//summations_done(&sfe);
+
 	if (pdaba != NULL)
 		database_done (pdaba);
 
@@ -1165,7 +1166,7 @@ if(!summations_init(&sfe, Players.n)) {
 	games_done (&Games);
 	encounters_done (&Encounters);
 	players_done (&Players);
-	supporting_auxmem_done (&Sum1, &Sum2, &Sdev, &PP, &PP_store);
+	supporting_auxmem_done (&Crun1, &Crun2, &Crevv, &PP, &PP_store);
 
 	if (relstr != NULL)
 		relpriors_done (&RPset, &RPset_store);
