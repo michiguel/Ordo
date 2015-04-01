@@ -307,8 +307,8 @@ all_report_rat (FILE *textf, struct CEGT *p)
 						get_super_player_symbolstr(j,p),
 	
 						Ratingof_results[j],
-						Sdev[j] * confidence,
-						Sdev[j] * confidence,
+						Sdev? Sdev[j] * confidence: 0,
+						Sdev? Sdev[j] * confidence: 0,
 						(long)Playedby_results[j],
 						Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/(double)Playedby_results[j],
 						" %",

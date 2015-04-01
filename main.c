@@ -791,10 +791,14 @@ struct summations sfe; // summations for errors
 	wa_sum2 = 0;				
 	dr_sum2 = 0;
 
+Crun1 = NULL; //FIXME test, to later remove them
+Crun2 = NULL; //FIXME test, to later remove them
+Crevv = NULL; //FIXME test, to later remove them
+
 sfe.relative = NULL;
-sfe.sum1 = Crun1;
-sfe.sum2 = Crun2;
-sfe.sdev = Crevv; //FIXME try to make it NULL
+sfe.sum1 = NULL;
+sfe.sum2 = NULL;
+sfe.sdev = NULL; //FIXME try to make it NULL
 sfe.wa_sum1 = 0;
 sfe.wa_sum2 = 0;                               
 sfe.dr_sum1 = 0;

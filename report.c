@@ -232,6 +232,8 @@ rating_round(double x, int d)
 	return (double)i/al[d];
 }
 
+#define NOSDEV "  ----"
+
 static char *
 get_sdev_str (double sdev, double confidence_factor, char *str, int decimals)
 {
@@ -239,7 +241,7 @@ get_sdev_str (double sdev, double confidence_factor, char *str, int decimals)
 	if (sdev > 0.00000001) {
 		sprintf(str, "%6.*f", decimals, rating_round(x, decimals));
 	} else {
-		sprintf(str, "%s", "  ----");
+		sprintf(str, "%s", NOSDEV);
 	}
 	return str;
 }
@@ -277,7 +279,6 @@ cegt_output	( bool_t quiet
 	assert (p);
 	assert (r);
 	assert (e);
-	assert (sdev);
 	assert (pgame_stats);
 
 	calc_encounters__(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
@@ -340,7 +341,6 @@ head2head_output( const struct GAMES 	*		g
 	assert (p);
 	assert (r);
 	assert (e);
-	assert (sdev);
 	assert (pgame_stats);
 	assert (s);
 
@@ -416,7 +416,6 @@ all_report 	( const struct GAMES 	*g
 	assert (p);
 	assert (r);
 	assert (e);
-	assert (sdev);
 	assert (rps);
 
 	calc_encounters__(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
@@ -486,7 +485,7 @@ all_report 	( const struct GAMES 	*g
 			for (i = 0; i < p->n; i++) {
 				j = r->sorted[i]; 
 
-				sdev_str = get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer, decimals);
+				sdev_str = sdev? get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer, decimals): NOSDEV;
 
 				assert(r->playedby_results[j] != 0 || is_empty_player(j,p));
 
@@ -562,7 +561,9 @@ all_report 	( const struct GAMES 	*g
 			if (ok_to_out (j, &outqual, p, r)) {
 				rank++;
 
-				if (sdev[j] > 0.00000001) {
+				if (sdev == NULL) {
+					sdev_str = "\"-\"";
+				} else if (sdev[j] > 0.00000001) {
 					sprintf(sdev_str_buffer, "%.1f", sdev[j] * confidence_factor);
 					sdev_str = sdev_str_buffer;
 				} else {
