@@ -783,7 +783,7 @@ struct summations sfe; // summations for errors
 sfe.relative = NULL;
 sfe.sum1 = NULL;
 sfe.sum2 = NULL;
-sfe.sdev = NULL; //FIXME try to make it NULL
+sfe.sdev = NULL; 
 sfe.wa_sum1 = 0;
 sfe.wa_sum2 = 0;                               
 sfe.dr_sum1 = 0;
@@ -1143,7 +1143,7 @@ sfe.dr_sdev = 0;
 	if (csvf_opened)  	fclose (csvf); 
 	if (groupf_opened) 	fclose(groupf);
 
-//summations_done(&sfe);
+//summations_done(&sfe); //FIXME add it
 
 	if (pdaba != NULL)
 		database_done (pdaba);
