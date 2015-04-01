@@ -205,56 +205,26 @@ players_done (struct PLAYERS *x)
 
 bool_t
 supporting_auxmem_init 	( player_t nplayers
-						, double **pSum1
-						, double **pSum2
-						, double **pSdev
 						, struct prior **pPP
 						, struct prior **pPP_store
 						)
 {
-	double			*a;
-	double 			*b;
-	double 			*c;
 	struct prior	*d;
 	struct prior	*e;
 
-	size_t		sa = sizeof(double);
-	size_t		sb = sizeof(double);
-	size_t		sc = sizeof(double);
 	size_t		sd = sizeof(struct prior);
 	size_t		se = sizeof(struct prior);
 
 	assert(nplayers > 0);
 
-	if (NULL == (a = memnew (sa * (size_t)nplayers))) {
-		return FALSE;
-	} else 
-	if (NULL == (b = memnew (sb * (size_t)nplayers))) {
-		memrel(a);
-		return FALSE;
-	} else 
-	if (NULL == (c = memnew (sc * (size_t)nplayers))) {
-		memrel(a);
-		memrel(b);
-		return FALSE;
-	} else 
 	if (NULL == (d = memnew (sd * (size_t)nplayers))) {
-		memrel(a);
-		memrel(b);
-		memrel(c);
 		return FALSE;
 	} else 
 	if (NULL == (e = memnew (se * (size_t)nplayers))) {
-		memrel(a);
-		memrel(b);
-		memrel(c);
 		memrel(d);
 		return FALSE;
 	}
 
-	*pSum1 	 	= a; 
-	*pSum2 	 	= b; 
-	*pSdev 	 	= c; 
 	*pPP  	 	= d;
 	*pPP_store 	= e;
 
@@ -262,28 +232,15 @@ supporting_auxmem_init 	( player_t nplayers
 }
 
 void
-supporting_auxmem_done 	( double **pSum1
-						, double **pSum2
-						, double **pSdev
-						, struct prior **pPP
+supporting_auxmem_done 	( struct prior **pPP
 						, struct prior **pPP_store)
 {
-	double *sum1 = *pSum1;
-	double *sum2 = *pSum2;	
-	double *sdev = *pSdev;	
 	struct prior *pp = *pPP;	
 	struct prior *pp_store = *pPP_store;
 
-
-	if (sum1) 		memrel (sum1 );
-	if (sum2) 		memrel (sum2);
-	if (sdev)	 	memrel (sdev);
 	if (pp) 		memrel (pp);
 	if (pp_store)	memrel (pp_store);
 
-	*pSum1 	 	= NULL;
-	*pSum2 	 	= NULL;
-	*pSdev 	 	= NULL;
 	*pPP 	 	= NULL;
 	*pPP_store 	= NULL;
 

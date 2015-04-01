@@ -43,17 +43,11 @@ extern void 	players_done (struct PLAYERS *x);
 
 extern bool_t 	supporting_auxmem_init 	
 						( player_t nplayers
-						, double **pSum1
-						, double **pSum2
-						, double **pSdev
 						, struct prior **pPP
 						, struct prior **pPP_store
 						);
 extern void 	supporting_auxmem_done 	
-						( double **pSum1
-						, double **pSum2
-						, double **pSdev
-						, struct prior **pPP
+						( struct prior **pPP
 						, struct prior **pPP_store);
 
 extern bool_t 	summations_init (struct summations *sm, player_t nplayers);

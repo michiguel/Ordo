@@ -177,10 +177,6 @@ static bool_t	General_average_set = FALSE;
 static double	Confidence = 95;
 static double	General_average = 2300.0;
 
-static double	*Crun1; // to be dynamically assigned
-static double	*Crun2; // to be dynamically assigned
-static double	*Crevv; // to be dynamically assigned 
-
 static long 	Simulate = 0;
 
 #define INVBETA 175.25
@@ -601,7 +597,7 @@ struct summations sfe; // summations for errors
 
 	/*==== more memory initialization ====*/
 
-	if (!supporting_auxmem_init (Players.n, &Crun1, &Crun2, &Crevv, &PP, &PP_store)) {
+	if (!supporting_auxmem_init (Players.n, &PP, &PP_store)) {
 		ratings_done (&RA);
 		games_done (&Games);
 		encounters_done (&Encounters);
@@ -779,21 +775,10 @@ struct summations sfe; // summations for errors
 
 	BETA = (-log(1.0/0.76-1.0)) / Rtng_76;
 
-	{	player_t i;
-		for (i = 0; i < Players.n; i++) {
-			Crun1[i] = 0;
-			Crun2[i] = 0;
-			Crevv[i] = 0;
-		}
-	}
 	wa_sum1 = 0;				
 	dr_sum1 = 0;
 	wa_sum2 = 0;				
 	dr_sum2 = 0;
-
-Crun1 = NULL; //FIXME test, to later remove them
-Crun2 = NULL; //FIXME test, to later remove them
-Crevv = NULL; //FIXME test, to later remove them
 
 sfe.relative = NULL;
 sfe.sum1 = NULL;
@@ -917,14 +902,11 @@ sfe.dr_sdev = 0;
 		ptrdiff_t np = topn;
 		ptrdiff_t est = (ptrdiff_t)((np*np-np)/2); /* elements of simulation table */
 		ptrdiff_t idx;
-		size_t allocsize = sizeof(struct DEVIATION_ACC) * (size_t)est;
 		double diff;
 
 		double fraction = 0.0;
 		double asterisk = n/50.0;
 		int astcount = 0;
-
-		assert(allocsize > 0);
 
 if(!summations_init(&sfe, Players.n)) {
 			fprintf(stderr, "Memory for simulations could not be allocated\n");
@@ -1170,7 +1152,7 @@ sfe.dr_sdev = 0;
 	games_done (&Games);
 	encounters_done (&Encounters);
 	players_done (&Players);
-	supporting_auxmem_done (&Crun1, &Crun2, &Crevv, &PP, &PP_store);
+	supporting_auxmem_done (&PP, &PP_store);
 
 	if (relstr != NULL)
 		relpriors_done (&RPset, &RPset_store);
