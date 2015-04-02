@@ -242,6 +242,8 @@ static void
 summations_update	( struct summations *sm
 					, player_t topn
 					, double *ratingof
+					, double white_advantage
+					, double drawrate_evenmatch
 )
 {
 	player_t i, j;
@@ -249,6 +251,11 @@ summations_update	( struct summations *sm
 	ptrdiff_t est = (ptrdiff_t)((np*np-np)/2); /* elements of simulation table */
 	ptrdiff_t idx;
 	double diff;
+
+	sm->wa_sum1 += white_advantage;
+	sm->wa_sum2 += white_advantage * white_advantage;				
+	sm->dr_sum1 += drawrate_evenmatch;
+	sm->dr_sum2 += drawrate_evenmatch * drawrate_evenmatch;	
 
 	// update summations for errors
 	for (i = 0; i < topn; i++) {
@@ -928,6 +935,11 @@ struct summations sfe; // summations for errors
 			exit(EXIT_FAILURE);
 		}
 
+		sfe.wa_sum1 += White_advantage;
+		sfe.wa_sum2 += White_advantage * White_advantage;				
+		sfe.dr_sum1 += Drawrate_evenmatch;
+		sfe.dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;
+
 		if (sim_updates) {
 			printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
 			printf ("|----|----|----|----|----|----|----|----|----|----|\n");
@@ -1012,7 +1024,7 @@ struct summations sfe; // summations for errors
 			dr_sum1 += Drawrate_evenmatch;
 			dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;	
 
-			summations_update (&sfe, topn, RA.ratingof);
+			summations_update (&sfe, topn, RA.ratingof, White_advantage, Drawrate_evenmatch);
 
 			if (Anchor_err_rel2avg) {
 				ratings_copy (Players.n, RA.ratingbk, RA.ratingof); // ** restore
@@ -1034,8 +1046,8 @@ struct summations sfe; // summations for errors
 			sfe.relative[i].sdev = get_sdev (sfe.relative[i].sum1, sfe.relative[i].sum2, n);
 		}
 
-		wa_sdev = get_sdev (wa_sum1, wa_sum2, n+1);
-		dr_sdev = get_sdev (dr_sum1, dr_sum2, n+1);
+		wa_sdev = get_sdev (sfe.wa_sum1, sfe.wa_sum2, n+1);
+		dr_sdev = get_sdev (sfe.dr_sum1, sfe.dr_sum2, n+1);
 
 		/* retransform database, to restore original data */
 		database_transform(pdaba, &Games, &Players, &Game_stats); 
