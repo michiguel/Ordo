@@ -238,6 +238,32 @@ get_sdev (double s1, double s2, double n)
 	return sqrt( xx ) /n;
 }
 
+static void
+summations_update	( struct summations *sm
+					, player_t topn
+					, double *ratingof
+)
+{
+	player_t i, j;
+	ptrdiff_t np = topn;
+	ptrdiff_t est = (ptrdiff_t)((np*np-np)/2); /* elements of simulation table */
+	ptrdiff_t idx;
+	double diff;
+
+	// update summations for errors
+	for (i = 0; i < topn; i++) {
+		sm->sum1[i] += ratingof[i];
+		sm->sum2[i] += ratingof[i]*ratingof[i];
+		for (j = 0; j < i; j++) {
+			idx = head2head_idx_sdev ((ptrdiff_t)i, (ptrdiff_t)j);
+			assert(idx < est || !printf("idx=%ld est=%ld\n",(long)idx,(long)est));
+			diff = ratingof[i] - ratingof[j];	
+			sm->relative[idx].sum1 += diff; 
+			sm->relative[idx].sum2 += diff * diff;
+		}
+	}
+}
+
 /*
 |
 |	MAIN
@@ -886,14 +912,11 @@ struct summations sfe; // summations for errors
 	/* Simulation block, begin */
 	if (Simulate > 1) {
 
-		ptrdiff_t i,j;
-		ptrdiff_t topn = (ptrdiff_t)Players.n;
+		ptrdiff_t i;
 		long z = Simulate;
 		double n = (double) (Simulate);
-		ptrdiff_t np = topn;
-		ptrdiff_t est = (ptrdiff_t)((np*np-np)/2); /* elements of simulation table */
-		ptrdiff_t idx;
-		double diff;
+		ptrdiff_t topn = (ptrdiff_t)Players.n;
+		ptrdiff_t est = (ptrdiff_t)((topn*topn-topn)/2); /* elements of simulation table */
 
 		double fraction = 0.0;
 		double asterisk = n/50.0;
@@ -987,17 +1010,8 @@ struct summations sfe; // summations for errors
 			wa_sum2 += White_advantage * White_advantage;				
 			dr_sum1 += Drawrate_evenmatch;
 			dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;	
-			for (i = 0; i < topn; i++) {
-				sfe.sum1[i] += RA.ratingof[i];
-				sfe.sum2[i] += RA.ratingof[i]*RA.ratingof[i];
-				for (j = 0; j < i; j++) {
-					idx = head2head_idx_sdev ((ptrdiff_t)i, (ptrdiff_t)j);
-					assert(idx < est || !printf("idx=%ld est=%ld\n",(long)idx,(long)est));
-					diff = RA.ratingof[i] - RA.ratingof[j];	
-					sfe.relative[idx].sum1 += diff; 
-					sfe.relative[idx].sum2 += diff * diff;
-				}
-			}
+
+			summations_update (&sfe, topn, RA.ratingof);
 
 			if (Anchor_err_rel2avg) {
 				ratings_copy (Players.n, RA.ratingbk, RA.ratingof); // ** restore
