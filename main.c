@@ -270,19 +270,19 @@ summations_update	( struct summations *sm
 }
 
 static void
-summations_calc_sdev (struct summations *sm, player_t topn)
+summations_calc_sdev (struct summations *sm, player_t topn, double sim_n)
 {
 	player_t i;
 	ptrdiff_t est = (ptrdiff_t)((topn*topn-topn)/2); /* elements of simulation table */
 
 	for (i = 0; i < topn; i++) {
-		sm->sdev[i] = get_sdev (sm->sum1[i], sm->sum2[i], (double)topn);
+		sm->sdev[i] = get_sdev (sm->sum1[i], sm->sum2[i], sim_n);
 	}
 	for (i = 0; i < est; i++) {
-		sm->relative[i].sdev = get_sdev (sm->relative[i].sum1, sm->relative[i].sum2, (double)topn);
+		sm->relative[i].sdev = get_sdev (sm->relative[i].sum1, sm->relative[i].sum2, sim_n);
 	}
-	sm->wa_sdev = get_sdev (sm->wa_sum1, sm->wa_sum2, (double)topn+1);
-	sm->dr_sdev = get_sdev (sm->dr_sum1, sm->dr_sum2, (double)topn+1);
+	sm->wa_sdev = get_sdev (sm->wa_sum1, sm->wa_sum2, sim_n+1);
+	sm->dr_sdev = get_sdev (sm->dr_sum1, sm->dr_sum2, sim_n+1);
 }
 
 /*
@@ -1033,16 +1033,9 @@ struct summations sfe; // summations for errors
 
 		} // while
 
-		for (i = 0; i < topn; i++) {
-			sfe.sdev[i] = get_sdev (sfe.sum1[i], sfe.sum2[i], n);
-		}
-	
-		for (i = 0; i < est; i++) {
-			sfe.relative[i].sdev = get_sdev (sfe.relative[i].sum1, sfe.relative[i].sum2, n);
-		}
-
-		wa_sdev = get_sdev (sfe.wa_sum1, sfe.wa_sum2, n+1);
-		dr_sdev = get_sdev (sfe.dr_sum1, sfe.dr_sum2, n+1);
+		summations_calc_sdev (&sfe, topn, n);
+		wa_sdev = sfe.wa_sdev;
+		dr_sdev = sfe.dr_sdev;
 
 		/* retransform database, to restore original data */
 		database_transform(pdaba, &Games, &Players, &Game_stats); 
