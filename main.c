@@ -247,8 +247,6 @@ summations_update	( struct summations *sm
 )
 {
 	player_t i, j;
-	ptrdiff_t np = topn;
-	ptrdiff_t est = (ptrdiff_t)((np*np-np)/2); /* elements of simulation table */
 	ptrdiff_t idx;
 	double diff;
 
@@ -263,12 +261,28 @@ summations_update	( struct summations *sm
 		sm->sum2[i] += ratingof[i]*ratingof[i];
 		for (j = 0; j < i; j++) {
 			idx = head2head_idx_sdev ((ptrdiff_t)i, (ptrdiff_t)j);
-			assert(idx < est || !printf("idx=%ld est=%ld\n",(long)idx,(long)est));
+			assert(idx < (ptrdiff_t)((topn*topn-topn)/2));
 			diff = ratingof[i] - ratingof[j];	
 			sm->relative[idx].sum1 += diff; 
 			sm->relative[idx].sum2 += diff * diff;
 		}
 	}
+}
+
+static void
+summations_calc_sdev (struct summations *sm, player_t topn)
+{
+	player_t i;
+	ptrdiff_t est = (ptrdiff_t)((topn*topn-topn)/2); /* elements of simulation table */
+
+	for (i = 0; i < topn; i++) {
+		sm->sdev[i] = get_sdev (sm->sum1[i], sm->sum2[i], (double)topn);
+	}
+	for (i = 0; i < est; i++) {
+		sm->relative[i].sdev = get_sdev (sm->relative[i].sum1, sm->relative[i].sum2, (double)topn);
+	}
+	sm->wa_sdev = get_sdev (sm->wa_sum1, sm->wa_sum2, (double)topn+1);
+	sm->dr_sdev = get_sdev (sm->dr_sum1, sm->dr_sum2, (double)topn+1);
 }
 
 /*
@@ -291,10 +305,6 @@ struct summations sfe; // summations for errors
 
 	double white_advantage_result;
 	double drawrate_evenmatch_result;
-	double wa_sum1;
-	double wa_sum2;				
-	double dr_sum1;
-	double dr_sum2; 
 	double wa_sdev = 0;				
 	double dr_sdev = 0;
 
@@ -808,11 +818,6 @@ struct summations sfe; // summations for errors
 
 	BETA = (-log(1.0/0.76-1.0)) / Rtng_76;
 
-	wa_sum1 = 0;				
-	dr_sum1 = 0;
-	wa_sum2 = 0;				
-	dr_sum2 = 0;
-
 	summations_init(&sfe);
 
 	/*===== groups ========*/
@@ -924,17 +929,12 @@ struct summations sfe; // summations for errors
 		double asterisk = n/50.0;
 		int astcount = 0;
 
-		// original run
-		wa_sum1 += White_advantage;
-		wa_sum2 += White_advantage * White_advantage;				
-		dr_sum1 += Drawrate_evenmatch;
-		dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;
-
 		if(!summations_calloc(&sfe, Players.n)) {
 			fprintf(stderr, "Memory for simulations could not be allocated\n");
 			exit(EXIT_FAILURE);
 		}
 
+		// original run
 		sfe.wa_sum1 += White_advantage;
 		sfe.wa_sum2 += White_advantage * White_advantage;				
 		sfe.dr_sum1 += Drawrate_evenmatch;
@@ -1019,11 +1019,6 @@ struct summations sfe; // summations for errors
 			}
 
 			// update summations for errors
-			wa_sum1 += White_advantage;
-			wa_sum2 += White_advantage * White_advantage;				
-			dr_sum1 += Drawrate_evenmatch;
-			dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;	
-
 			summations_update (&sfe, topn, RA.ratingof, White_advantage, Drawrate_evenmatch);
 
 			if (Anchor_err_rel2avg) {
