@@ -1006,8 +1006,8 @@ struct summations sfe; // summations for errors
 
 			ratings_cleared_for_purged (&Players, &RA);
 
-			relpriors_copy(&RPset_store, &RPset);
-			priors_copy(PP_store, Players.n, PP);
+			relpriors_copy (&RPset_store, &RPset);
+			priors_copy (PP_store, Players.n, PP);
 
 			if (Anchor_err_rel2avg) {
 				ratings_copy (Players.n, RA.ratingof, RA.ratingbk);	// ** save
