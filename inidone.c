@@ -247,9 +247,35 @@ supporting_auxmem_done 	( struct prior **pPP
 	return;
 }
 
+static void
+summations_clear (struct summations *sm, player_t nplayers)
+{
+	ptrdiff_t np = nplayers;
+	ptrdiff_t est = (ptrdiff_t)((np*np-np)/2); /* elements of simulation table */
+	ptrdiff_t i, idx;
+	
+	sm->wa_sum1 = 0;
+	sm->wa_sum2 = 0;                               
+	sm->dr_sum1 = 0;
+	sm->dr_sum2 = 0; 
+	sm->wa_sdev = 0;                               
+	sm->dr_sdev = 0;
+		
+	for (idx = 0; idx < est; idx++) {
+		sm->relative[idx].sum1 = 0;
+		sm->relative[idx].sum2 = 0;
+		sm->relative[idx].sdev = 0;
+	}
+
+	for (i = 0; i < np; i++) {
+		sm->sum1[i] = 0;
+		sm->sum2[i] = 0;
+		sm->sdev[i] = 0;
+	}
+}
 
 bool_t 
-summations_init (struct summations *sm, player_t nplayers)
+summations_calloc (struct summations *sm, player_t nplayers)
 {
 	ptrdiff_t np = nplayers;
 	ptrdiff_t est = (ptrdiff_t)((np*np-np)/2); /* elements of simulation table */
@@ -292,9 +318,27 @@ summations_init (struct summations *sm, player_t nplayers)
 	sm->sdev	 	= c; 
 	sm->relative 	= d; 
 
+	summations_clear (sm, nplayers);
+
 	return TRUE;
 }
 
+void 
+summations_init (struct summations *sm)
+{
+	assert (sm);
+	sm->relative = NULL;
+	sm->sum1 = NULL;
+	sm->sum2 = NULL;
+	sm->sdev = NULL; 
+	sm->wa_sum1 = 0;
+	sm->wa_sum2 = 0;                               
+	sm->dr_sum1 = 0;
+	sm->dr_sum2 = 0; 
+	sm->wa_sdev = 0;                               
+	sm->dr_sdev = 0;
+	return;
+}
 
 void 
 summations_done (struct summations *sm)

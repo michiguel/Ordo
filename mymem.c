@@ -42,7 +42,7 @@ _Memnew(size_t x)
 	assert(x > 0);
 	p = malloc(x);
 //printf("new --> %lu size=%lu\n", (long unsigned)p, x);
-	memset(p, GARBAGE, x);
+	if (p) memset(p, GARBAGE, x);
 	return p;
 }
 

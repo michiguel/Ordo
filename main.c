@@ -780,16 +780,7 @@ struct summations sfe; // summations for errors
 	wa_sum2 = 0;				
 	dr_sum2 = 0;
 
-sfe.relative = NULL;
-sfe.sum1 = NULL;
-sfe.sum2 = NULL;
-sfe.sdev = NULL; 
-sfe.wa_sum1 = 0;
-sfe.wa_sum2 = 0;                               
-sfe.dr_sum1 = 0;
-sfe.dr_sum2 = 0; 
-sfe.wa_sdev = 0;                               
-sfe.dr_sdev = 0;
+	summations_init(&sfe);
 
 	/*===== groups ========*/
 
@@ -908,26 +899,14 @@ sfe.dr_sdev = 0;
 		double asterisk = n/50.0;
 		int astcount = 0;
 
-if(!summations_init(&sfe, Players.n)) {
+		if(!summations_calloc(&sfe, Players.n)) {
 			fprintf(stderr, "Memory for simulations could not be allocated\n");
 			exit(EXIT_FAILURE);
-}
-sfe.wa_sum1 = 0;
-sfe.wa_sum2 = 0;                               
-sfe.dr_sum1 = 0;
-sfe.dr_sum2 = 0; 
-sfe.wa_sdev = 0;                               
-sfe.dr_sdev = 0;
+		}
 
 		if (sim_updates) {
 			printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
 			printf ("|----|----|----|----|----|----|----|----|----|----|\n");
-		}
-			
-		for (idx = 0; idx < est; idx++) {
-			sfe.relative[idx].sum1 = 0;
-			sfe.relative[idx].sum2 = 0;
-			sfe.relative[idx].sdev = 0;
 		}
 
 		assert(z > 1);
@@ -1143,7 +1122,7 @@ sfe.dr_sdev = 0;
 	if (csvf_opened)  	fclose (csvf); 
 	if (groupf_opened) 	fclose(groupf);
 
-//summations_done(&sfe); //FIXME add it
+	summations_done(&sfe); 
 
 	if (pdaba != NULL)
 		database_done (pdaba);
