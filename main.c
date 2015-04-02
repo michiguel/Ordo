@@ -902,11 +902,6 @@ struct summations sfe; // summations for errors
 	white_advantage_result = White_advantage;
 	drawrate_evenmatch_result = Drawrate_evenmatch;
 
-	wa_sum1 += White_advantage;
-	wa_sum2 += White_advantage * White_advantage;				
-	dr_sum1 += Drawrate_evenmatch;
-	dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;
-
 	/*== simulation ========*/
 
 	/* Simulation block, begin */
@@ -921,6 +916,12 @@ struct summations sfe; // summations for errors
 		double fraction = 0.0;
 		double asterisk = n/50.0;
 		int astcount = 0;
+
+		// original run
+		wa_sum1 += White_advantage;
+		wa_sum2 += White_advantage * White_advantage;				
+		dr_sum1 += Drawrate_evenmatch;
+		dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;
 
 		if(!summations_calloc(&sfe, Players.n)) {
 			fprintf(stderr, "Memory for simulations could not be allocated\n");
