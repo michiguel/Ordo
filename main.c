@@ -305,8 +305,6 @@ struct summations sfe; // summations for errors
 
 	double white_advantage_result;
 	double drawrate_evenmatch_result;
-	double wa_sdev = 0;				
-	double dr_sdev = 0;
 
 	struct output_qualifiers outqual = {FALSE, 0};
 	long int mingames = 0;
@@ -919,11 +917,9 @@ struct summations sfe; // summations for errors
 	/* Simulation block, begin */
 	if (Simulate > 1) {
 
-		ptrdiff_t i;
 		long z = Simulate;
 		double n = (double) (Simulate);
 		ptrdiff_t topn = (ptrdiff_t)Players.n;
-		ptrdiff_t est = (ptrdiff_t)((topn*topn-topn)/2); /* elements of simulation table */
 
 		double fraction = 0.0;
 		double asterisk = n/50.0;
@@ -1033,9 +1029,8 @@ struct summations sfe; // summations for errors
 
 		} // while
 
+		/* use summations to get sdev */
 		summations_calc_sdev (&sfe, topn, n);
-		wa_sdev = sfe.wa_sdev;
-		dr_sdev = sfe.dr_sdev;
 
 		/* retransform database, to restore original data */
 		database_transform(pdaba, &Games, &Players, &Game_stats); 
@@ -1069,8 +1064,8 @@ struct summations sfe; // summations for errors
 				, drawrate_evenmatch_result
 				, OUTDECIMALS
 				, outqual
-				, wa_sdev
-				, dr_sdev
+				, sfe.wa_sdev
+				, sfe.dr_sdev
 				);
 
 	#if 0
@@ -1116,7 +1111,6 @@ struct summations sfe; // summations for errors
 					);
 	}
 
-	// CEGT output style
 	if (Elostat_output) {
 		cegt_output	( quiet_mode
 					, &Games
