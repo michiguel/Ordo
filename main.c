@@ -241,7 +241,7 @@ calc_encounters__
 
 int main (int argc, char *argv[])
 {
-struct summations sfe; // summations for errors
+	struct summations sfe; // summations for errors
 
 	struct DATA *pdaba;
 
@@ -979,6 +979,10 @@ struct summations sfe; // summations for errors
 		/* use summations to get sdev */
 		summations_calc_sdev (&sfe, topn, n);
 
+	}
+	/* Simulation block, end */
+
+	if (Simulate > 1) {
 		/* retransform database, to restore original data */
 		database_transform(pdaba, &Games, &Players, &Game_stats); 
 		qsort (Games.ga, (size_t)Games.n, sizeof(struct gamei), compare_GAME);
@@ -992,7 +996,7 @@ struct summations sfe; // summations for errors
 			calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 		}
 	}
-	/* Simulation block, end */
+
 
 	/*==== reports ====*/
 
