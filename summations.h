@@ -19,37 +19,27 @@
 */
 
 
-#if !defined(H_INIDONE)
-#define H_INIDONE
+#if !defined(H_SUMMA)
+#define H_SUMMA
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
 #include "mytypes.h"
 
-extern bool_t 	ratings_init (player_t n, struct RATINGS *r); 
+extern bool_t 	summations_calloc (struct summations *sm, player_t nplayers);
 
-extern void 	ratings_done (struct RATINGS *r);
+extern void 	summations_init (struct summations *sm);
 
-extern bool_t 	games_init (gamesnum_t n, struct GAMES *g);
+extern void 	summations_done (struct summations *sm);
 
-extern void 	games_done (struct GAMES *g);
+extern void		summations_update	
+					( struct summations *sm
+					, player_t topn
+					, double *ratingof
+					, double white_advantage
+					, double drawrate_evenmatch
+					);
 
-extern bool_t 	encounters_init (gamesnum_t n, struct ENCOUNTERS *e);
-
-extern void 	encounters_done (struct ENCOUNTERS *e);
-
-extern bool_t 	players_init (player_t n, struct PLAYERS *x);
-
-extern void 	players_done (struct PLAYERS *x);
-
-extern bool_t 	supporting_auxmem_init 	
-						( player_t nplayers
-						, struct prior **pPP
-						, struct prior **pPP_store
-						);
-
-extern void 	supporting_auxmem_done 	
-						( struct prior **pPP
-						, struct prior **pPP_store);
+extern void		summations_calc_sdev (struct summations *sm, player_t topn, double sim_n);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

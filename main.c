@@ -56,6 +56,7 @@
 #include "rtngcalc.h"
 #include "ra.h"
 #include "sim.h"
+#include "summations.h"
 
 /*
 |
@@ -212,7 +213,7 @@ static bool_t	Prior_mode;
 /*---- static functions --------------------------------------------------*/
 
 static void 		table_output(double Rtng_76);
-static ptrdiff_t	head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y);
+
 static int 			compare_GAME (const void * a, const void * b);
 
 static void
@@ -230,60 +231,6 @@ calc_encounters__
 					, e->enc);
 }
 
-static double
-get_sdev (double s1, double s2, double n)
-{
-	double xx = n*s2 - s1 * s1;
-	xx = sqrt(xx*xx); // removes problems with -0.00000000000;
-	return sqrt( xx ) /n;
-}
-
-static void
-summations_update	( struct summations *sm
-					, player_t topn
-					, double *ratingof
-					, double white_advantage
-					, double drawrate_evenmatch
-)
-{
-	player_t i, j;
-	ptrdiff_t idx;
-	double diff;
-
-	sm->wa_sum1 += white_advantage;
-	sm->wa_sum2 += white_advantage * white_advantage;				
-	sm->dr_sum1 += drawrate_evenmatch;
-	sm->dr_sum2 += drawrate_evenmatch * drawrate_evenmatch;	
-
-	// update summations for errors
-	for (i = 0; i < topn; i++) {
-		sm->sum1[i] += ratingof[i];
-		sm->sum2[i] += ratingof[i]*ratingof[i];
-		for (j = 0; j < i; j++) {
-			idx = head2head_idx_sdev ((ptrdiff_t)i, (ptrdiff_t)j);
-			assert(idx < (ptrdiff_t)((topn*topn-topn)/2));
-			diff = ratingof[i] - ratingof[j];	
-			sm->relative[idx].sum1 += diff; 
-			sm->relative[idx].sum2 += diff * diff;
-		}
-	}
-}
-
-static void
-summations_calc_sdev (struct summations *sm, player_t topn, double sim_n)
-{
-	player_t i;
-	ptrdiff_t est = (ptrdiff_t)((topn*topn-topn)/2); /* elements of simulation table */
-
-	for (i = 0; i < topn; i++) {
-		sm->sdev[i] = get_sdev (sm->sum1[i], sm->sum2[i], sim_n);
-	}
-	for (i = 0; i < est; i++) {
-		sm->relative[i].sdev = get_sdev (sm->relative[i].sum1, sm->relative[i].sum2, sim_n);
-	}
-	sm->wa_sdev = get_sdev (sm->wa_sum1, sm->wa_sum2, sim_n+1);
-	sm->dr_sdev = get_sdev (sm->dr_sum1, sm->dr_sum2, sim_n+1);
-}
 
 /*
 |
@@ -1189,16 +1136,7 @@ usage (void)
 |
 \**/
 
-static ptrdiff_t
-head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y)
-{	
-	ptrdiff_t idx;
-	if (y < x) 
-		idx = (x*x-x)/2+y;					
-	else
-		idx = (y*y-y)/2+x;
-	return idx;
-}
+
 
 /*==================================================================*/
 
