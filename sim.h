@@ -74,17 +74,19 @@ extern void
 save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num);
 
 extern void
-simul		( bool_t 					quiet_mode
+simul		( long 						simulate
+			, bool_t 					sim_updates
+			, bool_t 					quiet_mode
 			, bool_t					prior_mode
 			, bool_t 					adjust_white_advantage
 			, bool_t 					adjust_draw_rate
-			, bool_t					Anchor_use
-			, bool_t					Anchor_err_rel2avg
+			, bool_t					anchor_use
+			, bool_t					anchor_err_rel2avg
 
-			, double					General_average
-			, player_t 					Anchor
+			, double					general_average
+			, player_t 					anchor
 			, player_t					priored_n
-			, double					BETA
+			, double					beta
 
 			, struct ENCOUNTERS	*		encount
 			, struct rel_prior_set *	rps
@@ -93,21 +95,17 @@ simul		( bool_t 					quiet_mode
 			, struct GAMES *			pGames
 
 			, struct prior *			pPrior
-			, struct prior 				Wa_prior
-			, struct prior 				Dr_prior
+			, struct prior 				wa_prior
+			, struct prior 				dr_prior
 
-			, double *					pWhite_advantage
-			, double *					pDraw_rate
-
-			, long 						Simulate
 			, double 					drawrate_evenmatch_result
 			, double 					white_advantage_result
 			, struct summations *		p_sfe_input
-			, bool_t 					sim_updates
 
 			, struct rel_prior_set 		RPset_store
 			, struct prior *			PP_store
 
-);
+)
+;
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

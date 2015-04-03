@@ -864,7 +864,9 @@ int main (int argc, char *argv[])
 	/* Simulation block, begin */
 	if (Simulate > 1) {
 
-		simul	( quiet_mode
+		simul	( Simulate
+				, sim_updates
+				, quiet_mode
 				, Forces_ML || Prior_mode
 				, adjust_white_advantage
 				, adjust_draw_rate
@@ -886,15 +888,10 @@ int main (int argc, char *argv[])
 				, Wa_prior
 				, Dr_prior
 
-				, &White_advantage
-				, &Drawrate_evenmatch
-
-				, Simulate
 				, drawrate_evenmatch_result
 				, white_advantage_result
 
 				, &sfe
-				, sim_updates
 
 				, RPset_store
 				, PP_store

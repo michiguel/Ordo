@@ -64,7 +64,7 @@ void
 get_a_simulated_run	( int 					limit
 					, bool_t 				quiet_mode
 
-					, double 				General_average
+					, double 				general_average
 					, double 				beta
 
 					, struct ENCOUNTERS 	*pEncounters
@@ -108,8 +108,8 @@ struct rel_prior_set	RPset_store = *pRPset_store;
 		priors_shuffle (PP, Players.n);
 
 		// may improve convergence in pathological cases, it should not be needed.
-		ratings_set (Players.n, General_average, Players.prefed, Players.flagged, RA.ratingof);
-		ratings_set (Players.n, General_average, Players.prefed, Players.flagged, RA.ratingbk);
+		ratings_set (Players.n, general_average, Players.prefed, Players.flagged, RA.ratingof);
+		ratings_set (Players.n, general_average, Players.prefed, Players.flagged, RA.ratingbk);
 		assert(ratings_sanity (Players.n, RA.ratingof));
 		assert(ratings_sanity (Players.n, RA.ratingbk));
 
@@ -225,17 +225,19 @@ save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num)
 #include "rtngcalc.h"
 
 void
-simul		( bool_t 					quiet_mode
+simul		( long 						simulate
+			, bool_t 					sim_updates
+			, bool_t 					quiet_mode
 			, bool_t					prior_mode
 			, bool_t 					adjust_white_advantage
 			, bool_t 					adjust_draw_rate
-			, bool_t					Anchor_use
-			, bool_t					Anchor_err_rel2avg
+			, bool_t					anchor_use
+			, bool_t					anchor_err_rel2avg
 
-			, double					General_average
-			, player_t 					Anchor
+			, double					general_average
+			, player_t 					anchor
 			, player_t					priored_n
-			, double					BETA
+			, double					beta
 
 			, struct ENCOUNTERS	*		encount
 			, struct rel_prior_set *	rps
@@ -244,41 +246,37 @@ simul		( bool_t 					quiet_mode
 			, struct GAMES *			pGames
 
 			, struct prior *			pPrior
-			, struct prior 				Wa_prior
-			, struct prior 				Dr_prior
+			, struct prior 				wa_prior
+			, struct prior 				dr_prior
 
-			, double *					pWhite_advantage
-			, double *					pDraw_rate
-
-			, long 						Simulate
 			, double 					drawrate_evenmatch_result
 			, double 					white_advantage_result
 			, struct summations *		p_sfe_input
-			, bool_t 					sim_updates
 
 			, struct rel_prior_set 		RPset_store
 			, struct prior *			PP_store
 
 )
 {
-struct summations 		sfe = *p_sfe_input; 	// summations for errors
-double 					White_advantage = *pWhite_advantage;
-double 					Drawrate_evenmatch = *pDraw_rate;
+	double 					White_advantage = white_advantage_result;
+	double 					Drawrate_evenmatch = drawrate_evenmatch_result;
 
-struct ENCOUNTERS		Encounters = *encount;
-struct rel_prior_set 	RPset = *rps;
-struct PLAYERS 			Players = *plyrs;
-struct RATINGS 			RA = *rat;
-struct GAMES 			Games = *pGames;
+	struct summations 		sfe = *p_sfe_input; 	// summations for errors
 
-struct prior *			PP = pPrior;
+	struct ENCOUNTERS		Encounters = *encount;
+	struct rel_prior_set 	RPset = *rps;
+	struct PLAYERS 			Players = *plyrs;
+	struct RATINGS 			RA = *rat;
+	struct GAMES 			Games = *pGames;
+
+	struct prior *			PP = pPrior;
 
 
 	/* Simulation block, begin */
-	if (Simulate > 1) {
+	if (simulate > 1) {
 
-		long z = Simulate;
-		double n = (double) (Simulate);
+		long z = simulate;
+		double n = (double) (simulate);
 		ptrdiff_t topn = (ptrdiff_t)Players.n;
 
 		double fraction = 0.0;
@@ -291,10 +289,10 @@ struct prior *			PP = pPrior;
 		}
 
 		// original run
-		sfe.wa_sum1 += White_advantage;
-		sfe.wa_sum2 += White_advantage * White_advantage;				
-		sfe.dr_sum1 += Drawrate_evenmatch;
-		sfe.dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;
+		sfe.wa_sum1 += white_advantage_result;
+		sfe.wa_sum2 += white_advantage_result * white_advantage_result;				
+		sfe.dr_sum1 += drawrate_evenmatch_result;
+		sfe.dr_sum2 += drawrate_evenmatch_result * drawrate_evenmatch_result;
 
 		if (sim_updates) {
 			printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
@@ -304,7 +302,7 @@ struct prior *			PP = pPrior;
 		assert(z > 1);
 		while (z-->0) {
 			if (!quiet_mode) {		
-				printf ("\n==> Simulation:%ld/%ld\n", Simulate-z, Simulate);
+				printf ("\n==> Simulation:%ld/%ld\n", simulate-z, simulate);
 			} 
 
 			if (sim_updates) {
@@ -318,8 +316,8 @@ struct prior *			PP = pPrior;
 
 			get_a_simulated_run	( 100
 								, quiet_mode
-								, General_average
-								, BETA
+								, general_average
+								, beta
 								, &Encounters // output
 								, &RPset 
 								, &Players
@@ -332,8 +330,8 @@ struct prior *			PP = pPrior;
 								, &RPset_store );
 
 			#if defined(SAVE_SIMULATION)
-			if ((Simulate-z) == SAVE_SIMULATION_N) {
-				save_simulated(&Players, &Games, (int)(Simulate-z)); 
+			if ((simulate-z) == SAVE_SIMULATION_N) {
+				save_simulated(&Players, &Games, (int)(simulate-z)); 
 			}
 			#endif
 
@@ -342,13 +340,13 @@ struct prior *			PP = pPrior;
 							, prior_mode //Forces_ML || Prior_mode
 							, adjust_white_advantage
 							, adjust_draw_rate
-							, Anchor_use
-							, Anchor_err_rel2avg
+							, anchor_use
+							, anchor_err_rel2avg
 
-							, General_average
-							, Anchor
+							, general_average
+							, anchor
 							, priored_n
-							, BETA
+							, beta
 
 							, &Encounters
 							, &RPset
@@ -357,8 +355,8 @@ struct prior *			PP = pPrior;
 							, &Games
 
 							, PP
-							, Wa_prior
-							, Dr_prior
+							, wa_prior
+							, dr_prior
 
 							, &White_advantage
 							, &Drawrate_evenmatch
@@ -369,7 +367,7 @@ struct prior *			PP = pPrior;
 			relpriors_copy (&RPset_store, &RPset);
 			priors_copy (PP_store, Players.n, PP);
 
-			if (Anchor_err_rel2avg) {
+			if (anchor_err_rel2avg) {
 				ratings_copy (Players.n, RA.ratingof, RA.ratingbk);	// ** save
 				ratings_center_to_zero (Players.n, Players.flagged, RA.ratingof);
 			}
@@ -377,7 +375,7 @@ struct prior *			PP = pPrior;
 			// update summations for errors
 			summations_update (&sfe, topn, RA.ratingof, White_advantage, Drawrate_evenmatch);
 
-			if (Anchor_err_rel2avg) {
+			if (anchor_err_rel2avg) {
 				ratings_copy (Players.n, RA.ratingbk, RA.ratingof); // ** restore
 			}
 
