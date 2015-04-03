@@ -219,3 +219,181 @@ save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num)
 	}
 }
 
+//========================================================================
+
+#include "summations.h"
+#include "rtngcalc.h"
+
+void
+simul		( bool_t 					quiet_mode
+			, bool_t					prior_mode
+			, bool_t 					adjust_white_advantage
+			, bool_t 					adjust_draw_rate
+			, bool_t					Anchor_use
+			, bool_t					Anchor_err_rel2avg
+
+			, double					General_average
+			, player_t 					Anchor
+			, player_t					priored_n
+			, double					BETA
+
+			, struct ENCOUNTERS	*		encount
+			, struct rel_prior_set *	rps
+			, struct PLAYERS *			plyrs
+			, struct RATINGS *			rat
+			, struct GAMES *			pGames
+
+			, struct prior *			pPrior
+			, struct prior 				Wa_prior
+			, struct prior 				Dr_prior
+
+			, double *					pWhite_advantage
+			, double *					pDraw_rate
+
+			, long 						Simulate
+			, double 					drawrate_evenmatch_result
+			, double 					white_advantage_result
+			, struct summations *		p_sfe_input
+			, bool_t 					sim_updates
+
+			, struct rel_prior_set 		RPset_store
+			, struct prior *			PP_store
+
+)
+{
+struct summations 		sfe = *p_sfe_input; 	// summations for errors
+double 					White_advantage = *pWhite_advantage;
+double 					Drawrate_evenmatch = *pDraw_rate;
+
+struct ENCOUNTERS		Encounters = *encount;
+struct rel_prior_set 	RPset = *rps;
+struct PLAYERS 			Players = *plyrs;
+struct RATINGS 			RA = *rat;
+struct GAMES 			Games = *pGames;
+
+struct prior *			PP = pPrior;
+
+
+	/* Simulation block, begin */
+	if (Simulate > 1) {
+
+		long z = Simulate;
+		double n = (double) (Simulate);
+		ptrdiff_t topn = (ptrdiff_t)Players.n;
+
+		double fraction = 0.0;
+		double asterisk = n/50.0;
+		int astcount = 0;
+
+		if(!summations_calloc(&sfe, Players.n)) {
+			fprintf(stderr, "Memory for simulations could not be allocated\n");
+			exit(EXIT_FAILURE);
+		}
+
+		// original run
+		sfe.wa_sum1 += White_advantage;
+		sfe.wa_sum2 += White_advantage * White_advantage;				
+		sfe.dr_sum1 += Drawrate_evenmatch;
+		sfe.dr_sum2 += Drawrate_evenmatch * Drawrate_evenmatch;
+
+		if (sim_updates) {
+			printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
+			printf ("|----|----|----|----|----|----|----|----|----|----|\n");
+		}
+
+		assert(z > 1);
+		while (z-->0) {
+			if (!quiet_mode) {		
+				printf ("\n==> Simulation:%ld/%ld\n", Simulate-z, Simulate);
+			} 
+
+			if (sim_updates) {
+				fraction += 1.0;
+				while (fraction > asterisk) {
+					fraction -= asterisk;
+					astcount++;
+					printf ("*"); fflush(stdout);
+				}
+			}
+
+			get_a_simulated_run	( 100
+								, quiet_mode
+								, General_average
+								, BETA
+								, &Encounters // output
+								, &RPset 
+								, &Players
+								, &RA
+								, &Games	// output
+								, PP
+								, drawrate_evenmatch_result
+								, white_advantage_result
+								, PP_store
+								, &RPset_store );
+
+			#if defined(SAVE_SIMULATION)
+			if ((Simulate-z) == SAVE_SIMULATION_N) {
+				save_simulated(&Players, &Games, (int)(Simulate-z)); 
+			}
+			#endif
+
+			Encounters.n = calc_rating 
+							( quiet_mode
+							, prior_mode //Forces_ML || Prior_mode
+							, adjust_white_advantage
+							, adjust_draw_rate
+							, Anchor_use
+							, Anchor_err_rel2avg
+
+							, General_average
+							, Anchor
+							, priored_n
+							, BETA
+
+							, &Encounters
+							, &RPset
+							, &Players
+							, &RA
+							, &Games
+
+							, PP
+							, Wa_prior
+							, Dr_prior
+
+							, &White_advantage
+							, &Drawrate_evenmatch
+							);
+
+			ratings_cleared_for_purged (&Players, &RA);
+
+			relpriors_copy (&RPset_store, &RPset);
+			priors_copy (PP_store, Players.n, PP);
+
+			if (Anchor_err_rel2avg) {
+				ratings_copy (Players.n, RA.ratingof, RA.ratingbk);	// ** save
+				ratings_center_to_zero (Players.n, Players.flagged, RA.ratingof);
+			}
+
+			// update summations for errors
+			summations_update (&sfe, topn, RA.ratingof, White_advantage, Drawrate_evenmatch);
+
+			if (Anchor_err_rel2avg) {
+				ratings_copy (Players.n, RA.ratingbk, RA.ratingof); // ** restore
+			}
+
+			if (sim_updates && z == 0) {
+				int x = 51-astcount;
+				while (x-->0) {printf ("*"); fflush(stdout);}
+				printf ("\n");
+			}
+
+		} // while
+
+		/* use summations to get sdev */
+		summations_calc_sdev (&sfe, topn, n);
+
+	}
+	/* Simulation block, end */
+
+} /* Simulation fuction, end */
+
