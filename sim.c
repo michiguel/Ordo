@@ -258,8 +258,8 @@ simul		( long 						simulate
 
 )
 {
-	double 					White_advantage = white_advantage_result;
-	double 					Drawrate_evenmatch = drawrate_evenmatch_result;
+	double 					white_advantage = white_advantage_result;
+	double 					drawrate_evenmatch = drawrate_evenmatch_result;
 
 	struct summations 		sfe = *p_sfe_input; 	// summations for errors
 
@@ -358,8 +358,8 @@ simul		( long 						simulate
 							, wa_prior
 							, dr_prior
 
-							, &White_advantage
-							, &Drawrate_evenmatch
+							, &white_advantage
+							, &drawrate_evenmatch
 							);
 
 			ratings_cleared_for_purged (&Players, &RA);
@@ -373,7 +373,7 @@ simul		( long 						simulate
 			}
 
 			// update summations for errors
-			summations_update (&sfe, topn, RA.ratingof, White_advantage, Drawrate_evenmatch);
+			summations_update (&sfe, topn, RA.ratingof, white_advantage, drawrate_evenmatch);
 
 			if (anchor_err_rel2avg) {
 				ratings_copy (Players.n, RA.ratingbk, RA.ratingof); // ** restore
