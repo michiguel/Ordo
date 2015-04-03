@@ -395,5 +395,7 @@ struct prior *			PP = pPrior;
 	}
 	/* Simulation block, end */
 
+	*p_sfe_input = sfe;
+
 } /* Simulation fuction, end */
 

@@ -861,8 +861,48 @@ int main (int argc, char *argv[])
 
 	/*== simulation ========*/
 
+	if (1 && Simulate > 1) {
+
+		simul	( quiet_mode
+				, Forces_ML || Prior_mode
+				, adjust_white_advantage
+				, adjust_draw_rate
+				, Anchor_use
+				, Anchor_err_rel2avg
+
+				, General_average
+				, Anchor
+				, Priored_n
+				, BETA
+
+				, &Encounters
+				, &RPset
+				, &Players
+				, &RA
+				, &Games
+
+				, PP
+				, Wa_prior
+				, Dr_prior
+
+				, &White_advantage
+				, &Drawrate_evenmatch
+
+				, Simulate
+				, drawrate_evenmatch_result
+				, white_advantage_result
+
+				, &sfe
+				, sim_updates
+
+				, RPset_store
+				, PP_store
+				);
+
+	}
+
 	/* Simulation block, begin */
-	if (Simulate > 1) {
+	if (0 && Simulate > 1) {
 
 		long z = Simulate;
 		double n = (double) (Simulate);
