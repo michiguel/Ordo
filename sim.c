@@ -62,27 +62,35 @@ calc_encounters__
 
 void
 get_a_simulated_run	( int 					limit
+					, bool_t 				quiet_mode
 
 					, double 				General_average
-					, bool_t 				quiet_mode
-					, struct PLAYERS 		Players
-					, struct RATINGS 		RA
-					, struct ENCOUNTERS 	Encounters
+					, double 				beta
+
+					, struct ENCOUNTERS 	*pEncounters
+					, struct rel_prior_set	*pRPset 
+					, struct PLAYERS 		*pPlayers
+					, struct RATINGS 		*pRA
+					, struct GAMES 			*pGames	// output
+					, struct prior *		PP
 
 					, double 				drawrate_evenmatch_result
 					, double 				white_advantage_result
-					, double 				beta
-					, struct GAMES 			Games	// output
 
-					, struct prior *		PP
 					, struct prior *		PP_store
-
-					, struct rel_prior_set	RPset 
-					, struct rel_prior_set	RPset_store 
+					, struct rel_prior_set	*pRPset_store 
 )
 {
-	int failed_sim = 0;
 
+struct ENCOUNTERS 		Encounters	= *pEncounters;
+struct rel_prior_set	RPset 		= *pRPset;
+struct PLAYERS 			Players		= *pPlayers;
+struct RATINGS 			RA			= *pRA;
+struct GAMES 			Games 		= *pGames;
+
+struct rel_prior_set	RPset_store = *pRPset_store;
+
+	int failed_sim = 0;
 	do {
 		if (!quiet_mode && failed_sim > 0) 
 			printf("--> Simulation: [Rejected]\n\n");

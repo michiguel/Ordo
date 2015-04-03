@@ -25,6 +25,7 @@
 #include "boolean.h"
 #include "mytypes.h"
 
+/*
 extern void
 get_a_simulated_run	( int 					limit
 
@@ -45,6 +46,29 @@ get_a_simulated_run	( int 					limit
 					, struct rel_prior_set	RPset 
 					, struct rel_prior_set	RPset_store 
 );
+*/
+
+void
+get_a_simulated_run	( int 					limit
+					, bool_t 				quiet_mode
+
+					, double 				General_average
+					, double 				beta
+
+					, struct ENCOUNTERS 	*pEncounters
+					, struct rel_prior_set	*pRPset 
+					, struct PLAYERS 		*pPlayers
+					, struct RATINGS 		*pRA
+					, struct GAMES 			*pGames	// output
+					, struct prior *		PP
+
+					, double 				drawrate_evenmatch_result
+					, double 				white_advantage_result
+
+					, struct prior *		PP_store
+					, struct rel_prior_set	*pRPset_store 
+)
+;
 
 extern void
 save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num);

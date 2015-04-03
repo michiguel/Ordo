@@ -957,19 +957,19 @@ struct summations sfe; // summations for errors
 			}
 
 			get_a_simulated_run	( 100
-								, General_average
 								, quiet_mode
-								, Players
-								, RA
-								, Encounters // output
+								, General_average
+								, BETA
+								, &Encounters // output
+								, &RPset 
+								, &Players
+								, &RA
+								, &Games	// output
+								, PP
 								, drawrate_evenmatch_result
 								, white_advantage_result
-								, BETA
-								, Games	// output
-								, PP
 								, PP_store
-								, RPset 
-								, RPset_store );
+								, &RPset_store );
 
 			#if defined(SAVE_SIMULATION)
 			if ((Simulate-z) == SAVE_SIMULATION_N) {
