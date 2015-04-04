@@ -67,18 +67,18 @@ get_a_simulated_run	( int 					limit
 					, double 				general_average
 					, double 				beta
 
-					, struct ENCOUNTERS 	*pEncounters
-					, struct rel_prior_set	*pRPset 
-					, struct PLAYERS 		*pPlayers
-					, struct RATINGS 		*pRA
-					, struct GAMES 			*pGames	// output
-					, struct prior 			*PP
-
 					, double 				drawrate_evenmatch_result
 					, double 				white_advantage_result
 
-					, struct prior 			*PP_store
-					, struct rel_prior_set	*pRPset_store 
+					, struct ENCOUNTERS 	*pEncounters 	// output
+					, struct rel_prior_set	*pRPset 		// output
+					, struct PLAYERS 		*pPlayers 		// output
+					, struct RATINGS 		*pRA
+					, struct GAMES 			*pGames			// output
+					, struct prior 			*PP				// output
+
+					, struct prior 			*PP_store		// output
+					, struct rel_prior_set	*pRPset_store 	// output
 )
 {
 	int failed_sim = 0;
@@ -310,16 +310,17 @@ simul		( long 						simulate
 							, quiet_mode
 							, general_average
 							, beta
-							, &Encounters // output
-							, &RPset 
-							, &Players
-							, &RA
-							, &Games	// output
-							, PP
 							, drawrate_evenmatch_result
 							, white_advantage_result
-							, PP_store
-							, &RPset_store );
+							, &Encounters 	// output
+							, &RPset 		// output
+							, &Players		// output
+							, &RA			// output	
+							, &Games		// output
+							, PP			// output
+							, PP_store		// output
+							, &RPset_store 	// output
+							);
 
 		#if defined(SAVE_SIMULATION)
 		if (z+1 == SAVE_SIMULATION_N) {
@@ -329,7 +330,7 @@ simul		( long 						simulate
 
 		Encounters.n = calc_rating 
 						( quiet_mode
-						, prior_mode //Forces_ML || Prior_mode
+						, prior_mode 
 						, adjust_white_advantage
 						, adjust_draw_rate
 						, anchor_use
@@ -356,6 +357,7 @@ simul		( long 						simulate
 
 		ratings_cleared_for_purged (&Players, &RA);
 
+		// restore priors. They were shuffled in the simulation and used in the calculation.
 		relpriors_copy (&RPset_store, &RPset);
 		priors_copy (PP_store, Players.n, PP);
 

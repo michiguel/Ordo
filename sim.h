@@ -52,21 +52,21 @@ void
 get_a_simulated_run	( int 					limit
 					, bool_t 				quiet_mode
 
-					, double 				General_average
+					, double 				general_average
 					, double 				beta
-
-					, struct ENCOUNTERS 	*pEncounters
-					, struct rel_prior_set	*pRPset 
-					, struct PLAYERS 		*pPlayers
-					, struct RATINGS 		*pRA
-					, struct GAMES 			*pGames	// output
-					, struct prior *		PP
 
 					, double 				drawrate_evenmatch_result
 					, double 				white_advantage_result
 
-					, struct prior *		PP_store
-					, struct rel_prior_set	*pRPset_store 
+					, struct ENCOUNTERS 	*pEncounters 	// output
+					, struct rel_prior_set	*pRPset 		// output
+					, struct PLAYERS 		*pPlayers 		// output
+					, struct RATINGS 		*pRA
+					, struct GAMES 			*pGames			// output
+					, struct prior 			*PP				// output
+
+					, struct prior 			*PP_store		// output
+					, struct rel_prior_set	*pRPset_store 	// output
 )
 ;
 
