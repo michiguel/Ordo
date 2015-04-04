@@ -229,6 +229,52 @@ ratings_set_to	( double general_average
 		assert(ratings_sanity (pPlayers->n, pRA->ratingbk));
 }
 
+static void
+updates_print_scale (bool_t sim_updates)
+{
+	if (sim_updates) {
+		printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
+		printf ("|----|----|----|----|----|----|----|----|----|----|\n");
+	}
+}
+
+static void
+updates_print_head (bool_t quiet, long z, long simulate)
+{
+	if (!quiet)
+		printf ("\n==> Simulation:%ld/%ld\n", z+1, simulate);
+}
+
+static int
+updates_print_progress (bool_t sim_updates, double asterisk, int astcount, double *pfraction)
+{
+	double fraction = *pfraction;
+
+	if (sim_updates) {
+		fraction += 1.0;
+		while (fraction > asterisk) {
+			fraction -= asterisk;
+			astcount++;
+			printf ("*"); 
+		}
+		fflush(stdout);
+	}
+
+	*pfraction = fraction;
+	return astcount;
+}
+
+static void
+updates_print_reachedgoal (bool_t sim_updates, int astcount)
+{
+	if (sim_updates) {
+		int x = 51-astcount;
+		while (x-->0) {printf ("*"); fflush(stdout);}
+		printf ("\n");
+	}
+}
+
+
 void
 simul		( long 						simulate
 			, bool_t 					sim_updates
@@ -300,25 +346,12 @@ simul		( long 						simulate
 	sfe.dr_sum1 += drawrate_evenmatch_result;
 	sfe.dr_sum2 += drawrate_evenmatch_result * drawrate_evenmatch_result;
 
-	if (sim_updates) {
-		printf ("0   10   20   30   40   50   60   70   80   90   100 (%s)\n","%");
-		printf ("|----|----|----|----|----|----|----|----|----|----|\n");
-	}
+	updates_print_scale (sim_updates);
 
 	for (z = 0; z < simulate; z++) {
-		if (!quiet_mode) {		
-			printf ("\n==> Simulation:%ld/%ld\n", z+1, simulate);
-		} 
 
-		if (sim_updates) {
-			fraction += 1.0;
-			while (fraction > asterisk) {
-				fraction -= asterisk;
-				astcount++;
-				printf ("*"); 
-			}
-			fflush(stdout);
-		}
+		updates_print_head (quiet_mode, z, simulate);
+		astcount = updates_print_progress (sim_updates, asterisk, astcount, &fraction);
 
 		// store originals
 		relpriors_copy (&RPset, &RPset_store); 
@@ -338,7 +371,6 @@ simul		( long 						simulate
 							, PP			// output
 							, &RPset	 	// output
 							);
-
 
 		#if defined(SAVE_SIMULATION)
 		if (z+1 == SAVE_SIMULATION_N) {
@@ -396,11 +428,7 @@ simul		( long 						simulate
 
 	} // for loop end
 
-	if (sim_updates) {
-		int x = 51-astcount;
-		while (x-->0) {printf ("*"); fflush(stdout);}
-		printf ("\n");
-	}
+	updates_print_reachedgoal (sim_updates, astcount);
 
 	/* use summations to get sdev */
 	summations_calc_sdev (&sfe, topn, n);
