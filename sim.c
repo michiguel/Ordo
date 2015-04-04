@@ -58,15 +58,18 @@ calc_encounters__
 					, e->enc);
 };
 
+static void
+ratings_set_to	( double general_average	
+				, const struct PLAYERS *pPlayers
+				, struct RATINGS *pRA /*@out@*/
+);
+
 //----------------------------------------------------------------
 
 void
 get_a_simulated_run	( int 					limit
 					, bool_t 				quiet_mode
-
-					, double 				general_average
 					, double 				beta
-
 					, double 				drawrate_evenmatch_result
 					, double 				white_advantage_result
 
@@ -83,6 +86,10 @@ get_a_simulated_run	( int 					limit
 {
 	int failed_sim = 0;
 
+	// store originals
+	relpriors_copy (pRPset, pRPset_store); 
+	priors_copy (PP, pPlayers->n, PP_store);
+
 	do {
 		if (!quiet_mode && failed_sim > 0) 
 			printf("--> Simulation: [Rejected]\n\n");
@@ -94,16 +101,10 @@ get_a_simulated_run	( int 					limit
 						, beta
 						, pGames /*out*/);
 
-		relpriors_copy (pRPset, pRPset_store); 
-		priors_copy (PP, pPlayers->n, PP_store);
-		relpriors_shuffle (pRPset);
-		priors_shuffle (PP, pPlayers->n);
-
-		// may improve convergence in pathological cases, it should not be needed.
-		ratings_set (pPlayers->n, general_average, pPlayers->prefed, pPlayers->flagged, pRA->ratingof);
-		ratings_set (pPlayers->n, general_average, pPlayers->prefed, pPlayers->flagged, pRA->ratingbk);
-		assert(ratings_sanity (pPlayers->n, pRA->ratingof));
-		assert(ratings_sanity (pPlayers->n, pRA->ratingbk));
+		relpriors_copy (pRPset_store, pRPset); 		// reload original
+		priors_copy (PP_store, pPlayers->n, PP); 	// reload original
+		relpriors_shuffle (pRPset);					// simulate new
+		priors_shuffle (PP, pPlayers->n);			// simulate new
 
 		assert(players_have_clear_flags(pPlayers));
 		calc_encounters__(ENCOUNTERS_FULL, pGames, pPlayers->flagged, pEncounters);
@@ -216,6 +217,19 @@ save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num)
 #include "summations.h"
 #include "rtngcalc.h"
 
+static void
+ratings_set_to	( double general_average	
+				, const struct PLAYERS *pPlayers
+				, struct RATINGS *pRA /*@out@*/
+)
+{
+		// may improve convergence in pathological cases, it should not be needed.
+		ratings_set (pPlayers->n, general_average, pPlayers->prefed, pPlayers->flagged, pRA->ratingof);
+		ratings_set (pPlayers->n, general_average, pPlayers->prefed, pPlayers->flagged, pRA->ratingbk);
+		assert(ratings_sanity (pPlayers->n, pRA->ratingof));
+		assert(ratings_sanity (pPlayers->n, pRA->ratingbk));
+}
+
 void
 simul		( long 						simulate
 			, bool_t 					sim_updates
@@ -243,7 +257,7 @@ simul		( long 						simulate
 
 			, double 					drawrate_evenmatch_result
 			, double 					white_advantage_result
-			, struct summations *		p_sfe_input
+			, struct summations *		p_sfe_io
 
 			, struct rel_prior_set 		RPset_store
 			, struct prior *			PP_store
@@ -253,7 +267,7 @@ simul		( long 						simulate
 	double 					white_advantage = white_advantage_result;
 	double 					drawrate_evenmatch = drawrate_evenmatch_result;
 
-	struct summations 		sfe = *p_sfe_input; 	// summations for errors
+	struct summations 		sfe = *p_sfe_io; 	// summations for errors
 
 	struct ENCOUNTERS		Encounters = *encount;
 	struct rel_prior_set 	RPset = *rps;
@@ -263,18 +277,18 @@ simul		( long 						simulate
 
 	struct prior *			PP = pPrior;
 
+	long 					z;
+	double 					n = (double) (simulate);
+	ptrdiff_t 				topn = (ptrdiff_t)Players.n;
+
+	double 					fraction = 0.0;
+	double 					asterisk = n/50.0;
+	int 					astcount = 0;
+
 	assert (simulate > 1);
 	if (simulate <= 1) return;
 
 	/* Simulation block, begin */
-{
-	long z;
-	double n = (double) (simulate);
-	ptrdiff_t topn = (ptrdiff_t)Players.n;
-
-	double fraction = 0.0;
-	double asterisk = n/50.0;
-	int astcount = 0;
 
 	if(!summations_calloc(&sfe, Players.n)) {
 		fprintf(stderr, "Memory for simulations could not be allocated\n");
@@ -302,13 +316,13 @@ simul		( long 						simulate
 			while (fraction > asterisk) {
 				fraction -= asterisk;
 				astcount++;
-				printf ("*"); fflush(stdout);
+				printf ("*"); 
 			}
+			fflush(stdout);
 		}
 
 		get_a_simulated_run	( 100
 							, quiet_mode
-							, general_average
 							, beta
 							, drawrate_evenmatch_result
 							, white_advantage_result
@@ -327,6 +341,9 @@ simul		( long 						simulate
 			save_simulated(&Players, &Games, (int)(z+1)); 
 		}
 		#endif
+
+		// may improve convergence in pathological cases, it should not be needed.
+		ratings_set_to (general_average, &Players, &RA);
 
 		Encounters.n = calc_rating 
 						( quiet_mode
@@ -373,7 +390,7 @@ simul		( long 						simulate
 			ratings_copy (Players.n, RA.ratingbk, RA.ratingof); // ** restore
 		}
 
-	} // while
+	} // for loop end
 
 	if (sim_updates) {
 		int x = 51-astcount;
@@ -381,14 +398,12 @@ simul		( long 						simulate
 		printf ("\n");
 	}
 
-
 	/* use summations to get sdev */
 	summations_calc_sdev (&sfe, topn, n);
 
-}
 	/* Simulation block, end */
 
-	*p_sfe_input = sfe;
+	*p_sfe_io = sfe;
 
-} /* Simulation fuction, end */
+} /* Simulation function, end */
 

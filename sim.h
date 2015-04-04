@@ -25,36 +25,10 @@
 #include "boolean.h"
 #include "mytypes.h"
 
-/*
-extern void
-get_a_simulated_run	( int 					limit
-
-					, double 				General_average
-					, bool_t 				quiet_mode
-					, struct PLAYERS 		Players
-					, struct RATINGS 		RA
-					, struct ENCOUNTERS 	Encounters
-
-					, double 				drawrate_evenmatch_result
-					, double 				white_advantage_result
-					, double 				beta
-					, struct GAMES 			Games	// output
-
-					, struct prior *		PP
-					, struct prior *		PP_store
-
-					, struct rel_prior_set	RPset 
-					, struct rel_prior_set	RPset_store 
-);
-*/
-
 void
 get_a_simulated_run	( int 					limit
 					, bool_t 				quiet_mode
-
-					, double 				general_average
 					, double 				beta
-
 					, double 				drawrate_evenmatch_result
 					, double 				white_advantage_result
 
