@@ -32,15 +32,15 @@ get_a_simulated_run	( int 					limit
 					, double 				drawrate_evenmatch_result
 					, double 				white_advantage_result
 
+					, const struct RATINGS 			*pRA
+					, const struct prior 			*PP_ori			
+					, const struct rel_prior_set	*pRPset_ori 	
+
 					, struct ENCOUNTERS 	*pEncounters 	// output
 					, struct PLAYERS 		*pPlayers 		// output
-					, struct RATINGS 		*pRA
 					, struct GAMES 			*pGames			// output
-
 					, struct prior 			*PP				// output
-					, struct prior 			*PP_store		// output
 					, struct rel_prior_set	*pRPset 		// output
-					, struct rel_prior_set	*pRPset_store 	// output
 )
 ;
 

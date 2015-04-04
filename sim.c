@@ -73,15 +73,15 @@ get_a_simulated_run	( int 					limit
 					, double 				drawrate_evenmatch_result
 					, double 				white_advantage_result
 
+					, const struct RATINGS 			*pRA
+					, const struct prior 			*PP_ori			
+					, const struct rel_prior_set	*pRPset_ori 	
+
 					, struct ENCOUNTERS 	*pEncounters 	// output
 					, struct PLAYERS 		*pPlayers 		// output
-					, struct RATINGS 		*pRA
 					, struct GAMES 			*pGames			// output
-
 					, struct prior 			*PP				// output
-					, struct prior 			*PP_ori			// output
 					, struct rel_prior_set	*pRPset 		// output
-					, struct rel_prior_set	*pRPset_ori 	// output
 )
 {
 	int failed_sim = 0;
@@ -329,16 +329,16 @@ simul		( long 						simulate
 							, beta
 							, drawrate_evenmatch_result
 							, white_advantage_result
+							, &RA	
+							, PP_store			
+							, &RPset_store		
 							, &Encounters 	// output
 							, &Players		// output
-							, &RA			// output	
 							, &Games		// output
-
 							, PP			// output
-							, PP_store		// output
-							, &RPset 		// output
-							, &RPset_store 	// output
+							, &RPset	 	// output
 							);
+
 
 		#if defined(SAVE_SIMULATION)
 		if (z+1 == SAVE_SIMULATION_N) {
