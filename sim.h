@@ -33,13 +33,13 @@ get_a_simulated_run	( int 					limit
 					, double 				white_advantage_result
 
 					, struct ENCOUNTERS 	*pEncounters 	// output
-					, struct rel_prior_set	*pRPset 		// output
 					, struct PLAYERS 		*pPlayers 		// output
 					, struct RATINGS 		*pRA
 					, struct GAMES 			*pGames			// output
-					, struct prior 			*PP				// output
 
+					, struct prior 			*PP				// output
 					, struct prior 			*PP_store		// output
+					, struct rel_prior_set	*pRPset 		// output
 					, struct rel_prior_set	*pRPset_store 	// output
 )
 ;

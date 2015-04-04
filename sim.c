@@ -74,21 +74,20 @@ get_a_simulated_run	( int 					limit
 					, double 				white_advantage_result
 
 					, struct ENCOUNTERS 	*pEncounters 	// output
-					, struct rel_prior_set	*pRPset 		// output
 					, struct PLAYERS 		*pPlayers 		// output
 					, struct RATINGS 		*pRA
 					, struct GAMES 			*pGames			// output
-					, struct prior 			*PP				// output
 
-					, struct prior 			*PP_store		// output
-					, struct rel_prior_set	*pRPset_store 	// output
+					, struct prior 			*PP				// output
+					, struct prior 			*PP_ori			// output
+					, struct rel_prior_set	*pRPset 		// output
+					, struct rel_prior_set	*pRPset_ori 	// output
 )
 {
 	int failed_sim = 0;
 
-	// store originals
-	relpriors_copy (pRPset, pRPset_store); 
-	priors_copy (PP, pPlayers->n, PP_store);
+	relpriors_copy (pRPset_ori, pRPset); 		// reload original
+	priors_copy    (PP_ori, pPlayers->n, PP); 	// reload original
 
 	do {
 		if (!quiet_mode && failed_sim > 0) 
@@ -101,10 +100,10 @@ get_a_simulated_run	( int 					limit
 						, beta
 						, pGames /*out*/);
 
-		relpriors_copy (pRPset_store, pRPset); 		// reload original
-		priors_copy (PP_store, pPlayers->n, PP); 	// reload original
+		relpriors_copy    (pRPset_ori, pRPset); 	// reload original
 		relpriors_shuffle (pRPset);					// simulate new
-		priors_shuffle (PP, pPlayers->n);			// simulate new
+		priors_copy       (PP_ori, pPlayers->n, PP);// reload original
+		priors_shuffle    (PP, pPlayers->n);		// simulate new
 
 		assert(players_have_clear_flags(pPlayers));
 		calc_encounters__(ENCOUNTERS_FULL, pGames, pPlayers->flagged, pEncounters);
@@ -321,18 +320,23 @@ simul		( long 						simulate
 			fflush(stdout);
 		}
 
+		// store originals
+		relpriors_copy (&RPset, &RPset_store); 
+		priors_copy (PP, Players.n, PP_store);
+
 		get_a_simulated_run	( 100
 							, quiet_mode
 							, beta
 							, drawrate_evenmatch_result
 							, white_advantage_result
 							, &Encounters 	// output
-							, &RPset 		// output
 							, &Players		// output
 							, &RA			// output	
 							, &Games		// output
+
 							, PP			// output
 							, PP_store		// output
+							, &RPset 		// output
 							, &RPset_store 	// output
 							);
 
