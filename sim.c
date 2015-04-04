@@ -276,7 +276,7 @@ simul		( long 						simulate
 
 	/* Simulation block, begin */
 {
-	long z = simulate;
+	long z;
 	double n = (double) (simulate);
 	ptrdiff_t topn = (ptrdiff_t)Players.n;
 
@@ -300,10 +300,9 @@ simul		( long 						simulate
 		printf ("|----|----|----|----|----|----|----|----|----|----|\n");
 	}
 
-	assert(z > 1);
-	while (z-->0) {
+	for (z = 0; z < simulate; z++) {
 		if (!quiet_mode) {		
-			printf ("\n==> Simulation:%ld/%ld\n", simulate-z, simulate);
+			printf ("\n==> Simulation:%ld/%ld\n", z+1, simulate);
 		} 
 
 		if (sim_updates) {
@@ -331,8 +330,8 @@ simul		( long 						simulate
 							, &RPset_store );
 
 		#if defined(SAVE_SIMULATION)
-		if ((simulate-z) == SAVE_SIMULATION_N) {
-			save_simulated(&Players, &Games, (int)(simulate-z)); 
+		if (z+1 == SAVE_SIMULATION_N) {
+			save_simulated(&Players, &Games, (int)(z+1)); 
 		}
 		#endif
 
@@ -380,13 +379,14 @@ simul		( long 						simulate
 			ratings_copy (Players.n, RA.ratingbk, RA.ratingof); // ** restore
 		}
 
-		if (sim_updates && z == 0) {
-			int x = 51-astcount;
-			while (x-->0) {printf ("*"); fflush(stdout);}
-			printf ("\n");
-		}
-
 	} // while
+
+	if (sim_updates) {
+		int x = 51-astcount;
+		while (x-->0) {printf ("*"); fflush(stdout);}
+		printf ("\n");
+	}
+
 
 	/* use summations to get sdev */
 	summations_calc_sdev (&sfe, topn, n);
