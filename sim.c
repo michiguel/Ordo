@@ -72,57 +72,49 @@ get_a_simulated_run	( int 					limit
 					, struct PLAYERS 		*pPlayers
 					, struct RATINGS 		*pRA
 					, struct GAMES 			*pGames	// output
-					, struct prior *		PP
+					, struct prior 			*PP
 
 					, double 				drawrate_evenmatch_result
 					, double 				white_advantage_result
 
-					, struct prior *		PP_store
+					, struct prior 			*PP_store
 					, struct rel_prior_set	*pRPset_store 
 )
 {
-
-struct ENCOUNTERS 		Encounters	= *pEncounters;
-struct rel_prior_set	RPset 		= *pRPset;
-struct PLAYERS 			Players		= *pPlayers;
-struct RATINGS 			RA			= *pRA;
-struct GAMES 			Games 		= *pGames;
-
-struct rel_prior_set	RPset_store = *pRPset_store;
-
 	int failed_sim = 0;
+
 	do {
 		if (!quiet_mode && failed_sim > 0) 
 			printf("--> Simulation: [Rejected]\n\n");
 
-		players_flags_reset (&Players);
-		simulate_scores ( RA.ratingof_results
+		players_flags_reset (pPlayers);
+		simulate_scores ( pRA->ratingof_results
 						, drawrate_evenmatch_result
 						, white_advantage_result
 						, beta
-						, &Games /*out*/);
+						, pGames /*out*/);
 
-		relpriors_copy (&RPset, &RPset_store); 
-		priors_copy (PP, Players.n, PP_store);
-		relpriors_shuffle (&RPset);
-		priors_shuffle (PP, Players.n);
+		relpriors_copy (pRPset, pRPset_store); 
+		priors_copy (PP, pPlayers->n, PP_store);
+		relpriors_shuffle (pRPset);
+		priors_shuffle (PP, pPlayers->n);
 
 		// may improve convergence in pathological cases, it should not be needed.
-		ratings_set (Players.n, general_average, Players.prefed, Players.flagged, RA.ratingof);
-		ratings_set (Players.n, general_average, Players.prefed, Players.flagged, RA.ratingbk);
-		assert(ratings_sanity (Players.n, RA.ratingof));
-		assert(ratings_sanity (Players.n, RA.ratingbk));
+		ratings_set (pPlayers->n, general_average, pPlayers->prefed, pPlayers->flagged, pRA->ratingof);
+		ratings_set (pPlayers->n, general_average, pPlayers->prefed, pPlayers->flagged, pRA->ratingbk);
+		assert(ratings_sanity (pPlayers->n, pRA->ratingof));
+		assert(ratings_sanity (pPlayers->n, pRA->ratingbk));
 
-		assert(players_have_clear_flags(&Players));
-		calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
+		assert(players_have_clear_flags(pPlayers));
+		calc_encounters__(ENCOUNTERS_FULL, pGames, pPlayers->flagged, pEncounters);
 
-		players_set_priored_info (PP, &RPset, &Players);
-		if (0 < players_set_super (quiet_mode, &Encounters, &Players)) {
-			players_purge (quiet_mode, &Players);
-			calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
+		players_set_priored_info (PP, pRPset, pPlayers);
+		if (0 < players_set_super (quiet_mode, pEncounters, pPlayers)) {
+			players_purge (quiet_mode, pPlayers);
+			calc_encounters__(ENCOUNTERS_NOFLAGGED, pGames, pPlayers->flagged, pEncounters);
 		}
 
-	} while (failed_sim++ < limit && group_is_problematic (&Encounters, &Players));
+	} while (failed_sim++ < limit && group_is_problematic (pEncounters, pPlayers));
 
 	if (!quiet_mode) printf("--> Simulation: [Accepted]\n");
 }
