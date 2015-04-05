@@ -435,3 +435,69 @@ simul
 
 } /* Simulation function, end */
 
+
+void
+simul_smp
+	( int							cpus
+	, long 							simulate
+	, bool_t 						sim_updates
+	, bool_t 						quiet_mode
+	, bool_t						prior_mode
+	, bool_t 						adjust_white_advantage
+	, bool_t 						adjust_draw_rate
+	, bool_t						anchor_use
+	, bool_t						anchor_err_rel2avg
+
+	, double						general_average
+	, player_t 						anchor
+	, player_t						priored_n
+	, double						beta
+
+	, double 						drawrate_evenmatch_result
+	, double 						white_advantage_result
+	, const struct rel_prior_set *	rps
+	, const struct prior *			pPrior
+	, struct prior 					wa_prior
+	, struct prior 					dr_prior
+
+	, struct ENCOUNTERS	*			encount				// io, modified
+	, struct PLAYERS *				plyrs				// io, modified
+	, struct RATINGS *				rat					// io, modified
+	, struct GAMES *				pGames				// io, modified
+
+	, struct rel_prior_set 			RPset_work			// mem provided
+	, struct prior *				PP_work				// mem provided
+
+	, struct summations *			p_sfe_io 			// output
+)
+{
+	if (cpus < 1) return;
+
+	simul (	simulate
+	, 		sim_updates
+	, 		quiet_mode
+	, 		prior_mode
+	, 		adjust_white_advantage
+	, 		adjust_draw_rate
+	, 		anchor_use
+	, 		anchor_err_rel2avg
+	, 		general_average
+	, 		anchor
+	, 		priored_n
+	, 		beta
+	, 		drawrate_evenmatch_result
+	, 		white_advantage_result
+	, 		rps
+	, 		pPrior
+	, 		wa_prior
+	, 		dr_prior
+	, 		encount				// io, modified
+	, 		plyrs				// io, modified
+	, 		rat					// io, modified
+	, 		pGames				// io, modified
+	, 		RPset_work			// mem provided
+	, 		PP_work				// mem provided
+	, 		p_sfe_io 			// output
+	);
+	return;
+}

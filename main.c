@@ -864,7 +864,9 @@ int main (int argc, char *argv[])
 	/* Simulation block, begin */
 	if (Simulate > 1) {
 
-		simul	( Simulate
+		simul_smp
+				( 1 // cpus
+				, Simulate
 				, sim_updates
 				, quiet_mode
 				, Forces_ML || Prior_mode
