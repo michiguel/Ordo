@@ -213,6 +213,54 @@ save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num)
 
 //========================================================================
 
+static long Sim_N = 0;
+
+static long
+grab_N (void)
+{
+	long ret;
+	//mutex
+	ret = Sim_N++;
+	//mutex
+	return ret;
+}
+
+struct SIMSMP {
+	  long							simulate
+	; bool_t 						sim_updates
+	; bool_t 						quiet_mode
+	; bool_t						prior_mode
+	; bool_t 						adjust_white_advantage
+	; bool_t 						adjust_draw_rate
+	; bool_t						anchor_use
+	; bool_t						anchor_err_rel2avg
+
+	; double						general_average
+	; player_t 						anchor
+	; player_t						priored_n
+	; double						beta
+
+	; double 						drawrate_evenmatch_result
+	; double 						white_advantage_result
+	; const struct rel_prior_set *	rps
+	; const struct prior *			pPrior
+	; struct prior 					wa_prior
+	; struct prior 					dr_prior
+
+	; struct ENCOUNTERS	*			encount				// io, modified
+	; struct PLAYERS *				plyrs				// io, modified
+	; struct RATINGS *				rat					// io, modified
+	; struct GAMES *				pGames				// io, modified
+
+	; struct rel_prior_set 			RPset_work			// mem provided
+	; struct prior *				PP_work				// mem provided
+
+	; struct summations *			p_sfe_io 			// output
+	;
+};
+
+//========================================================================
+
 #include "summations.h"
 #include "rtngcalc.h"
 
@@ -436,6 +484,9 @@ simul
 } /* Simulation function, end */
 
 
+static void
+simul_smp_process (void *p);
+
 void
 simul_smp
 	( int							cpus
@@ -471,33 +522,75 @@ simul_smp
 	, struct summations *			p_sfe_io 			// output
 )
 {
+	struct SIMSMP s;
+	void *p;
+
 	if (cpus < 1) return;
 
-	simul (	simulate
-	, 		sim_updates
-	, 		quiet_mode
-	, 		prior_mode
-	, 		adjust_white_advantage
-	, 		adjust_draw_rate
-	, 		anchor_use
-	, 		anchor_err_rel2avg
-	, 		general_average
-	, 		anchor
-	, 		priored_n
-	, 		beta
-	, 		drawrate_evenmatch_result
-	, 		white_advantage_result
-	, 		rps
-	, 		pPrior
-	, 		wa_prior
-	, 		dr_prior
-	, 		encount				// io, modified
-	, 		plyrs				// io, modified
-	, 		rat					// io, modified
-	, 		pGames				// io, modified
-	, 		RPset_work			// mem provided
-	, 		PP_work				// mem provided
-	, 		p_sfe_io 			// output
+	s.simulate					= simulate						;
+	s.sim_updates				= sim_updates					;
+	s.quiet_mode				= quiet_mode					;
+	s.prior_mode				= prior_mode					;
+	s.adjust_white_advantage	= adjust_white_advantage		;
+	s.adjust_draw_rate			= adjust_draw_rate				;
+	s.anchor_use				= anchor_use					;
+	s.anchor_err_rel2avg		= anchor_err_rel2avg			;
+	s.general_average			= general_average				;
+	s.anchor					= anchor						;
+	s.priored_n					= priored_n						;
+	s.beta						= beta							;
+	s.drawrate_evenmatch_result	= drawrate_evenmatch_result		;
+	s.white_advantage_result	= white_advantage_result		;
+	s.rps						= rps							;
+	s.pPrior					= pPrior						;
+	s.wa_prior					= wa_prior						;
+	s.dr_prior					= dr_prior						;
+
+	s.encount					= encount						;
+	s.plyrs						= plyrs							;
+	s.rat						= rat							;
+	s.pGames					= pGames						;
+	s.RPset_work				= RPset_work					;
+	s.PP_work					= PP_work						;
+	s.p_sfe_io 					= p_sfe_io						;
+
+	p = &s;
+
+	simul_smp_process(p);
+
+	return;
+}
+
+static void
+simul_smp_process (void *p)
+{
+	struct SIMSMP *s = p;
+
+	simul (	s->simulate
+	, 		s->sim_updates
+	, 		s->quiet_mode
+	, 		s->prior_mode
+	, 		s->adjust_white_advantage
+	, 		s->adjust_draw_rate
+	, 		s->anchor_use
+	, 		s->anchor_err_rel2avg
+	, 		s->general_average
+	, 		s->anchor
+	, 		s->priored_n
+	, 		s->beta
+	, 		s->drawrate_evenmatch_result
+	, 		s->white_advantage_result
+	, 		s->rps
+	, 		s->pPrior
+	, 		s->wa_prior
+	, 		s->dr_prior
+	, 		s->encount				// io, modified
+	, 		s->plyrs				// io, modified
+	, 		s->rat					// io, modified
+	, 		s->pGames				// io, modified
+	, 		s->RPset_work			// mem provided
+	, 		s->PP_work				// mem provided
+	, 		s->p_sfe_io 			// output
 	);
 	return;
 }
