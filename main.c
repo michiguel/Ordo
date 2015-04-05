@@ -1013,7 +1013,7 @@ int main (int argc, char *argv[])
 	supporting_auxmem_done (&PP, &PP_store);
 
 	if (relstr != NULL)
-		relpriors_done (&RPset, &RPset_store);
+		relpriors_done2 (&RPset, &RPset_store);
 
 	name_storage_done();
 

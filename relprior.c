@@ -261,17 +261,48 @@ relpriors_init 	( bool_t quietmode
 }
 
 void
-relpriors_done (struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *rps_backup /*@out@*/)
+relpriors_done1 (struct rel_prior_set *rps /*@out@*/)
 {
 	assert(rps);
-	assert(rps_backup);
 	rps->n = 0;
-	rps_backup->n = 0;
 	assert(rps->x);
-	assert(rps_backup->x);
 	free(rps->x);
-	free(rps_backup->x);
 	return;
+}
+
+void
+relpriors_done2 (struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *rps_backup /*@out@*/)
+{
+	relpriors_done1 (rps);
+	relpriors_done1 (rps_backup);
+	return;
+}
+
+//struct rel_prior_set {
+//	player_t n;
+//	struct relprior *x; // this points to an array
+//};
+
+bool_t 
+relpriors_dup (struct rel_prior_set *rps, struct rel_prior_set *rps_dup)
+{
+	struct relprior *x;
+	struct relprior *newx;
+	player_t n, i;
+	n = rps->n;
+	x = rps->x;
+
+	newx = memnew(sizeof(struct relprior) * (size_t)n);
+	if (newx == NULL) 
+		return FALSE;
+
+	for (i = 0; i < n; i++) {
+		newx[i] = x[i];
+	}
+
+	rps_dup->n = n;
+	rps_dup->x = newx;
+	return TRUE;
 }
 
 //====================== PRIORS =============================================================================

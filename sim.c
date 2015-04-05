@@ -523,7 +523,7 @@ simul_smp
 )
 {
 	struct SIMSMP s;
-	void *p;
+	void *pdata;
 
 	if (cpus < 1) return;
 
@@ -554,9 +554,9 @@ simul_smp
 	s.PP_work					= PP_work						;
 	s.p_sfe_io 					= p_sfe_io						;
 
-	p = &s;
+	pdata = &s;
 
-	simul_smp_process(p);
+	simul_smp_process(pdata);
 
 	return;
 }
@@ -594,3 +594,4 @@ simul_smp_process (void *p)
 	);
 	return;
 }
+
