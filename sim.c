@@ -276,37 +276,37 @@ updates_print_reachedgoal (bool_t sim_updates, int astcount)
 
 
 void
-simul		( long 						simulate
-			, bool_t 					sim_updates
-			, bool_t 					quiet_mode
-			, bool_t					prior_mode
-			, bool_t 					adjust_white_advantage
-			, bool_t 					adjust_draw_rate
-			, bool_t					anchor_use
-			, bool_t					anchor_err_rel2avg
+simul
+	( long 							simulate
+	, bool_t 						sim_updates
+	, bool_t 						quiet_mode
+	, bool_t						prior_mode
+	, bool_t 						adjust_white_advantage
+	, bool_t 						adjust_draw_rate
+	, bool_t						anchor_use
+	, bool_t						anchor_err_rel2avg
 
-			, double					general_average
-			, player_t 					anchor
-			, player_t					priored_n
-			, double					beta
+	, double						general_average
+	, player_t 						anchor
+	, player_t						priored_n
+	, double						beta
 
-			, struct ENCOUNTERS	*		encount
-			, struct rel_prior_set *	rps
-			, struct PLAYERS *			plyrs
-			, struct RATINGS *			rat
-			, struct GAMES *			pGames
+	, double 						drawrate_evenmatch_result
+	, double 						white_advantage_result
+	, const struct rel_prior_set *	rps
+	, const struct prior *			pPrior
+	, struct prior 					wa_prior
+	, struct prior 					dr_prior
 
-			, struct prior *			pPrior
-			, struct prior 				wa_prior
-			, struct prior 				dr_prior
+	, struct ENCOUNTERS	*			encount				// io, modified
+	, struct PLAYERS *				plyrs				// io, modified
+	, struct RATINGS *				rat					// io, modified
+	, struct GAMES *				pGames				// io, modified
 
-			, double 					drawrate_evenmatch_result
-			, double 					white_advantage_result
-			, struct summations *		p_sfe_io
+	, struct rel_prior_set 			RPset_work			// mem provided
+	, struct prior *				PP_work				// mem provided
 
-			, struct rel_prior_set 		RPset_store
-			, struct prior *			PP_store
-
+	, struct summations *			p_sfe_io 			// output
 )
 {
 	double 					white_advantage = white_advantage_result;
@@ -320,7 +320,7 @@ simul		( long 						simulate
 	struct RATINGS 			RA = *rat;
 	struct GAMES 			Games = *pGames;
 
-	struct prior *			PP = pPrior;
+	const struct prior *	PP = pPrior;
 
 	long 					z;
 	double 					n = (double) (simulate);
@@ -354,8 +354,8 @@ simul		( long 						simulate
 		astcount = updates_print_progress (sim_updates, asterisk, astcount, &fraction);
 
 		// store originals
-		relpriors_copy (&RPset, &RPset_store); 
-		priors_copy (PP, Players.n, PP_store);
+		relpriors_copy (&RPset, &RPset_work); 
+		priors_copy (PP, Players.n, PP_work);
 
 		get_a_simulated_run	( 100
 							, quiet_mode
@@ -363,13 +363,13 @@ simul		( long 						simulate
 							, drawrate_evenmatch_result
 							, white_advantage_result
 							, &RA	
-							, PP_store			
-							, &RPset_store		
+							, PP			
+							, &RPset		
 							, &Encounters 	// output
 							, &Players		// output
 							, &Games		// output
-							, PP			// output
-							, &RPset	 	// output
+							, PP_work		// output
+							, &RPset_work 	// output
 							);
 
 		#if defined(SAVE_SIMULATION)
@@ -395,12 +395,12 @@ simul		( long 						simulate
 						, beta
 
 						, &Encounters
-						, &RPset
+						, &RPset_work
 						, &Players
 						, &RA
 						, &Games
 
-						, PP
+						, PP_work
 						, wa_prior
 						, dr_prior
 
@@ -409,10 +409,6 @@ simul		( long 						simulate
 						);
 
 		ratings_cleared_for_purged (&Players, &RA);
-
-		// restore priors. They were shuffled in the simulation and used in the calculation.
-		relpriors_copy (&RPset_store, &RPset);
-		priors_copy (PP_store, Players.n, PP);
 
 		if (anchor_err_rel2avg) {
 			ratings_copy (Players.n, RA.ratingof, RA.ratingbk);	// ** save

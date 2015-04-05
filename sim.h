@@ -48,37 +48,37 @@ extern void
 save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num);
 
 extern void
-simul		( long 						simulate
-			, bool_t 					sim_updates
-			, bool_t 					quiet_mode
-			, bool_t					prior_mode
-			, bool_t 					adjust_white_advantage
-			, bool_t 					adjust_draw_rate
-			, bool_t					anchor_use
-			, bool_t					anchor_err_rel2avg
+simul
+	( long 							simulate
+	, bool_t 						sim_updates
+	, bool_t 						quiet_mode
+	, bool_t						prior_mode
+	, bool_t 						adjust_white_advantage
+	, bool_t 						adjust_draw_rate
+	, bool_t						anchor_use
+	, bool_t						anchor_err_rel2avg
 
-			, double					general_average
-			, player_t 					anchor
-			, player_t					priored_n
-			, double					beta
+	, double						general_average
+	, player_t 						anchor
+	, player_t						priored_n
+	, double						beta
 
-			, struct ENCOUNTERS	*		encount
-			, struct rel_prior_set *	rps
-			, struct PLAYERS *			plyrs
-			, struct RATINGS *			rat
-			, struct GAMES *			pGames
+	, double 						drawrate_evenmatch_result
+	, double 						white_advantage_result
+	, const struct rel_prior_set *	rps
+	, const struct prior *			pPrior
+	, struct prior 					wa_prior
+	, struct prior 					dr_prior
 
-			, struct prior *			pPrior
-			, struct prior 				wa_prior
-			, struct prior 				dr_prior
+	, struct ENCOUNTERS	*			encount				// io, modified
+	, struct PLAYERS *				plyrs				// io, modified
+	, struct RATINGS *				rat					// io, modified
+	, struct GAMES *				pGames				// io, modified
 
-			, double 					drawrate_evenmatch_result
-			, double 					white_advantage_result
-			, struct summations *		p_sfe_input
+	, struct rel_prior_set 			RPset_work			// mem provided
+	, struct prior *				PP_work				// mem provided
 
-			, struct rel_prior_set 		RPset_store
-			, struct prior *			PP_store
-
+	, struct summations *			p_sfe_io 			// output
 )
 ;
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/

@@ -878,23 +878,22 @@ int main (int argc, char *argv[])
 				, Priored_n
 				, BETA
 
-				, &Encounters
+				, drawrate_evenmatch_result
+				, white_advantage_result
 				, &RPset
-				, &Players
-				, &RA
-				, &Games
-
 				, PP
 				, Wa_prior
 				, Dr_prior
 
-				, drawrate_evenmatch_result
-				, white_advantage_result
-
-				, &sfe
+				, &Encounters
+				, &Players
+				, &RA
+				, &Games
 
 				, RPset_store
 				, PP_store
+
+				, &sfe
 				);
 
 	}
