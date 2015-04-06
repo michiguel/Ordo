@@ -175,7 +175,29 @@ players_set_super (bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl
 	return super;
 }
 
-// debug routines
+
+void	
+players_copy (const struct PLAYERS *source, struct PLAYERS *target)
+{
+	const struct PLAYERS *x = source;
+	struct PLAYERS *y = target;
+	player_t i;
+	player_t n = x->n;
+
+	y->n 			= x->n;
+	y->size 		= x->size;
+	y->anchored_n 	= x->anchored_n;
+	y->name 		= x->name;
+	y->perf_set 	= x->perf_set;
+	for (i = 0; i < n; i++) {
+		y->flagged[i] 			= x->flagged[i];
+		y->prefed[i] 			= x->prefed[i];
+		y->priored[i] 			= x->priored[i];
+		y->performance_type[i]	= x->performance_type[i]; 
+	}
+}
+
+//------------------------- debug routines
 
 #if !defined(NDEBUG)
 bool_t

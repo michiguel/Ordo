@@ -38,7 +38,7 @@ extern void		relpriors_done2		( struct rel_prior_set *rps /*@out@*/
 
 extern void		relpriors_done1		( struct rel_prior_set *rps /*@out@*/);
 
-extern bool_t 	relpriors_dup 		( struct rel_prior_set *rps, struct rel_prior_set *rps_dup);
+extern bool_t 	relpriors_replicate	( struct rel_prior_set *rps, struct rel_prior_set *rps_dup);
 
 //----------------------------------
 

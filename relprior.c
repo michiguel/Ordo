@@ -284,7 +284,7 @@ relpriors_done2 (struct rel_prior_set *rps /*@out@*/, struct rel_prior_set *rps_
 //};
 
 bool_t 
-relpriors_dup (struct rel_prior_set *rps, struct rel_prior_set *rps_dup)
+relpriors_replicate (struct rel_prior_set *rps, struct rel_prior_set *rps_dup)
 {
 	struct relprior *x;
 	struct relprior *newx;
@@ -292,17 +292,14 @@ relpriors_dup (struct rel_prior_set *rps, struct rel_prior_set *rps_dup)
 	n = rps->n;
 	x = rps->x;
 
-	newx = memnew(sizeof(struct relprior) * (size_t)n);
-	if (newx == NULL) 
-		return FALSE;
-
-	for (i = 0; i < n; i++) {
-		newx[i] = x[i];
+	if (NULL != (newx = memnew(sizeof(struct relprior) * (size_t)n))) {
+		for (i = 0; i < n; i++) {
+			newx[i] = x[i];
+		}
+		rps_dup->n = n;
+		rps_dup->x = newx;
 	}
-
-	rps_dup->n = n;
-	rps_dup->x = newx;
-	return TRUE;
+	return newx != NULL;
 }
 
 //====================== PRIORS =============================================================================

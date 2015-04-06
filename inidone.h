@@ -41,6 +41,8 @@ extern bool_t 	players_init (player_t n, struct PLAYERS *x);
 
 extern void 	players_done (struct PLAYERS *x);
 
+extern bool_t 	players_replicate (const struct PLAYERS *x, struct PLAYERS *y);
+
 extern bool_t 	supporting_auxmem_init 	
 						( player_t nplayers
 						, struct prior **pPP
@@ -50,6 +52,16 @@ extern bool_t 	supporting_auxmem_init
 extern void 	supporting_auxmem_done 	
 						( struct prior **pPP
 						, struct prior **pPP_store);
+
+
+extern bool_t	priorlist_init 	( player_t nplayers
+								, struct prior **pPP);
+
+extern void 	priorlist_done 	(struct prior **pPP);
+
+extern bool_t	priorlist_replicate ( player_t nplayers
+									, struct prior *PP
+									, struct prior **pQQ);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

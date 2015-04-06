@@ -199,6 +199,19 @@ players_done (struct PLAYERS *x)
 	x->performance_type = NULL;
 } 
 
+#include "plyrs.h"
+
+bool_t
+players_replicate (const struct PLAYERS *x, struct PLAYERS *y)
+{
+	bool_t ok;
+	ok = players_init (x->n, y);
+	if (ok) {
+		players_copy (x, y);
+	}
+	return ok;
+}
+
 //
 
 bool_t
@@ -233,15 +246,51 @@ void
 supporting_auxmem_done 	( struct prior **pPP
 						, struct prior **pPP_store)
 {
-	struct prior *pp = *pPP;	
-	struct prior *pp_store = *pPP_store;
-
-	if (pp) 		memrel (pp);
-	if (pp_store)	memrel (pp_store);
-
-	*pPP 	 	= NULL;
-	*pPP_store 	= NULL;
-
+	priorlist_done 	(pPP);
+	priorlist_done 	(pPP_store);
 	return;
+}
+
+#include "relprior.h" 
+
+bool_t
+priorlist_init 	( player_t nplayers
+				, struct prior **pPP
+				)
+{
+	struct prior	*d;
+	size_t		sd = sizeof(struct prior);
+	assert(nplayers > 0);
+	if (NULL == (d = memnew (sd * (size_t)nplayers))) {
+		return FALSE;
+	} 
+	*pPP  	 	= d;
+	return TRUE;
+}
+
+void
+priorlist_done 	(struct prior **pPP)
+{
+	struct prior *pp = *pPP;	
+	if (pp) 
+		memrel (pp);
+	*pPP = NULL;
+	return;
+}
+
+bool_t
+priorlist_replicate ( player_t nplayers
+					, struct prior *PP
+					, struct prior **pQQ
+					)
+{
+	bool_t ok;
+	struct prior *qq;
+	ok = priorlist_init (nplayers, &qq);
+	if (ok) {
+		priors_copy(PP, nplayers, qq);
+		*pQQ = qq;
+	}
+	return ok;
 }
 

@@ -30,6 +30,7 @@ extern void		players_purge (bool_t quiet, struct PLAYERS *pl);
 extern void		players_set_priored_info (const struct prior *pr, const struct rel_prior_set *rps, struct PLAYERS *pl /*@out@*/);
 extern void		players_flags_reset (struct PLAYERS *pl);
 extern player_t	players_set_super (bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl);
+extern void 	players_copy (const struct PLAYERS *source, struct PLAYERS *target);
 
 #if !defined(NDEBUG)
 extern bool_t	players_have_clear_flags (struct PLAYERS *pl);
