@@ -41,7 +41,7 @@ extern bool_t 	players_init (player_t n, struct PLAYERS *x);
 
 extern void 	players_done (struct PLAYERS *x);
 
-extern bool_t 	players_replicate (const struct PLAYERS *x, struct PLAYERS *y);
+extern bool_t 	players_replicate (const struct PLAYERS *src, struct PLAYERS *tgt);
 
 extern bool_t 	supporting_auxmem_init 	
 						( player_t nplayers

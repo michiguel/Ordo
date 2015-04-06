@@ -202,12 +202,12 @@ players_done (struct PLAYERS *x)
 #include "plyrs.h"
 
 bool_t
-players_replicate (const struct PLAYERS *x, struct PLAYERS *y)
+players_replicate (const struct PLAYERS *src, struct PLAYERS *tgt)
 {
 	bool_t ok;
-	ok = players_init (x->n, y);
+	ok = players_init (src->n, tgt);
 	if (ok) {
-		players_copy (x, y);
+		players_copy (src, tgt);
 	}
 	return ok;
 }
