@@ -80,7 +80,7 @@ ratings_done (struct RATINGS *r)
 } 
 
 
-static
+static void
 ratings2_copy (const struct RATINGS *src, struct RATINGS *tgt) //FIXME organize nomenclature, there is a ratings_copy() already
 {
 	player_t i, n = src->size;
@@ -144,6 +144,37 @@ games_done (struct GAMES *g)
 	g->size			= 0;
 	g->ga		 	= NULL;
 } 
+
+//struct GAMES {
+//	gamesnum_t 	n; 
+//	gamesnum_t	size;
+//	struct gamei *ga;
+//};
+
+static void
+games_copy (const struct GAMES *src, struct GAMES *tgt)
+{
+	gamesnum_t i, n = src->n;
+	struct gamei *s = src->ga;
+	struct gamei *t = tgt->ga; 
+	tgt->n = src->n;
+	tgt->size = src->size;
+	for (i = 0; i < n; i++) {
+		t[i] = s[i];
+	}
+}
+
+bool_t
+games_replicate (const struct GAMES *src, struct GAMES *tgt)
+{
+	bool_t ok;
+	ok = games_init (src->n, tgt);
+	if (ok) {
+		games_copy (src, tgt);
+	}
+	return ok;
+}
+
 
 //
 

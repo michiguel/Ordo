@@ -31,6 +31,7 @@ extern bool_t	ratings_replicate (const struct RATINGS *src, struct RATINGS *tgt)
 
 extern bool_t 	games_init (gamesnum_t n, struct GAMES *g);
 extern void 	games_done (struct GAMES *g);
+extern bool_t	games_replicate (const struct GAMES *src, struct GAMES *tgt);
 
 extern bool_t 	encounters_init (gamesnum_t n, struct ENCOUNTERS *e);
 extern void 	encounters_done (struct ENCOUNTERS *e);
