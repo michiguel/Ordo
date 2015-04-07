@@ -80,6 +80,41 @@ ratings_done (struct RATINGS *r)
 } 
 
 
+static
+ratings2_copy (const struct RATINGS *src, struct RATINGS *tgt) //FIXME organize nomenclature, there is a ratings_copy() already
+{
+	player_t i, n = src->size;
+	tgt->size = src->size;
+	for (i = 0; i < n; i++) {
+		tgt->sorted[i]				=src->sorted[i]; 	
+		tgt->obtained[i]			=src->obtained[i];
+		tgt->playedby[i]			=src->playedby[i]; 	
+	 	tgt->ratingof[i]			=src->ratingof[i]; 	
+	 	tgt->ratingbk[i]			=src->ratingbk[i]; 	
+	 	tgt->changing[i]			=src->changing[i]; 	
+		tgt->reference[i]			=src->reference[i];
+		tgt->ratingdd[i]			=src->ratingdd[i];
+		tgt->ratingof_results[i]	=src->ratingof_results[i];
+		tgt->obtained_results[i]	=src->obtained_results[i];
+		tgt->playedby_results[i]	=src->playedby_results[i];
+	}
+}
+
+bool_t
+ratings_replicate (const struct RATINGS *src, struct RATINGS *tgt)
+{
+	bool_t ok;
+	ok = ratings_init (src->size, tgt);
+	if (ok) {
+		ratings2_copy (src, tgt);
+	}
+	return ok;
+}
+
+
+
+//
+
 bool_t 
 games_init (gamesnum_t n, struct GAMES *g)
 {
@@ -140,6 +175,31 @@ encounters_done (struct ENCOUNTERS *e)
 	e->size	 = 0;
 	e->enc	 = NULL;
 } 
+
+
+void
+encounters_copy (const struct ENCOUNTERS *src, struct ENCOUNTERS *tgt)
+{
+	gamesnum_t i, n = src->n;
+	struct ENC *s = src->enc;
+	struct ENC *t = tgt->enc; 
+	tgt->n = src->n;
+	tgt->size = src->size;
+	for (i = 0; i < n; i++) {
+		t[i] = s[i];
+	}
+}
+
+bool_t
+encounters_replicate (const struct ENCOUNTERS *src, struct ENCOUNTERS *tgt)
+{
+	bool_t ok;
+	ok = encounters_init (src->n, tgt);
+	if (ok) {
+		encounters_copy (src, tgt);
+	}
+	return ok;
+}
 
 
 bool_t 

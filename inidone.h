@@ -26,21 +26,20 @@
 #include "mytypes.h"
 
 extern bool_t 	ratings_init (player_t n, struct RATINGS *r); 
-
 extern void 	ratings_done (struct RATINGS *r);
+extern bool_t	ratings_replicate (const struct RATINGS *src, struct RATINGS *tgt);
 
 extern bool_t 	games_init (gamesnum_t n, struct GAMES *g);
-
 extern void 	games_done (struct GAMES *g);
 
 extern bool_t 	encounters_init (gamesnum_t n, struct ENCOUNTERS *e);
-
 extern void 	encounters_done (struct ENCOUNTERS *e);
+extern void		encounters_copy (const struct ENCOUNTERS *src, struct ENCOUNTERS *tgt);
+extern bool_t	encounters_replicate (const struct ENCOUNTERS *src, struct ENCOUNTERS *tgt);
+
 
 extern bool_t 	players_init (player_t n, struct PLAYERS *x);
-
 extern void 	players_done (struct PLAYERS *x);
-
 extern bool_t 	players_replicate (const struct PLAYERS *src, struct PLAYERS *tgt);
 
 extern bool_t 	supporting_auxmem_init 	

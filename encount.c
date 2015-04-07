@@ -219,6 +219,7 @@ encounter_merge (const struct ENC *a, const struct ENC *b)
 		return r;
 }
 
+
 static gamesnum_t
 shrink_ENC (struct ENC *enc, gamesnum_t N_enc)
 {
