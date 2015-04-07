@@ -487,6 +487,8 @@ simul
 static void
 simul_smp_process (void *p);
 
+#include "inidone.h"
+
 void
 simul_smp
 	( int							cpus
@@ -524,8 +526,36 @@ simul_smp
 {
 	struct SIMSMP s;
 	void *pdata;
+#if 0
+struct ENCOUNTERS		_encount	;
+struct PLAYERS 			_plyrs		;	
+	
+
+	
+	
+struct RATINGS 			_rat		;		
+struct GAMES 			_games		;		
+#endif
+
+//struct rel_prior_set 	_RPset_work ;			
+//struct prior 		*	_PP_work    ;			
+
+
 
 	if (cpus < 1) return;
+#if 0
+encounters_replicate (encount, &_encount);
+players_replicate (plyrs, &_plyrs);
+
+
+
+
+games_replicate (pGames, &_games);
+ratings_replicate (rat, &_rat);
+#endif
+
+//priorlist_replicate (plyrs->n, PP_work, &_PP_work);
+//relpriors_replicate	(&RPset_work, &_RPset_work);
 
 	s.simulate					= simulate						;
 	s.sim_updates				= sim_updates					;
@@ -557,6 +587,19 @@ simul_smp
 	pdata = &s;
 
 	simul_smp_process(pdata);
+#if 0
+encounters_done (&_encount);
+players_done (&_plyrs);
+
+
+
+
+games_done (&_games);
+ratings_done (&_rat);
+#endif
+
+//priorlist_done (&_PP_work);
+//relpriors_done1	(&_RPset_work);
 
 	return;
 }
