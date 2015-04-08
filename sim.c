@@ -549,31 +549,22 @@ simul_smp
 	void *pdata;
 
 struct PLAYERS 			_plyrs		;	
-
-#if 0
 struct ENCOUNTERS		_encount	;
+struct GAMES 			_games		;	
 struct RATINGS 			_rat		;		
-struct GAMES 			_games		;		
-#endif
 
 //struct rel_prior_set 	_RPset_work ;			
 //struct prior 		*	_PP_work    ;			
 
-
-
 	if (cpus < 1) return;
 
-#if 0
+players_replicate (plyrs, &_plyrs);
 encounters_replicate (encount, &_encount);
 games_replicate (pGames, &_games);
 ratings_replicate (rat, &_rat);
-#endif
 
 //priorlist_replicate (plyrs->n, PP_work, &_PP_work);
 //relpriors_replicate	(&RPset_work, &_RPset_work);
-
-players_replicate (plyrs, &_plyrs);
-
 
 	s.simulate					= simulate						;
 	s.sim_updates				= sim_updates					;
@@ -603,16 +594,12 @@ players_replicate (plyrs, &_plyrs);
 	s.p_sfe_io 					= p_sfe_io						;
 
 	pdata = &s;
-
 	simul_smp_process(pdata);
 
 players_done (&_plyrs);
-
-#if 0
 encounters_done (&_encount);
 games_done (&_games);
 ratings_done (&_rat);
-#endif
 
 //priorlist_done (&_PP_work);
 //relpriors_done1	(&_RPset_work);

@@ -49,12 +49,15 @@ ratings_init (player_t n, struct RATINGS *r)
 	}
 	if (ok) {
 		r->size				= n;
+
 		r->sorted 			= pu[0];
 		r->playedby 		= pu[1];
 		r->playedby_results = pu[2];
+
 		r->obtained 		= pu[3];
  		r->ratingof 		= pu[4];
  		r->ratingbk 		= pu[5];
+
  		r->changing 		= pu[6];
 		r->ratingof_results = pu[7];
 		r->obtained_results = pu[8];
@@ -71,9 +74,11 @@ ratings_done (struct RATINGS *r)
 	memrel(r->sorted);
 	memrel(r->playedby);
 	memrel(r->playedby_results);
+
 	memrel(r->obtained);
  	memrel(r->ratingof);
  	memrel(r->ratingbk);
+
  	memrel(r->changing);
 	memrel(r->ratingof_results);
 	memrel(r->obtained_results);
@@ -87,16 +92,16 @@ ratings2_copy (const struct RATINGS *src, struct RATINGS *tgt) //FIXME organize 
 	tgt->size = src->size;
 	for (i = 0; i < n; i++) {
 		tgt->sorted[i]				=src->sorted[i]; 	
-		tgt->obtained[i]			=src->obtained[i];
 		tgt->playedby[i]			=src->playedby[i]; 	
+		tgt->playedby_results[i]	=src->playedby_results[i];
+
+		tgt->obtained[i]			=src->obtained[i];
 	 	tgt->ratingof[i]			=src->ratingof[i]; 	
 	 	tgt->ratingbk[i]			=src->ratingbk[i]; 	
+
 	 	tgt->changing[i]			=src->changing[i]; 	
-		tgt->reference[i]			=src->reference[i];
-		tgt->ratingdd[i]			=src->ratingdd[i];
 		tgt->ratingof_results[i]	=src->ratingof_results[i];
 		tgt->obtained_results[i]	=src->obtained_results[i];
-		tgt->playedby_results[i]	=src->playedby_results[i];
 	}
 }
 
@@ -110,8 +115,6 @@ ratings_replicate (const struct RATINGS *src, struct RATINGS *tgt)
 	}
 	return ok;
 }
-
-
 
 //
 

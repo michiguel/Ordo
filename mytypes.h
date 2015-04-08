@@ -172,10 +172,6 @@ struct RATINGS {
  	double		*ratingof; 	/* rating current */
  	double		*ratingbk; 	/* rating backup  */
  	double		*changing; 	/* direction change vector */
-
-	player_t	*reference;
-	player_t	*ratingdd;
-
 	double		*ratingof_results;
 	double		*obtained_results;
 	gamesnum_t	*playedby_results;
