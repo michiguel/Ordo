@@ -54,8 +54,7 @@ extern void 	supporting_auxmem_done
 						, struct prior **pPP_store);
 
 
-extern bool_t	priorlist_init 	( player_t nplayers
-								, struct prior **pPP);
+extern struct prior *priorlist_init 	(player_t nplayers);
 
 extern void 	priorlist_done 	(struct prior **pPP);
 

@@ -348,19 +348,16 @@ supporting_auxmem_done 	( struct prior **pPP
 
 #include "relprior.h" 
 
-bool_t
-priorlist_init 	( player_t nplayers
-				, struct prior **pPP
-				)
+struct prior *
+priorlist_init 	(player_t nplayers)
 {
-	struct prior	*d;
-	size_t		sd = sizeof(struct prior);
+	struct prior *d;
+	size_t	sd = sizeof(struct prior);
 	assert(nplayers > 0);
 	if (NULL == (d = memnew (sd * (size_t)nplayers))) {
-		return FALSE;
+		return NULL;
 	} 
-	*pPP  	 	= d;
-	return TRUE;
+	return d;
 }
 
 void
@@ -370,7 +367,7 @@ priorlist_done 	(struct prior **pPP)
 	if (pp) 
 		memrel (pp);
 	pp = NULL;
-	*pPP = NULL;
+	*pPP = pp;
 	return;
 }
 
@@ -384,10 +381,11 @@ priorlist_replicate ( player_t nplayers
 {
 	bool_t ok;
 	struct prior *qq;
-	ok = priorlist_init (nplayers, &qq);
+	qq = priorlist_init (nplayers);
+	ok = qq != NULL;
 
 	if (ok) {
-		priors_copy(PP, nplayers, qq);
+		priors_copy (PP, nplayers, qq);
 		*pQQ = qq;
 	}
 	return ok;

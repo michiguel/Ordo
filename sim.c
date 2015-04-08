@@ -552,7 +552,7 @@ struct PLAYERS 			_plyrs		;
 struct ENCOUNTERS		_encount	;
 struct GAMES 			_games		;	
 struct RATINGS 			_rat		;		
-struct prior 		*	_PP_work    ;			
+struct prior 		*	_PP_work  = NULL  ;			
 struct rel_prior_set 	_RPset_work ;	
 
 	if (cpus < 1) return;
