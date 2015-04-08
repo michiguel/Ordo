@@ -489,6 +489,27 @@ simul_smp_process (void *p);
 
 #include "inidone.h"
 
+
+static void
+players_show (struct PLAYERS *pl)
+{
+	player_t i;
+	player_t n = pl->n;
+	printf ("N: %ld\n", (long)pl->n);
+	printf ("size: %ld\n", (long)pl->size);
+	printf ("anchored_n: %ld\n", (long)pl->anchored_n);
+	printf ("perf_set: %ld\n", (long)pl->perf_set);	
+	for (i = 0; i < n; i++) {
+		printf ("\n# %ld\n",(long)i);
+		printf ("name = %s\n",pl->name[i]);
+		printf ("flagged = %d\n",pl->flagged[i]);
+		printf ("prefed = %d\n",pl->prefed[i]);
+		printf ("priored = %d\n",pl->priored[i]);
+		printf ("performance_type = %d\n",pl->performance_type[i]);
+	}
+	
+}
+
 void
 simul_smp
 	( int							cpus
@@ -556,6 +577,9 @@ ratings_replicate (rat, &_rat);
 
 //priorlist_replicate (plyrs->n, PP_work, &_PP_work);
 //relpriors_replicate	(&RPset_work, &_RPset_work);
+
+
+players_show (plyrs);
 
 	s.simulate					= simulate						;
 	s.sim_updates				= sim_updates					;
