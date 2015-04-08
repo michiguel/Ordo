@@ -187,9 +187,9 @@ players_copy (const struct PLAYERS *source, struct PLAYERS *target)
 	y->n 			= x->n;
 	y->size 		= x->size;
 	y->anchored_n 	= x->anchored_n;
-	y->name 		= x->name;
 	y->perf_set 	= x->perf_set;
 	for (i = 0; i < n; i++) {
+		y->name[i] 				= x->name[i];
 		y->flagged[i] 			= x->flagged[i];
 		y->prefed[i] 			= x->prefed[i];
 		y->priored[i] 			= x->priored[i];

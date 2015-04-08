@@ -276,6 +276,12 @@ players_init (player_t n, struct PLAYERS *x)
 void 
 players_done (struct PLAYERS *x)
 {
+	assert(x->name);
+	assert(x->flagged);
+	assert(x->prefed);
+	assert(x->priored);
+	assert(x->performance_type);
+
 	memrel(x->name);
 	memrel(x->flagged);
 	memrel(x->prefed);
