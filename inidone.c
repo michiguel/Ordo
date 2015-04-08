@@ -148,11 +148,6 @@ games_done (struct GAMES *g)
 	g->ga		 	= NULL;
 } 
 
-//struct GAMES {
-//	gamesnum_t 	n; 
-//	gamesnum_t	size;
-//	struct gamei *ga;
-//};
 
 static void
 games_copy (const struct GAMES *src, struct GAMES *tgt)
@@ -374,9 +369,12 @@ priorlist_done 	(struct prior **pPP)
 	struct prior *pp = *pPP;	
 	if (pp) 
 		memrel (pp);
+	pp = NULL;
 	*pPP = NULL;
 	return;
 }
+
+#include <stdio.h>
 
 bool_t
 priorlist_replicate ( player_t nplayers
@@ -387,6 +385,7 @@ priorlist_replicate ( player_t nplayers
 	bool_t ok;
 	struct prior *qq;
 	ok = priorlist_init (nplayers, &qq);
+
 	if (ok) {
 		priors_copy(PP, nplayers, qq);
 		*pQQ = qq;

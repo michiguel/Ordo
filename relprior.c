@@ -264,9 +264,10 @@ void
 relpriors_done1 (struct rel_prior_set *rps /*@out@*/)
 {
 	assert(rps);
+	assert(rps->n == 0 || rps->x != NULL);
 	rps->n = 0;
-	assert(rps->x);
-	free(rps->x);
+	if (rps->x) free(rps->x);
+	rps->x = NULL;
 	return;
 }
 
@@ -287,19 +288,20 @@ bool_t
 relpriors_replicate (struct rel_prior_set *rps, struct rel_prior_set *rps_dup)
 {
 	struct relprior *x;
-	struct relprior *newx;
+	struct relprior *newx = NULL;
 	player_t n, i;
 	n = rps->n;
 	x = rps->x;
 
-	if (NULL != (newx = memnew(sizeof(struct relprior) * (size_t)n))) {
+	if (x && NULL != (newx = memnew(sizeof(struct relprior) * (size_t)n))) {
 		for (i = 0; i < n; i++) {
 			newx[i] = x[i];
 		}
-		rps_dup->n = n;
-		rps_dup->x = newx;
 	}
-	return newx != NULL;
+
+	rps_dup->n = n;
+	rps_dup->x = newx;
+	return x == NULL || newx != NULL;
 }
 
 //====================== PRIORS =============================================================================
