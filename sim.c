@@ -550,21 +550,22 @@ simul_smp
 	struct SIMSMP s;
 	void *pdata;
 
-struct PLAYERS 			_plyrs		;	
-struct ENCOUNTERS		_encount	;
-struct GAMES 			_games		;	
-struct RATINGS 			_rat		;		
-struct prior 		*	_PP_work  = NULL  ;			
-struct rel_prior_set 	_RPset_work ;	
+	struct PLAYERS 			_plyrs			;	
+	struct ENCOUNTERS		_encount		;	
+	struct GAMES 			_games			;	
+	struct RATINGS 			_rat			;		
+	struct prior 		*	_PP_work  = NULL;			
+	struct rel_prior_set 	_RPset_work 	;	
 
 	if (cpus < 1) return;
 
-players_replicate (plyrs, &_plyrs);
-encounters_replicate (encount, &_encount);
-games_replicate (pGames, &_games);
-ratings_replicate (rat, &_rat);
-priorlist_replicate (plyrs->n, PP_work, &_PP_work);
-relpriors_replicate	(&RPset_work, &_RPset_work);
+	// save locally
+	players_replicate (plyrs, &_plyrs);
+	encounters_replicate (encount, &_encount);
+	games_replicate (pGames, &_games);
+	ratings_replicate (rat, &_rat);	
+	priorlist_replicate (plyrs->n, PP_work, &_PP_work);
+	relpriors_replicate	(&RPset_work, &_RPset_work);
 
 	s.simulate					= simulate						;
 	s.sim_updates				= sim_updates					;
@@ -597,12 +598,13 @@ relpriors_replicate	(&RPset_work, &_RPset_work);
 	pdata = &s;
 	simul_smp_process(pdata);
 
-players_done (&_plyrs);
-encounters_done (&_encount);
-games_done (&_games);
-ratings_done (&_rat);
-priorlist_done (&_PP_work);
-relpriors_done1	(&_RPset_work);
+	// done
+	players_done (&_plyrs);
+	encounters_done (&_encount);
+	games_done (&_games);
+	ratings_done (&_rat);
+	priorlist_done (&_PP_work);
+	relpriors_done1	(&_RPset_work);
 
 	return;
 }
