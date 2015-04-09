@@ -25,6 +25,10 @@
 #include "boolean.h"
 #include "mytypes.h"
 
+#include "sysport.h"
+
+extern mythread_mutex_t Smpcount;
+
 void
 get_a_simulated_run	( int 					limit
 					, bool_t 				quiet_mode

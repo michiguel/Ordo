@@ -58,6 +58,8 @@
 #include "sim.h"
 #include "summations.h"
 
+#include "sysport/sysport.h"
+
 /*
 |
 |	GENERAL OPTIONS
@@ -759,6 +761,8 @@ int main (int argc, char *argv[])
 	|  BEGIN...
 	\*----------------------------------*/
 
+	mythread_mutex_init		(&Smpcount);
+
 	randfast_init (1324561);
 
 	BETA = (-log(1.0/0.76-1.0)) / Rtng_76;
@@ -1016,6 +1020,8 @@ int main (int argc, char *argv[])
 		relpriors_done2 (&RPset, &RPset_store);
 
 	name_storage_done();
+
+	mythread_mutex_destroy (&Smpcount);
 
 	return EXIT_SUCCESS;
 }

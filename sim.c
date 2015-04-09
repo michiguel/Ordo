@@ -214,6 +214,9 @@ save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num)
 }
 
 //========================================================================
+#include "sysport.h"
+
+mythread_mutex_t Smpcount;
 
 static long Sim_N = 0;
 
@@ -222,6 +225,7 @@ smpcount_get (long *x)
 {
 	bool_t ok;
 	//mutex
+	mythread_mutex_lock (&Smpcount);
 	if (Sim_N > 0) {
 		*x = Sim_N--;
 		ok = TRUE;
@@ -230,6 +234,7 @@ smpcount_get (long *x)
 		ok = FALSE;
 	}
 	//mutex
+	mythread_mutex_unlock (&Smpcount);
 	return ok;
 }
 
@@ -237,8 +242,10 @@ static void
 smpcount_set (long x)
 {
 	//mutex
+	mythread_mutex_lock (&Smpcount);
 	Sim_N = x;
 	//mutex
+	mythread_mutex_unlock (&Smpcount);
 }
 
 //========================================================================
