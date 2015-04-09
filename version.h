@@ -1,2 +1,2 @@
-#define VERSION "v0.9.9.8.1-smp16"
+#define VERSION "v0.9.9.8.1-smp17"
 

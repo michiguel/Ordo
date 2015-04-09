@@ -217,6 +217,8 @@ save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num)
 #include "sysport.h"
 
 mythread_mutex_t Smpcount;
+mythread_mutex_t Groupmtx;
+mythread_mutex_t Summamtx;
 
 static long Sim_N = 0;
 
@@ -224,7 +226,6 @@ static bool_t
 smpcount_get (long *x)
 {
 	bool_t ok;
-	//mutex
 	mythread_mutex_lock (&Smpcount);
 	if (Sim_N > 0) {
 		*x = Sim_N--;
@@ -233,7 +234,6 @@ smpcount_get (long *x)
 		*x = 0;
 		ok = FALSE;
 	}
-	//mutex
 	mythread_mutex_unlock (&Smpcount);
 	return ok;
 }
@@ -241,10 +241,8 @@ smpcount_get (long *x)
 static void
 smpcount_set (long x)
 {
-	//mutex
 	mythread_mutex_lock (&Smpcount);
 	Sim_N = x;
-	//mutex
 	mythread_mutex_unlock (&Smpcount);
 }
 
@@ -435,6 +433,7 @@ simul
 		relpriors_copy (&RPset, &RPset_work); 
 		priors_copy (PP, Players.n, PP_work);
 
+		mythread_mutex_lock (&Groupmtx);
 		get_a_simulated_run	( 100
 							, quiet_mode
 							, beta
@@ -449,6 +448,7 @@ simul
 							, PP_work		// output
 							, &RPset_work 	// output
 							);
+		mythread_mutex_unlock (&Groupmtx);
 
 		#if defined(SAVE_SIMULATION)
 		if (z+1 == SAVE_SIMULATION_N) {
@@ -494,7 +494,9 @@ simul
 		}
 
 		// update summations for errors
+		mythread_mutex_lock (&Summamtx);
 		summations_update (&sfe, topn, RA.ratingof, white_advantage, drawrate_evenmatch);
+		mythread_mutex_unlock (&Summamtx);
 
 		if (anchor_err_rel2avg) {
 			ratings_copy (Players.n, RA.ratingbk, RA.ratingof); // ** restore
@@ -505,7 +507,9 @@ simul
 	updates_print_reachedgoal (sim_updates, astcount);
 
 	/* use summations to get sdev */
+	mythread_mutex_lock (&Summamtx);
 	summations_calc_sdev (&sfe, topn, n);
+	mythread_mutex_unlock (&Summamtx);
 
 	/* Simulation block, end */
 

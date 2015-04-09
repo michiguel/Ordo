@@ -28,6 +28,8 @@
 #include "sysport.h"
 
 extern mythread_mutex_t Smpcount;
+extern mythread_mutex_t Groupmtx;
+extern mythread_mutex_t Summamtx;
 
 void
 get_a_simulated_run	( int 					limit
