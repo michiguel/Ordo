@@ -217,15 +217,32 @@ save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num)
 
 static long Sim_N = 0;
 
-static long
-grab_N (void)
+static bool_t
+smpcount_get (long *x)
 {
-	long ret;
+	bool_t ok;
 	//mutex
-	ret = Sim_N++;
+	if (Sim_N > 0) {
+		*x = Sim_N--;
+		ok = TRUE;
+	} else {
+		*x = 0;
+		ok = FALSE;
+	}
 	//mutex
-	return ret;
+	return ok;
 }
+
+static void
+smpcount_set (long x)
+{
+	//mutex
+	Sim_N = x;
+	//mutex
+}
+
+//========================================================================
+
 
 struct SIMSMP {
 	  long							simulate
@@ -372,7 +389,7 @@ simul
 
 	const struct prior *	PP = pPrior;
 
-	long 					z;
+	long 					zz;
 	double 					n = (double) (simulate);
 	ptrdiff_t 				topn = (ptrdiff_t)Players.n;
 
@@ -398,7 +415,11 @@ simul
 
 	updates_print_scale (sim_updates);
 
-	for (z = 0; z < simulate; z++) {
+	smpcount_set(simulate);
+
+	while (smpcount_get(&zz)) {
+		long z = simulate-zz;
+//	for (z = 0; z < simulate; z++) {
 
 		updates_print_head (quiet_mode, z, simulate);
 		astcount = updates_print_progress (sim_updates, asterisk, astcount, &fraction);
@@ -490,27 +511,6 @@ static void
 simul_smp_process (void *p);
 
 #include "inidone.h"
-
-
-static void
-players_show (struct PLAYERS *pl)
-{
-	player_t i;
-	player_t n = pl->n;
-	printf ("N: %ld\n", (long)pl->n);
-	printf ("size: %ld\n", (long)pl->size);
-	printf ("anchored_n: %ld\n", (long)pl->anchored_n);
-	printf ("perf_set: %ld\n", (long)pl->perf_set);	
-	for (i = 0; i < n; i++) {
-		printf ("\n# %ld\n",(long)i);
-		printf ("name = %s\n",pl->name[i]);
-		printf ("flagged = %d\n",pl->flagged[i]);
-		printf ("prefed = %d\n",pl->prefed[i]);
-		printf ("priored = %d\n",pl->priored[i]);
-		printf ("performance_type = %d\n",pl->performance_type[i]);
-	}
-	
-}
 
 void
 simul_smp
