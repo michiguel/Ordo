@@ -223,7 +223,7 @@ bool_t
 encounters_replicate (const struct ENCOUNTERS *src, struct ENCOUNTERS *tgt)
 {
 	bool_t ok;
-	ok = encounters_init (src->n, tgt);
+	ok = encounters_init (src->size, tgt);
 	if (ok) {
 		encounters_copy (src, tgt);
 	}

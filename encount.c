@@ -65,8 +65,9 @@ calc_encounters ( int selectivity
 	gamesnum_t ne;
 	bool_t skip;
 
-	for (i = 0; i < n_games; i++) {
+	assert(enc);
 
+	for (i = 0; i < n_games; i++) {
 		int32_t score_i = gam[i].score;
 		player_t wp_i = gam[i].whiteplayer;
 		player_t bp_i = gam[i].blackplayer;

@@ -51,6 +51,7 @@ calc_encounters__
 				, struct ENCOUNTERS	*e
 ) 
 {
+
 	e->n = 
 	calc_encounters	( selectivity
 					, g
@@ -106,6 +107,7 @@ get_a_simulated_run	( int 					limit
 		priors_shuffle    (PP, pPlayers->n);		// simulate new
 
 		assert(players_have_clear_flags(pPlayers));
+
 		calc_encounters__(ENCOUNTERS_FULL, pGames, pPlayers->flagged, pEncounters);
 
 		players_set_priored_info (PP, pRPset, pPlayers);
@@ -583,12 +585,13 @@ relpriors_replicate	(&RPset_work, &_RPset_work);
 	s.wa_prior					= wa_prior						;
 	s.dr_prior					= dr_prior						;
 
-	s.encount					= encount						;
-	s.plyrs						= plyrs							;
-	s.rat						= rat							;
-	s.pGames					= pGames						;
-	s.RPset_work				= RPset_work					;
-	s.PP_work					= PP_work						;
+	s.encount					= &_encount						;
+	s.plyrs						= &_plyrs						;
+	s.rat						= &_rat							;
+	s.pGames					= &_games						;
+	s.RPset_work				= _RPset_work					;
+	s.PP_work					= _PP_work						;
+
 	s.p_sfe_io 					= p_sfe_io						;
 
 	pdata = &s;
