@@ -151,6 +151,7 @@ static void usage (void);
 		" -t <value>  threshold of minimum games played for a participant to be included\n"
 		" -N <value>  number of decimals in output, minimum is 0 (default=1)\n"
 		" -M          force maximum-likelihood estimation to obtain ratings\n"
+		" -n <value>  number of processors for parallel calculation of simulations\n"
 		"\n"
 		;
 
@@ -160,7 +161,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:TF:Xt:N:M";
+	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:TF:Xt:N:Mn:";
 
 /*
 |
@@ -270,6 +271,7 @@ int main (int argc, char *argv[])
 	bool_t adjust_white_advantage;
 	bool_t adjust_draw_rate;
 
+	int cpus = 1;
 	int op;
 	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr;
 	const char *priorsstr, *relstr;
@@ -442,6 +444,11 @@ int main (int argc, char *argv[])
 							outqual.mingames = (gamesnum_t)mingames;
 							outqual.mingames_set = TRUE;
 						}
+						break;
+			case 'n': 	if (1 != sscanf(opt_arg,"%d", &cpus) || cpus < 1) {
+							fprintf(stderr, "wrong nuber of processors selected\n");
+							exit(EXIT_FAILURE);
+						} 
 						break;
 			case '?': 	parameter_error();
 						exit(EXIT_FAILURE);
@@ -872,7 +879,7 @@ int main (int argc, char *argv[])
 	if (Simulate > 1) {
 
 		simul_smp
-				( 1 // cpus
+				( cpus
 				, Simulate
 				, sim_updates
 				, quiet_mode

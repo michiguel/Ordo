@@ -414,7 +414,6 @@ simul
 	const struct prior *	PP = pPrior;
 
 	long 					zz;
-	double 					n = (double) (simulate);
 	ptrdiff_t 				topn = (ptrdiff_t)Players.n;
 
 	assert (simulate > 1);
@@ -438,7 +437,6 @@ simul
 		}
 
 		updates_print_head (quiet_mode, z, simulate);
-		updates_print_progress (sim_updates);
 
 		// store originals
 		relpriors_copy (&RPset, &RPset_work); 
@@ -512,6 +510,8 @@ simul
 		if (anchor_err_rel2avg) {
 			ratings_copy (Players.n, RA.ratingbk, RA.ratingof); // ** restore
 		}
+
+		updates_print_progress (sim_updates);
 
 	} // for loop end
 
@@ -636,7 +636,7 @@ simul_smp
 		}
 	}
 
-	summations_calc_sdev (s.p_sfe_io, s.plyrs->n, simulate);
+	summations_calc_sdev (s.p_sfe_io, s.plyrs->n, (double)simulate);
 	updates_print_reachedgoal (sim_updates);
 
 	return;
@@ -646,6 +646,7 @@ static /*@null@*/
 thread_return_t THREAD_CALL
 simul_smp_process (void *p)
 {
+	bool_t ok;
 	struct SIMSMP *s = p;
 
 	struct PLAYERS 			_plyrs			;	
@@ -656,14 +657,18 @@ simul_smp_process (void *p)
 	struct rel_prior_set 	_RPset_work 	;	
 
 	// save locally
+	ok = TRUE;
+	ok = ok && players_replicate 	(s->plyrs, &_plyrs);
+	ok = ok && encounters_replicate	(s->encount, &_encount);
+	ok = ok && games_replicate 		(s->pGames, &_games);
+	ok = ok && ratings_replicate 	(s->rat, &_rat);	
+	ok = ok && priorlist_replicate 	(s->plyrs->n, s->PP_work, &_PP_work);
+	ok = ok && relpriors_replicate	(&s->RPset_work, &_RPset_work);
 
-//FIXME add error code
-	players_replicate 		(s->plyrs, &_plyrs);
-	encounters_replicate 	(s->encount, &_encount);
-	games_replicate 		(s->pGames, &_games);
-	ratings_replicate 		(s->rat, &_rat);	
-	priorlist_replicate 	(s->plyrs->n, s->PP_work, &_PP_work);
-	relpriors_replicate		(&s->RPset_work, &_RPset_work);
+	if (!ok) {
+		printf ("Not enough memory to run in parallel\n");
+		exit(EXIT_FAILURE);
+	}
 
 	simul (	s->simulate
 	, 		s->sim_updates
