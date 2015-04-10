@@ -49,7 +49,7 @@ get_sdev (double s1, double s2, double n)
 static void
 summations_clear (struct summations *sm, player_t nplayers)
 {
-	ptrdiff_t np = nplayers;
+	ptrdiff_t np = (ptrdiff_t)nplayers;
 	ptrdiff_t est = (ptrdiff_t)((np*np-np)/2); /* elements of simulation table */
 	ptrdiff_t i, idx;
 	
@@ -78,7 +78,7 @@ summations_clear (struct summations *sm, player_t nplayers)
 bool_t 
 summations_calloc (struct summations *sm, player_t nplayers)
 {
-	ptrdiff_t np = nplayers;
+	ptrdiff_t np = (ptrdiff_t)nplayers;
 	ptrdiff_t est = (ptrdiff_t)((np*np-np)/2); /* elements of simulation table */
 	size_t allocsize = sizeof(struct DEVIATION_ACC) * (size_t)est;
 

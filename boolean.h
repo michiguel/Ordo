@@ -24,8 +24,13 @@
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
 typedef int bool_t;
-#define FALSE 0
-#define TRUE !FALSE
+#if !defined(FALSE)
+	#define FALSE 0
+#endif
+
+#if !defined(TRUE)
+	#define TRUE !FALSE
+#endif
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif
