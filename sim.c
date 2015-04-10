@@ -219,6 +219,7 @@ save_simulated(struct PLAYERS *pPlayers, struct GAMES *pGames, int num)
 mythread_mutex_t Smpcount;
 mythread_mutex_t Groupmtx;
 mythread_mutex_t Summamtx;
+mythread_mutex_t Printmtx;
 
 static long Sim_N = 0;
 
@@ -294,11 +295,11 @@ ratings_set_to	( double general_average
 				, struct RATINGS *pRA /*@out@*/
 )
 {
-		// may improve convergence in pathological cases, it should not be needed.
-		ratings_set (pPlayers->n, general_average, pPlayers->prefed, pPlayers->flagged, pRA->ratingof);
-		ratings_set (pPlayers->n, general_average, pPlayers->prefed, pPlayers->flagged, pRA->ratingbk);
-		assert(ratings_sanity (pPlayers->n, pRA->ratingof));
-		assert(ratings_sanity (pPlayers->n, pRA->ratingbk));
+	// may improve convergence in pathological cases, it should not be needed.
+	ratings_set (pPlayers->n, general_average, pPlayers->prefed, pPlayers->flagged, pRA->ratingof);
+	ratings_set (pPlayers->n, general_average, pPlayers->prefed, pPlayers->flagged, pRA->ratingbk);
+	assert(ratings_sanity (pPlayers->n, pRA->ratingof));
+	assert(ratings_sanity (pPlayers->n, pRA->ratingbk));
 }
 
 static void
@@ -313,37 +314,55 @@ updates_print_scale (bool_t sim_updates)
 static void
 updates_print_head (bool_t quiet, long z, long simulate)
 {
+	mythread_mutex_lock (&Printmtx);
 	if (!quiet)
 		printf ("\n==> Simulation:%ld/%ld\n", z+1, simulate);
+	mythread_mutex_unlock (&Printmtx);
 }
 
-static int
-updates_print_progress (bool_t sim_updates, double asterisk, int astcount, double *pfraction)
-{
-	double fraction = *pfraction;
+static	double 					Fraction = 0.0;
+static	double 					Asterisk = 1;
+static	int 					Astcount = 0;
 
+static void
+updates_print_progress (bool_t sim_updates)
+{
+	double fraction;
+	int astcount;
+
+	mythread_mutex_lock (&Printmtx);
+
+	fraction = Fraction;
+	astcount = Astcount;
 	if (sim_updates) {
 		fraction += 1.0;
-		while (fraction > asterisk) {
-			fraction -= asterisk;
+		while (fraction > Asterisk) {
+			fraction -= Asterisk;
 			astcount++;
 			printf ("*"); 
 		}
 		fflush(stdout);
 	}
+	Fraction = fraction;
+	Astcount = astcount;
 
-	*pfraction = fraction;
-	return astcount;
+	mythread_mutex_unlock (&Printmtx);
+
+	return;
 }
 
 static void
-updates_print_reachedgoal (bool_t sim_updates, int astcount)
+updates_print_reachedgoal (bool_t sim_updates)
 {
+	int astcount;
+	mythread_mutex_lock (&Printmtx);
+	astcount = Astcount;
 	if (sim_updates) {
 		int x = 51-astcount;
 		while (x-->0) {printf ("*"); fflush(stdout);}
 		printf ("\n");
 	}
+	mythread_mutex_unlock (&Printmtx);
 }
 
 
@@ -384,7 +403,7 @@ simul
 	double 					white_advantage = white_advantage_result;
 	double 					drawrate_evenmatch = drawrate_evenmatch_result;
 
-	struct summations 		sfe = *p_sfe_io; 	// summations for errors
+	struct summations 		*sfe = p_sfe_io; 	// summations for errors
 
 	struct ENCOUNTERS		Encounters = *encount;
 	struct rel_prior_set 	RPset = *rps;
@@ -398,36 +417,28 @@ simul
 	double 					n = (double) (simulate);
 	ptrdiff_t 				topn = (ptrdiff_t)Players.n;
 
-	double 					fraction = 0.0;
-	double 					asterisk = n/50.0;
-	int 					astcount = 0;
-
 	assert (simulate > 1);
 	if (simulate <= 1) return;
 
 	/* Simulation block, begin */
 
-	if(!summations_calloc(&sfe, Players.n)) {
-		fprintf(stderr, "Memory for simulations could not be allocated\n");
-		exit(EXIT_FAILURE);
-	}
-
-	// original run
-	sfe.wa_sum1 += white_advantage_result;
-	sfe.wa_sum2 += white_advantage_result * white_advantage_result;				
-	sfe.dr_sum1 += drawrate_evenmatch_result;
-	sfe.dr_sum2 += drawrate_evenmatch_result * drawrate_evenmatch_result;
-
-	updates_print_scale (sim_updates);
-
-	smpcount_set(simulate);
-
 	while (smpcount_get(&zz)) {
+
 		long z = simulate-zz;
-//	for (z = 0; z < simulate; z++) {
+
+		if (z == 0) {
+			// original run
+			// should be done only once by only one thread, that is why z == 0
+			mythread_mutex_lock (&Summamtx);
+			sfe->wa_sum1 += white_advantage_result;
+			sfe->wa_sum2 += white_advantage_result * white_advantage_result;				
+			sfe->dr_sum1 += drawrate_evenmatch_result;
+			sfe->dr_sum2 += drawrate_evenmatch_result * drawrate_evenmatch_result;
+			mythread_mutex_unlock (&Summamtx);
+		}
 
 		updates_print_head (quiet_mode, z, simulate);
-		astcount = updates_print_progress (sim_updates, asterisk, astcount, &fraction);
+		updates_print_progress (sim_updates);
 
 		// store originals
 		relpriors_copy (&RPset, &RPset_work); 
@@ -495,7 +506,7 @@ simul
 
 		// update summations for errors
 		mythread_mutex_lock (&Summamtx);
-		summations_update (&sfe, topn, RA.ratingof, white_advantage, drawrate_evenmatch);
+		summations_update (sfe, topn, RA.ratingof, white_advantage, drawrate_evenmatch);
 		mythread_mutex_unlock (&Summamtx);
 
 		if (anchor_err_rel2avg) {
@@ -504,21 +515,11 @@ simul
 
 	} // for loop end
 
-	updates_print_reachedgoal (sim_updates, astcount);
-
-	/* use summations to get sdev */
-	mythread_mutex_lock (&Summamtx);
-	summations_calc_sdev (&sfe, topn, n);
-	mythread_mutex_unlock (&Summamtx);
-
-	/* Simulation block, end */
-
-	*p_sfe_io = sfe;
-
 } /* Simulation function, end */
 
 
-static void
+static /*@null@*/
+thread_return_t THREAD_CALL
 simul_smp_process (void *p);
 
 #include "inidone.h"
@@ -561,22 +562,9 @@ simul_smp
 	struct SIMSMP s;
 	void *pdata;
 
-	struct PLAYERS 			_plyrs			;	
-	struct ENCOUNTERS		_encount		;	
-	struct GAMES 			_games			;	
-	struct RATINGS 			_rat			;		
-	struct prior 		*	_PP_work  = NULL;			
-	struct rel_prior_set 	_RPset_work 	;	
-
 	if (cpus < 1) return;
 
-	// save locally
-	players_replicate (plyrs, &_plyrs);
-	encounters_replicate (encount, &_encount);
-	games_replicate (pGames, &_games);
-	ratings_replicate (rat, &_rat);	
-	priorlist_replicate (plyrs->n, PP_work, &_PP_work);
-	relpriors_replicate	(&RPset_work, &_RPset_work);
+	if (cpus > 1 && !quiet_mode) {quiet_mode = TRUE; sim_updates = TRUE;}
 
 	s.simulate					= simulate						;
 	s.sim_updates				= sim_updates					;
@@ -597,33 +585,85 @@ simul_smp
 	s.wa_prior					= wa_prior						;
 	s.dr_prior					= dr_prior						;
 
-	s.encount					= &_encount						;
-	s.plyrs						= &_plyrs						;
-	s.rat						= &_rat							;
-	s.pGames					= &_games						;
-	s.RPset_work				= _RPset_work					;
-	s.PP_work					= _PP_work						;
+	s.encount					= encount						;
+	s.plyrs						= plyrs						;
+	s.rat						= rat							;
+	s.pGames					= pGames						;
+	s.RPset_work				= RPset_work					;
+	s.PP_work					= PP_work						;
 
 	s.p_sfe_io 					= p_sfe_io						;
 
-	pdata = &s;
-	simul_smp_process(pdata);
+	pdata = &s; // convert to a void pointer, needed for the SMP call
 
-	// done
-	players_done (&_plyrs);
-	encounters_done (&_encount);
-	games_done (&_games);
-	ratings_done (&_rat);
-	priorlist_done (&_PP_work);
-	relpriors_done1	(&_RPset_work);
+	if(!summations_calloc(s.p_sfe_io, s.plyrs->n)) {
+		fprintf(stderr, "Memory for simulations could not be allocated\n");
+		exit(EXIT_FAILURE);
+	}
+
+	{
+		#define MAX_CPUS 64
+
+		int CPUS = cpus > MAX_CPUS? MAX_CPUS: cpus;
+		int t;
+		static bool_t		iret     [MAX_CPUS];
+		static mythread_t 	threadid [MAX_CPUS];
+		static int			err		 [MAX_CPUS];
+
+		smpcount_set(simulate);
+		updates_print_scale (sim_updates);
+		Asterisk = (double)simulate/50.0;
+
+		/* Create independent threads each of which will execute function */
+		for (t = 0; t < CPUS; t++) {
+			iret[t] = mythread_create( &threadid[t], simul_smp_process, pdata, &err[t]);
+		}
+
+		/* reporting error */
+		for (t = 0; t < CPUS; t++) {
+			if (!iret[(short int)t]) { //cast to short int silences a warning
+				fprintf (stderr, "thread %d, fatal error at creating: %s\n", t, mythread_create_error(err[t]) );
+				exit(EXIT_FAILURE);
+			}
+		}
+
+		/* Wait for threads to be done */
+		for (t = 0; t < CPUS; t++) {
+			if (0==mythread_join( threadid[t] )) {
+				fprintf (stderr, "thread %d: fatal problems at joining\n", t);	
+				exit(EXIT_FAILURE);	
+			};
+		}
+	}
+
+	summations_calc_sdev (s.p_sfe_io, s.plyrs->n, simulate);
+	updates_print_reachedgoal (sim_updates);
 
 	return;
 }
 
-static void
+static /*@null@*/
+thread_return_t THREAD_CALL
 simul_smp_process (void *p)
 {
 	struct SIMSMP *s = p;
+
+	struct PLAYERS 			_plyrs			;	
+	struct ENCOUNTERS		_encount		;	
+	struct GAMES 			_games			;	
+	struct RATINGS 			_rat			;		
+	struct prior 		*	_PP_work  = NULL;			
+	struct rel_prior_set 	_RPset_work 	;	
+
+	// save locally
+
+//FIXME add error code
+	players_replicate 		(s->plyrs, &_plyrs);
+	encounters_replicate 	(s->encount, &_encount);
+	games_replicate 		(s->pGames, &_games);
+	ratings_replicate 		(s->rat, &_rat);	
+	priorlist_replicate 	(s->plyrs->n, s->PP_work, &_PP_work);
+	relpriors_replicate		(&s->RPset_work, &_RPset_work);
 
 	simul (	s->simulate
 	, 		s->sim_updates
@@ -643,14 +683,27 @@ simul_smp_process (void *p)
 	, 		s->pPrior
 	, 		s->wa_prior
 	, 		s->dr_prior
-	, 		s->encount				// io, modified
-	, 		s->plyrs				// io, modified
-	, 		s->rat					// io, modified
-	, 		s->pGames				// io, modified
-	, 		s->RPset_work			// mem provided
-	, 		s->PP_work				// mem provided
-	, 		s->p_sfe_io 			// output
+
+	, 		&_encount			// io, modified
+	, 		&_plyrs				// io, modified
+	, 		&_rat				// io, modified
+	, 		&_games				// io, modified
+	, 		_RPset_work			// mem provided
+	, 		_PP_work			// mem provided
+
+	, 		s->p_sfe_io 		// output
 	);
-	return;
+
+	// done
+	players_done (&_plyrs);
+	encounters_done (&_encount);
+	games_done (&_games);
+	ratings_done (&_rat);
+	priorlist_done (&_PP_work);
+	relpriors_done1	(&_RPset_work);
+
+	mythread_exit ();
+	return (thread_return_t) 0;
 }
+
 

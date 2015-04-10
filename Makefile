@@ -2,7 +2,7 @@ CC = gcc
 CFLAGS = -DNDEBUG -DMY_SEMAPHORES -flto -I myopt -I sysport
 WARN = -Wwrite-strings -Wconversion -Wshadow -Wparentheses -Wlogical-op -Wunused -Wmissing-prototypes -Wmissing-declarations -Wdeclaration-after-statement -W -Wall -Wextra
 OPT = -O3
-LIBFLAGS = -lm
+LIBFLAGS = -lm -lpthread
 
 EXE = ordo
 

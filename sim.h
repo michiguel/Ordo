@@ -30,6 +30,7 @@
 extern mythread_mutex_t Smpcount;
 extern mythread_mutex_t Groupmtx;
 extern mythread_mutex_t Summamtx;
+extern mythread_mutex_t Printmtx;
 
 void
 get_a_simulated_run	( int 					limit

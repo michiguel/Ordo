@@ -764,6 +764,7 @@ int main (int argc, char *argv[])
 	mythread_mutex_init		(&Smpcount);
 	mythread_mutex_init		(&Groupmtx);
 	mythread_mutex_init		(&Summamtx);
+	mythread_mutex_init		(&Printmtx);
 
 	randfast_init (1324561);
 
@@ -1026,6 +1027,7 @@ int main (int argc, char *argv[])
 	mythread_mutex_destroy (&Smpcount);
 	mythread_mutex_destroy (&Groupmtx);
 	mythread_mutex_destroy (&Summamtx);
+	mythread_mutex_destroy (&Printmtx);
 
 	return EXIT_SUCCESS;
 }
