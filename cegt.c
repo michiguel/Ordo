@@ -387,7 +387,7 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 	assert (Temp_enc);
 	assert (textf);
 
-	nlen = (int) calclen ((long)N_players+1);
+	nlen = calclen ((long)N_players+1);
 
 		/* output in text format */
 		f = textf;
