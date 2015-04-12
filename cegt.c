@@ -433,7 +433,7 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 
 				fprintf(f, "%ld %-*s :%5.*f %ld (+%3ld,=%3ld,-%3ld), %4.1f %s\n\n"
 					,(long)i+1
-					,(int)(ml+(nlen-calclen(i+1)))
+					,(int)(ml+(nlen-calclen((long)i+1)))
 					, Name[target]
 					, decimals
 					, Ratingof_results[target]
