@@ -270,7 +270,8 @@ cegt_output	( bool_t quiet
 			, double				confidence_factor
 			, const struct GAMESTATS *pgame_stats
 			, const struct DEVIATION_ACC *s
-			, struct output_qualifiers outqual)
+			, struct output_qualifiers outqual
+			, int decimals)
 {
 	struct CEGT cegt;
 	player_t j;
@@ -307,6 +308,8 @@ cegt_output	( bool_t quiet
 	cegt.sim = s;
 
 	cegt.outqual = outqual;
+
+	cegt.decimals = decimals;
 
 	output_cegt_style (quiet, "general.dat", "rating.dat", "programs.dat", &cegt);
 }

@@ -192,6 +192,7 @@ static double	BETA = 1.0/INVBETA;
 static double	Confidence_factor = 1.0;
 
 static int		OUTDECIMALS = 1;
+static bool_t	Decimals_set = FALSE;
 
 static struct GAMESTATS	Game_stats;
 
@@ -435,6 +436,8 @@ int main (int argc, char *argv[])
 			case 'N': 	if (1 != sscanf(opt_arg,"%d", &OUTDECIMALS) || OUTDECIMALS < 0) {
 							fprintf(stderr, "wrong decimals parameter\n");
 							exit(EXIT_FAILURE);
+						} else {
+							Decimals_set = TRUE;
 						}
 						break;
 			case 't': 	if (1 != sscanf(opt_arg,"%ld", &mingames) || mingames < 0) {
@@ -1006,7 +1009,8 @@ int main (int argc, char *argv[])
 					, Confidence_factor
 					, &Game_stats
 					, sfe.relative
-					, outqual);
+					, outqual
+					, Decimals_set? OUTDECIMALS: 0);
 	}
 
 	/*==== clean up ====*/

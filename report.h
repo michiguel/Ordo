@@ -39,7 +39,8 @@ cegt_output	( bool_t 				quiet
 			, double				confidence_factor
 			, const struct GAMESTATS *pgame_stats
 			, const struct DEVIATION_ACC *s
-			, struct output_qualifiers outqual);
+			, struct output_qualifiers outqual
+			, int decimals);
 
 // Function provided to have all head to head information
 void 

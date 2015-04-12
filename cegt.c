@@ -26,10 +26,8 @@
 
 #include "cegt.h"
 #include "mytypes.h"
-
 #include "ordolim.h"
 #include "gauss.h"
-
 #include "mymem.h"
 
 struct OPP_LINE {
@@ -277,6 +275,8 @@ all_report_rat (FILE *textf, struct CEGT *p)
 	const char	**Name = p->name ;
 	double		confidence = p->confidence_factor;
 	player_t	rank = 0;
+	int			decimals = p->decimals;
+	int			extension = decimals == 0? 0: decimals+1;
 
 	/* output in text format */
 	f = textf;
@@ -287,11 +287,16 @@ all_report_rat (FILE *textf, struct CEGT *p)
 		if (ml > 50) ml = 50;
 
 		{
-			fprintf(f, "\n\n%s %-*s     %4s %4s %4s %7s %7s %8s %6s\n\n", 
+			fprintf(f, "\n\n%s %-*s     %*s %*s %*s %7s %7s %8s %6s\n\n", 
 				"    ", 			
 				(int)ml,
 				"Program", 
-				"Elo", "+", "-", "Games", "Score", "Av.Op.", "Draws");
+				4+extension,
+				"Elo", 
+				4+extension, 
+				"+", 
+				4+extension, 
+				"-", "Games", "Score", "Av.Op.", "Draws");
 	
 			for (i = 0; i < N_players; i++) {
 				j = Sorted[i];
@@ -300,14 +305,19 @@ all_report_rat (FILE *textf, struct CEGT *p)
 
 					rank++;
 
-					fprintf(f, "%4lu %-*s %s :%5.0f%5.0f%5.0f %5ld %7.1f%s %6.0f %6.1f%s\n", 
+					fprintf(f, "%4lu %-*s %s : %*.*f %*.*f %*.*f %5ld %7.1f%s %6.0f %6.1f%s\n", 
 						(long unsigned)rank,
 						(int)ml+1,
 						Name[j],
 						get_super_player_symbolstr(j,p),
-	
+						4+extension,
+						decimals,
 						Ratingof_results[j],
+						4+extension,
+						decimals,
 						Sdev? Sdev[j] * confidence: 0,
+						4+extension,
+						decimals,
 						Sdev? Sdev[j] * confidence: 0,
 						(long)Playedby_results[j],
 						Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/(double)Playedby_results[j],
@@ -317,26 +327,6 @@ all_report_rat (FILE *textf, struct CEGT *p)
 						" %"
 					);
 				} 
-#if 0
-				else {
-					fprintf(f, "%4lu %-*s %s :%5s%5s%5s %5ld %7.1f%s %6.0f %6.1f%s\n", 
-						i+1,
-						(int)ml+1,
-						Name[j],
-						" ",
-	
-						"----",
-						"--",
-						"--",
-						(long)Playedby_results[j],
-						Playedby_results[j]==0? 0: 100.0*Obtained_results[j]/(double)Playedby_results[j],
-						" %",
-						av_opp(j, p),
-						draw_percentage(j, Enc, N_enc),
-						" %"
-					);
-				}
-#endif
 			}
 		}
 
@@ -383,6 +373,7 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 	player_t j;
 	size_t ml;
 	size_t nlen;
+	int decimals = p->decimals;
 
 	// Interface p with internal variables or pointers
 	struct ENC 	*Enc = p->enc;
@@ -440,10 +431,11 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 					assert (Temp_enc[e].wh == target || Temp_enc[e].bl == target);
 				}
 
-				fprintf(f, "%ld %-*s :%5.0f %ld (+%3ld,=%3ld,-%3ld), %4.1f %s\n\n"
+				fprintf(f, "%ld %-*s :%5.*f %ld (+%3ld,=%3ld,-%3ld), %4.1f %s\n\n"
 					,(long)i+1
 					,(int)(ml+(nlen-calclen(i+1)))
 					, Name[target]
+					, decimals
 					, Ratingof_results[target]
 					, (long)(won+dra+los)
 					, (long)won
