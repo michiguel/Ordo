@@ -366,6 +366,15 @@ static int compare_ENC2 (const void * a, const void * b)
 	
 }
 
+static size_t
+calclen (long x)
+{
+	char s[80];
+	sprintf(s, "%ld", x);
+	return strlen(s);	
+}
+
+
 static void
 all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 {
@@ -373,6 +382,7 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 	player_t i;
 	player_t j;
 	size_t ml;
+	size_t nlen;
 
 	// Interface p with internal variables or pointers
 	struct ENC 	*Enc = p->enc;
@@ -385,6 +395,8 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 
 	assert (Temp_enc);
 	assert (textf);
+
+	nlen = (int) calclen ((long)N_players+1);
 
 		/* output in text format */
 		f = textf;
@@ -430,7 +442,7 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 
 				fprintf(f, "%ld %-*s :%5.0f %ld (+%3ld,=%3ld,-%3ld), %4.1f %s\n\n"
 					,(long)i+1
-					,(int)ml+1
+					,(int)(ml+(nlen-calclen(i+1)))
 					, Name[target]
 					, Ratingof_results[target]
 					, (long)(won+dra+los)
@@ -467,7 +479,7 @@ all_report_prg (FILE *textf, struct CEGT *p, struct ENC *Temp_enc)
 					assert (Temp_enc[e].wh == target || Temp_enc[e].bl == target);
 
 					fprintf(f, "%-*s : %ld (+%3ld,=%3ld,-%3ld), %4.1f %s\n"
-						,(int)ml+5
+						,(int)(ml+nlen+1)
 						, Name[oth]
 						, (long)(won+dra+los)
 						, (long)won, (long)dra, (long)los
@@ -527,12 +539,19 @@ head2head_idx_sdev (player_t inp_x, player_t inp_y)
 	return idx;
 }
 
-static size_t
-calclen (long x)
+
+static char *
+get_ratingstr (char *s, int decimals, double rating)
 {
-	char s[80];
-	sprintf(s, "%ld", x);
-	return strlen(s);	
+	sprintf(s, "%.*f", decimals, rating);
+	return s;
+}
+
+static size_t
+get_ratingstr_len (char *s, int decimals, double rating)
+{
+	sprintf(s, "%.*f", decimals, rating);
+	return strlen(s);
 }
 
 
@@ -550,6 +569,9 @@ all_report_indiv_stats 	( FILE *textf
 	size_t ml;
 	size_t gl = 7;
 
+	char buf[256];
+	char *rstr;
+
 	int gwlen = 3;
 	int gdlen = 5;
 	int gllen = 7;
@@ -559,14 +581,16 @@ all_report_indiv_stats 	( FILE *textf
 	int	indent = 0;
 
 	// Interface p with internal variables or pointers
-	struct ENC 	*Enc = p->enc;
-	gamesnum_t 	N_enc = p->n_enc ;
-	player_t	N_players = p->n_players ;
-	player_t	*Sorted = p->sorted ;
-	double		*Ratingof_results = p->ratingof_results ;
-	bool_t		*Flagged = p->flagged ;
-	const char	**Name = p->name ;
-	int decimals = p->decimals;
+	struct ENC *  Enc              = p->enc;
+	gamesnum_t 	  N_enc            = p->n_enc ;
+	player_t	  N_players        = p->n_players ;
+	player_t *    Sorted           = p->sorted ;
+	double *      Ratingof_results = p->ratingof_results ;
+	bool_t *      Flagged          = p->flagged ;
+	const char ** Name             = p->name ;
+	int           decimals         = p->decimals;
+
+	size_t        maxl = 0;
 
 	indent = (int) calclen ((long)N_players+1);
 	
@@ -581,7 +605,16 @@ all_report_indiv_stats 	( FILE *textf
 			ml = 50;
 		
 		fprintf(f,"Head to head statistics:\n\n");
-	
+
+		// calculate maximum character length for the ratings
+		for (i = 0; i < N_players; i++) {
+			size_t slen;
+			if (!Flagged[i]) {
+				slen = get_ratingstr_len (buf, decimals, Ratingof_results[i]);
+				maxl = slen > maxl? slen: maxl;
+			}
+		}
+
 		for (i = 0; i < N_players; i++) {
 			j = Sorted[i];
 
@@ -622,12 +655,14 @@ all_report_indiv_stats 	( FILE *textf
 				gdlen = (int)calclen((long)dra);
 				gllen = (int)calclen((long)los);
 
-				fprintf(f, "%*ld) %-*s %5.*f : %*ld (+%*ld,=%*ld,-%*ld), %5.1f %s\n\n"
+				rstr = get_ratingstr (buf, decimals, Ratingof_results[target]);
+
+				fprintf(f, "%*ld) %-*s %*s : %*ld (+%*ld,=%*ld,-%*ld), %5.1f %s\n\n"
 					, indent
 					, (long)i+1
 					, (int)ml, Name[target]
-					, decimals
-					, Ratingof_results[target]
+					, (int)maxl
+					, rstr
 					, (int)gl, (long)(won+dra+los)
 					, gwlen, (long)won
 					, gdlen, (long)dra
