@@ -1,3 +1,6 @@
+%===========================================================================================
+% standard format
+
 %\documentclass[12pt]{article}
 
 %\usepackage[T1]{fontenc}
@@ -473,24 +476,31 @@ Empirically, this is a reasonable approximation for most cases.
 \subsubsection*{White advantage calculation}
 
 The rationale to calculate the white advantage ($W_{adv}$) is that the expected outcome for white should be as close as possible to the actual white performance.
-If we compare those in each game, the optimum $W_{adv}$ will be the one that minimizes $E$ in the following equation
+In other words, the number of points obtained by white ($W_{p}$) should be the same as the number of points expected to be obtained by white ($W_{e}$).
 
 	\begin{equation} \label{eq:white_adv_errors_1}
-	E = \sum\limits_{i=1}^n (Result_{i} - Expectancy(RW_{i} + W_{adv}, RB_{i}))^2
+	E = (W_{p} - W_{e})^2
 	\end{equation}
 
-$E$ is the overall error in the estimation.
+Therefore, the optimum $W_{adv}$ is the one that minimizes $E$, which is the overall error squared in equation \ref{eq:white_adv_errors_1}.
+
+	\begin{equation} \label{eq:white_adv_errors_1b}
+	W_{e} = \sum\limits_{i=1}^n Expectancy(RW_{i} + W_{adv}, RB_{i})
+	\end{equation}
+
 Here, $n$ is the total number of games, $RW_{i}$ and $RB_{i}$ are the ratings (in game $i$) of white and black, respectively.
 $Expectancy$ is actually equation \ref{eq:flipped}.
-However, a faster way to calculate $W_{adv}$ is to group games with the same white and black players. 
-Those games will be considered a "match".
 
-	\begin{equation} \label{eq:white_adv_errors_2}
-	E = \sum\limits_{m=1}^M \left(p_{m} - N_{m}\:\: \frac{1}{1 + e^{-\beta(RW_{m} + W_{adv}-RB_{m})}}	\right)^2
+	\begin{equation} \label{eq:white_adv_errors_1c}
+	W_{e} = \sum\limits_{i=1}^n \frac{1}{1 + e^{-\beta(RW_{i} + W_{adv}-RB_{i})}}
 	\end{equation}
 
-In eq. \ref{eq:white_adv_errors_2}, $m$ is the match number, $M$ is the total number of matches, $N_{m}$ is the total number of games in the match $m$.
-Also, $p_{m}$ is the performance, or total number of points obtained by white in that particular match.
+Then, combining \ref{eq:white_adv_errors_1} and \ref{eq:white_adv_errors_1c}
+
+	\begin{equation} \label{eq:white_adv_errors_1d}
+	E = \left(W_{p} - \sum\limits_{i=1}^n \frac{1}{1 + e^{-\beta(RW_{i} + W_{adv}-RB_{i})}}\right)^2
+	\end{equation}
+
 $W_{adv}$ is calculated iteratively, until $E$ is minimized.
 This calculation assumes that $W_{adv}$ is relatively constant throughout the database.
 Once $W_{adv}$ is obtained, the ratings are re-calculated.
