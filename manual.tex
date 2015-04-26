@@ -508,7 +508,7 @@ The procedure continues until the numbers stabilize.
 
 %~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-\subsubsection*{Draw rate calculation}
+\subsubsection*{Draw rate model}
 
 To estimate the probability of a draw in a single game the model from Fig. \ref{fig:figlevels2} needs to be expanded to have an extra "draw state" (Fig. \ref{fig:threestates}).
 
@@ -687,8 +687,49 @@ Replacing $\phi$ in eq. \ref{eq:draw_rate1} with eq. \ref{eq:deq0b} we obtain
 
 Equation \ref{eq:draw_rate2} is the one used by Ordo to obtain the draw rate for any pair of opponents as a function of win probability ($W$) and draw rate for equal opponents ($D_{eq}$).
 
+%---------------------------------------------------------
 
+\subsubsection*{Draw rate calculation}
 
+The rationale to calculate the draw rate for equal opponents ($D_{eq}$) is that the expected outcome of number of draws showuld be as close as possible to the actual number of draws in the database.
+In other words, the number of draws observed ($D_{obs}$) should be the same as the number of draws expected ($D_{exp}$).
+
+	\begin{equation} \label{eq:drawrate_errors_1}
+	E = (D_{obs} - D_{exp})^2
+	\end{equation}
+
+Therefore, the optimum $D_{eq}$ is the one that minimizes $E$, which is the overall error squared in equation \ref{eq:drawrate_errors_1}.
+
+	\begin{equation} \label{eq:drawrate_errors_1b}
+	D_{exp} = \sum\limits_{i=1}^n D_{i} 
+	\end{equation}
+
+Here, $n$ is the total number of games, and $D_{i}$ is the probability of a draw for game $i$.
+From equation \ref{eq:deq11}, $D_{i}$ could be solved as
+
+	\begin{equation} \label{eq:drawrate_errors_1c}
+	D_{i} = \frac{- 1 + \sqrt{ 1 - 4 (p_{i}^2-p_{i}) (4 (\frac{1-D_{eq}}{2 D_{eq}})^2 - 1) }  }{4 (\frac{1-D_{eq}}{2 D_{eq}})^2 - 1} 
+% b=2
+% 4 (p_{i}^2-p_{i})
+% a = (4 (\frac{1-D_{eq}}{2 D_{eq}})^2 - 1)
+%	D_{i} = \frac{1+ \sqrt{1 - 4 (4 \phi^2 - 1) (p_{i}^2-p_{i})}  }{4 \phi^2 - 1} 
+% (\frac{1-D_{eq}}{2 D_{eq}})
+	\end{equation}
+
+where $p_{i}$ is the expected performance for white for each game, and could be calculated from equation \ref{eq:flipped} as
+
+	\begin{equation} \label{eq:drawrate_errors_1d}
+	p_{i} = \frac{1}{1 + e^{-\beta(RW_{i} + W_{adv}-RB_{i})}}
+	\end{equation}
+
+$RW_{i}$ and $RB_{i}$ are the ratings (in game $i$) of white and black, respectively.
+Once $D_{eq}$ is estimated, $p_{i}$ and $D_{i}$ are calculated (equations \ref{eq:drawrate_errors_1c} and \ref{eq:drawrate_errors_1d}) for each game to obtain $D_{exp}$ and $E$ (equations \ref{eq:drawrate_errors_1} and \ref{eq:drawrate_errors_1b}).
+Optimum value of $D_{eq}$ is the one that minimizes $E$ and it is calculated iteratively.
+This calculation assumes that $D_{eq}$ is relatively constant throughout the database.
+Once $D_{eq}$ is obtained, the ratings are re-calculated as it is done with $W_{adv}$.
+The procedure continues until the numbers stabilize.
+
+%---------------------------------------------------------
 \subsubsection*{Rating calculation with prior information}
 
 When user provides Ordo with either \textit{loose anchors}, \textit{relative anchors}, \textit{white advantage} uncertainty, or a \textit{draw rate} uncertainty the calculation is performed by a \textit{maximum-likelihood estimation}.
