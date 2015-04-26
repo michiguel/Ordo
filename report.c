@@ -424,6 +424,7 @@ all_report 	( const struct GAMES 	*g
 			, double				wa_sdev				
 			, double				dr_sdev
 			, const struct DEVIATION_ACC *	s
+			, bool_t csf_column
 			)
 {
 	FILE *f;
@@ -503,11 +504,16 @@ all_report 	( const struct GAMES 	*g
 			bool_t prev_is = FALSE;
 			player_t prev_j = -1;
 
-			fprintf(f, "\n%s %-*s    :%7s %6s %8s %7s %6s   %s\n", 
+			fprintf(f, "\n%s %-*s    :%7s %6s %8s %7s %6s", 
 				"   #", 
 				(int)ml, 
-				Player_str, Rating_str, Error_str, Points_str, Played_str, Percent_str, Cfsnext_str);
-	
+				Player_str, Rating_str, Error_str, Points_str, Played_str, Percent_str);
+
+			if (csf_column)
+			fprintf(f, "   %s", Cfsnext_str);
+
+			fprintf(f, "\n");
+
 			for (i = 0; i < p->n; i++) {
 				j = r->sorted[i]; 
 
@@ -529,7 +535,7 @@ all_report 	( const struct GAMES 	*g
 					if (showrank || !hide_old_ver) {
 
 						if (prev_is) {
-							if (s && simulate > 1) {			
+							if (s && simulate > 1 && csf_column) {			
 								double delta_rating = r->ratingof_results[prev_j]-r->ratingof_results[j];
 								fprintf(f, "%8.0lf",get_cfs (s, delta_rating, prev_j, j));
 							}
@@ -556,7 +562,8 @@ all_report 	( const struct GAMES 	*g
 				}
 			}
 
-			fprintf (f, "%8s\n","---");
+			if (csf_column)	fprintf (f, "%8s","---");
+			fprintf (f, "\n");
 
 		}
 
@@ -640,7 +647,8 @@ all_report 	( const struct GAMES 	*g
 			",\"%s\""
 			",\"%s\""
 			",%s"
-			",%s"
+			"%s"
+			"%s"
 			"\n"	
 			,"#"	
 			,Player_str
@@ -649,7 +657,8 @@ all_report 	( const struct GAMES 	*g
 			,Points_str
 			,Played_str
 			,Percent_str
-			,Cfsnext_str
+			,csf_column?",":""		
+			,csf_column?Cfsnext_str:""
 			);
 		rank = 0;
 		for (i = 0; i < p->n; i++) {
@@ -669,7 +678,7 @@ all_report 	( const struct GAMES 	*g
 
 
 				if (prev_is) {
-					if (s && simulate > 1) {			
+					if (s && simulate > 1 && csf_column) {			
 						double delta_rating = r->ratingof_results[prev_j]-r->ratingof_results[j];
 						fprintf(f, ",%.0lf",get_cfs (s, delta_rating, prev_j, j));
 					}
@@ -697,7 +706,7 @@ all_report 	( const struct GAMES 	*g
 			}
 		}
 
-		fprintf (f, ",\"%s\"","-");
+		if (csf_column) fprintf (f, ",\"%s\"","-");
 		fprintf (f, "\n");
 	}
 	return;

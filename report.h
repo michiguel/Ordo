@@ -76,6 +76,7 @@ all_report 	( const struct GAMES 	*g
 			, double				wa_sdev				
 			, double				dr_sdev
 			, const struct DEVIATION_ACC *	s
+			, bool_t csf_column
 			);
 
 void

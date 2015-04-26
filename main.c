@@ -57,7 +57,7 @@
 #include "ra.h"
 #include "sim.h"
 #include "summations.h"
-
+#include "myopt.h"
 #include "sysport/sysport.h"
 
 /*
@@ -70,8 +70,6 @@
 #define SAVE_SIMULATION
 #define SAVE_SIMULATION_N 2
 #endif
-
-#include "myopt.h"
 
 const char *license_str = "\n"
 "   Copyright (c) 2015 Miguel A. Ballicora\n"
@@ -146,6 +144,7 @@ static void usage (void);
 		" -s  #       perform # simulations to calculate errors\n"
 		" -e <file>   save an error matrix, if -s was used\n"
 		" -C <file>   save a matrix (.csv) with confidence for superiority (-s was used)\n"
+		" -J          add an output column with confidence for superiority (next player)\n"
 		" -F <value>  confidence (%) to estimate error margins. Default is 95.0\n"
 		" -X          ignore draws\n"
 		" -t <value>  threshold of minimum games played for a participant to be included\n"
@@ -161,7 +160,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:TF:Xt:N:Mn:";
+	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:JTF:Xt:N:Mn:";
 
 /*
 |
@@ -279,7 +278,7 @@ int main (int argc, char *argv[])
 	const char *head2head_str;
 	const char *ctsmatstr;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
-	bool_t group_is_output, Elostat_output, Ignore_draws, groups_no_check, Forces_ML;
+	bool_t group_is_output, Elostat_output, Ignore_draws, groups_no_check, Forces_ML, cfs_column;
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE, switch_d=FALSE, switch_k=FALSE, switch_D=FALSE;
 
 	/* defaults */
@@ -308,6 +307,7 @@ int main (int argc, char *argv[])
 	head2head_str	= NULL;
 	Ignore_draws 	= FALSE;
 	Forces_ML 	 	= FALSE;
+	cfs_column      = FALSE;
 
 	while (END_OF_OPTIONS != (op = options (argc, argv, OPTION_LIST))) {
 		switch (op) {
@@ -415,6 +415,7 @@ int main (int argc, char *argv[])
 							exit(EXIT_FAILURE);
 						}
 						break;
+			case 'J':	cfs_column = TRUE;	break;
 			case 'T':	table_mode = TRUE;	break;
 			case 'q':	quiet_mode = TRUE;	break;
 			case 'Q':	quiet_mode = TRUE;	sim_updates = TRUE; break;
@@ -954,6 +955,7 @@ int main (int argc, char *argv[])
 				, sfe.wa_sdev
 				, sfe.dr_sdev
 				, sfe.relative
+				, cfs_column
 				);
 
 	#if 0
