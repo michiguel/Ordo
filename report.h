@@ -75,6 +75,7 @@ all_report 	( const struct GAMES 	*g
 			, struct output_qualifiers	outqual
 			, double				wa_sdev				
 			, double				dr_sdev
+			, const struct DEVIATION_ACC *	s
 			);
 
 void

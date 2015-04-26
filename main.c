@@ -953,6 +953,7 @@ int main (int argc, char *argv[])
 				, outqual
 				, sfe.wa_sdev
 				, sfe.dr_sdev
+				, sfe.relative
 				);
 
 	#if 0

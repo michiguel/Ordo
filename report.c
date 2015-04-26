@@ -321,6 +321,7 @@ static const char *Error_str  = "ERROR";
 static const char *Points_str = "POINTS";
 static const char *Played_str = "PLAYED";
 static const char *Percent_str = "(%)";
+static const char *Cfsnext_str = "CFS(next)";
 
 // Function provided to have all head to head information
 
@@ -386,6 +387,24 @@ is_empty_player(player_t j, const struct PLAYERS *pPlayers)
 }
 #endif
 
+static double
+get_cfs (const struct DEVIATION_ACC *sim, double dr, player_t target, player_t oth)
+{
+		if (sim != NULL) {
+			ptrdiff_t idx;
+			double ctrs;
+			double sd;
+			idx = head2head_idx_sdev (target, oth);
+			sd = sim[idx].sdev;
+			ctrs = 100*gauss_integral(dr/sd);
+			return ctrs;
+		}
+		else {
+			return 0;
+		}
+}
+
+
 void
 all_report 	( const struct GAMES 	*g
 			, const struct PLAYERS 	*p
@@ -404,6 +423,7 @@ all_report 	( const struct GAMES 	*g
 			, struct output_qualifiers	outqual
 			, double				wa_sdev				
 			, double				dr_sdev
+			, const struct DEVIATION_ACC *	s
 			)
 {
 	FILE *f;
@@ -480,10 +500,13 @@ all_report 	( const struct GAMES 	*g
 			}
 
 		} else {
-			fprintf(f, "\n%s %-*s    :%7s %6s %8s %7s %6s\n", 
+			bool_t prev_is = FALSE;
+			player_t prev_j = -1;
+
+			fprintf(f, "\n%s %-*s    :%7s %6s %8s %7s %6s   %s\n", 
 				"   #", 
 				(int)ml, 
-				Player_str, Rating_str, Error_str, Points_str, Played_str, Percent_str);
+				Player_str, Rating_str, Error_str, Points_str, Played_str, Percent_str, Cfsnext_str);
 	
 			for (i = 0; i < p->n; i++) {
 				j = r->sorted[i]; 
@@ -503,10 +526,17 @@ all_report 	( const struct GAMES 	*g
 						rankbuf[0] = '\0';
 					}
 
-					if (showrank
-						|| !hide_old_ver
-					){
-						fprintf(f, "%4s %-*s %s :%7.*f %s %8.1f %7ld %6.1f%s\n", 
+					if (showrank || !hide_old_ver) {
+
+						if (prev_is) {
+							if (s && simulate > 1) {			
+								double delta_rating = r->ratingof_results[prev_j]-r->ratingof_results[j];
+								fprintf(f, "%8.0lf",get_cfs (s, delta_rating, prev_j, j));
+							}
+							fprintf(f, "\n");
+						}
+
+						fprintf(f, "%4s %-*s %s :%7.*f %s %8.1f %7ld %6.1f%s", 
 						rankbuf,
 						(int)ml+1, 
 						p->name[j],
@@ -519,9 +549,15 @@ all_report 	( const struct GAMES 	*g
 						r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/(double)r->playedby_results[j], 
 						"%"
 						);
+		
+						prev_is= TRUE;
+						prev_j = j;
 					}
 				}
 			}
+
+			fprintf (f, "%8s\n","---");
+
 		}
 
 		if (simulate < 2) {
