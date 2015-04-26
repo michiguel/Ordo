@@ -576,7 +576,7 @@ all_report 	( const struct GAMES 	*g
 
 	/* output in a comma separated value file */
 	f = csvf;
-	if (f != NULL) {
+	if (f != NULL && simulate < 2) {
 			fprintf(f, "\"%s\""
 			",\"%s\""
 			",\"%s\""
@@ -628,6 +628,78 @@ all_report 	( const struct GAMES 	*g
 		}
 	}
 
+	if (f != NULL && simulate > 1) {
+
+			bool_t prev_is = FALSE;
+			player_t prev_j = -1;
+
+			fprintf(f, "\"%s\""
+			",\"%s\""
+			",\"%s\""
+			",\"%s\""
+			",\"%s\""
+			",\"%s\""
+			",%s"
+			",%s"
+			"\n"	
+			,"#"	
+			,Player_str
+			,Rating_str 
+			,Error_str
+			,Points_str
+			,Played_str
+			,Percent_str
+			,Cfsnext_str
+			);
+		rank = 0;
+		for (i = 0; i < p->n; i++) {
+			j = r->sorted[i];
+
+			if (ok_to_out (j, &outqual, p, r)) {
+				rank++;
+
+				if (sdev == NULL) {
+					sdev_str = "\"-\"";
+				} else if (sdev[j] > 0.00000001) {
+					sprintf(sdev_str_buffer, "%.1f", sdev[j] * confidence_factor);
+					sdev_str = sdev_str_buffer;
+				} else {
+					sdev_str = "\"-\"";
+				}
+
+
+				if (prev_is) {
+					if (s && simulate > 1) {			
+						double delta_rating = r->ratingof_results[prev_j]-r->ratingof_results[j];
+						fprintf(f, ",%.0lf",get_cfs (s, delta_rating, prev_j, j));
+					}
+					fprintf(f, "\n");
+				}
+
+				fprintf(f, "%d,"
+				"\"%s\",%.1f"
+				",%s"
+				",%.2f"
+				",%ld"
+				",%.2f"
+				//"\n"		
+				,rank
+				,p->name[j]
+				,r->ratingof_results[j] 
+				,sdev_str
+				,r->obtained_results[j]
+				,(long)r->playedby_results[j]
+				,r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/(double)r->playedby_results[j] 
+				);
+
+				prev_is= TRUE;
+				prev_j = j;
+			}
+		}
+
+		fprintf (f, ",\"%s\"","-");
+		fprintf (f, "\n");
+	}
 	return;
 }
 
