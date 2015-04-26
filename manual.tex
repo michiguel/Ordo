@@ -1,3 +1,17 @@
+%\documentclass[12pt]{article}
+
+%\usepackage[T1]{fontenc}
+%\usepackage[latin1]{inputenc}
+%\usepackage{verbatim}
+%\usepackage{url}
+%\usepackage{textcomp}
+%\usepackage{amsmath}
+%\usepackage{alltt}
+%\usepackage{graphicx}
+
+%===========================================================================================
+% format taken from http://tex.stackexchange.com/questions/84478/how-to-format-title-and-abstract
+
 \documentclass[12pt]{article}
 
 \usepackage[T1]{fontenc}
@@ -9,6 +23,33 @@
 \usepackage{alltt}
 \usepackage{graphicx}
 
+\usepackage{lipsum}
+\usepackage{authblk}
+\usepackage[top=2cm, bottom=2cm, left=2cm, right=2cm]{geometry}
+\usepackage{fancyhdr}
+%
+\pagestyle{fancy}
+%
+\renewenvironment{abstract}{%
+\hfill\begin{minipage}{0.95\textwidth}
+\rule{\textwidth}{1pt}}
+{\par\noindent\rule{\textwidth}{1pt}\end{minipage}}
+%
+\makeatletter
+\renewcommand\@maketitle{%
+\hfill
+\begin{minipage}{0.95\textwidth}
+\vskip 2em
+\let\footnote\thanks 
+{\LARGE \@title \par }
+\vskip 1.5em
+{\large \@author \par}
+\end{minipage}
+\vskip 1em \par
+}
+\makeatother
+%
+%===========================================================================================
 %\newcommand{\cmdln}[1] {\begin{quotation}\texttt{#1}\end{quotation}}
 
 \newcommand{\rgstrd} {\textsuperscript{\textregistered{}}}
