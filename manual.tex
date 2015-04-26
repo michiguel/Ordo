@@ -9,7 +9,6 @@
 \usepackage{alltt}
 \usepackage{graphicx}
 
-
 %\newcommand{\cmdln}[1] {\begin{quotation}\texttt{#1}\end{quotation}}
 
 \newcommand{\rgstrd} {\textsuperscript{\textregistered{}}}
@@ -38,7 +37,7 @@
 
 \title{ORDO \input{version.txt} \\ Ratings for chess and other games} 
 \author{Copyright \cpyrht{} 2015 Miguel A. Ballicora\\e-mail: mballicora (at gmail dot com)}
-\date{March 2015}
+\date{April 2015}
 \parindent 0mm 
 \parskip 2mm 
 \begin{document}
@@ -160,6 +159,7 @@ This may be a significant speed-up.
 If simulations have been run, using the switch \swtch{-C} will output a matrix with the confidence for superiority (CFS) between each of the players.
 Each of the numbers is an answer to the question \textit{"What is the maximum confidence I can set the test to show that player x is not inferior to player y and still obtain the same positive answer?"}.
 The matrix file is in \textit{comma separated values} format, and it could be opened by any spreadsheet program if it was saved with the *.csv extension.
+In addition, if the user provides the switch \swtch{-J}, the CFS values between the player and the next one in the ranking will be displayed in the output.
 
 \subsubsection*{Draw rate (for equal opponents)}
 By default, Ordo considers that the draw rate for evenly matched players is 50\%.
@@ -325,7 +325,8 @@ fi
 \end{verbatim}
 
 \subsubsection*{Ordoprep}
-A tool is included to shrink the PGN file to contain only the game results. 
+A tool is available in another distribution\footnote{\url{https://github.com/michiguel/Ordoprep/releases}} to shrink the PGN file.
+The output will contain only the results of the games. 
 In addition, it could discard players that won all games, or lost all games. 
 Other switches allow the exclusion of players that do not have a minimum performance or played too few games.
 
