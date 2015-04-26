@@ -394,7 +394,7 @@ get_cfs (const struct DEVIATION_ACC *sim, double dr, player_t target, player_t o
 			ptrdiff_t idx;
 			double ctrs;
 			double sd;
-			idx = head2head_idx_sdev (target, oth);
+			idx = head2head_idx_sdev ((ptrdiff_t)target, (ptrdiff_t)oth);
 			sd = sim[idx].sdev;
 			ctrs = 100*gauss_integral(dr/sd);
 			return ctrs;
