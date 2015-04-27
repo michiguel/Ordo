@@ -79,7 +79,7 @@
 % Ra just to silence previous coloring, for some reason "Ra" ends it in gedit
 %===========================================================================================
 
-\title{ORDO \input{version.txt} \\ Ratings for chess and other games\footnote{Copyright \cpyrht{} 2015 Miguel A. Ballicora}} 
+\title{ORDO \input{version.txt} \\ Ratings for chess and other games} 
 \author{Miguel A. Ballicora\footnote{e-mail: mballicora (at gmail dot com)}}
 \date{April 2015}
 \parindent 0mm 
@@ -88,7 +88,7 @@
    \maketitle
 
 \begin{abstract}
-Ordo is a program designed to calculate ratings of individual chess engines (or players).
+Ordo\footnote{Copyright \cpyrht{} 2015 Miguel A. Ballicora} is a program designed to calculate ratings of individual chess engines (or players).
 It has a similar concept than the Elo rating\footnote{\url{http://en.wikipedia.org/wiki/Elo_rating_system}}, but with a different model and algorithm. 
 Ordo keeps consistency among ratings because it calculates them considering all results at once.
 In that respect, it behaves similarly to BayesElo\footnote{\url{http://remi.coulom.free.fr/Bayesian-Elo/}}.
@@ -106,9 +106,7 @@ It is a quick and great start for users of that operating system.
 \subsubsection*{GNU/Linux compilation and installation}
 After unzipping the contents, you can type
 \cmdln{make}
-\cmdln{make install}
-or in Ubuntu
-\cmdln{sudo make install}
+\cmdln{make install} or in Ubuntu \cmdln{sudo make install}
 
 \subsubsection*{Usage}
 The input should be a file that adheres to the PGN standard\footnote{\url{http://en.wikipedia.org/wiki/Portable_Game_Notation}}. 
@@ -140,7 +138,7 @@ If you want both, you can use:
 	\cmdln{ordo -a 2500 -p games.pgn -o ratings.txt -c rating.csv}
 
 \subsubsection*{Anchor}
-In addition, \swtch{-A} will fix the rating of a given player as a reference (\textit{anchor}) for the whole pool of players.
+The switch \swtch{-A} will fix the rating of a given player as a reference (\textit{anchor}) for the whole pool.
 
 	\cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt}
 
@@ -154,9 +152,9 @@ With this switch we can complete the above example:
 
 \cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W}
 
-If the user knows that the \textit{white advantage} is most likely a certain value that could vary within a certain range, this uncertainty could be given by the switch \swtch{-u}. 
-Therefore, a combination of switches \swtch{-w <value>} and \swtch{-u <deviation>} may provide a prior information to Ordo to calculate the white advantage.
-When a high number of games is played, this prior information will be less and less relevant.
+If the user knows that the \textit{white advantage} is a value within a certain range, this uncertainty could be given by the switch \swtch{-u}. 
+A combination of switches \swtch{-w <value>} and \swtch{-u <deviation>} may provide a prior information that Ordo will use to calculate the white advantage.
+As the number of games played increases, the prior information will be less and less relevant.
 Ordo assumes a Gaussian distribution centered in \swtch{<value>} with a standard \swtch{<deviation>}.
 
 \subsubsection*{Simulation and errors}
@@ -171,8 +169,8 @@ In this case, the anchor error will be zero since it is the point of reference.
 To get the errors for rating differences between a given pair of players, the switch \swtch{-e~file.csv} should be added.
 It will generate an error matrix saved in \swtch{file.csv}.
 
-To run these simulations, a minimum reasonable number is about \swtch{-s~100}. 
-Take into account that the more simulations, the longer it takes to complete the runs. 
+A minimum reasonable number for the simulations is about \swtch{-s~100}. 
+The more simulations, the longer it takes to complete the runs. 
 The errors calculated will be more accurate, but more than 1000 simulations is probably not needed. 
 This is an example to use these switches:
 
@@ -187,7 +185,8 @@ That is how the output should be interpreted.
 It is incorrect to use this error to estimate relative values against other engines. 
 For that purpose, the switch \swtch{-e} needs to be provided to obtain a matrix with every single error for every engine-engine match ups.
 
-If an anchor (reference) is provided, but the user wants the errors to be relative to the average of the pool, the switch \swtch{-V} should be added in the command line. This is what other rating software has as default.
+If an anchor (reference) is provided, but the user wants relative errors to the average of the pool, the switch \swtch{-V} should be used. 
+This is what other rating software has as default.
 
 \cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W -s1000 -e errors.csv -V}
 
