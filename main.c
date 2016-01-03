@@ -271,9 +271,12 @@ int main (int argc, char *argv[])
 	bool_t adjust_white_advantage;
 	bool_t adjust_draw_rate;
 
+	int input_n;
+	const char *inputfile[1024];
+
 	int cpus = 1;
 	int op;
-	const char *inputf, *textstr, *csvstr, *ematstr, *groupstr, *pinsstr;
+	const char *textstr, *csvstr, *ematstr, *groupstr, *pinsstr;
 	const char *priorsstr, *relstr;
 	const char *head2head_str;
 	const char *ctsmatstr;
@@ -282,6 +285,8 @@ int main (int argc, char *argv[])
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE, switch_d=FALSE, switch_k=FALSE, switch_D=FALSE;
 
 	/* defaults */
+	input_n = 0;
+	inputfile[input_n] = NULL;
 	adjust_white_advantage = FALSE;
 	adjust_draw_rate = FALSE;
 	quiet_mode   	= FALSE;
@@ -292,7 +297,6 @@ int main (int argc, char *argv[])
 	switch_mode  	= FALSE;
 	input_mode   	= FALSE;
 	table_mode   	= FALSE;
-	inputf       	= NULL;
 	textstr 	 	= NULL;
 	csvstr       	= NULL;
 	ematstr 	 	= NULL;
@@ -318,7 +322,8 @@ int main (int argc, char *argv[])
 			case 'h':	help_mode = TRUE;		break;
 			case 'H':	switch_mode = TRUE;		break;
 			case 'p': 	input_mode = TRUE;
-					 	inputf = opt_arg;
+						inputfile[input_n++] = opt_arg;
+						inputfile[input_n] = NULL;
 						break;
 			case 'c': 	csvstr = opt_arg;
 						break;
@@ -494,24 +499,14 @@ int main (int argc, char *argv[])
 		table_output(Rtng_76);
 		exit (EXIT_SUCCESS);
 	}
-	if ((argc - opt_index) > 1) {
-		/* too many parameters */
-		fprintf (stderr, "ERROR: Extra parameters present\n");
-		fprintf (stderr, "Make sure to surround parameters with \"quotes\" if they contain spaces\n\n");
-		exit(EXIT_FAILURE);
-	}
-	if (input_mode && argc != opt_index) {
-		fprintf (stderr, "Extra parameters present\n");
-		fprintf (stderr, "Make sure to surround parameters with \"quotes\" if they contain spaces\n\n");
-		exit(EXIT_FAILURE);
-	}
 	if (!input_mode && argc == opt_index) {
 		fprintf (stderr, "Need file name to proceed\n\n");
 		exit(EXIT_FAILURE);
 	}
 	/* get folder, should be only one at this point */
 	while (opt_index < argc ) {
-		inputf = argv[opt_index++];
+		inputfile[input_n++] = argv[opt_index++];
+		inputfile[input_n] = NULL;
 	}
 
 	/*==== Incorrect combination of switches ====*/
@@ -548,14 +543,14 @@ int main (int argc, char *argv[])
 
 	/*==== set input ====*/
 
-	if (NULL != (pdaba = database_init_frompgn(inputf, quiet_mode))) {
+	if (NULL != (pdaba = database_init_frompgn (inputfile, quiet_mode))) {
 		if (0 == pdaba->n_players || 0 == pdaba->n_games) {
 			fprintf (stderr, "ERROR: Input file contains no games\n");
 			return EXIT_FAILURE; 			
 		}
 		if (Ignore_draws) database_ignore_draws(pdaba);
 	} else {
-		fprintf (stderr, "Problems reading results from: %s\n", inputf);
+		fprintf (stderr, "Problems reading results\n");
 		return EXIT_FAILURE; 
 	}
 

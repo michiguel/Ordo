@@ -171,20 +171,26 @@ structdata_done (struct DATA *d)
 \*--------------------------------------------------------------*/
 
 struct DATA *
-database_init_frompgn (const char *pgn, bool_t quiet)
+database_init_frompgn (const char *pgn_i[], bool_t quiet)
 {
 
 	struct DATA *pDAB = NULL;
 	FILE *fpgn;
 	bool_t ok = FALSE;
+	const char *pgn;
 
 	ok = NULL != (pDAB = structdata_init ());
 
-	if (ok) {
+	pgn = *pgn_i++;
+	while (ok && pgn) {
+		printf ("\nFile: %s\n",pgn);
 		if (NULL != (fpgn = fopen (pgn, "r"))) {
 			ok = fpgnscan (fpgn, quiet, pDAB);
 			fclose(fpgn);
+		} else {
+			ok = FALSE;
 		}
+		if (ok) pgn = *pgn_i++;
 	}
 	return ok? pDAB: NULL;
 
@@ -535,7 +541,7 @@ fpgnscan (FILE *fpgn, bool_t quiet, struct DATA *d)
 		return FALSE;
 
 	if (!quiet) 
-		printf("\nLoading data (%d games x dot): \n\n",games_x_dot); fflush(stdout);
+		printf("Loading data (%d games x dot): \n\n",games_x_dot); fflush(stdout);
 
 	pgn_result_reset  (&result);
 
