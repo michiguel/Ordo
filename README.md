@@ -51,6 +51,10 @@ In addition, -A will fix the rating of a given player as a reference anchor for 
 That will calculate the ratings from games.pgn, save it in ratings.txt, and anchor the engine Engine X to a rating of 2800.
 Names that contain spaces should be surrounded by quote marks as in this example.
 
+If several input files are used, they can be listed after '--'
+
+`ordo -a 2800 -A "Engine X" -o ratings.txt -- input1.pgn input2.pgn input3.pgn`
+
 ### Help
 Other switches are available and information about them can be obtained by typing
 
