@@ -452,7 +452,12 @@ all_report 	( const struct GAMES 	*g
 
 	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
 
-	/* output in text format */
+	/* 
+	|
+	|	output in text format 
+	|
+	\--------------------------------*/
+
 	f = textf;
 	if (f != NULL) {
 
@@ -581,10 +586,16 @@ all_report 	( const struct GAMES 	*g
 
 	} /*if*/
 
-	/* output in a comma separated value file */
+	/* 
+	|
+	|	output in a comma separated value file 
+	|
+	\-------------------------------------------*/
+
 	f = csvf;
 	if (f != NULL && simulate < 2) {
-			fprintf(f, "\"%s\""
+
+		fprintf(f, "\"%s\""
 			",\"%s\""
 			",\"%s\""
 			",\"%s\""
@@ -600,6 +611,7 @@ all_report 	( const struct GAMES 	*g
 			,Played_str
 			,Percent_str
 			);
+
 		rank = 0;
 		for (i = 0; i < p->n; i++) {
 			j = r->sorted[i];
@@ -637,10 +649,10 @@ all_report 	( const struct GAMES 	*g
 
 	if (f != NULL && simulate > 1) {
 
-			bool_t prev_is = FALSE;
-			player_t prev_j = -1;
+		bool_t prev_is = FALSE;
+		player_t prev_j = -1;
 
-			fprintf(f, "\"%s\""
+		fprintf(f, "\"%s\""
 			",\"%s\""
 			",\"%s\""
 			",\"%s\""
@@ -659,7 +671,8 @@ all_report 	( const struct GAMES 	*g
 			,Percent_str
 			,csf_column?",":""		
 			,csf_column?Cfsnext_str:""
-			);
+		);
+
 		rank = 0;
 		for (i = 0; i < p->n; i++) {
 			j = r->sorted[i];
@@ -667,15 +680,12 @@ all_report 	( const struct GAMES 	*g
 			if (ok_to_out (j, &outqual, p, r)) {
 				rank++;
 
-				if (sdev == NULL) {
+				if (sdev == NULL || sdev[j] <= 0.00000001) {
 					sdev_str = "\"-\"";
-				} else if (sdev[j] > 0.00000001) {
+				} else {
 					sprintf(sdev_str_buffer, "%.1f", sdev[j] * confidence_factor);
 					sdev_str = sdev_str_buffer;
-				} else {
-					sdev_str = "\"-\"";
 				}
-
 
 				if (prev_is) {
 					if (s && simulate > 1 && csf_column) {			
