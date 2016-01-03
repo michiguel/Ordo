@@ -466,11 +466,14 @@ all_report 	( const struct GAMES 	*g
 		if (ml < strlen(Player_str)) ml = strlen(Player_str);
 
 		if (simulate < 2) {
-			fprintf(f, "\n%s %-*s    :%7s %9s %7s %6s\n", 
-				"   #", 			
-				(int)ml,
-				Player_str, Rating_str, Points_str, Played_str, Percent_str);
-	
+
+			fprintf(f, "\n%s %-*s    :","   #",	(int)ml, Player_str);
+			fprintf(f, " %*s", 6, Rating_str);
+			fprintf(f, " %*s", 9, Points_str);
+			fprintf(f, " %*s", 7, Played_str);
+			fprintf(f, " %*s", 6, Percent_str);
+			fprintf(f, "\n");
+
 			for (i = 0; i < p->n; i++) {
 
 				j = r->sorted[i]; 
@@ -489,18 +492,12 @@ all_report 	( const struct GAMES 	*g
 					if (showrank
 						|| !hide_old_ver
 					){
-						fprintf(f, "%4s %-*s %s :%7.*f %9.1f %7ld %6.1f%s\n", 
-							rankbuf,
-							(int)ml+1,
-							p->name[j],
-							get_super_player_symbolstr(j,p),
-							decimals,
-							rating_round (r->ratingof_results[j], decimals), 
-							r->obtained_results[j], 
-							(long)r->playedby_results[j], 
-							r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], 
-							"%"
-						);
+						fprintf(f, "%*s %-*s %s :", 4,	rankbuf, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) );
+						fprintf(f, " %*.*f", 6, decimals, rating_round (r->ratingof_results[j], decimals) );
+						fprintf(f, " %*.1f", 9, r->obtained_results[j] );
+						fprintf(f, " %*ld" , 7, (long)r->playedby_results[j] );
+						fprintf(f, " %*.1f%s", 6, r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], "%");
+						fprintf(f, "\n"); 
 					}
 				} 
 			}
@@ -509,10 +506,12 @@ all_report 	( const struct GAMES 	*g
 			bool_t prev_is = FALSE;
 			player_t prev_j = -1;
 
-			fprintf(f, "\n%s %-*s    :%7s %6s %8s %7s %6s", 
-				"   #", 
-				(int)ml, 
-				Player_str, Rating_str, Error_str, Points_str, Played_str, Percent_str);
+			fprintf(f, "\n%s %-*s    :","   #", (int)ml, Player_str);
+			fprintf(f, " %*s", 6, Rating_str);
+			fprintf(f, " %*s", 6, Error_str);
+			fprintf(f, " %*s", 8, Points_str);
+			fprintf(f, " %*s", 7, Played_str);
+			fprintf(f, " %*s", 6, Percent_str);
 
 			if (csf_column)
 			fprintf(f, "   %s", Cfsnext_str);
@@ -547,20 +546,14 @@ all_report 	( const struct GAMES 	*g
 							fprintf(f, "\n");
 						}
 
-						fprintf(f, "%4s %-*s %s :%7.*f %s %8.1f %7ld %6.1f%s", 
-						rankbuf,
-						(int)ml+1, 
-						p->name[j],
-						get_super_player_symbolstr(j,p),
-						decimals,
-						rating_round(r->ratingof_results[j], decimals), 
-						sdev_str, 
-						r->obtained_results[j], 
-						(long)r->playedby_results[j], 
-						r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/(double)r->playedby_results[j], 
-						"%"
-						);
-		
+						fprintf(f, "%*s %-*s %s :", 4,	rankbuf, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) );
+
+						fprintf(f, " %*.*f", 6, decimals, rating_round (r->ratingof_results[j], decimals) );
+						fprintf(f, " %s", sdev_str );
+						fprintf(f, " %*.1f", 8, r->obtained_results[j] );
+						fprintf(f, " %*ld" , 7, (long)r->playedby_results[j] );
+						fprintf(f, " %*.1f%s", 6, r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], "%");
+
 						prev_is= TRUE;
 						prev_j = j;
 					}
