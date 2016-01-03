@@ -183,7 +183,7 @@ database_init_frompgn (const char *pgn_i[], bool_t quiet)
 
 	pgn = *pgn_i++;
 	while (ok && pgn) {
-		printf ("\nFile: %s\n",pgn);
+		if (!quiet)	printf ("\nFile: %s\n",pgn);
 		if (NULL != (fpgn = fopen (pgn, "r"))) {
 			ok = fpgnscan (fpgn, quiet, pDAB);
 			fclose(fpgn);
