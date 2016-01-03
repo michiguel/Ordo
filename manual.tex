@@ -137,6 +137,17 @@ If you want both, you can use:
 
 	\cmdln{ordo -a 2500 -p games.pgn -o ratings.txt -c rating.csv}
 
+\subsubsection*{Multiple input files}
+Ordo can use several pgn input files at the same time.
+It is not needed to combine them beforehand.
+To do list, each file could be listed after the switch \swtch{-}\swtch{-} like this
+
+	\cmdln{ordo -a 2500 -p g1.pgn -o ratings.txt -c rating.csv \swtch{-}\swtch{-} g2.pgn g3.pgn "Other games.pgn"}
+
+For that reason, the switch \swtch{-p} can be omitted and all files could be listed after \swtch{-}\swtch{-}
+
+	\cmdln{ordo -a 2500 -o ratings.txt -c rating.csv \swtch{-}\swtch{-} g1.pgn g2.pgn g3.pgn "Other games.pgn"}
+
 \subsubsection*{Anchor}
 The switch \swtch{-A} will fix the rating of a given player as a reference (\textit{anchor}) for the whole pool.
 
@@ -150,7 +161,7 @@ The switch \swtch{-w} sets the rating advantage for having white pieces in chess
 Alternatively, the (highly recommended) switch \swtch{-W} lets Ordo calculate it automatically. 
 With this switch we can complete the above example:
 
-\cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W}
+	\cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W}
 
 If the user knows that the \textit{white advantage} is a value within a certain range, this uncertainty could be given by the switch \swtch{-u}. 
 A combination of switches \swtch{-w <value>} and \swtch{-u <deviation>} may provide a prior information that Ordo will use to calculate the white advantage.

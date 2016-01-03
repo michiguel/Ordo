@@ -1,2 +1,2 @@
-#define VERSION "1.0-mf1"
+#define VERSION "1.0-mf2"
 
