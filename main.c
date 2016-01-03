@@ -244,6 +244,8 @@ calc_encounters__
 
 int main (int argc, char *argv[])
 {
+	enum filelimit {INPUTMAX=1024};
+
 	struct summations sfe; // summations for errors
 
 	struct DATA *pdaba;
@@ -272,7 +274,7 @@ int main (int argc, char *argv[])
 	bool_t adjust_draw_rate;
 
 	int input_n;
-	const char *inputfile[1024];
+	const char *inputfile[INPUTMAX+1];
 
 	int cpus = 1;
 	int op;
@@ -504,9 +506,13 @@ int main (int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 	/* get folder, should be only one at this point */
-	while (opt_index < argc ) {
+	while (opt_index < argc && input_n < INPUTMAX) {
 		inputfile[input_n++] = argv[opt_index++];
 		inputfile[input_n] = NULL;
+	}
+	if (opt_index < argc && input_n == INPUTMAX) {
+		fprintf (stderr, "Too many input files\n\n");
+		exit(EXIT_FAILURE);
 	}
 
 	/*==== Incorrect combination of switches ====*/
