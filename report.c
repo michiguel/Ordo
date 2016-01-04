@@ -320,7 +320,7 @@ static const char *Rating_str = "RATING";
 static const char *Error_str  = "ERROR";
 static const char *Points_str = "POINTS";
 static const char *Played_str = "PLAYED";
-static const char *Percent_str = "(%)";
+static const char *Percent_str = "(%) ";
 static const char *Cfsnext_str = "CFS(next)";
 
 // Function provided to have all head to head information
@@ -390,18 +390,45 @@ is_empty_player(player_t j, const struct PLAYERS *pPlayers)
 static double
 get_cfs (const struct DEVIATION_ACC *sim, double dr, player_t target, player_t oth)
 {
-		if (sim != NULL) {
-			ptrdiff_t idx;
-			double ctrs;
-			double sd;
-			idx = head2head_idx_sdev ((ptrdiff_t)target, (ptrdiff_t)oth);
-			sd = sim[idx].sdev;
-			ctrs = 100*gauss_integral(dr/sd);
-			return ctrs;
-		}
-		else {
-			return 0;
-		}
+	double ret;
+	if (sim != NULL) {
+		ptrdiff_t idx;
+		double ctrs;
+		double sd;
+		idx = head2head_idx_sdev ((ptrdiff_t)target, (ptrdiff_t)oth);
+		sd = sim[idx].sdev;
+		ctrs = 100*gauss_integral(dr/sd);
+		ret = ctrs;
+	}
+	else {
+		ret = 0;
+	}
+	return ret;
+}
+
+static void
+prnt_singleitem
+			( int item
+			, FILE *f
+			, int decimals
+			, const struct PLAYERS 	*p
+			, const struct RATINGS 	*r
+			, player_t i
+			, player_t j
+			, size_t ml
+			, const char *rankbuf
+			, const char *sdev_str
+)
+{
+	switch (item) {
+		case 0:	fprintf(f, "%*s %-*s %s :", 4,	rankbuf, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) ); break;
+		case 1:	fprintf(f, " %*.*f", 6, decimals, rating_round (r->ratingof_results[j], decimals) ); break;
+		case 2:	fprintf(f, " %s", sdev_str ); break;
+		case 3:	fprintf(f, " %*.1f", 9, r->obtained_results[j] ); break;
+		case 4:	fprintf(f, " %*ld" , 7, (long)r->playedby_results[j] ); break;
+		case 5:	fprintf(f, " %*.1f%s", 6, r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], "%"); break;
+		default:  break;
+	}
 }
 
 static void
@@ -414,25 +441,34 @@ prnt_item(	FILE *f
 			, size_t ml
 			, const char *rankbuf
 			, const char *sdev_str
+			, int *list
 )
 {
-	fprintf(f, "%*s %-*s %s :", 4,	rankbuf, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) );
-	fprintf(f, " %*.*f", 6, decimals, rating_round (r->ratingof_results[j], decimals) );
-	fprintf(f, " %s", sdev_str );
-	fprintf(f, " %*.1f", 8, r->obtained_results[j] );
-	fprintf(f, " %*ld" , 7, (long)r->playedby_results[j] );
-	fprintf(f, " %*.1f%s", 6, r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], "%");
+	int item;
+	for (item = 0; list[item] != -1; item++)
+		prnt_singleitem(list[item], f, decimals, p, r, i, j, ml, rankbuf, sdev_str);
 }
 
 static void
-prnt_header (FILE *f, size_t ml)
+prnt_header_single (int item, FILE *f, size_t ml)
 {
-	fprintf(f, "\n%s %-*s    :","   #", (int)ml, Player_str);
-	fprintf(f, " %*s", 6, Rating_str);
-	fprintf(f, " %*s", 6, Error_str);
-	fprintf(f, " %*s", 8, Points_str);
-	fprintf(f, " %*s", 7, Played_str);
-	fprintf(f, " %*s", 6, Percent_str);
+	switch (item) {
+		case 0: fprintf(f, "\n%s %-*s    :","   #", (int)ml, Player_str); break;
+		case 1: fprintf(f, " %*s", 6, Rating_str); break;
+		case 2: fprintf(f, " %*s", 6, Error_str); break;
+		case 3: fprintf(f, " %*s", 9, Points_str); break;
+		case 4: fprintf(f, " %*s", 7, Played_str); break;
+		case 5: fprintf(f, " %*s", 7, Percent_str); break;
+		default: break;
+	}
+}
+
+static void
+prnt_header (FILE *f, size_t ml, int *list)
+{
+	int item;
+	for (item = 0; list[item] != -1; item++)
+		prnt_header_single (list[item], f, ml);
 }
 
 void
@@ -457,12 +493,16 @@ all_report 	( const struct GAMES 	*g
 			, bool_t csf_column
 			)
 {
+
+int list[] = {0,1,2,3,4,5,-1};
+int list_no_sim[] = {0,1,3,4,5,-1};
+
 	FILE *f;
 	player_t i;
 	player_t j;
 	size_t ml;
 	char sdev_str_buffer[80];
-	const char *sdev_str;
+	const char *sdev_str = "";
 	int rank = 0;
 	bool_t showrank = TRUE;
 
@@ -497,11 +537,7 @@ all_report 	( const struct GAMES 	*g
 
 		if (simulate < 2) {
 
-			fprintf(f, "\n%s %-*s    :","   #",	(int)ml, Player_str);
-			fprintf(f, " %*s", 6, Rating_str);
-			fprintf(f, " %*s", 9, Points_str);
-			fprintf(f, " %*s", 7, Played_str);
-			fprintf(f, " %*s", 6, Percent_str);
+			prnt_header (f, ml, list_no_sim);
 			fprintf(f, "\n");
 
 			for (i = 0; i < p->n; i++) {
@@ -519,24 +555,23 @@ all_report 	( const struct GAMES 	*g
 						rankbuf[0] = '\0';
 					}
 
-					if (showrank
-						|| !hide_old_ver
-					){
-						fprintf(f, "%*s %-*s %s :", 4,	rankbuf, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) );
-						fprintf(f, " %*.*f", 6, decimals, rating_round (r->ratingof_results[j], decimals) );
-						fprintf(f, " %*.1f", 9, r->obtained_results[j] );
-						fprintf(f, " %*ld" , 7, (long)r->playedby_results[j] );
-						fprintf(f, " %*.1f%s", 6, r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], "%");
-						fprintf(f, "\n"); 
+					if (showrank || !hide_old_ver){
+						prnt_item (f, decimals, p, r, i, j, ml, rankbuf, sdev_str, list_no_sim);
+						fprintf(f, "\n");
 					}
 				} 
 			}
+
+			fprintf (f,"\n");
+			fprintf (f,"White advantage = %.2f\n", white_advantage);
+			fprintf (f,"Draw rate (equal opponents) = %.2f %s\n",100*drawrate_evenmatch, "%");
+			fprintf (f,"\n");
 
 		} else {
 			bool_t prev_is = FALSE;
 			player_t prev_j = -1;
 
-			prnt_header (f, ml);
+			prnt_header (f, ml, list);
 
 			if (csf_column)
 			fprintf(f, "   %s", Cfsnext_str);
@@ -566,12 +601,12 @@ all_report 	( const struct GAMES 	*g
 						if (prev_is) {
 							if (s && simulate > 1 && csf_column) {			
 								double delta_rating = r->ratingof_results[prev_j]-r->ratingof_results[j];
-								fprintf(f, "%8.0lf",get_cfs (s, delta_rating, prev_j, j));
+								fprintf(f, "%8.0lf", get_cfs(s, delta_rating, prev_j, j));
 							}
 							fprintf(f, "\n");
 						}
 
-						prnt_item (f, decimals, p, r, i, j, ml, rankbuf, sdev_str);
+						prnt_item (f, decimals, p, r, i, j, ml, rankbuf, sdev_str, list);
 
 						prev_is= TRUE;
 						prev_j = j;
@@ -582,14 +617,6 @@ all_report 	( const struct GAMES 	*g
 			if (csf_column)	fprintf (f, "%8s","---");
 			fprintf (f, "\n");
 
-		}
-
-		if (simulate < 2) {
-			fprintf (f,"\n");
-			fprintf (f,"White advantage = %.2f\n", white_advantage);
-			fprintf (f,"Draw rate (equal opponents) = %.2f %s\n",100*drawrate_evenmatch, "%");
-			fprintf (f,"\n");
-		} else {
 			fprintf (f,"\n");
 			fprintf (f,"White advantage = %.2f +/- %.2f\n",white_advantage, wa_sdev);
 			fprintf (f,"Draw rate (equal opponents) = %.2f %s +/- %.2f\n",100*drawrate_evenmatch, "%", 100*dr_sdev);
