@@ -404,6 +404,36 @@ get_cfs (const struct DEVIATION_ACC *sim, double dr, player_t target, player_t o
 		}
 }
 
+static void
+prnt_item(	FILE *f
+			, int decimals
+			, const struct PLAYERS 	*p
+			, const struct RATINGS 	*r
+			, player_t i
+			, player_t j
+			, size_t ml
+			, const char *rankbuf
+			, const char *sdev_str
+)
+{
+	fprintf(f, "%*s %-*s %s :", 4,	rankbuf, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) );
+	fprintf(f, " %*.*f", 6, decimals, rating_round (r->ratingof_results[j], decimals) );
+	fprintf(f, " %s", sdev_str );
+	fprintf(f, " %*.1f", 8, r->obtained_results[j] );
+	fprintf(f, " %*ld" , 7, (long)r->playedby_results[j] );
+	fprintf(f, " %*.1f%s", 6, r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], "%");
+}
+
+static void
+prnt_header (FILE *f, size_t ml)
+{
+	fprintf(f, "\n%s %-*s    :","   #", (int)ml, Player_str);
+	fprintf(f, " %*s", 6, Rating_str);
+	fprintf(f, " %*s", 6, Error_str);
+	fprintf(f, " %*s", 8, Points_str);
+	fprintf(f, " %*s", 7, Played_str);
+	fprintf(f, " %*s", 6, Percent_str);
+}
 
 void
 all_report 	( const struct GAMES 	*g
@@ -506,12 +536,7 @@ all_report 	( const struct GAMES 	*g
 			bool_t prev_is = FALSE;
 			player_t prev_j = -1;
 
-			fprintf(f, "\n%s %-*s    :","   #", (int)ml, Player_str);
-			fprintf(f, " %*s", 6, Rating_str);
-			fprintf(f, " %*s", 6, Error_str);
-			fprintf(f, " %*s", 8, Points_str);
-			fprintf(f, " %*s", 7, Played_str);
-			fprintf(f, " %*s", 6, Percent_str);
+			prnt_header (f, ml);
 
 			if (csf_column)
 			fprintf(f, "   %s", Cfsnext_str);
@@ -546,13 +571,7 @@ all_report 	( const struct GAMES 	*g
 							fprintf(f, "\n");
 						}
 
-						fprintf(f, "%*s %-*s %s :", 4,	rankbuf, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) );
-
-						fprintf(f, " %*.*f", 6, decimals, rating_round (r->ratingof_results[j], decimals) );
-						fprintf(f, " %s", sdev_str );
-						fprintf(f, " %*.1f", 8, r->obtained_results[j] );
-						fprintf(f, " %*ld" , 7, (long)r->playedby_results[j] );
-						fprintf(f, " %*.1f%s", 6, r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], "%");
+						prnt_item (f, decimals, p, r, i, j, ml, rankbuf, sdev_str);
 
 						prev_is= TRUE;
 						prev_j = j;
