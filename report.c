@@ -613,31 +613,10 @@ int *list_chosen = NULL;
 
 		if (simulate < 2) {
 
-			prnt_header (f, ml, list_no_sim);
+			prnt_header (f, ml, list_chosen);
 			fprintf(f, "\n");
 
 #if 0
-			for (i = 0; i < p->n; i++) {
-
-				j = r->sorted[i]; 
-
-				if (ok_to_out (j, &outqual, p, r)) {
-
-					char rankbuf[80];
-					showrank = !is_old_version(j, rps); 
-					if (showrank) {
-						rank++;
-						sprintf(rankbuf,"%d",rank);
-					} else {
-						rankbuf[0] = '\0';
-					}
-
-					if (showrank || !hide_old_ver){
-						prnt_item (f, decimals, p, r, j, ml, rankbuf, sdev_str, list_no_sim);
-						fprintf(f, "\n");
-					}
-				} 
-			}
 #else
 {
 
@@ -647,7 +626,6 @@ char *rank_str = NULL;
 char rank_str_buffer[80];
 
 			for (i = 0; i < p->n; i++) {
-
 				j = r->sorted[i]; 
 
 				assert(r->playedby_results[j] != 0 || is_empty_player(j,p));
@@ -661,7 +639,7 @@ char rank_str_buffer[80];
 					if (showrank || !hide_old_ver) {
 
 						if (x > 0 && s && simulate > 1 && csf_column) {		
-							int prev_j = q.j[x-1];	
+							player_t prev_j = q.j[x-1];	
 							double delta_rating = r->ratingof_results[prev_j] - r->ratingof_results[j];
 							q.cfs_value[x-1] = get_cfs(s, delta_rating, prev_j, j);
 							q.cfs_is_ok[x-1] = TRUE;
@@ -689,6 +667,9 @@ char rank_str_buffer[80];
 				fprintf (f, "\n");
 
 			}
+
+
+
 }
 #endif
 			fprintf (f,"\n");
@@ -697,10 +678,8 @@ char rank_str_buffer[80];
 			fprintf (f,"\n");
 
 		} else {
-			bool_t prev_is = FALSE;
-			player_t prev_j = -1;
 
-			prnt_header (f, ml, list);
+			prnt_header (f, ml, list_chosen);
 
 			if (csf_column)
 			fprintf(f, "   %s", Cfsnext_str);
@@ -708,57 +687,7 @@ char rank_str_buffer[80];
 			fprintf(f, "\n");
 
 #if 0
-			for (i = 0; i < p->n; i++) {
-				j = r->sorted[i]; 
-
-				sdev_str = sdev? get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer, decimals): NOSDEV;
-
-				assert(r->playedby_results[j] != 0 || is_empty_player(j,p));
-
-				if (ok_to_out (j, &outqual, p, r)) {
-
-					char rankbuf[80];
-					showrank = !is_old_version(j, rps);
-					if (showrank) {
-						rank++;
-						sprintf(rankbuf,"%d",rank);
-					} else {
-						rankbuf[0] = '\0';
-					}
-
-					if (showrank || !hide_old_ver) {
-
-						if (prev_is) {
-							if (s && simulate > 1 && csf_column) {			
-								double delta_rating = r->ratingof_results[prev_j]-r->ratingof_results[j];
-								fprintf(f, "%8.0lf", get_cfs(s, delta_rating, prev_j, j));
-							}
-							fprintf(f, "\n");
-						}
-
-						prnt_item (f, decimals, p, r, j, ml, rankbuf, sdev_str, list);
-
-						prev_is= TRUE;
-						prev_j = j;
-					}
-				}
-			}
-
-			if (csf_column)	fprintf (f, "%8s","---");
-			fprintf (f, "\n");
-
 #else
-
-
-
-
-
-
-
-
-
-
-
 {
 
 int			x = 0;
@@ -780,7 +709,7 @@ char rank_str_buffer[80];
 					if (showrank || !hide_old_ver) {
 
 						if (x > 0 && s && simulate > 1 && csf_column) {		
-							int prev_j = q.j[x-1];	
+							player_t prev_j = q.j[x-1];	
 							double delta_rating = r->ratingof_results[prev_j] - r->ratingof_results[j];
 							q.cfs_value[x-1] = get_cfs(s, delta_rating, prev_j, j);
 							q.cfs_is_ok[x-1] = TRUE;
@@ -813,17 +742,6 @@ char rank_str_buffer[80];
 
 }
 #endif
-
-
-
-
-
-
-
-
-
-
-
 
 			fprintf (f,"\n");
 			fprintf (f,"White advantage = %.2f +/- %.2f\n",white_advantage, wa_sdev);
