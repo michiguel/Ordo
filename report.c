@@ -528,6 +528,7 @@ prnt_header_single (int item, FILE *f, size_t ml)
 		case 3: fprintf(f, " %*s", 9, Points_str); break;
 		case 4: fprintf(f, " %*s", 7, Played_str); break;
 		case 5: fprintf(f, " %*s", 7, Percent_str); break;
+		case 6: fprintf(f, "   %s", Cfsnext_str); break;
 		default: break;
 	}
 }
@@ -605,26 +606,18 @@ int *list_chosen = NULL;
 		if (ml > 50) ml = 50;
 		if (ml < strlen(Player_str)) ml = strlen(Player_str);
 
-		if (simulate < 2) {
-			list_chosen = list_no_sim;
-		} else {
-			list_chosen = list;
-		}
+		list_chosen = simulate < 2? list_no_sim: list;
 
-		if (simulate < 2) {
+		prnt_header (f, ml, list_chosen);
+		fprintf(f, "\n");
 
-			prnt_header (f, ml, list_chosen);
-			fprintf(f, "\n");
+		{
+			int	x = 0;
+			int x_max = 0;
+			char *rank_str = NULL;
+			char rank_str_buffer[80];
 
-#if 0
-#else
-{
-
-int			x = 0;
-int x_max = 0;
-char *rank_str = NULL;
-char rank_str_buffer[80];
-
+			/* calculation for printing */
 			for (i = 0; i < p->n; i++) {
 				j = r->sorted[i]; 
 
@@ -657,6 +650,7 @@ char rank_str_buffer[80];
 			x_max = x;
 
 
+			/* actual printing */
 			for (x = 0; x < x_max; x++) {
 				j = q.j[x];
 
@@ -667,82 +661,14 @@ char rank_str_buffer[80];
 				fprintf (f, "\n");
 
 			}
+		}
 
-
-
-}
-#endif
+		if (simulate < 2) {
 			fprintf (f,"\n");
 			fprintf (f,"White advantage = %.2f\n", white_advantage);
 			fprintf (f,"Draw rate (equal opponents) = %.2f %s\n",100*drawrate_evenmatch, "%");
 			fprintf (f,"\n");
-
 		} else {
-
-			prnt_header (f, ml, list_chosen);
-
-			if (csf_column)
-			fprintf(f, "   %s", Cfsnext_str);
-
-			fprintf(f, "\n");
-
-#if 0
-#else
-{
-
-int			x = 0;
-int x_max = 0;
-char *rank_str = NULL;
-char rank_str_buffer[80];
-
-			for (i = 0; i < p->n; i++) {
-				j = r->sorted[i]; 
-
-				assert(r->playedby_results[j] != 0 || is_empty_player(j,p));
-
-				if (ok_to_out (j, &outqual, p, r)) {
-					showrank = !is_old_version(j, rps);
-					if (showrank) {
-						rank++;
-					} 
-
-					if (showrank || !hide_old_ver) {
-
-						if (x > 0 && s && simulate > 1 && csf_column) {		
-							player_t prev_j = q.j[x-1];	
-							double delta_rating = r->ratingof_results[prev_j] - r->ratingof_results[j];
-							q.cfs_value[x-1] = get_cfs(s, delta_rating, prev_j, j);
-							q.cfs_is_ok[x-1] = TRUE;
-						}
-
-						q.j[x] = j;
-						q.rnk_value[x] = rank;
-						q.rnk_is_ok[x] = showrank;
-						q.cfs_value[x] = 0; 
-						q.cfs_is_ok[x] = FALSE;
-						x++;
-					}
-				}
-			}
-			x_max = x;
-
-
-			for (x = 0; x < x_max; x++) {
-				j = q.j[x];
-
-				sdev_str = sdev? get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer, decimals): NOSDEV;
-				rank_str = q.rnk_is_ok[x]? get_rank_str (q.rnk_value[x], rank_str_buffer): "";
-
-				prnt_item_ (f, decimals, p, r, j, ml, rank_str, sdev_str, list_chosen, &q, x);
-				fprintf (f, "\n");
-
-			}
-
-
-
-}
-#endif
-
 			fprintf (f,"\n");
 			fprintf (f,"White advantage = %.2f +/- %.2f\n",white_advantage, wa_sdev);
 			fprintf (f,"Draw rate (equal opponents) = %.2f %s +/- %.2f\n",100*drawrate_evenmatch, "%", 100*dr_sdev);
