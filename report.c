@@ -413,7 +413,6 @@ prnt_singleitem
 			, int decimals
 			, const struct PLAYERS 	*p
 			, const struct RATINGS 	*r
-			, player_t i
 			, player_t j
 			, size_t ml
 			, const char *rankbuf
@@ -436,7 +435,6 @@ prnt_item(	FILE *f
 			, int decimals
 			, const struct PLAYERS 	*p
 			, const struct RATINGS 	*r
-			, player_t i
 			, player_t j
 			, size_t ml
 			, const char *rankbuf
@@ -446,7 +444,7 @@ prnt_item(	FILE *f
 {
 	int item;
 	for (item = 0; list[item] != -1; item++)
-		prnt_singleitem(list[item], f, decimals, p, r, i, j, ml, rankbuf, sdev_str);
+		prnt_singleitem(list[item], f, decimals, p, r, j, ml, rankbuf, sdev_str);
 }
 
 static void
@@ -556,7 +554,7 @@ int list_no_sim[] = {0,1,3,4,5,-1};
 					}
 
 					if (showrank || !hide_old_ver){
-						prnt_item (f, decimals, p, r, i, j, ml, rankbuf, sdev_str, list_no_sim);
+						prnt_item (f, decimals, p, r, j, ml, rankbuf, sdev_str, list_no_sim);
 						fprintf(f, "\n");
 					}
 				} 
@@ -606,7 +604,7 @@ int list_no_sim[] = {0,1,3,4,5,-1};
 							fprintf(f, "\n");
 						}
 
-						prnt_item (f, decimals, p, r, i, j, ml, rankbuf, sdev_str, list);
+						prnt_item (f, decimals, p, r, j, ml, rankbuf, sdev_str, list);
 
 						prev_is= TRUE;
 						prev_j = j;
