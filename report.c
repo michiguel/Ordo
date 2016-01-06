@@ -667,47 +667,52 @@ int x_max = 0;
 		if (list_chosen[z] == -1) {list_chosen[z] = 6; list_chosen[z+1] = -1;}
 	}
 
+
+
+	/* calculation for printing */
+	for (i = 0; i < p->n; i++) {
+		j = r->sorted[i]; 
+
+		assert(r->playedby_results[j] != 0 || is_empty_player(j,p));
+
+		if (ok_to_out (j, outqual, p, r)) {
+			showrank = !is_old_version(j, rps);
+			if (showrank) {
+				rank++;
+			} 
+
+			if (showrank || !hide_old_ver) {
+
+				if (x > 0 && s && simulate > 1) 
+				{		
+					player_t prev_j = q.j[x-1];	
+					double delta_rating = r->ratingof_results[prev_j] - r->ratingof_results[j];
+					q.cfs_value[x-1] = get_cfs(s, delta_rating, prev_j, j);
+					q.cfs_is_ok[x-1] = TRUE;
+				}
+
+				q.j[x] = j;
+				q.rnk_value[x] = rank;
+				q.rnk_is_ok[x] = showrank;
+				q.cfs_value[x] = 0; 
+				q.cfs_is_ok[x] = FALSE;
+				x++;
+			}
+		}
+	}
+	x_max = x;
+
 	/* 
 	|
 	|	output in text format 
 	|
 	\--------------------------------*/
 
-			/* calculation for printing */
-			for (i = 0; i < p->n; i++) {
-				j = r->sorted[i]; 
-
-				assert(r->playedby_results[j] != 0 || is_empty_player(j,p));
-
-				if (ok_to_out (j, outqual, p, r)) {
-					showrank = !is_old_version(j, rps);
-					if (showrank) {
-						rank++;
-					} 
-
-					if (showrank || !hide_old_ver) {
-
-						if (x > 0 && s && simulate > 1) 
-						{		
-							player_t prev_j = q.j[x-1];	
-							double delta_rating = r->ratingof_results[prev_j] - r->ratingof_results[j];
-							q.cfs_value[x-1] = get_cfs(s, delta_rating, prev_j, j);
-							q.cfs_is_ok[x-1] = TRUE;
-						}
-
-						q.j[x] = j;
-						q.rnk_value[x] = rank;
-						q.rnk_is_ok[x] = showrank;
-						q.cfs_value[x] = 0; 
-						q.cfs_is_ok[x] = FALSE;
-						x++;
-					}
-				}
-			}
-			x_max = x;
-
 	f = textf;
 	if (f != NULL) {
+
+		const char *rank_str = NULL;
+		char rank_str_buffer[80];
 
 		ml = find_maxlen (p->name, (size_t)p->n);
 		if (ml > 50) ml = 50;
@@ -716,21 +721,15 @@ int x_max = 0;
 		prnt_header (f, ml, list_chosen);
 		fprintf(f, "\n");
 
-		{
-			const char *rank_str = NULL;
-			char rank_str_buffer[80];
+		/* actual printing */
+		for (x = 0; x < x_max; x++) {
+			j = q.j[x];
 
-			/* actual printing */
-			for (x = 0; x < x_max; x++) {
-				j = q.j[x];
+			sdev_str = sdev? get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer, decimals): NOSDEV;
+			rank_str = q.rnk_is_ok[x]? get_rank_str (q.rnk_value[x], rank_str_buffer): "";
 
-				sdev_str = sdev? get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer, decimals): NOSDEV;
-				rank_str = q.rnk_is_ok[x]? get_rank_str (q.rnk_value[x], rank_str_buffer): "";
-
-				prnt_item_ (f, decimals, p, r, j, ml, rank_str, sdev_str, list_chosen, &q, x);
-				fprintf (f, "\n");
-
-			}
+			prnt_item_ (f, decimals, p, r, j, ml, rank_str, sdev_str, list_chosen, &q, x);
+			fprintf (f, "\n");
 		}
 
 		if (simulate < 2) {
@@ -773,6 +772,7 @@ int x_max = 0;
 			fprintf (f, "\n");
 		}
 	}
+
 	return;
 }
 
