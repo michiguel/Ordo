@@ -246,6 +246,19 @@ get_sdev_str (double sdev, double confidence_factor, char *str, int decimals)
 	return str;
 }
 
+#define NOSDEV_csv "-"
+
+static char *
+get_sdev_str_csv (double sdev, double confidence_factor, char *str, int decimals)
+{
+	double x = sdev * confidence_factor;
+	if (sdev > 0.00000001) {
+		sprintf(str, "%.*f", decimals, rating_round(x, decimals));
+	} else {
+		sprintf(str, "%s", NOSDEV_csv);
+	}
+	return str;
+}
 
 static bool_t
 ok_to_out (player_t j, const struct output_qualifiers outqual, const struct PLAYERS *p, const struct RATINGS *r)
@@ -499,6 +512,104 @@ prnt_header (FILE *f, size_t ml, int *list)
 		prnt_header_single (list[item], f, ml);
 }
 
+
+static char *
+quoted_str (const char *s, char *buffer)
+{
+	sprintf(buffer, "\"%s\"", s);
+	return buffer;
+}
+
+static void
+prnt_header_single_csv (int item, FILE *f)
+{
+	char buffer[80];
+
+	switch (item) {
+		case 0: fprintf(f,  "%s", quoted_str(        "#",buffer)); 
+		        fprintf(f, ",%s", quoted_str( Player_str,buffer)); break;
+		case 1: fprintf(f, ",%s", quoted_str( Rating_str,buffer)); break;
+		case 2: fprintf(f, ",%s", quoted_str(  Error_str,buffer)); break;
+		case 3: fprintf(f, ",%s", quoted_str( Points_str,buffer)); break;
+		case 4: fprintf(f, ",%s", quoted_str( Played_str,buffer)); break;
+		case 5: fprintf(f, ",%s", quoted_str(Percent_str,buffer)); break;
+		case 6: fprintf(f, ",%s", quoted_str(Cfsnext_str,buffer)); break;
+		default: break;
+	}
+}
+
+static void
+prnt_header_csv (FILE *f, int *list)
+{
+	int item;
+	for (item = 0; list[item] != -1; item++)
+		prnt_header_single_csv (list[item], f);
+}
+
+
+
+
+
+
+static void
+prnt_singleitem_csv
+			( int item
+			, FILE *f
+			, int decimals
+			, const struct PLAYERS 	*p
+			, const struct RATINGS 	*r
+			, player_t j
+			, int rank
+			, const char *sdev_str
+			, const char *cfs_str
+)
+{
+	switch (item) {
+		case 0:	
+				fprintf(f, "%d,"	,rank);
+				fprintf(f, "\"%s\""	,p->name[j]);
+ 				break;
+		case 1:	fprintf(f, ",%.*f"	,decimals, r->ratingof_results[j]);  break;
+		case 2:	fprintf(f, ",%s"	,sdev_str); break;
+		case 3:	fprintf(f, ",%.2f"	,r->obtained_results[j]); break;
+		case 4:	fprintf(f, ",%ld"	,(long)r->playedby_results[j]); break;
+		case 5:	fprintf(f, ",%.2f"	,r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/(double)r->playedby_results[j]); break;
+		case 6:	fprintf(f, ",%s" , cfs_str); break;
+		default:  break;
+	}
+}
+
+static void
+prnt_item_csv
+			( FILE *f
+			, int decimals
+			, const struct PLAYERS 	*p
+			, const struct RATINGS 	*r
+			, player_t j
+			, int rank
+			, const char *sdev_str
+			, int *list
+			, struct OUT_EXTRA *pq
+			, int x
+)
+{
+	int item;
+	const char *cfs_str;
+	char cfs_buf[80];
+
+	sprintf(cfs_buf, "%.0lf", pq->cfs_value[x]);
+	cfs_str = pq->cfs_is_ok[x]? cfs_buf : "\"-\"";
+
+	for (item = 0; list[item] != -1; item++)
+		prnt_singleitem_csv (list[item], f, decimals, p, r, j, rank, sdev_str, cfs_str);
+}
+
+
+
+
+
+
+
 void
 all_report 	( const struct GAMES 			*g
 			, const struct PLAYERS 			*p
@@ -526,6 +637,9 @@ static struct OUT_EXTRA q;
 int list[] = {0,1,2,3,4,5,6,-1,-1,-1};
 int list_no_sim[] = {0,1,3,4,5,-1,-1};
 int *list_chosen = NULL;
+
+			int	x = 0;
+			int x_max = 0;
 
 	FILE *f;
 	player_t i;
@@ -579,8 +693,7 @@ int *list_chosen = NULL;
 		fprintf(f, "\n");
 
 		{
-			int	x = 0;
-			int x_max = 0;
+
 			const char *rank_str = NULL;
 			char rank_str_buffer[80];
 
@@ -708,75 +821,19 @@ int *list_chosen = NULL;
 
 	if (f != NULL && simulate > 1) {
 
-		bool_t prev_is = FALSE;
-		player_t prev_j = -1;
+		prnt_header_csv (f, list_chosen);
+		fprintf(f, "\n");
 
-		fprintf(f, "\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",%s"
-			"%s"
-			"%s"
-			"\n"	
-			,"#"	
-			,Player_str
-			,Rating_str 
-			,Error_str
-			,Points_str
-			,Played_str
-			,Percent_str
-			,csf_column?",":""		
-			,csf_column?Cfsnext_str:""
-		);
+		/* actual printing */
+		for (x = 0; x < x_max; x++) {
+			int rank_int;
+			j = q.j[x];
 
-		rank = 0;
-		for (i = 0; i < p->n; i++) {
-			j = r->sorted[i];
-
-			if (ok_to_out (j, outqual, p, r)) {
-				rank++;
-
-				if (sdev == NULL || sdev[j] <= 0.00000001) {
-					sdev_str = "\"-\"";
-				} else {
-					sprintf(sdev_str_buffer, "%.1f", sdev[j] * confidence_factor);
-					sdev_str = sdev_str_buffer;
-				}
-
-				if (prev_is) {
-					if (s && simulate > 1 && csf_column) {			
-						double delta_rating = r->ratingof_results[prev_j]-r->ratingof_results[j];
-						fprintf(f, ",%.0lf",get_cfs (s, delta_rating, prev_j, j));
-					}
-					fprintf(f, "\n");
-				}
-
-				fprintf(f, "%d,"
-				"\"%s\",%.1f"
-				",%s"
-				",%.2f"
-				",%ld"
-				",%.2f"
-				//"\n"		
-				,rank
-				,p->name[j]
-				,r->ratingof_results[j] 
-				,sdev_str
-				,r->obtained_results[j]
-				,(long)r->playedby_results[j]
-				,r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/(double)r->playedby_results[j] 
-				);
-
-				prev_is= TRUE;
-				prev_j = j;
-			}
+			sdev_str = sdev? get_sdev_str_csv (sdev[j], confidence_factor, sdev_str_buffer, decimals): NOSDEV_csv;
+			rank_int = q.rnk_value[x];
+			prnt_item_csv (f, decimals, p, r, j, rank_int, sdev_str, list_chosen, &q, x);
+			fprintf (f, "\n");
 		}
-
-		if (csf_column) fprintf (f, ",\"%s\"","-");
-		fprintf (f, "\n");
 	}
 	return;
 }
