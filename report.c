@@ -246,7 +246,7 @@ get_sdev_str (double sdev, double confidence_factor, char *str, int decimals)
 	return str;
 }
 
-#define NOSDEV_csv "-"
+#define NOSDEV_csv "\"-\""
 
 static char *
 get_sdev_str_csv (double sdev, double confidence_factor, char *str, int decimals)
@@ -636,6 +636,7 @@ static struct OUT_EXTRA q;
 
 int list[] = {0,1,2,3,4,5,6,-1,-1,-1};
 int list_no_sim[] = {0,1,3,4,5,-1,-1};
+int list_no_sim_csv[] = {0,1,2,3,4,5,-1,-1};
 int *list_chosen = NULL;
 
 			int	x = 0;
@@ -765,61 +766,10 @@ int *list_chosen = NULL;
 	\-------------------------------------------*/
 
 	f = csvf;
-	if (f != NULL && simulate < 2) {
 
-		fprintf(f, "\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",%s"
-			"\n"	
-			,"#"	
-			,Player_str
-			,Rating_str 
-			,Error_str
-			,Points_str
-			,Played_str
-			,Percent_str
-			);
+	if (f != NULL) {
 
-		rank = 0;
-		for (i = 0; i < p->n; i++) {
-			j = r->sorted[i];
-
-			if (ok_to_out (j, outqual, p, r)) {
-				rank++;
-
-				if (sdev == NULL) {
-					sdev_str = "\"-\"";
-				} else if (sdev[j] > 0.00000001) {
-					sprintf(sdev_str_buffer, "%.1f", sdev[j] * confidence_factor);
-					sdev_str = sdev_str_buffer;
-				} else {
-					sdev_str = "\"-\"";
-				}
-
-				fprintf(f, "%d,"
-				"\"%s\",%.1f"
-				",%s"
-				",%.2f"
-				",%ld"
-				",%.2f"
-				"\n"		
-				,rank
-				,p->name[j]
-				,r->ratingof_results[j] 
-				,sdev_str
-				,r->obtained_results[j]
-				,(long)r->playedby_results[j]
-				,r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/(double)r->playedby_results[j] 
-				);
-			}
-		}
-	}
-
-	if (f != NULL && simulate > 1) {
+		if (simulate < 2) list_chosen = list_no_sim_csv;
 
 		prnt_header_csv (f, list_chosen);
 		fprintf(f, "\n");
