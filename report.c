@@ -428,6 +428,13 @@ get_rank_str (int rank, char *buffer)
 	return buffer;
 }
 
+static char *
+quoted_str (const char *s, char *buffer)
+{
+	sprintf(buffer, "\"%s\"", s);
+	return buffer;
+}
+
 #define N_EXTRA 10000
 struct OUT_EXTRA {
 	player_t	j[N_EXTRA];
@@ -494,12 +501,12 @@ prnt_header_single (int item, FILE *f, size_t ml)
 {
 	switch (item) {
 		case 0: fprintf(f, "\n%s %-*s    :","   #", (int)ml, Player_str); break;
-		case 1: fprintf(f, " %*s", 6, Rating_str); break;
-		case 2: fprintf(f, " %*s", 6, Error_str); break;
-		case 3: fprintf(f, " %*s", 9, Points_str); break;
-		case 4: fprintf(f, " %*s", 7, Played_str); break;
-		case 5: fprintf(f, " %*s ", 6, Percent_str); break;
-		case 6: fprintf(f, "   %s", Cfsnext_str); break;
+		case 1: fprintf(f, " %*s"  , 6, Rating_str); break;
+		case 2: fprintf(f, " %*s"  , 6, Error_str); break;
+		case 3: fprintf(f, " %*s"  ,  9, Points_str); break;
+		case 4: fprintf(f, " %*s"  , 7, Played_str); break;
+		case 5: fprintf(f, " %*s " , 6, Percent_str); break;
+		case 6: fprintf(f, "   %s" , Cfsnext_str); break;
 		default: break;
 	}
 }
@@ -510,14 +517,6 @@ prnt_header (FILE *f, size_t ml, int *list)
 	int item;
 	for (item = 0; list[item] != -1; item++)
 		prnt_header_single (list[item], f, ml);
-}
-
-
-static char *
-quoted_str (const char *s, char *buffer)
-{
-	sprintf(buffer, "\"%s\"", s);
-	return buffer;
 }
 
 static void
@@ -545,11 +544,6 @@ prnt_header_csv (FILE *f, int *list)
 	for (item = 0; list[item] != -1; item++)
 		prnt_header_single_csv (list[item], f);
 }
-
-
-
-
-
 
 static void
 prnt_singleitem_csv
@@ -604,8 +598,7 @@ prnt_item_csv
 		prnt_singleitem_csv (list[item], f, decimals, p, r, j, rank, sdev_str, cfs_str);
 }
 
-
-
+//----
 
 void
 all_report 	( const struct GAMES 			*g
@@ -636,8 +629,8 @@ int list_no_sim[] = {0,1,3,4,5,-1,-1};
 int list_no_sim_csv[] = {0,1,2,3,4,5,-1,-1};
 int *list_chosen = NULL;
 
-			int	x = 0;
-			int x_max = 0;
+int	x = 0;
+int x_max = 0;
 
 	FILE *f;
 	player_t i;
@@ -680,21 +673,6 @@ int *list_chosen = NULL;
 	|
 	\--------------------------------*/
 
-	f = textf;
-	if (f != NULL) {
-
-		ml = find_maxlen (p->name, (size_t)p->n);
-		if (ml > 50) ml = 50;
-		if (ml < strlen(Player_str)) ml = strlen(Player_str);
-
-		prnt_header (f, ml, list_chosen);
-		fprintf(f, "\n");
-
-		{
-
-			const char *rank_str = NULL;
-			char rank_str_buffer[80];
-
 			/* calculation for printing */
 			for (i = 0; i < p->n; i++) {
 				j = r->sorted[i]; 
@@ -728,6 +706,19 @@ int *list_chosen = NULL;
 			}
 			x_max = x;
 
+	f = textf;
+	if (f != NULL) {
+
+		ml = find_maxlen (p->name, (size_t)p->n);
+		if (ml > 50) ml = 50;
+		if (ml < strlen(Player_str)) ml = strlen(Player_str);
+
+		prnt_header (f, ml, list_chosen);
+		fprintf(f, "\n");
+
+		{
+			const char *rank_str = NULL;
+			char rank_str_buffer[80];
 
 			/* actual printing */
 			for (x = 0; x < x_max; x++) {
