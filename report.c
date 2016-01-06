@@ -248,12 +248,12 @@ get_sdev_str (double sdev, double confidence_factor, char *str, int decimals)
 
 
 static bool_t
-ok_to_out (player_t j, const struct output_qualifiers *poutqual, const struct PLAYERS *p, const struct RATINGS *r)
+ok_to_out (player_t j, const struct output_qualifiers outqual, const struct PLAYERS *p, const struct RATINGS *r)
 {
 	gamesnum_t games = r->playedby_results[j];
 	bool_t ok = !p->flagged[j]
 				&& games > 0
-				&& (!poutqual->mingames_set || games >= poutqual->mingames);
+				&& (!outqual.mingames_set || games >= outqual.mingames);
 	return ok;
 } 
 
@@ -424,8 +424,6 @@ struct OUT_EXTRA {
 	double 	cfs_value[N_EXTRA];
 };
 
-static struct OUT_EXTRA q;
-
 static void
 prnt_singleitem
 			( int item
@@ -542,30 +540,31 @@ prnt_header (FILE *f, size_t ml, int *list)
 }
 
 void
-all_report 	( const struct GAMES 	*g
-			, const struct PLAYERS 	*p
-			, const struct RATINGS 	*r
-			, const struct rel_prior_set *rps
-			, struct ENCOUNTERS 	*e  // memory just provided for local calculations
-			, double 				*sdev
-			, long 					simulate
-			, bool_t				hide_old_ver
-			, double				confidence_factor
-			, FILE 					*csvf
-			, FILE 					*textf
-			, double 				white_advantage
-			, double 				drawrate_evenmatch
-			, int					decimals
-			, struct output_qualifiers	outqual
-			, double				wa_sdev				
-			, double				dr_sdev
+all_report 	( const struct GAMES 			*g
+			, const struct PLAYERS 			*p
+			, const struct RATINGS 			*r
+			, const struct rel_prior_set 	*rps
+			, struct ENCOUNTERS 			*e  // memory just provided for local calculations
+			, double 						*sdev
+			, long 							simulate
+			, bool_t						hide_old_ver
+			, double						confidence_factor
+			, FILE 							*csvf
+			, FILE 							*textf
+			, double 						white_advantage
+			, double 						drawrate_evenmatch
+			, int							decimals
+			, struct output_qualifiers		outqual
+			, double						wa_sdev				
+			, double						dr_sdev
 			, const struct DEVIATION_ACC *	s
-			, bool_t csf_column
+			, bool_t 						csf_column
 			)
 {
+static struct OUT_EXTRA q;
 
-int list[] = {0,1,2,3,4,5,6,-1};
-int list_no_sim[] = {0,1,3,4,5,-1};
+int list[] = {0,1,2,3,4,5,6,-1,-1,-1};
+int list_no_sim[] = {0,1,3,4,5,-1,-1};
 int *list_chosen = NULL;
 
 	FILE *f;
@@ -593,6 +592,16 @@ int *list_chosen = NULL;
 
 	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
 
+	list_chosen = simulate < 2? list_no_sim: list;
+
+	if (csf_column) { // force 6 in list_chosen
+		int z;
+		for (z = 0; list_chosen[z] != -1 && list_chosen[z] != 6; z++) {
+			;
+		}
+		if (list_chosen[z] == -1) {list_chosen[z] = 6; list_chosen[z+1] = -1;}
+	}
+
 	/* 
 	|
 	|	output in text format 
@@ -605,8 +614,6 @@ int *list_chosen = NULL;
 		ml = find_maxlen (p->name, (size_t)p->n);
 		if (ml > 50) ml = 50;
 		if (ml < strlen(Player_str)) ml = strlen(Player_str);
-
-		list_chosen = simulate < 2? list_no_sim: list;
 
 		prnt_header (f, ml, list_chosen);
 		fprintf(f, "\n");
@@ -623,7 +630,7 @@ int *list_chosen = NULL;
 
 				assert(r->playedby_results[j] != 0 || is_empty_player(j,p));
 
-				if (ok_to_out (j, &outqual, p, r)) {
+				if (ok_to_out (j, outqual, p, r)) {
 					showrank = !is_old_version(j, rps);
 					if (showrank) {
 						rank++;
@@ -631,7 +638,8 @@ int *list_chosen = NULL;
 
 					if (showrank || !hide_old_ver) {
 
-						if (x > 0 && s && simulate > 1 && csf_column) {		
+						if (x > 0 && s && simulate > 1) 
+						{		
 							player_t prev_j = q.j[x-1];	
 							double delta_rating = r->ratingof_results[prev_j] - r->ratingof_results[j];
 							q.cfs_value[x-1] = get_cfs(s, delta_rating, prev_j, j);
@@ -707,7 +715,7 @@ int *list_chosen = NULL;
 		for (i = 0; i < p->n; i++) {
 			j = r->sorted[i];
 
-			if (ok_to_out (j, &outqual, p, r)) {
+			if (ok_to_out (j, outqual, p, r)) {
 				rank++;
 
 				if (sdev == NULL) {
@@ -768,7 +776,7 @@ int *list_chosen = NULL;
 		for (i = 0; i < p->n; i++) {
 			j = r->sorted[i];
 
-			if (ok_to_out (j, &outqual, p, r)) {
+			if (ok_to_out (j, outqual, p, r)) {
 				rank++;
 
 				if (sdev == NULL || sdev[j] <= 0.00000001) {
