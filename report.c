@@ -333,7 +333,7 @@ static const char *Rating_str = "RATING";
 static const char *Error_str  = "ERROR";
 static const char *Points_str = "POINTS";
 static const char *Played_str = "PLAYED";
-static const char *Percent_str = "(%) ";
+static const char *Percent_str = "(%)";
 static const char *Cfsnext_str = "CFS(next)";
 
 // Function provided to have all head to head information
@@ -498,7 +498,7 @@ prnt_header_single (int item, FILE *f, size_t ml)
 		case 2: fprintf(f, " %*s", 6, Error_str); break;
 		case 3: fprintf(f, " %*s", 9, Points_str); break;
 		case 4: fprintf(f, " %*s", 7, Played_str); break;
-		case 5: fprintf(f, " %*s", 7, Percent_str); break;
+		case 5: fprintf(f, " %*s ", 6, Percent_str); break;
 		case 6: fprintf(f, "   %s", Cfsnext_str); break;
 		default: break;
 	}
@@ -603,9 +603,6 @@ prnt_item_csv
 	for (item = 0; list[item] != -1; item++)
 		prnt_singleitem_csv (list[item], f, decimals, p, r, j, rank, sdev_str, cfs_str);
 }
-
-
-
 
 
 
