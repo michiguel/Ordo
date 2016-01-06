@@ -408,7 +408,7 @@ get_cfs (const struct DEVIATION_ACC *sim, double dr, player_t target, player_t o
 
 //=====================
 
-char *
+static char *
 get_rank_str (int rank, char *buffer)
 {
 	sprintf(buffer,"%d",rank);
@@ -417,36 +417,12 @@ get_rank_str (int rank, char *buffer)
 
 #define N_EXTRA 10000
 struct OUT_EXTRA {
-	int 	j[N_EXTRA];
-	bool_t 	rnk_is_ok[N_EXTRA];
-	int		rnk_value[N_EXTRA];
-	bool_t	cfs_is_ok[N_EXTRA];
-	double 	cfs_value[N_EXTRA];
+	player_t	j[N_EXTRA];
+	bool_t 		rnk_is_ok[N_EXTRA];
+	int			rnk_value[N_EXTRA];
+	bool_t		cfs_is_ok[N_EXTRA];
+	double 		cfs_value[N_EXTRA];
 };
-
-static void
-prnt_singleitem
-			( int item
-			, FILE *f
-			, int decimals
-			, const struct PLAYERS 	*p
-			, const struct RATINGS 	*r
-			, player_t j
-			, size_t ml
-			, const char *rankbuf
-			, const char *sdev_str
-)
-{
-	switch (item) {
-		case 0:	fprintf(f, "%*s %-*s %s :", 4,	rankbuf, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) ); break;
-		case 1:	fprintf(f, " %*.*f", 6, decimals, rating_round (r->ratingof_results[j], decimals) ); break;
-		case 2:	fprintf(f, " %s", sdev_str ); break;
-		case 3:	fprintf(f, " %*.1f", 9, r->obtained_results[j] ); break;
-		case 4:	fprintf(f, " %*ld" , 7, (long)r->playedby_results[j] ); break;
-		case 5:	fprintf(f, " %*.1f%s", 6, r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], "%"); break;
-		default:  break;
-	}
-}
 
 static void
 prnt_singleitem_
@@ -489,7 +465,7 @@ prnt_item_(	FILE *f
 )
 {
 	int item;
-	char *cfs_str;
+	const char *cfs_str;
 	char cfs_buf[80];
 
 	sprintf(cfs_buf, "%7.0lf", pq->cfs_value[x]);
@@ -499,22 +475,6 @@ prnt_item_(	FILE *f
 		prnt_singleitem_(list[item], f, decimals, p, r, j, ml, rankbuf, sdev_str, cfs_str);
 }
 
-static void
-prnt_item(	FILE *f
-			, int decimals
-			, const struct PLAYERS 	*p
-			, const struct RATINGS 	*r
-			, player_t j
-			, size_t ml
-			, const char *rankbuf
-			, const char *sdev_str
-			, int *list
-)
-{
-	int item;
-	for (item = 0; list[item] != -1; item++)
-		prnt_singleitem(list[item], f, decimals, p, r, j, ml, rankbuf, sdev_str);
-}
 
 static void
 prnt_header_single (int item, FILE *f, size_t ml)
@@ -621,7 +581,7 @@ int *list_chosen = NULL;
 		{
 			int	x = 0;
 			int x_max = 0;
-			char *rank_str = NULL;
+			const char *rank_str = NULL;
 			char rank_str_buffer[80];
 
 			/* calculation for printing */
