@@ -598,7 +598,14 @@ prnt_item_csv
 		prnt_singleitem_csv (list[item], f, decimals, p, r, j, rank, sdev_str, cfs_str);
 }
 
-//----
+static void
+list_remove_item (int *list, int x);
+
+/* 
+|
+|	Major report function 
+|
+\--------------------------------*/
 
 void
 all_report 	( const struct GAMES 			*g
@@ -620,12 +627,14 @@ all_report 	( const struct GAMES 			*g
 			, double						dr_sdev
 			, const struct DEVIATION_ACC *	s
 			, bool_t 						csf_column
+			, int							*inp_list
 			)
 {
+//FIXME make q dynamic
+//FIXME add a list_chosen dynamically
+
 static struct OUT_EXTRA q;
 
-int list[] = {0,1,2,3,4,5,6,-1,-1,-1};
-int list_no_sim[] = {0,1,3,4,5,-1,-1};
 int list_no_sim_csv[] = {0,1,2,3,4,5,-1,-1};
 int *list_chosen = NULL;
 
@@ -657,7 +666,9 @@ int x_max = 0;
 
 	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
 
-	list_chosen = simulate < 2? list_no_sim: list;
+	list_chosen = inp_list;
+	if (simulate < 2) 
+		list_remove_item (list_chosen, 2);
 
 	if (csf_column) { // force 6 in list_chosen
 		int z;
@@ -776,6 +787,63 @@ int x_max = 0;
 	return;
 }
 
+static char *
+string_dup (const char *s)
+{
+	char *p;
+	char *q;
+	size_t len = strlen(s);
+	p = malloc (len + 1);
+	if (p == NULL) return NULL;
+	q = p;
+	while (*s) *p++ = *s++;
+	*p = '\0';
+	return q;
+}
+
+bool_t
+str2list (const char *inp_str, int max, int *n, int *t)
+{
+	bool_t end_reached = FALSE;
+	int value;
+	int counter = 0;
+	char *s;
+	char *p;
+	char *d;
+	bool_t ok = TRUE;
+
+	if (NULL != (d = string_dup(inp_str))) {
+
+		p = d;
+		s = d;
+
+		for (end_reached = FALSE; !end_reached && ok;) {
+			while (*p != ',' && *p != '\0') 
+				p++;
+			end_reached = *p == '\0';
+			*p++ = '\0';
+			ok = 1 == sscanf (s, "%d", &value) && counter < max;
+			if (ok) {*t++ = value; counter++;}
+			s = p;
+		}
+
+		free(d);
+	}
+
+	if (ok)	*t = -1;
+	*n = counter;
+	return ok;
+}
+
+static void
+list_remove_item (int *list, int x)
+{
+	int *t;
+	int *p = list;
+	while (*p != -1 && *p != x) {p++;}
+	while (*p != -1) {t = p++; *t = *p;}
+
+}
 
 void
 errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out, double confidence_factor)

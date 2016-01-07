@@ -244,7 +244,7 @@ calc_encounters__
 
 int main (int argc, char *argv[])
 {
-	enum filelimit {INPUTMAX=1024};
+	enum mainlimits {INPUTMAX=1024, COLSMAX=256};
 
 	struct summations sfe; // summations for errors
 
@@ -275,6 +275,9 @@ int main (int argc, char *argv[])
 
 	int input_n;
 	const char *inputfile[INPUTMAX+1];
+
+	int columns_n;
+	int columns[COLSMAX+1];
 
 	int cpus = 1;
 	int op;
@@ -504,6 +507,10 @@ int main (int argc, char *argv[])
 	if (!input_mode && argc == opt_index) {
 		fprintf (stderr, "Need file name to proceed\n\n");
 		exit(EXIT_FAILURE);
+	}
+	if (!str2list ("0,1,2,3,4,5", COLSMAX, &columns_n, columns)) {
+		fprintf (stderr, "Columns number provided are wrong or exceeded limit (%d)\n\n", COLSMAX);
+		exit(EXIT_FAILURE);		
 	}
 	/* get folder, should be only one at this point */
 	while (opt_index < argc && input_n < INPUTMAX) {
@@ -957,6 +964,7 @@ int main (int argc, char *argv[])
 				, sfe.dr_sdev
 				, sfe.relative
 				, cfs_column
+				, columns
 				);
 
 	#if 0
