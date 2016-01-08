@@ -466,7 +466,7 @@ prnt_singleitem_
 		case 3:	fprintf(f, " %*.1f", 9, r->obtained_results[j] ); break;
 		case 4:	fprintf(f, " %*ld" , 7, (long)r->playedby_results[j] ); break;
 		case 5:	fprintf(f, " %*.1f%s", 6, r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], "%"); break;
-		case 6:	fprintf(f, " %s" , cfs_str); break;
+		case 6:	fprintf(f, " %s    " , cfs_str); break;
 		default:  break;
 	}
 }
@@ -504,7 +504,7 @@ prnt_header_single (int item, FILE *f, size_t ml)
 		case 0: fprintf(f, "\n%s %-*s    :","   #", (int)ml, Player_str); break;
 		case 1: fprintf(f, " %*s"  , 6, Rating_str); break;
 		case 2: fprintf(f, " %*s"  , 6, Error_str); break;
-		case 3: fprintf(f, " %*s"  ,  9, Points_str); break;
+		case 3: fprintf(f, " %*s"  , 9, Points_str); break;
 		case 4: fprintf(f, " %*s"  , 7, Played_str); break;
 		case 5: fprintf(f, " %*s " , 6, Percent_str); break;
 		case 6: fprintf(f, "   %s" , Cfsnext_str); break;
