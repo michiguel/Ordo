@@ -601,6 +601,31 @@ prnt_item_csv
 static void
 list_remove_item (int *list, int x);
 
+static size_t
+listlen(int *x)
+{
+	int *ori = x;
+	while (*x != -1) x++;
+	return (size_t)(x - ori);
+}
+
+static void
+listcopy (const int *s, int *t)
+{
+	while (*s != -1) *t++ = *s++;
+	*t = -1;
+}
+
+static void
+addabsent (int *list_chosen, int a)
+{
+	int z;
+	for (z = 0; list_chosen[z] != -1 && list_chosen[z] != a; z++) {
+		;
+	}
+	if (list_chosen[z] == -1) {list_chosen[z] = a; list_chosen[z+1] = -1;}
+}
+
 /* 
 |
 |	Major report function 
@@ -637,6 +662,7 @@ static struct OUT_EXTRA q;
 
 int list_no_sim_csv[] = {0,1,2,3,4,5,-1,-1};
 int *list_chosen = NULL;
+int *listbuff = NULL;
 
 int	x = 0;
 int x_max = 0;
@@ -666,7 +692,18 @@ int x_max = 0;
 
 	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
 
-	list_chosen = inp_list;
+//
+	{
+		size_t ll = listlen (inp_list);
+		listbuff = malloc ( (sizeof (inp_list[0])) * (ll + 2));
+		if (NULL == listbuff) {
+			fprintf(stderr, "Not enough memory for list creation\n");
+			exit (EXIT_FAILURE);
+		}
+		listcopy (inp_list, listbuff);
+	}
+
+	list_chosen = listbuff;
 	if (simulate < 2) 
 		list_remove_item (list_chosen, 2);
 
@@ -767,7 +804,18 @@ int x_max = 0;
 
 	if (f != NULL) {
 
-		if (simulate < 2) list_chosen = list_no_sim_csv;
+		listcopy (inp_list, listbuff);
+		list_chosen = listbuff;
+//		if (simulate < 2) 
+//			list_remove_item (list_chosen, 2);
+
+		if (csf_column) { // force 6 in list_chosen
+			int z;
+			for (z = 0; list_chosen[z] != -1 && list_chosen[z] != 6; z++) {
+				;
+			}
+			if (list_chosen[z] == -1) {list_chosen[z] = 6; list_chosen[z+1] = -1;}
+		}
 
 		prnt_header_csv (f, list_chosen);
 		fprintf(f, "\n");
@@ -784,6 +832,8 @@ int x_max = 0;
 		}
 	}
 
+
+	free (listbuff);
 	return;
 }
 
