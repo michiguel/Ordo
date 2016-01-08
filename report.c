@@ -690,7 +690,7 @@ static struct OUT_EXTRA q;
 
 	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
 
-//
+	// initialize listbuff
 	{
 		size_t ll = listlen (inp_list);
 		listbuff = malloc ( (sizeof (inp_list[0])) * (ll + 2));
