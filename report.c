@@ -436,12 +436,13 @@ quoted_str (const char *s, char *buffer)
 }
 
 #define N_EXTRA 10000
-struct OUT_EXTRA {
-	player_t	j[N_EXTRA];
-	bool_t 		rnk_is_ok[N_EXTRA];
-	int			rnk_value[N_EXTRA];
-	bool_t		cfs_is_ok[N_EXTRA];
-	double 		cfs_value[N_EXTRA];
+
+struct outextra {
+	player_t	j;
+	bool_t 		rnk_is_ok;
+	int			rnk_value;
+	bool_t		cfs_is_ok;
+	double 		cfs_value;
 };
 
 static void
@@ -480,7 +481,7 @@ prnt_item_(	FILE *f
 			, const char *rankbuf
 			, const char *sdev_str
 			, int *list
-			, struct OUT_EXTRA *pq
+			, struct outextra *pq
 			, int x
 )
 {
@@ -488,8 +489,8 @@ prnt_item_(	FILE *f
 	const char *cfs_str;
 	char cfs_buf[80];
 
-	sprintf(cfs_buf, "%7.0lf", pq->cfs_value[x]);
-	cfs_str = pq->cfs_is_ok[x]? cfs_buf : "    ---";
+	sprintf(cfs_buf, "%7.0lf", pq[x].cfs_value);
+	cfs_str = pq[x].cfs_is_ok? cfs_buf : "    ---";
 
 	for (item = 0; list[item] != -1; item++)
 		prnt_singleitem_(list[item], f, decimals, p, r, j, ml, rankbuf, sdev_str, cfs_str);
@@ -583,7 +584,7 @@ prnt_item_csv
 			, int rank
 			, const char *sdev_str
 			, int *list
-			, struct OUT_EXTRA *pq
+			, struct outextra *pq
 			, int x
 )
 {
@@ -591,8 +592,8 @@ prnt_item_csv
 	const char *cfs_str;
 	char cfs_buf[80];
 
-	sprintf(cfs_buf, "%.0lf", pq->cfs_value[x]);
-	cfs_str = pq->cfs_is_ok[x]? cfs_buf : "\"-\"";
+	sprintf(cfs_buf, "%.0lf", pq[x].cfs_value);
+	cfs_str = pq[x].cfs_is_ok? cfs_buf : "\"-\"";
 
 	for (item = 0; list[item] != -1; item++)
 		prnt_singleitem_csv (list[item], f, decimals, p, r, j, rank, sdev_str, cfs_str);
@@ -655,9 +656,7 @@ all_report 	( const struct GAMES 			*g
 			, int							*inp_list
 			)
 {
-//FIXME make q dynamic
-
-static struct OUT_EXTRA q;
+	struct outextra *q;
 
 	int *list_chosen = NULL;
 	int *listbuff = NULL;
@@ -690,12 +689,19 @@ static struct OUT_EXTRA q;
 
 	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
 
+	q = malloc (((size_t)p->n + 1) * sizeof(struct outextra));
+	if (NULL == q) {
+		fprintf(stderr, "Not enough memory for creation of internal buffers for reporting results\n");
+		exit (EXIT_FAILURE);
+	}
+
 	// initialize listbuff
 	{
 		size_t ll = listlen (inp_list);
 		listbuff = malloc ( (sizeof (inp_list[0])) * (ll + 2));
 		if (NULL == listbuff) {
 			fprintf(stderr, "Not enough memory for list creation\n");
+			free(q);
 			exit (EXIT_FAILURE);
 		}
 		listcopy (inp_list, listbuff);
@@ -725,17 +731,17 @@ static struct OUT_EXTRA q;
 
 				if (x > 0 && s && simulate > 1) 
 				{		
-					player_t prev_j = q.j[x-1];	
+					player_t prev_j = q[x-1].j;	
 					double delta_rating = r->ratingof_results[prev_j] - r->ratingof_results[j];
-					q.cfs_value[x-1] = get_cfs(s, delta_rating, prev_j, j);
-					q.cfs_is_ok[x-1] = TRUE;
+					q[x-1].cfs_value = get_cfs(s, delta_rating, prev_j, j);
+					q[x-1].cfs_is_ok = TRUE;
 				}
 
-				q.j[x] = j;
-				q.rnk_value[x] = rank;
-				q.rnk_is_ok[x] = showrank;
-				q.cfs_value[x] = 0; 
-				q.cfs_is_ok[x] = FALSE;
+				q[x].j = j;
+				q[x].rnk_value = rank;
+				q[x].rnk_is_ok = showrank;
+				q[x].cfs_value = 0; 
+				q[x].cfs_is_ok = FALSE;
 				x++;
 			}
 		}
@@ -763,12 +769,12 @@ static struct OUT_EXTRA q;
 
 		/* actual printing */
 		for (x = 0; x < x_max; x++) {
-			j = q.j[x];
+			j = q[x].j;
 
 			sdev_str = sdev? get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer, decimals): NOSDEV;
-			rank_str = q.rnk_is_ok[x]? get_rank_str (q.rnk_value[x], rank_str_buffer): "";
+			rank_str = q[x].rnk_is_ok? get_rank_str (q[x].rnk_value, rank_str_buffer): "";
 
-			prnt_item_ (f, decimals, p, r, j, ml, rank_str, sdev_str, list_chosen, &q, x);
+			prnt_item_ (f, decimals, p, r, j, ml, rank_str, sdev_str, list_chosen, q, x);
 			fprintf (f, "\n");
 		}
 
@@ -809,16 +815,16 @@ static struct OUT_EXTRA q;
 		/* actual printing */
 		for (x = 0; x < x_max; x++) {
 			int rank_int;
-			j = q.j[x];
+			j = q[x].j;
 
 			sdev_str = sdev? get_sdev_str_csv (sdev[j], confidence_factor, sdev_str_buffer, decimals): NOSDEV_csv;
-			rank_int = q.rnk_value[x];
-			prnt_item_csv (f, decimals, p, r, j, rank_int, sdev_str, list_chosen, &q, x);
+			rank_int = q[x].rnk_value;
+			prnt_item_csv (f, decimals, p, r, j, rank_int, sdev_str, list_chosen, q, x);
 			fprintf (f, "\n");
 		}
 	}
 
-
+	free (q);
 	free (listbuff);
 	return;
 }
