@@ -708,14 +708,8 @@ int x_max = 0;
 		list_remove_item (list_chosen, 2);
 
 	if (csf_column) { // force 6 in list_chosen
-		int z;
-		for (z = 0; list_chosen[z] != -1 && list_chosen[z] != 6; z++) {
-			;
-		}
-		if (list_chosen[z] == -1) {list_chosen[z] = 6; list_chosen[z+1] = -1;}
+		addabsent (list_chosen, 6);
 	}
-
-
 
 	/* calculation for printing */
 	for (i = 0; i < p->n; i++) {
@@ -806,15 +800,9 @@ int x_max = 0;
 
 		listcopy (inp_list, listbuff);
 		list_chosen = listbuff;
-//		if (simulate < 2) 
-//			list_remove_item (list_chosen, 2);
-
+	
 		if (csf_column) { // force 6 in list_chosen
-			int z;
-			for (z = 0; list_chosen[z] != -1 && list_chosen[z] != 6; z++) {
-				;
-			}
-			if (list_chosen[z] == -1) {list_chosen[z] = 6; list_chosen[z+1] = -1;}
+			addabsent (list_chosen, 6);
 		}
 
 		prnt_header_csv (f, list_chosen);
