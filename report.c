@@ -246,14 +246,27 @@ get_sdev_str (double sdev, double confidence_factor, char *str, int decimals)
 	return str;
 }
 
+#define NOSDEV_csv "\"-\""
+
+static char *
+get_sdev_str_csv (double sdev, double confidence_factor, char *str, int decimals)
+{
+	double x = sdev * confidence_factor;
+	if (sdev > 0.00000001) {
+		sprintf(str, "%.*f", decimals, rating_round(x, decimals));
+	} else {
+		sprintf(str, "%s", NOSDEV_csv);
+	}
+	return str;
+}
 
 static bool_t
-ok_to_out (player_t j, const struct output_qualifiers *poutqual, const struct PLAYERS *p, const struct RATINGS *r)
+ok_to_out (player_t j, const struct output_qualifiers outqual, const struct PLAYERS *p, const struct RATINGS *r)
 {
 	gamesnum_t games = r->playedby_results[j];
 	bool_t ok = !p->flagged[j]
 				&& games > 0
-				&& (!poutqual->mingames_set || games >= poutqual->mingames);
+				&& (!outqual.mingames_set || games >= outqual.mingames);
 	return ok;
 } 
 
@@ -390,49 +403,273 @@ is_empty_player(player_t j, const struct PLAYERS *pPlayers)
 static double
 get_cfs (const struct DEVIATION_ACC *sim, double dr, player_t target, player_t oth)
 {
-		if (sim != NULL) {
-			ptrdiff_t idx;
-			double ctrs;
-			double sd;
-			idx = head2head_idx_sdev ((ptrdiff_t)target, (ptrdiff_t)oth);
-			sd = sim[idx].sdev;
-			ctrs = 100*gauss_integral(dr/sd);
-			return ctrs;
-		}
-		else {
-			return 0;
-		}
+	double ret;
+	if (sim != NULL) {
+		ptrdiff_t idx;
+		double ctrs;
+		double sd;
+		idx = head2head_idx_sdev ((ptrdiff_t)target, (ptrdiff_t)oth);
+		sd = sim[idx].sdev;
+		ctrs = 100*gauss_integral(dr/sd);
+		ret = ctrs;
+	}
+	else {
+		ret = 0;
+	}
+	return ret;
+}
+
+//=====================
+
+static char *
+get_rank_str (int rank, char *buffer)
+{
+	sprintf(buffer,"%d",rank);
+	return buffer;
+}
+
+static char *
+quoted_str (const char *s, char *buffer)
+{
+	sprintf(buffer, "\"%s\"", s);
+	return buffer;
+}
+
+#define N_EXTRA 10000
+
+struct outextra {
+	player_t	j;
+	bool_t 		rnk_is_ok;
+	int			rnk_value;
+	bool_t		cfs_is_ok;
+	double 		cfs_value;
+};
+
+static void
+prnt_singleitem_
+			( int item
+			, FILE *f
+			, int decimals
+			, const struct PLAYERS 	*p
+			, const struct RATINGS 	*r
+			, player_t j
+			, size_t ml
+			, const char *rankbuf
+			, const char *sdev_str
+			, const char *cfs_str
+)
+{
+	switch (item) {
+		case 0:	fprintf(f, "%*s %-*s %s :", 4,	rankbuf, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) ); break;
+		case 1:	fprintf(f, " %*.*f", 6, decimals, rating_round (r->ratingof_results[j], decimals) ); break;
+		case 2:	fprintf(f, " %s", sdev_str ); break;
+		case 3:	fprintf(f, " %*.1f", 9, r->obtained_results[j] ); break;
+		case 4:	fprintf(f, " %*ld" , 7, (long)r->playedby_results[j] ); break;
+		case 5:	fprintf(f, " %*.1f%s", 6, r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], "%"); break;
+		case 6:	fprintf(f, " %s    " , cfs_str); break;
+		default:  break;
+	}
+}
+
+static void
+prnt_item_(	FILE *f
+			, int decimals
+			, const struct PLAYERS 	*p
+			, const struct RATINGS 	*r
+			, player_t j
+			, size_t ml
+			, const char *rankbuf
+			, const char *sdev_str
+			, int *list
+			, struct outextra *pq
+			, int x
+)
+{
+	int item;
+	const char *cfs_str;
+	char cfs_buf[80];
+
+	sprintf(cfs_buf, "%7.0lf", pq[x].cfs_value);
+	cfs_str = pq[x].cfs_is_ok? cfs_buf : "    ---";
+
+	for (item = 0; list[item] != -1; item++)
+		prnt_singleitem_(list[item], f, decimals, p, r, j, ml, rankbuf, sdev_str, cfs_str);
 }
 
 
-void
-all_report 	( const struct GAMES 	*g
+static void
+prnt_header_single (int item, FILE *f, size_t ml)
+{
+	switch (item) {
+		case 0: fprintf(f, "\n%s %-*s    :","   #", (int)ml, Player_str); break;
+		case 1: fprintf(f, " %*s"  , 6, Rating_str); break;
+		case 2: fprintf(f, " %*s"  , 6, Error_str); break;
+		case 3: fprintf(f, " %*s"  , 9, Points_str); break;
+		case 4: fprintf(f, " %*s"  , 7, Played_str); break;
+		case 5: fprintf(f, " %*s " , 6, Percent_str); break;
+		case 6: fprintf(f, "   %s" , Cfsnext_str); break;
+		default: break;
+	}
+}
+
+static void
+prnt_header (FILE *f, size_t ml, int *list)
+{
+	int item;
+	for (item = 0; list[item] != -1; item++)
+		prnt_header_single (list[item], f, ml);
+}
+
+static void
+prnt_header_single_csv (int item, FILE *f)
+{
+	char buffer[80];
+
+	switch (item) {
+		case 0: fprintf(f,  "%s", quoted_str(        "#",buffer)); 
+		        fprintf(f, ",%s", quoted_str( Player_str,buffer)); break;
+		case 1: fprintf(f, ",%s", quoted_str( Rating_str,buffer)); break;
+		case 2: fprintf(f, ",%s", quoted_str(  Error_str,buffer)); break;
+		case 3: fprintf(f, ",%s", quoted_str( Points_str,buffer)); break;
+		case 4: fprintf(f, ",%s", quoted_str( Played_str,buffer)); break;
+		case 5: fprintf(f, ",%s", quoted_str(Percent_str,buffer)); break;
+		case 6: fprintf(f, ",%s", quoted_str(Cfsnext_str,buffer)); break;
+		default: break;
+	}
+}
+
+static void
+prnt_header_csv (FILE *f, int *list)
+{
+	int item;
+	for (item = 0; list[item] != -1; item++)
+		prnt_header_single_csv (list[item], f);
+}
+
+static void
+prnt_singleitem_csv
+			( int item
+			, FILE *f
+			, int decimals
 			, const struct PLAYERS 	*p
 			, const struct RATINGS 	*r
-			, const struct rel_prior_set *rps
-			, struct ENCOUNTERS 	*e  // memory just provided for local calculations
-			, double 				*sdev
-			, long 					simulate
-			, bool_t				hide_old_ver
-			, double				confidence_factor
-			, FILE 					*csvf
-			, FILE 					*textf
-			, double 				white_advantage
-			, double 				drawrate_evenmatch
-			, int					decimals
-			, struct output_qualifiers	outqual
-			, double				wa_sdev				
-			, double				dr_sdev
+			, player_t j
+			, int rank
+			, const char *sdev_str
+			, const char *cfs_str
+)
+{
+	switch (item) {
+		case 0:	
+				fprintf(f, "%d,"	,rank);
+				fprintf(f, "\"%s\""	,p->name[j]);
+ 				break;
+		case 1:	fprintf(f, ",%.*f"	,decimals, r->ratingof_results[j]);  break;
+		case 2:	fprintf(f, ",%s"	,sdev_str); break;
+		case 3:	fprintf(f, ",%.2f"	,r->obtained_results[j]); break;
+		case 4:	fprintf(f, ",%ld"	,(long)r->playedby_results[j]); break;
+		case 5:	fprintf(f, ",%.2f"	,r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/(double)r->playedby_results[j]); break;
+		case 6:	fprintf(f, ",%s" , cfs_str); break;
+		default:  break;
+	}
+}
+
+static void
+prnt_item_csv
+			( FILE *f
+			, int decimals
+			, const struct PLAYERS 	*p
+			, const struct RATINGS 	*r
+			, player_t j
+			, int rank
+			, const char *sdev_str
+			, int *list
+			, struct outextra *pq
+			, int x
+)
+{
+	int item;
+	const char *cfs_str;
+	char cfs_buf[80];
+
+	sprintf(cfs_buf, "%.0lf", pq[x].cfs_value);
+	cfs_str = pq[x].cfs_is_ok? cfs_buf : "\"-\"";
+
+	for (item = 0; list[item] != -1; item++)
+		prnt_singleitem_csv (list[item], f, decimals, p, r, j, rank, sdev_str, cfs_str);
+}
+
+static void
+list_remove_item (int *list, int x);
+
+static size_t
+listlen(int *x)
+{
+	int *ori = x;
+	while (*x != -1) x++;
+	return (size_t)(x - ori);
+}
+
+static void
+listcopy (const int *s, int *t)
+{
+	while (*s != -1) *t++ = *s++;
+	*t = -1;
+}
+
+static void
+addabsent (int *list_chosen, int a)
+{
+	int z;
+	for (z = 0; list_chosen[z] != -1 && list_chosen[z] != a; z++) {
+		;
+	}
+	if (list_chosen[z] == -1) {list_chosen[z] = a; list_chosen[z+1] = -1;}
+}
+
+/* 
+|
+|	Major report function 
+|
+\--------------------------------*/
+
+void
+all_report 	( const struct GAMES 			*g
+			, const struct PLAYERS 			*p
+			, const struct RATINGS 			*r
+			, const struct rel_prior_set 	*rps
+			, struct ENCOUNTERS 			*e  // memory just provided for local calculations
+			, double 						*sdev
+			, long 							simulate
+			, bool_t						hide_old_ver
+			, double						confidence_factor
+			, FILE 							*csvf
+			, FILE 							*textf
+			, double 						white_advantage
+			, double 						drawrate_evenmatch
+			, int							decimals
+			, struct output_qualifiers		outqual
+			, double						wa_sdev				
+			, double						dr_sdev
 			, const struct DEVIATION_ACC *	s
-			, bool_t csf_column
+			, bool_t 						csf_column
+			, int							*inp_list
 			)
 {
+	struct outextra *q;
+
+	int *list_chosen = NULL;
+	int *listbuff = NULL;
+
+	int	x = 0;
+	int x_max = 0;
+
 	FILE *f;
 	player_t i;
 	player_t j;
 	size_t ml;
 	char sdev_str_buffer[80];
-	const char *sdev_str;
+	const char *sdev_str = "";
 	int rank = 0;
 	bool_t showrank = TRUE;
 
@@ -452,119 +689,93 @@ all_report 	( const struct GAMES 	*g
 
 	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
 
-	/* output in text format */
+	q = malloc (((size_t)p->n + 1) * sizeof(struct outextra));
+	if (NULL == q) {
+		fprintf(stderr, "Not enough memory for creation of internal buffers for reporting results\n");
+		exit (EXIT_FAILURE);
+	}
+
+	// initialize listbuff
+	{
+		size_t ll = listlen (inp_list);
+		listbuff = malloc ( (sizeof (inp_list[0])) * (ll + 2));
+		if (NULL == listbuff) {
+			fprintf(stderr, "Not enough memory for list creation\n");
+			free(q);
+			exit (EXIT_FAILURE);
+		}
+		listcopy (inp_list, listbuff);
+	}
+
+	list_chosen = listbuff;
+	if (simulate < 2) 
+		list_remove_item (list_chosen, 2);
+
+	if (csf_column) { // force 6 in list_chosen
+		addabsent (list_chosen, 6);
+	}
+
+	/* calculation for printing */
+	for (i = 0; i < p->n; i++) {
+		j = r->sorted[i]; 
+
+		assert(r->playedby_results[j] != 0 || is_empty_player(j,p));
+
+		if (ok_to_out (j, outqual, p, r)) {
+			showrank = !is_old_version(j, rps);
+			if (showrank) {
+				rank++;
+			} 
+
+			if (showrank || !hide_old_ver) {
+
+				if (x > 0 && s && simulate > 1) 
+				{		
+					player_t prev_j = q[x-1].j;	
+					double delta_rating = r->ratingof_results[prev_j] - r->ratingof_results[j];
+					q[x-1].cfs_value = get_cfs(s, delta_rating, prev_j, j);
+					q[x-1].cfs_is_ok = TRUE;
+				}
+
+				q[x].j = j;
+				q[x].rnk_value = rank;
+				q[x].rnk_is_ok = showrank;
+				q[x].cfs_value = 0; 
+				q[x].cfs_is_ok = FALSE;
+				x++;
+			}
+		}
+	}
+	x_max = x;
+
+	/* 
+	|
+	|	output in text format 
+	|
+	\--------------------------------*/
+
 	f = textf;
 	if (f != NULL) {
+
+		const char *rank_str = NULL;
+		char rank_str_buffer[80];
 
 		ml = find_maxlen (p->name, (size_t)p->n);
 		if (ml > 50) ml = 50;
 		if (ml < strlen(Player_str)) ml = strlen(Player_str);
 
-		if (simulate < 2) {
-			fprintf(f, "\n%s %-*s    :%7s %9s %7s %6s\n", 
-				"   #", 			
-				(int)ml,
-				Player_str, Rating_str, Points_str, Played_str, Percent_str);
-	
-			for (i = 0; i < p->n; i++) {
+		prnt_header (f, ml, list_chosen);
+		fprintf(f, "\n");
 
-				j = r->sorted[i]; 
+		/* actual printing */
+		for (x = 0; x < x_max; x++) {
+			j = q[x].j;
 
-				if (ok_to_out (j, &outqual, p, r)) {
+			sdev_str = sdev? get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer, decimals): NOSDEV;
+			rank_str = q[x].rnk_is_ok? get_rank_str (q[x].rnk_value, rank_str_buffer): "";
 
-					char rankbuf[80];
-					showrank = !is_old_version(j, rps); 
-					if (showrank) {
-						rank++;
-						sprintf(rankbuf,"%d",rank);
-					} else {
-						rankbuf[0] = '\0';
-					}
-
-					if (showrank
-						|| !hide_old_ver
-					){
-						fprintf(f, "%4s %-*s %s :%7.*f %9.1f %7ld %6.1f%s\n", 
-							rankbuf,
-							(int)ml+1,
-							p->name[j],
-							get_super_player_symbolstr(j,p),
-							decimals,
-							rating_round (r->ratingof_results[j], decimals), 
-							r->obtained_results[j], 
-							(long)r->playedby_results[j], 
-							r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], 
-							"%"
-						);
-					}
-				} 
-			}
-
-		} else {
-			bool_t prev_is = FALSE;
-			player_t prev_j = -1;
-
-			fprintf(f, "\n%s %-*s    :%7s %6s %8s %7s %6s", 
-				"   #", 
-				(int)ml, 
-				Player_str, Rating_str, Error_str, Points_str, Played_str, Percent_str);
-
-			if (csf_column)
-			fprintf(f, "   %s", Cfsnext_str);
-
-			fprintf(f, "\n");
-
-			for (i = 0; i < p->n; i++) {
-				j = r->sorted[i]; 
-
-				sdev_str = sdev? get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer, decimals): NOSDEV;
-
-				assert(r->playedby_results[j] != 0 || is_empty_player(j,p));
-
-				if (ok_to_out (j, &outqual, p, r)) {
-
-					char rankbuf[80];
-					showrank = !is_old_version(j, rps);
-					if (showrank) {
-						rank++;
-						sprintf(rankbuf,"%d",rank);
-					} else {
-						rankbuf[0] = '\0';
-					}
-
-					if (showrank || !hide_old_ver) {
-
-						if (prev_is) {
-							if (s && simulate > 1 && csf_column) {			
-								double delta_rating = r->ratingof_results[prev_j]-r->ratingof_results[j];
-								fprintf(f, "%8.0lf",get_cfs (s, delta_rating, prev_j, j));
-							}
-							fprintf(f, "\n");
-						}
-
-						fprintf(f, "%4s %-*s %s :%7.*f %s %8.1f %7ld %6.1f%s", 
-						rankbuf,
-						(int)ml+1, 
-						p->name[j],
-						get_super_player_symbolstr(j,p),
-						decimals,
-						rating_round(r->ratingof_results[j], decimals), 
-						sdev_str, 
-						r->obtained_results[j], 
-						(long)r->playedby_results[j], 
-						r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/(double)r->playedby_results[j], 
-						"%"
-						);
-		
-						prev_is= TRUE;
-						prev_j = j;
-					}
-				}
-			}
-
-			if (csf_column)	fprintf (f, "%8s","---");
+			prnt_item_ (f, decimals, p, r, j, ml, rank_str, sdev_str, list_chosen, q, x);
 			fprintf (f, "\n");
-
 		}
 
 		if (simulate < 2) {
@@ -581,137 +792,100 @@ all_report 	( const struct GAMES 	*g
 
 	} /*if*/
 
-	/* output in a comma separated value file */
+	/* 
+	|
+	|	output in a comma separated value file 
+	|
+	\-------------------------------------------*/
+
 	f = csvf;
-	if (f != NULL && simulate < 2) {
-			fprintf(f, "\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",%s"
-			"\n"	
-			,"#"	
-			,Player_str
-			,Rating_str 
-			,Error_str
-			,Points_str
-			,Played_str
-			,Percent_str
-			);
-		rank = 0;
-		for (i = 0; i < p->n; i++) {
-			j = r->sorted[i];
 
-			if (ok_to_out (j, &outqual, p, r)) {
-				rank++;
+	if (f != NULL) {
 
-				if (sdev == NULL) {
-					sdev_str = "\"-\"";
-				} else if (sdev[j] > 0.00000001) {
-					sprintf(sdev_str_buffer, "%.1f", sdev[j] * confidence_factor);
-					sdev_str = sdev_str_buffer;
-				} else {
-					sdev_str = "\"-\"";
-				}
+		listcopy (inp_list, listbuff);
+		list_chosen = listbuff;
+	
+		if (csf_column) { // force 6 in list_chosen
+			addabsent (list_chosen, 6);
+		}
 
-				fprintf(f, "%d,"
-				"\"%s\",%.1f"
-				",%s"
-				",%.2f"
-				",%ld"
-				",%.2f"
-				"\n"		
-				,rank
-				,p->name[j]
-				,r->ratingof_results[j] 
-				,sdev_str
-				,r->obtained_results[j]
-				,(long)r->playedby_results[j]
-				,r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/(double)r->playedby_results[j] 
-				);
-			}
+		prnt_header_csv (f, list_chosen);
+		fprintf(f, "\n");
+
+		/* actual printing */
+		for (x = 0; x < x_max; x++) {
+			int rank_int;
+			j = q[x].j;
+
+			sdev_str = sdev? get_sdev_str_csv (sdev[j], confidence_factor, sdev_str_buffer, decimals): NOSDEV_csv;
+			rank_int = q[x].rnk_value;
+			prnt_item_csv (f, decimals, p, r, j, rank_int, sdev_str, list_chosen, q, x);
+			fprintf (f, "\n");
 		}
 	}
 
-	if (f != NULL && simulate > 1) {
-
-			bool_t prev_is = FALSE;
-			player_t prev_j = -1;
-
-			fprintf(f, "\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",\"%s\""
-			",%s"
-			"%s"
-			"%s"
-			"\n"	
-			,"#"	
-			,Player_str
-			,Rating_str 
-			,Error_str
-			,Points_str
-			,Played_str
-			,Percent_str
-			,csf_column?",":""		
-			,csf_column?Cfsnext_str:""
-			);
-		rank = 0;
-		for (i = 0; i < p->n; i++) {
-			j = r->sorted[i];
-
-			if (ok_to_out (j, &outqual, p, r)) {
-				rank++;
-
-				if (sdev == NULL) {
-					sdev_str = "\"-\"";
-				} else if (sdev[j] > 0.00000001) {
-					sprintf(sdev_str_buffer, "%.1f", sdev[j] * confidence_factor);
-					sdev_str = sdev_str_buffer;
-				} else {
-					sdev_str = "\"-\"";
-				}
-
-
-				if (prev_is) {
-					if (s && simulate > 1 && csf_column) {			
-						double delta_rating = r->ratingof_results[prev_j]-r->ratingof_results[j];
-						fprintf(f, ",%.0lf",get_cfs (s, delta_rating, prev_j, j));
-					}
-					fprintf(f, "\n");
-				}
-
-				fprintf(f, "%d,"
-				"\"%s\",%.1f"
-				",%s"
-				",%.2f"
-				",%ld"
-				",%.2f"
-				//"\n"		
-				,rank
-				,p->name[j]
-				,r->ratingof_results[j] 
-				,sdev_str
-				,r->obtained_results[j]
-				,(long)r->playedby_results[j]
-				,r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/(double)r->playedby_results[j] 
-				);
-
-				prev_is= TRUE;
-				prev_j = j;
-			}
-		}
-
-		if (csf_column) fprintf (f, ",\"%s\"","-");
-		fprintf (f, "\n");
-	}
+	free (q);
+	free (listbuff);
 	return;
 }
 
+static char *
+string_dup (const char *s)
+{
+	char *p;
+	char *q;
+	size_t len = strlen(s);
+	p = malloc (len + 1);
+	if (p == NULL) return NULL;
+	q = p;
+	while (*s) *p++ = *s++;
+	*p = '\0';
+	return q;
+}
+
+bool_t
+str2list (const char *inp_str, int max, int *n, int *t)
+{
+	bool_t end_reached = FALSE;
+	int value;
+	int counter = 0;
+	char *s;
+	char *p;
+	char *d;
+	bool_t ok = TRUE;
+
+	if (NULL != (d = string_dup(inp_str))) {
+
+		p = d;
+		s = d;
+
+		for (end_reached = FALSE; !end_reached && ok;) {
+			while (*p != ',' && *p != '\0') 
+				p++;
+			end_reached = *p == '\0';
+			*p++ = '\0';
+			ok = 1 == sscanf (s, "%d", &value) && counter < max;
+			if (ok) {*t++ = value; counter++;}
+			s = p;
+		}
+
+		free(d);
+	}
+
+	if (ok)	*t = -1;
+	*n = counter;
+	return ok;
+}
+
+static void
+list_remove_item (int *list, int x)
+{
+	int *t;
+	int *p = list;
+	while (*p != -1 && *p != x) {p++;}
+	while (*p != -1) {t = p++; *t = *p;}
+
+}
 
 void
 errorsout(const struct PLAYERS *p, const struct RATINGS *r, const struct DEVIATION_ACC *s, const char *out, double confidence_factor)

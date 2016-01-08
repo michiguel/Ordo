@@ -76,7 +76,8 @@ all_report 	( const struct GAMES 	*g
 			, double				wa_sdev				
 			, double				dr_sdev
 			, const struct DEVIATION_ACC *	s
-			, bool_t csf_column
+			, bool_t 				csf_column
+			, int					*inp_list
 			);
 
 void
@@ -110,6 +111,13 @@ look_at_individual_deviation
 			, gamesnum_t		n_enc
 			, double			white_adv
 			, double			beta);
+
+bool_t
+str2list 
+			( const char *inp_str
+			, int max
+			, int *n
+			, int *t);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

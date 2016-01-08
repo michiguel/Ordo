@@ -151,6 +151,7 @@ static void usage (void);
 		" -N <value>  number of decimals in output, minimum is 0 (default=1)\n"
 		" -M          force maximum-likelihood estimation to obtain ratings\n"
 		" -n <value>  number of processors for parallel calculation of simulations\n"
+		" -U <a,..,z> info in output. Default columns are \"1,2,3,4,5\"\n"
 		"\n"
 		;
 
@@ -160,7 +161,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:JTF:Xt:N:Mn:";
+	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:JTF:Xt:N:Mn:U:";
 
 /*
 |
@@ -244,7 +245,7 @@ calc_encounters__
 
 int main (int argc, char *argv[])
 {
-	enum filelimit {INPUTMAX=1024};
+	enum mainlimits {INPUTMAX=1024, COLSMAX=256};
 
 	struct summations sfe; // summations for errors
 
@@ -276,12 +277,16 @@ int main (int argc, char *argv[])
 	int input_n;
 	const char *inputfile[INPUTMAX+1];
 
+	int columns_n;
+	int columns[COLSMAX+1];
+
 	int cpus = 1;
 	int op;
 	const char *textstr, *csvstr, *ematstr, *groupstr, *pinsstr;
 	const char *priorsstr, *relstr;
 	const char *head2head_str;
 	const char *ctsmatstr;
+	const char *output_columns;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
 	bool_t group_is_output, Elostat_output, Ignore_draws, groups_no_check, Forces_ML, cfs_column;
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE, switch_d=FALSE, switch_k=FALSE, switch_D=FALSE;
@@ -306,6 +311,7 @@ int main (int argc, char *argv[])
 	pinsstr		 	= NULL;
 	priorsstr	 	= NULL;
 	relstr		 	= NULL;
+	output_columns  = NULL;
 	group_is_output = FALSE;
 	groups_no_check = FALSE;
 	groupstr 	 	= NULL;
@@ -461,6 +467,8 @@ int main (int argc, char *argv[])
 							exit(EXIT_FAILURE);
 						} 
 						break;
+			case 'U':	output_columns = opt_arg;
+						break;
 			case '?': 	parameter_error();
 						exit(EXIT_FAILURE);
 						break;
@@ -504,6 +512,17 @@ int main (int argc, char *argv[])
 	if (!input_mode && argc == opt_index) {
 		fprintf (stderr, "Need file name to proceed\n\n");
 		exit(EXIT_FAILURE);
+	}
+	if (output_columns != NULL) {
+		if (!str2list (output_columns, COLSMAX, &columns_n, columns)) {
+			fprintf (stderr, "Columns number provided are wrong or exceeded limit (%d)\n\n", COLSMAX);
+			exit(EXIT_FAILURE);		
+		}
+	} else {
+		if (!str2list ("0,1,2,3,4,5", COLSMAX, &columns_n, columns)) {
+			fprintf (stderr, "Default number of columns is wrong or exceeded limit (%d)\n\n", COLSMAX);
+			exit(EXIT_FAILURE);		
+		}
 	}
 	/* get folder, should be only one at this point */
 	while (opt_index < argc && input_n < INPUTMAX) {
@@ -957,6 +976,7 @@ int main (int argc, char *argv[])
 				, sfe.dr_sdev
 				, sfe.relative
 				, cfs_column
+				, columns
 				);
 
 	#if 0
