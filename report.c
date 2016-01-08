@@ -656,16 +656,14 @@ all_report 	( const struct GAMES 			*g
 			)
 {
 //FIXME make q dynamic
-//FIXME add a list_chosen dynamically
 
 static struct OUT_EXTRA q;
 
-int list_no_sim_csv[] = {0,1,2,3,4,5,-1,-1};
-int *list_chosen = NULL;
-int *listbuff = NULL;
+	int *list_chosen = NULL;
+	int *listbuff = NULL;
 
-int	x = 0;
-int x_max = 0;
+	int	x = 0;
+	int x_max = 0;
 
 	FILE *f;
 	player_t i;
