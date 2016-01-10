@@ -29,7 +29,7 @@
 extern bool_t	name_storage_init(void);
 extern void 	name_storage_done(void);
 extern bool_t 	name_ispresent (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
-extern bool_t 	name_register (uint32_t hash, player_t i);
+extern bool_t 	name_register (uint32_t hash, player_t i, player_t i_out);
 extern uint32_t namehash(const char *str);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/

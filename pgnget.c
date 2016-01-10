@@ -71,6 +71,8 @@ static bool_t 	is_complete (struct pgn_result *p);
 static void 	pgn_result_reset (struct pgn_result *p);
 static bool_t 	pgn_result_collect (struct pgn_result *p, struct DATA *d);
 
+static void		syn_preload (bool_t quiet, struct DATA *d);
+
 /*
 |
 |
@@ -180,6 +182,8 @@ database_init_frompgn (const char *pgn_i[], bool_t quiet)
 	const char *pgn;
 
 	ok = NULL != (pDAB = structdata_init ());
+
+	syn_preload (quiet, pDAB); //FIXME incomplete
 
 	pgn = *pgn_i++;
 	while (ok && pgn) {
@@ -419,8 +423,54 @@ static void report_error (long int n)
 }
 
 
+static void
+syn_preload (bool_t quiet, struct DATA *d)
+{
+	#define NOPLAYER -1
+	player_t 	i;
+	player_t 	j;
+	bool_t 		ok = TRUE;
+	player_t 	plyr = NOPLAYER; // to silence warnings
+	const char *tagstr;
+	uint32_t 	taghsh;
 
+//synonyms
+#if 0
+	tagstr = "D";
+	taghsh = namehash(tagstr);
 
+	if (ok && !name_ispresent (d, tagstr, taghsh, &plyr)) {
+		ok = addplayer (d, tagstr, &plyr) && name_register(taghsh,plyr,plyr);
+
+#if 1
+	printf ("[%s] in=%ld, out=%ld\n",tagstr,plyr,plyr);
+	if (name_ispresent (d, tagstr, taghsh, &plyr)) {
+		printf ("[%s] testing out=%ld\n",tagstr,plyr);
+	}
+#endif
+
+	}
+	i = plyr;
+
+	tagstr = "Dd";
+	taghsh = namehash(tagstr);
+
+	if (ok && !name_ispresent (d, tagstr, taghsh, &plyr)) {
+		ok = addplayer (d, tagstr, &plyr) && name_register(taghsh,plyr,i);
+
+#if 1
+	printf ("[%s] in=%ld, out=%ld\n",tagstr,plyr,i);
+	if (name_ispresent (d, tagstr, taghsh, &plyr)) {
+		printf ("[%s] testing out=%ld\n",tagstr,plyr);
+	}
+#endif
+
+	}
+	i = plyr;
+
+#endif
+//
+}
 
 
 static void
@@ -449,7 +499,7 @@ pgn_result_collect (struct pgn_result *p, struct DATA *d)
 	taghsh = namehash(tagstr);
 
 	if (ok && !name_ispresent (d, tagstr, taghsh, &plyr)) {
-		ok = addplayer (d, tagstr, &plyr) && name_register(taghsh,plyr);
+		ok = addplayer (d, tagstr, &plyr) && name_register(taghsh,plyr,plyr);
 	}
 	i = plyr;
 
@@ -457,7 +507,7 @@ pgn_result_collect (struct pgn_result *p, struct DATA *d)
 	taghsh = namehash(tagstr);
 
 	if (ok && !name_ispresent (d, tagstr, taghsh, &plyr)) {
-		ok = addplayer (d, tagstr, &plyr) && name_register(taghsh,plyr);
+		ok = addplayer (d, tagstr, &plyr) && name_register(taghsh,plyr,plyr);
 	}
 	j = plyr;
 

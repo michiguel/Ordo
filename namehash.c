@@ -41,16 +41,17 @@
 #define PODMAX   (1<<PODBITS)
 
 struct NAMEPEA {
-	player_t pidx; // player index
-	uint32_t hash; // name hash
+	player_t pidx; 		// player index
+	player_t pidx_out; 	// player index to be used for synonims, if different from pidx
+	uint32_t hash; 		// name hash
 };
 
 static bool_t name_tree_init(void);
 static void   name_tree_done(void);
 static bool_t name_ispresent_hashtable (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
-static bool_t name_register_hashtable (uint32_t hash, player_t i);
+static bool_t name_register_hashtable (uint32_t hash, player_t i, player_t i_out);
 static bool_t name_ispresent_tree (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
-static bool_t name_register_tree (uint32_t hash, player_t i);
+static bool_t name_register_tree (uint32_t hash, player_t i, player_t i_out);
 
 //*************************** GENERAL **************************************
 
@@ -76,10 +77,10 @@ name_ispresent (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *
 
 
 bool_t
-name_register (uint32_t hash, player_t i)
+name_register (uint32_t hash, player_t i, player_t i_out)
 {
-	return	name_register_hashtable (hash, i)
-		||	name_register_tree (hash, i);
+	return	name_register_hashtable (hash, i, i_out)
+		||	name_register_tree (hash, i, i_out);
 }
 
 //************************* HASHED STORAGE *********************************
@@ -111,7 +112,7 @@ name_ispresent_hashtable (struct DATA *d, const char *s, uint32_t hash, /*out*/ 
 			assert(name_str);
 			if (!strcmp(s, name_str)) {
 				found = TRUE;
-				*out_index = ppea[i].pidx;
+				*out_index = ppea[i].pidx_out;
 				break;
 			}
 		}
@@ -120,7 +121,7 @@ name_ispresent_hashtable (struct DATA *d, const char *s, uint32_t hash, /*out*/ 
 }
 
 bool_t
-name_register_hashtable (uint32_t hash, player_t i)
+name_register_hashtable (uint32_t hash, player_t i, player_t i_out)
 {
 	struct NAMEPOD *ppod = &Namehashtab[hash & PODMASK];
 	struct NAMEPEA *ppea;
@@ -131,6 +132,7 @@ name_register_hashtable (uint32_t hash, player_t i)
 
 	if (n < PEAXPOD) {
 		ppea[n].pidx = i;
+		ppea[n].pidx_out = i_out;
 		ppea[n].hash = hash;
 		ppod->n++;
 		return TRUE;
@@ -210,7 +212,7 @@ name_tree_addmem (void)
 }
 
 static bool_t
-name_register_tree (uint32_t hash, player_t i)
+name_register_tree (uint32_t hash, player_t i, player_t i_out)
 {
 	if (Treemembers == 0)
 		name_tree_init();
@@ -223,6 +225,7 @@ name_register_tree (uint32_t hash, player_t i)
 	T_end->hi = NULL;
 	T_end->lo = NULL;		
 	T_end->p.pidx = i;
+	T_end->p.pidx_out = i_out;
 	T_end->p.hash = hash;
 
 	if (Treemembers > 0)
@@ -241,7 +244,7 @@ name_ispresent_tree (struct DATA *d, const char *s, uint32_t hash, /*out*/ playe
 	for (pnode = Troot; !hit && pnode != NULL;) {
 		hit = nodetree_is_hit (d, s, hash, pnode);
 		if (hit) {
-			*out_index = pnode->p.pidx;
+			*out_index = pnode->p.pidx_out;
 		} else if (hash < pnode->p.hash) {
 			pnode = pnode->lo;
 		} else {

@@ -1503,7 +1503,7 @@ group_is_problematic(const struct ENCOUNTERS *encounters, const struct PLAYERS *
 			n = convert_to_groups(NULL, players->n, players->name);
 			if (n == 1) {
 				ok = TRUE;
-			} else if (n == 2) {
+			} else if (n != 1) { //FIXME used to be n == 2
 				ok = 1 == final_list_population_min();
 			} else {
 				ok = FALSE;
