@@ -1068,30 +1068,6 @@ group_number_of_actives (group_t *s, const struct PLAYERS *players)
 	return	participants_list_actives (s->pstart, players);
 }
 
-#if 0
-static size_t
-group_population (group_t *s)
-{		
-	return	participants_list_population (s->pstart);
-}
-
-static size_t
-non_single_groups_population (void)
-{
-	group_t *g;
-	size_t i;
-	size_t x;
-	size_t counter = 0;
-
-	for (i = 0; i < Group_final_list_n; i++) {
-		g = Group_final_list[i];
-		simplify_shrink (g);
-		x = group_population(g);
-		if (x > 1) counter++;
-	}
-	return counter;
-}
-#endif
 
 static player_t
 non_empty_groups_population (const struct PLAYERS *players)
@@ -1108,7 +1084,6 @@ non_empty_groups_population (const struct PLAYERS *players)
 		x = group_number_of_actives (g,players);
 		// p = group_population(g);
 		// printf ("population[%ld]=%ld, actives=%ld\n", i, p, x);
-
 		if (x > 0) counter++;
 	}
 	return counter;
