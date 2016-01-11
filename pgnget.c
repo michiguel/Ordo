@@ -473,7 +473,6 @@ syn_preload (bool_t quietmode, const char *fsyns_name, struct DATA *d)
 	char myline[MAXSIZE_CSVLINE];
 	char *p;
 	bool_t success;
-	double x;
 	bool_t line_success = TRUE;
 	bool_t file_success = TRUE;
 
@@ -497,7 +496,7 @@ syn_preload (bool_t quietmode, const char *fsyns_name, struct DATA *d)
 			success = FALSE;
 			p = myline;
 			p = skipblanks(p);
-			x = 0;
+
 			if (*p == '\0') continue;
 
 			if (csv_line_init(&csvln, myline)) {

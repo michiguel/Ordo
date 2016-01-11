@@ -1048,6 +1048,27 @@ participants_list_population (participant_t *pstart)
 	return group_n;
 }
 
+static player_t
+participants_list_actives (participant_t *pstart, const struct PLAYERS *players)
+{
+	participant_t *p;
+	player_t j;
+	player_t accum; 
+
+	for (p = pstart, accum = 0; p != NULL; p = p->next) {
+		j = p->id;
+		accum += players->performance_type[j] == PERF_NOGAMES? (player_t)0: (player_t)1;
+	}
+	return accum;
+}
+
+static player_t
+group_number_of_actives (group_t *s, const struct PLAYERS *players)
+{		
+	return	participants_list_actives (s->pstart, players);
+}
+
+#if 0
 static size_t
 group_population (group_t *s)
 {		
@@ -1055,24 +1076,42 @@ group_population (group_t *s)
 }
 
 static size_t
-final_list_population_min (void)
+non_single_groups_population (void)
 {
 	group_t *g;
-	int i;
-	size_t x, min = 0;
+	size_t i;
+	size_t x;
+	size_t counter = 0;
 
 	for (i = 0; i < Group_final_list_n; i++) {
 		g = Group_final_list[i];
 		simplify_shrink (g);
 		x = group_population(g);
-		if (i == 0) {
-			min = x;
-		} else {
-			min = x < min? x: min;
-		}
+		if (x > 1) counter++;
 	}
-	assert(min != 0);
-	return min;
+	return counter;
+}
+#endif
+
+static player_t
+non_empty_groups_population (const struct PLAYERS *players)
+{
+	group_t *g;
+	player_t i;
+	player_t x;
+//	player_t p;
+	player_t counter = 0;
+
+	for (i = 0; i < Group_final_list_n; i++) {
+		g = Group_final_list[i];
+		simplify_shrink (g);
+		x = group_number_of_actives (g,players);
+		// p = group_population(g);
+		// printf ("population[%ld]=%ld, actives=%ld\n", i, p, x);
+
+		if (x > 0) counter++;
+	}
+	return counter;
 }
 
 
@@ -1503,10 +1542,8 @@ group_is_problematic(const struct ENCOUNTERS *encounters, const struct PLAYERS *
 			n = convert_to_groups(NULL, players->n, players->name);
 			if (n == 1) {
 				ok = TRUE;
-			} else if (n != 1) { //FIXME used to be n == 2
-				ok = 1 == final_list_population_min();
 			} else {
-				ok = FALSE;
+				ok = 1 == non_empty_groups_population(players); // single ones have been purged;
 			}
 			supporting_groupmem_done ();
 		} else {
