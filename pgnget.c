@@ -423,6 +423,111 @@ static void report_error (long int n)
 }
 
 
+#include "csv.h"
+static char *skipblanks(char *p) {while (isspace(*p)) p++; return p;}
+
+static bool_t
+syn_apply_pair (struct DATA *d, const char *m, const char *s)
+{
+	#define NOPLAYER -1
+	bool_t 		ok = TRUE;
+	player_t 	plyr_0 = NOPLAYER; // to silence warnings
+	player_t 	plyr_i = NOPLAYER; // to silence warnings
+	const char *tagstr;
+	uint32_t 	taghsh;
+
+	tagstr = m;
+	taghsh = namehash(tagstr);
+
+	if (ok && !name_ispresent (d, tagstr, taghsh, &plyr_0)) {
+		ok = addplayer (d, tagstr, &plyr_0) && name_register(taghsh,plyr_0,plyr_0);
+	}
+
+	tagstr = s;
+	taghsh = namehash(tagstr);
+
+	if (ok && !name_ispresent (d, tagstr, taghsh, &plyr_i)) {
+		ok = addplayer (d, tagstr, &plyr_i) && name_register(taghsh,plyr_i,plyr_0);
+	}
+
+	return ok;
+}
+
+static bool_t
+csvline_syn_apply (csv_line_t *pcsvln, struct DATA *d)
+{
+	bool_t ok = TRUE;
+	int i;
+	for (i = 1; ok && i < pcsvln->n; i++) {
+		printf ("[%s] synonym of [%s]\n",pcsvln->s[0],pcsvln->s[i]);
+		ok = ok && syn_apply_pair (d, pcsvln->s[0], pcsvln->s[i]);
+	}
+	return ok;
+}
+
+static void
+synonims_load (bool_t quietmode, const char *fsyns_name, struct DATA *d)
+{
+	FILE *fsyns;
+	char myline[MAXSIZE_CSVLINE];
+	char *p;
+	bool_t success;
+	double x;
+	bool_t line_success = TRUE;
+	bool_t file_success = TRUE;
+
+	assert(NULL != fsyns_name);
+
+	if (NULL == fsyns_name) {
+		fprintf (stderr, "Error, synonim file not provided, absent, or corrupted\n");
+		exit(EXIT_FAILURE);
+	}
+
+	if (NULL != (fsyns = fopen (fsyns_name, "r"))) {
+
+		csv_line_t csvln;
+		line_success = TRUE;
+		file_success = TRUE;
+
+		while ( line_success && 
+				file_success && 
+				NULL != fgets(myline, MAXSIZE_CSVLINE, fsyns)) {
+
+			success = FALSE;
+			p = myline;
+			p = skipblanks(p);
+			x = 0;
+			if (*p == '\0') continue;
+
+			if (csv_line_init(&csvln, myline)) {
+				if (csvln.n >= 1) {
+					success = csvline_syn_apply (&csvln, d);
+				}
+				csv_line_done(&csvln);		
+			} else {
+				printf ("Failure to input synonim file\n");
+				exit(EXIT_FAILURE);
+			}
+			file_success = success;
+		}
+
+		fclose(fsyns);
+	}
+	else {
+		file_success = FALSE;
+	}
+
+	if (!file_success) {
+			fprintf (stderr, "Errors in file \"%s\"\n",fsyns_name);
+			exit(EXIT_FAILURE);
+	}
+	if (!line_success) {
+			fprintf (stderr, "Errors in file \"%s\" (not matching names)\n",fsyns_name);
+			exit(EXIT_FAILURE);
+	}
+	return;
+}
+
 static void
 syn_preload (bool_t quiet, struct DATA *d)
 {
@@ -434,42 +539,8 @@ syn_preload (bool_t quiet, struct DATA *d)
 	const char *tagstr;
 	uint32_t 	taghsh;
 
-//synonyms
-#if 0
-	tagstr = "D";
-	taghsh = namehash(tagstr);
+	synonims_load (quiet, "syn.txt", d);
 
-	if (ok && !name_ispresent (d, tagstr, taghsh, &plyr)) {
-		ok = addplayer (d, tagstr, &plyr) && name_register(taghsh,plyr,plyr);
-
-#if 1
-	printf ("[%s] in=%ld, out=%ld\n",tagstr,plyr,plyr);
-	if (name_ispresent (d, tagstr, taghsh, &plyr)) {
-		printf ("[%s] testing out=%ld\n",tagstr,plyr);
-	}
-#endif
-
-	}
-	i = plyr;
-
-	tagstr = "Dd";
-	taghsh = namehash(tagstr);
-
-	if (ok && !name_ispresent (d, tagstr, taghsh, &plyr)) {
-		ok = addplayer (d, tagstr, &plyr) && name_register(taghsh,plyr,i);
-
-#if 1
-	printf ("[%s] in=%ld, out=%ld\n",tagstr,plyr,i);
-	if (name_ispresent (d, tagstr, taghsh, &plyr)) {
-		printf ("[%s] testing out=%ld\n",tagstr,plyr);
-	}
-#endif
-
-	}
-	i = plyr;
-
-#endif
-//
 }
 
 
