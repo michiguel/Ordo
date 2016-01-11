@@ -156,9 +156,10 @@ struct PLAYERS {
 	player_t	n; 
 	player_t	size;
 	player_t	anchored_n;
-	const char  **name;
 	bool_t		perf_set;
+	const char  **name;
 	bool_t		*flagged;
+	bool_t		*present_in_games;
 	bool_t		*prefed;
 	bool_t		*priored;
 	int			*performance_type; 

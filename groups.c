@@ -1057,7 +1057,8 @@ participants_list_actives (participant_t *pstart, const struct PLAYERS *players)
 
 	for (p = pstart, accum = 0; p != NULL; p = p->next) {
 		j = p->id;
-		accum += players->performance_type[j] == PERF_NOGAMES? (player_t)0: (player_t)1;
+//		accum += players->performance_type[j] == PERF_NOGAMES? (player_t)0: (player_t)1;
+		accum += players->present_in_games[j]? (player_t)1: (player_t)0;
 	}
 	return accum;
 }
@@ -1072,18 +1073,22 @@ group_number_of_actives (group_t *s, const struct PLAYERS *players)
 static player_t
 non_empty_groups_population (const struct PLAYERS *players)
 {
+	#if 0
+	player_t p;
+	#endif
 	group_t *g;
 	player_t i;
 	player_t x;
-//	player_t p;
 	player_t counter = 0;
 
 	for (i = 0; i < Group_final_list_n; i++) {
 		g = Group_final_list[i];
 		simplify_shrink (g);
 		x = group_number_of_actives (g,players);
-		// p = group_population(g);
-		// printf ("population[%ld]=%ld, actives=%ld\n", i, p, x);
+		#if 0
+		 p = participants_list_population (g->pstart);
+		 printf ("population[%ld]=%ld, actives=%ld\n", i, p, x);
+		#endif
 		if (x > 0) counter++;
 	}
 	return counter;

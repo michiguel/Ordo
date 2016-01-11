@@ -236,12 +236,15 @@ database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, st
 	for (j = 0; j < topn; j++) {
 		p->name[j] = database_getname(db,j);
 		p->flagged[j] = FALSE;
+		p->present_in_games[j] = FALSE;
 		p->prefed [j] = FALSE;
 		p->priored[j] = FALSE;
 		p->performance_type[j] = PERF_NORMAL;
 	}
 
 {
+	player_t wp, bp;
+
 	size_t blk_filled  = db->gb_filled;
 	size_t blk;
 	size_t idx_last = db->gb_idx;
@@ -252,10 +255,14 @@ database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, st
 
 		for (idx = 0; idx < MAXGAMESxBLOCK; idx++) {
 
-			g->ga[i].whiteplayer = db->gb[blk]->white[idx];
-			g->ga[i].blackplayer = db->gb[blk]->black[idx]; 
-			g->ga[i].score       = db->gb[blk]->score[idx];
+			g->ga[i].whiteplayer = wp = db->gb[blk]->white[idx];
+			g->ga[i].blackplayer = bp = db->gb[blk]->black[idx]; 
+			g->ga[i].score       =      db->gb[blk]->score[idx];
 			if (g->ga[i].score <= DISCARD) gamestat[g->ga[i].score]++;
+
+p->present_in_games[wp] = TRUE;
+p->present_in_games[bp] = TRUE;
+			
 			i++;
 		}
 	
@@ -265,10 +272,14 @@ database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, st
 
 		for (idx = 0; idx < idx_last; idx++) {
 
-			g->ga[i].whiteplayer = db->gb[blk]->white[idx];
-			g->ga[i].blackplayer = db->gb[blk]->black[idx]; 
-			g->ga[i].score       = db->gb[blk]->score[idx];
+			g->ga[i].whiteplayer = wp = db->gb[blk]->white[idx];
+			g->ga[i].blackplayer = bp = db->gb[blk]->black[idx]; 
+			g->ga[i].score       =      db->gb[blk]->score[idx];
 			if (g->ga[i].score <= DISCARD) gamestat[g->ga[i].score]++;
+
+p->present_in_games[wp] = TRUE;
+p->present_in_games[bp] = TRUE;
+
 			i++;
 		}
 

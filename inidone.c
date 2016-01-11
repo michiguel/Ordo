@@ -234,7 +234,7 @@ encounters_replicate (const struct ENCOUNTERS *src, struct ENCOUNTERS *tgt)
 bool_t 
 players_init (player_t n, struct PLAYERS *x)
 {
-	enum VARIAB {NV = 5};
+	enum VARIAB {NV = 6};
 	bool_t failed;
 	size_t sz[NV];
 	void * pv[NV];
@@ -246,8 +246,9 @@ players_init (player_t n, struct PLAYERS *x)
 	sz[0] = sizeof(char *);
 	sz[1] = sizeof(bool_t);
 	sz[2] = sizeof(bool_t);
-	sz[3] = sizeof(int);
+	sz[3] = sizeof(bool_t);
 	sz[4] = sizeof(bool_t);
+	sz[5] = sizeof(int);
 
 	for (failed = FALSE, i = 0; !failed && i < NV; i++) {
 		if (NULL == (pv[i] = memnew (sz[i] * (size_t)n))) {
@@ -262,9 +263,10 @@ players_init (player_t n, struct PLAYERS *x)
 	x->anchored_n		= 0;
 	x->name 			= pv[0];
 	x->flagged			= pv[1];
-	x->prefed			= pv[2];
-	x->performance_type = pv[3]; 
+	x->present_in_games	= pv[2];
+	x->prefed			= pv[3];
 	x->priored			= pv[4]; 
+	x->performance_type = pv[5]; 
 
 	x->perf_set = FALSE;
 
