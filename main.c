@@ -152,6 +152,7 @@ static void usage (void);
 		" -M          force maximum-likelihood estimation to obtain ratings\n"
 		" -n <value>  number of processors for parallel calculation of simulations\n"
 		" -U <a,..,z> info in output. Default columns are \"1,2,3,4,5\"\n"
+		" -Y <file>   Name synonyms (csv format). Each line: main,syn1,syn2 etc.\n"
 		"\n"
 		;
 
@@ -161,7 +162,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:JTF:Xt:N:Mn:U:";
+	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:JTF:Xt:N:Mn:U:Y:";
 
 /*
 |
@@ -285,7 +286,7 @@ int main (int argc, char *argv[])
 	const char *textstr, *csvstr, *ematstr, *groupstr, *pinsstr;
 	const char *priorsstr, *relstr;
 	const char *head2head_str;
-	const char *ctsmatstr;
+	const char *ctsmatstr, *synstr;
 	const char *output_columns;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
 	bool_t group_is_output, Elostat_output, Ignore_draws, groups_no_check, Forces_ML, cfs_column;
@@ -311,6 +312,7 @@ int main (int argc, char *argv[])
 	pinsstr		 	= NULL;
 	priorsstr	 	= NULL;
 	relstr		 	= NULL;
+	synstr			= NULL;
 	output_columns  = NULL;
 	group_is_output = FALSE;
 	groups_no_check = FALSE;
@@ -469,6 +471,8 @@ int main (int argc, char *argv[])
 						break;
 			case 'U':	output_columns = opt_arg;
 						break;
+			case 'Y': 	synstr = opt_arg;
+						break;
 			case '?': 	parameter_error();
 						exit(EXIT_FAILURE);
 						break;
@@ -568,7 +572,7 @@ int main (int argc, char *argv[])
 
 	/*==== set input ====*/
 
-	if (NULL != (pdaba = database_init_frompgn (inputfile, quiet_mode))) {
+	if (NULL != (pdaba = database_init_frompgn (inputfile, synstr, quiet_mode))) {
 		if (0 == pdaba->n_players || 0 == pdaba->n_games) {
 			fprintf (stderr, "ERROR: Input file contains no games\n");
 			return EXIT_FAILURE; 			

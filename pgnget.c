@@ -71,7 +71,7 @@ static bool_t 	is_complete (struct pgn_result *p);
 static void 	pgn_result_reset (struct pgn_result *p);
 static bool_t 	pgn_result_collect (struct pgn_result *p, struct DATA *d);
 
-static void		syn_preload (bool_t quiet, struct DATA *d);
+static void		syn_preload (bool_t quiet, const char *synfile_name, struct DATA *d);
 
 /*
 |
@@ -173,7 +173,7 @@ structdata_done (struct DATA *d)
 \*--------------------------------------------------------------*/
 
 struct DATA *
-database_init_frompgn (const char *pgn_i[], bool_t quiet)
+database_init_frompgn (const char *pgn_i[], const char *synfile_name, bool_t quiet)
 {
 
 	struct DATA *pDAB = NULL;
@@ -183,7 +183,8 @@ database_init_frompgn (const char *pgn_i[], bool_t quiet)
 
 	ok = NULL != (pDAB = structdata_init ());
 
-	syn_preload (quiet, pDAB); //FIXME incomplete
+	if (NULL != synfile_name) // not provided
+		syn_preload (quiet, synfile_name, pDAB); 
 
 	pgn = *pgn_i++;
 	while (ok && pgn) {
@@ -454,19 +455,19 @@ syn_apply_pair (struct DATA *d, const char *m, const char *s)
 }
 
 static bool_t
-csvline_syn_apply (csv_line_t *pcsvln, struct DATA *d)
+csvline_syn_apply (csv_line_t *pcsvln, struct DATA *d, bool_t quiet)
 {
 	bool_t ok = TRUE;
 	int i;
 	for (i = 1; ok && i < pcsvln->n; i++) {
-		printf ("[%s] synonym of [%s]\n",pcsvln->s[0],pcsvln->s[i]);
+		if (!quiet) printf ("[%s] synonym of [%s]\n",pcsvln->s[0],pcsvln->s[i]);
 		ok = ok && syn_apply_pair (d, pcsvln->s[0], pcsvln->s[i]);
 	}
 	return ok;
 }
 
 static void
-synonims_load (bool_t quietmode, const char *fsyns_name, struct DATA *d)
+syn_preload (bool_t quietmode, const char *fsyns_name, struct DATA *d)
 {
 	FILE *fsyns;
 	char myline[MAXSIZE_CSVLINE];
@@ -479,7 +480,7 @@ synonims_load (bool_t quietmode, const char *fsyns_name, struct DATA *d)
 	assert(NULL != fsyns_name);
 
 	if (NULL == fsyns_name) {
-		fprintf (stderr, "Error, synonim file not provided, absent, or corrupted\n");
+		fprintf (stderr, "Error, synonym file not provided, absent, or corrupted\n");
 		exit(EXIT_FAILURE);
 	}
 
@@ -501,11 +502,11 @@ synonims_load (bool_t quietmode, const char *fsyns_name, struct DATA *d)
 
 			if (csv_line_init(&csvln, myline)) {
 				if (csvln.n >= 1) {
-					success = csvline_syn_apply (&csvln, d);
+					success = csvline_syn_apply (&csvln, d, quietmode);
 				}
 				csv_line_done(&csvln);		
 			} else {
-				printf ("Failure to input synonim file\n");
+				printf ("Failure to input synonym file\n");
 				exit(EXIT_FAILURE);
 			}
 			file_success = success;
@@ -526,21 +527,6 @@ synonims_load (bool_t quietmode, const char *fsyns_name, struct DATA *d)
 			exit(EXIT_FAILURE);
 	}
 	return;
-}
-
-static void
-syn_preload (bool_t quiet, struct DATA *d)
-{
-	#define NOPLAYER -1
-	player_t 	i;
-	player_t 	j;
-	bool_t 		ok = TRUE;
-	player_t 	plyr = NOPLAYER; // to silence warnings
-	const char *tagstr;
-	uint32_t 	taghsh;
-
-	synonims_load (quiet, "syn.txt", d);
-
 }
 
 

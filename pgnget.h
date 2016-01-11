@@ -34,7 +34,7 @@ enum RESULTS {
 	DISCARD = 3
 };
 
-extern struct DATA * 	database_init_frompgn (const char *pgn_i[], bool_t quiet);
+extern struct DATA * 	database_init_frompgn (const char *pgn_i[], const char *synfile_name, bool_t quiet);
 extern void 			database_done (struct DATA *p);
 
 #include "mytypes.h"

@@ -42,7 +42,7 @@
 
 struct NAMEPEA {
 	player_t pidx; 		// player index
-	player_t pidx_out; 	// player index to be used for synonims, if different from pidx
+	player_t pidx_out; 	// player index to be used for synonyms, if different from pidx
 	uint32_t hash; 		// name hash
 };
 
