@@ -63,6 +63,18 @@ ba_ison(struct BITARRAY *ba, player_t x)
 	return ret;
 }
 
+static void
+ba_clear (struct BITARRAY *ba)
+{
+	size_t i;
+	player_t max; 
+	size_t max_p;
+
+	max = ba->max; 
+	max_p = (size_t)max/64 + (max % 64 > 0?1:0);
+	for (i = 0; i < max_p; i++) ba->pod[i] = 0;
+}
+
 static bool_t
 ba_init(struct BITARRAY *ba, player_t max)
 {
@@ -72,6 +84,8 @@ ba_init(struct BITARRAY *ba, player_t max)
 	size_t max_p = (size_t)max/64 + (max % 64 > 0?1:0);
 
 	assert(ba);
+	ba->max = 0;
+	ba->pod = NULL;
 	ok = NULL != (ptr = memnew (sizeof(pod_t)*max_p));
 	if (ok) {
 		ba->max = max;
@@ -127,8 +141,6 @@ static player_t		N_players = 0;
 static player_t	*	Group_belong;
 static player_t		N_groups;
 
-static bitarray_t 	BA;
-static bitarray_t	BB;
 static player_t *	Get_new_id;
 
 static group_t 	**	Group_final_list;
@@ -171,14 +183,10 @@ static void			group_output (FILE *f, group_t *s);
 static bool_t
 groupset_sanity_check(void)
 { 
-	group_t *c; 
-
-	c = Group_buffer.prehead;
-	if (c != NULL)
-		c = c->next;
-	else
-		return FALSE;
-
+	// verify c is properly double-linked
+	group_t *c = Group_buffer.prehead;
+	if (c == NULL) return FALSE;
+	c = c->next;
 	for (; c != NULL; c = c->next) {
 		if (c->prev == NULL) return FALSE;
 	}
@@ -186,7 +194,8 @@ groupset_sanity_check(void)
 }
 #endif
 
-static void groupset_init (void) 
+static void 
+groupset_init (void) 
 {
 	Group_buffer.tail    = &Group_buffer.list[0];
 	Group_buffer.prehead = &Group_buffer.list[0];
@@ -211,7 +220,8 @@ static void groupset_print(void)
 }
 #endif
 
-static void groupset_add (group_t *a) 
+static void 
+groupset_add (group_t *a) 
 {
 	group_t *t = groupset_tail();
 	t->next = a;
@@ -219,7 +229,8 @@ static void groupset_add (group_t *a)
 	Group_buffer.tail = a;
 }
 
-static group_t * groupset_find (player_t id)
+static group_t * 
+groupset_find (player_t id)
 {
 	group_t * s;
 	for (s = groupset_head(); s != NULL; s = s->next) {
@@ -364,10 +375,8 @@ group_buffer_init (struct GROUP_BUFFER *g, player_t n)
 		g->prehead = NULL;
 		g->n = 0;
 		g->max = n;
-		return TRUE;
-	} else {
-		return FALSE;
-	}
+	} 
+	return p != NULL;
 }
 
 static void
@@ -391,10 +400,8 @@ participant_buffer_init (struct PARTICIPANT_BUFFER *x, player_t n)
 		x->list = p;		
 		x->n = 0;
 		x->max = n;
-		return TRUE;
-	} else {
-		return FALSE;
-	}
+	} 
+	return p != NULL;
 }
 
 static void
@@ -415,10 +422,8 @@ connection_buffer_init (struct CONNECT_BUFFER *x, gamesnum_t n)
 		x->list = p;		
 		x->n = 0;
 		x->max = n;
-		return TRUE;
-	} else {
-		return FALSE;
-	}
+	} 
+	return p != NULL;
 }
 
 static void
@@ -837,14 +842,18 @@ beat_lost_output (group_t *g)
 static void
 simplify_shrink__ (group_t *g)
 {
+	bitarray_t 		bA;
+	bitarray_t		bB;
 	group_t 		*beat_to, *lost_to;
 	connection_t 	*c, *p;
 	player_t		id, oid;
 
 	id = NO_ID;
 
-	ba_init(&BA, N_players); // it was -1
-	ba_init(&BB, N_players); // it was -2
+	if (!ba_init(&bA, N_players) || !ba_init(&bB, N_players)) {
+		fprintf(stderr, "No memory to initialize internal arrays\n");
+		exit(EXIT_FAILURE);			  
+	}
 
 	oid = g->id; // own id
 
@@ -864,21 +873,21 @@ simplify_shrink__ (group_t *g)
 
 	if (c && beat_to) {
 
-		ba_put(&BA, id);
+		ba_put(&bA, id);
 		p = c;
 		c = c->next;
 
 		while (c != NULL) {
 			beat_to = group_pointed_by_conn(c);
 			id = beat_to->id;
-			if (id == oid || ba_ison(&BA, id)) {
+			if (id == oid || ba_ison(&bA, id)) {
 				// remove connection and advance
 				c = c->next; //no mem leak, allocated buffer
 				p->next = c; 
 			}
 			else {
 				// remember and advance
-				ba_put(&BA, id);
+				ba_put(&bA, id);
 				p = c;
 				c = c->next;
 			}
@@ -904,29 +913,29 @@ simplify_shrink__ (group_t *g)
 
 	if (c && lost_to) {
 
-		ba_put(&BB, id);
+		ba_put(&bB, id);
 		p = c;
 		c = c->next;
 
 		while (c != NULL) {
 			lost_to = group_pointed_by_conn(c);
 			id = lost_to->id;
-			if (id == oid || ba_ison(&BB, id)) {
+			if (id == oid || ba_ison(&bB, id)) {
 				// remove connection and advance
 				c = c->next;		
 				p->next = c; //no mem leak, allocated buffer
 			}
 			else {
 				// remember and advance
-				ba_put(&BB, id);
+				ba_put(&bB, id);
 				p = c;
 				c = c->next;
 			}
 		}
 	}
 
-	ba_done(&BA);
-	ba_done(&BB);
+	ba_done(&bA);
+	ba_done(&bB);
 
 	return;
 }
@@ -946,6 +955,8 @@ simplify_shrink (group_t *g)
 static void
 simplify (group_t *g)
 {
+	bitarray_t 	bA;
+	bitarray_t	bB;
 	group_t 		*beat_to, *lost_to, *combine_with=NULL;
 	connection_t 	*c, *p;
 	player_t		id, oid;
@@ -959,8 +970,10 @@ simplify (group_t *g)
 
 		assert(groupset_sanity_check());
 
-		ba_init(&BA, N_players); // was - 1
-		ba_init(&BB, N_players); // was - 2 
+		if (!ba_init(&bA, N_players) || !ba_init(&bB, N_players)) {
+			fprintf(stderr, "No memory to initialize internal arrays\n");
+			exit(EXIT_FAILURE);			  
+		}
 
 		oid = g->id; // own id
 
@@ -982,21 +995,21 @@ simplify (group_t *g)
 
 		if (c && beat_to) {
 
-			ba_put(&BA, id);
+			ba_put(&bA, id);
 			p = c;
 			c = c->next;
 
 			while (c != NULL) {
 				beat_to = group_pointed_by_conn(c);
 				id = beat_to->id;
-				if (id == oid || ba_ison(&BA, id)) {
+				if (id == oid || ba_ison(&bA, id)) {
 					// remove connection and advance
 					c = c->next; //no mem leak, allocated buffer
 					p->next = c; 
 				}
 				else {
 					// remember and advance
-					ba_put(&BA, id);
+					ba_put(&bA, id);
 					p = c;
 					c = c->next;
 				}
@@ -1029,7 +1042,7 @@ simplify (group_t *g)
 		if (c && lost_to) {
 
 			// GOTTACOMBINE?
-			if (ba_ison(&BA, id)) {
+			if (ba_ison(&bA, id)) {
 
 				assert(groupset_sanity_check());
 
@@ -1038,7 +1051,7 @@ simplify (group_t *g)
 			}
 			else gotta_combine = FALSE;
 
-			ba_put(&BB, id);
+			ba_put(&bB, id);
 			p = c;
 			c = c->next;
 
@@ -1047,19 +1060,19 @@ simplify (group_t *g)
 			while (c != NULL && !gotta_combine) {
 				lost_to = group_pointed_by_conn(c);
 				id = lost_to->id;
-				if (id == oid || ba_ison(&BB, id)) {
+				if (id == oid || ba_ison(&bB, id)) {
 					// remove connection and advance
 					c = c->next;		
 					p->next = c; //no mem leak, allocated buffer
 				}
 				else {
 					// remember and advance
-					ba_put(&BB, id);
+					ba_put(&bB, id);
 					p = c;
 					c = c->next;
 	
 					// GOTTACOMBINE?
-					if (ba_ison(&BA, id)) {
+					if (ba_ison(&bA, id)) {
 						gotta_combine = TRUE;
 						combine_with = lost_to;
 					}
@@ -1070,8 +1083,8 @@ simplify (group_t *g)
 			assert(groupset_sanity_check());
 		}
 
-		ba_done(&BA);
-		ba_done(&BB);
+		ba_done(&bA);
+		ba_done(&bB);
 
 		if (gotta_combine) {
 			//printf("combine g=%d combine_with=%d\n",g->id, combine_with->id);
@@ -1136,6 +1149,7 @@ group_next_pointed_by_beat (group_t *g)
 static void
 finish_it (void)
 {
+	bitarray_t 	bA;
 	player_t *chain_end;
 	group_t *g, *h, *gp;
 	connection_t *b;
@@ -1144,52 +1158,39 @@ finish_it (void)
 	bool_t startover;
 	bool_t combined;
 
+	if (!ba_init(&bA, N_players)) {
+		fprintf(stderr, "No memory to initialize internal arrays\n");
+		exit(EXIT_FAILURE);		
+	}
+
 	do {
 		startover = FALSE;
 		combined = FALSE;
 
 		chain = CHAIN;
 
-		ba_init(&BA, N_players);
-
 		g = groupset_head();
 		if (g == NULL) break;
-
 		own_id = g->id; // own id
-
 		do {
-			ba_put(&BA, own_id);
+			ba_put(&bA, own_id);
 			*chain++ = own_id;
-
 			h = group_next_pointed_by_beat(g);
 
-			if (h == NULL) {
-
-				Group_final_list[Group_final_list_n++] = group_unlink(g);
-
-				ba_done(&BA);
-				startover = TRUE;
-
-			} else {
-			
+			if (h != NULL) {
 				g = h;
-
 				own_id = g->id;
-
 				for (b = group_beathead(g); b != NULL; b = beat_next(b)) {
-
 					gp = group_pointed_by_conn(b);
 					bi = gp->id;
-	
-					if (ba_ison(&BA, bi)) {
+					if (ba_ison(&bA, bi)) {
 						//	findprevious bi, combine... remember to include own id;
 						player_t *p;
 						chain_end = chain;
 						while (chain-->CHAIN) {
 							if (*chain == bi) break;
 						}
-						
-						for (p = chain; p < chain_end; p++) {
+						for (p = chain; p < chain_end; p++) { //FIXME for and the next break looks like wrong
 							group_t *x, *y;
 							//printf("combine x=%d y=%d\n",own_id, *p);
 							x = group_pointed_by_node(Gnode + own_id);
@@ -1197,14 +1198,24 @@ finish_it (void)
 							group_gocombine(x,y);
 							combined = TRUE;
 							startover = TRUE;
-							break;
+							break; //FIXME
 						}
 						break;
 					}
-				}	
+				}
+
+			} else {
+				Group_final_list[Group_final_list_n++] = group_unlink(g);
+				startover = TRUE;
 			}
+
 		} while (!combined && !startover);
+
+		ba_clear(&bA);			
+
 	} while (startover);
+
+	ba_done(&bA);	
 
 	return;
 }
