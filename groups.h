@@ -89,12 +89,14 @@ extern void 	scan_encounters	( const struct ENC Encounter[]
 
 extern player_t	convert_to_groups(FILE *f, player_t N_plyers, const char **name, const struct PLAYERS *players);
 
+/*
 extern void		sieve_encounters( const struct ENC *enc
 								, gamesnum_t N_enc
 								, struct ENC *enca
 								, gamesnum_t *N_enca
 								, struct ENC *encb
 								, gamesnum_t *N_encb);
+*/
 
 extern bool_t 	supporting_encmem_init (gamesnum_t nenc);
 
@@ -104,16 +106,18 @@ extern bool_t 	supporting_groupmem_init (player_t nplayers, gamesnum_t nenc);
 
 extern void 	supporting_groupmem_done (void);
 
-extern bool_t	groups_process 	( bool_t quiet
-								, const struct ENCOUNTERS *encounters
+extern bool_t	groups_process	( const struct ENCOUNTERS *encounters
 								, const struct PLAYERS *players
-								, FILE *groupf);
+								, FILE *groupf
+								, bool_t quiet
+								);
+
 
 extern bool_t	groups_process_to_count ( const struct ENCOUNTERS *encounters
 										, const struct PLAYERS *players
 										, player_t *n);
 
-extern bool_t	group_is_problematic	( const struct ENCOUNTERS *encounters
+extern bool_t	groups_are_ok			( const struct ENCOUNTERS *encounters
 										, const struct PLAYERS *players);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/

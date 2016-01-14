@@ -681,12 +681,10 @@ group_belonging (player_t plyr)
 		return NO_ID;
 }
 
-void
+static void
 sieve_encounters	( const struct ENC *enc
 					, gamesnum_t n_enc
-					, struct ENC *enca
 					, gamesnum_t *N_enca
-					, struct ENC *encb
 					, gamesnum_t *N_encb
 )
 {
@@ -694,22 +692,17 @@ sieve_encounters	( const struct ENC *enc
 	player_t w,b;
 	gamesnum_t na = 0, nb = 0;
 
-	*N_enca = 0;
-	*N_encb = 0;
-
 	for (e = 0; e < n_enc; e++) {
 		w = enc[e].wh; 
 		b = enc[e].bl; 
 		if (group_belonging(w) == group_belonging(b)) {
-			enca[na] = enc[e]; na += 1;
+			na += 1;
 		} else {
-			encb[nb] = enc[e]; nb += 1;
+			nb += 1;
 		}
 	} 
-
 	*N_enca = na;
 	*N_encb = nb;
-
 	return;
 }
 
@@ -1465,94 +1458,95 @@ scan_encounters (const struct ENC *enc, gamesnum_t n_enc, player_t n_plyrs)
 //-----------------------------------------------------------------------------------
 
 bool_t
-groups_process	( bool_t quiet
-				, const struct ENCOUNTERS *encounters
-				, const struct PLAYERS *players
-				, FILE *groupf) 
+groups_process
+		( const struct ENCOUNTERS *encounters
+		, const struct PLAYERS *players
+		, FILE *groupf
+		, bool_t quiet
+		)
 {
-	bool_t ok = FALSE;
-
-	if (supporting_encmem_init (encounters->n)) {
-		struct ENC *	a;
-		struct ENC *	b;
-		struct ENC *	Encounter2;
-		struct ENC *	Encounter3;
-		gamesnum_t		N_encounters2 = 0;
-		gamesnum_t 		N_encounters3 = 0;
-		gamesnum_t 		nenc = encounters->n;
-
-		assert (nenc > 0);
-		if (NULL == (a = memnew (sizeof(struct ENC) * (size_t)nenc))) {
-			ok = FALSE;
-		} else 
-		if (NULL == (b = memnew (sizeof(struct ENC) * (size_t)nenc))) {
-			ok = FALSE;
-			memrel(a);
-		} else {
-			Encounter2 = a;
-			Encounter3 = b;
-
-			if (supporting_groupmem_init (players->n, encounters->n)) {
-				player_t groups_n;
-				ok = TRUE;
-				scan_encounters (encounters->enc, encounters->n, players->n); 
-				groups_n = convert_to_groups (groupf, players->n, players->name, players);
-				sieve_encounters (encounters->enc, encounters->n, Encounter2, &N_encounters2, Encounter3, &N_encounters3);
-				if (!quiet) {
-					printf ("Groups=%ld\n", (long)groups_n);
-					printf ("Encounters, Total=%ld, Main=%ld, @ Interface between groups=%ld\n"
-								,(long)encounters->n, (long)N_encounters2, (long)N_encounters3);
-				}
-				supporting_groupmem_done ();
-			} else {
-				ok = FALSE;
-			}
-			memrel(a);
-			memrel(b);
-		}
-		supporting_encmem_done ();
-	} 
-	return ok;
-}
-
-
-bool_t
-groups_process_to_count (const struct ENCOUNTERS *encounters, const struct PLAYERS *players, player_t *n) 
-{
-	bool_t ok = FALSE;
-	if (supporting_encmem_init (encounters->n)) {
-		if (supporting_groupmem_init (players->n, encounters->n)) {
-			ok = TRUE;
-			scan_encounters(encounters->enc, encounters->n, players->n); 
-			*n = convert_to_groups(NULL, players->n, players->name, players);
-			supporting_groupmem_done ();
-		} else {
-			ok = FALSE;
-		}
-		supporting_encmem_done ();
-	} 
-	return ok;
-}
-
-bool_t
-group_is_problematic(const struct ENCOUNTERS *encounters, const struct PLAYERS *players)
-{
+	gamesnum_t		N_intra = 0;
+	gamesnum_t 		N_inter = 0;
+	gamesnum_t 		nenc = encounters->n;
 	player_t n;
 	bool_t ok = FALSE;
+
+	assert (nenc > 0);
+
 	if (supporting_encmem_init (encounters->n)) {
+
 		if (supporting_groupmem_init (players->n, encounters->n)) {
+
+			scan_encounters(encounters->enc, encounters->n, players->n); 
+			n = convert_to_groups(groupf, players->n, players->name, players);
+			sieve_encounters (encounters->enc, encounters->n, &N_intra, &N_inter);
+			if (!quiet) {
+				printf ("Groups=%ld\n", (long)n);
+				printf ("Encounters: Total=%ld, within groups=%ld, @ interface between groups=%ld\n"
+							,(long)encounters->n, (long)N_intra, (long)N_inter);
+			}
+			ok = TRUE;
+			supporting_groupmem_done ();
+		} else {
+			ok = FALSE;
+		}
+
+		supporting_encmem_done ();
+	} 
+
+	return ok;
+}
+
+
+bool_t
+groups_process_to_count 
+		( const struct ENCOUNTERS *encounters
+		, const struct PLAYERS *players
+		, player_t *pn
+		)
+{
+	player_t n = 0;
+	bool_t ok = FALSE;
+
+	if (supporting_encmem_init (encounters->n)) {
+
+		if (supporting_groupmem_init (players->n, encounters->n)) {
+
 			scan_encounters(encounters->enc, encounters->n, players->n); 
 			n = convert_to_groups(NULL, players->n, players->name, players);
-			if (n == 1) {
-				ok = TRUE;
-			} else {
-				ok = 1 == non_empty_groups_population(players); // single ones have been purged;
-			}
+			ok = TRUE;
 			supporting_groupmem_done ();
 		} else {
 			ok = FALSE;
 		}
 		supporting_encmem_done ();
 	} 
-	return !ok;
+	*pn = n;
+	return ok;
+}
+
+
+bool_t
+groups_are_ok
+		( const struct ENCOUNTERS *encounters
+		, const struct PLAYERS *players
+		)
+{
+	player_t n = 0;
+	bool_t ok = FALSE;
+
+	if (supporting_encmem_init (encounters->n)) {
+
+		if (supporting_groupmem_init (players->n, encounters->n)) {
+
+			scan_encounters(encounters->enc, encounters->n, players->n); 
+			n = convert_to_groups(NULL, players->n, players->name, players);
+			ok = (1 == n) || 1 == non_empty_groups_population(players); // single ones have been purged;
+			supporting_groupmem_done ();
+		} else {
+			ok = FALSE;
+		}
+		supporting_encmem_done ();
+	} 
+	return ok;
 }

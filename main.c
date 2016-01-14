@@ -814,7 +814,7 @@ int main (int argc, char *argv[])
 
 	if (group_is_output) {
 		bool_t ok;
-		ok = groups_process (quiet_mode, &Encounters, &Players, groupf);
+		ok = groups_process (&Encounters, &Players, groupf, quiet_mode);
 		if (!ok) {
 			fprintf (stderr, "not enough memory for encounters allocation\n");
 			exit(EXIT_FAILURE);
@@ -851,7 +851,7 @@ int main (int argc, char *argv[])
 		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
 
-	if (!groups_no_check && group_is_problematic (&Encounters, &Players)) {
+	if (!groups_no_check && !groups_are_ok (&Encounters, &Players)) {
 			fprintf (stderr, "\n\n");
 			fprintf (stderr, "*************************[ WARNING ]*************************\n");
 			fprintf (stderr, "*       Database is not well connected by games...          *\n");

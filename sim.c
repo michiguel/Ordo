@@ -116,7 +116,7 @@ get_a_simulated_run	( int 					limit
 			calc_encounters__(ENCOUNTERS_NOFLAGGED, pGames, pPlayers->flagged, pEncounters);
 		}
 
-	} while (failed_sim++ < limit && group_is_problematic (pEncounters, pPlayers));
+	} while (failed_sim++ < limit && !groups_are_ok (pEncounters, pPlayers));
 
 	if (!quiet_mode) printf("--> Simulation: [Accepted]\n");
 }
