@@ -1467,11 +1467,12 @@ groups_process
 		, gamesnum_t * pN_inter
 		)
 {
-	gamesnum_t 		nenc = encounters->n;
 	player_t n = 0;
 	bool_t ok = FALSE;
 
-	assert (nenc > 0);
+	assert (encounters && players && pn);
+	assert (pN_intra && pN_inter);
+	assert (encounters->n > 0);
 
 	if (supporting_encmem_init (encounters->n)) {
 
@@ -1504,6 +1505,9 @@ groups_process_to_count
 	player_t n = 0;
 	bool_t ok = FALSE;
 
+	assert (encounters && players && pn);
+	assert (encounters->n > 0);
+
 	if (supporting_encmem_init (encounters->n)) {
 
 		if (supporting_groupmem_init (players->n, encounters->n)) {
@@ -1530,6 +1534,9 @@ groups_are_ok
 {
 	player_t n = 0;
 	bool_t ok = FALSE;
+
+	assert (encounters && players);
+	assert (encounters->n > 0);
 
 	if (supporting_encmem_init (encounters->n)) {
 
