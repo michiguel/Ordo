@@ -827,7 +827,6 @@ int main (int argc, char *argv[])
 			printf ("Encounters: Total=%ld, within groups=%ld, @ interface between groups=%ld\n"
 						,(long)Encounters.n, (long)intra, (long)inter);
 		}
-
 		if (textstr == NULL && csvstr == NULL)	{
 			exit(EXIT_SUCCESS);
 		}

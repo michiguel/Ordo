@@ -139,7 +139,6 @@ static gamesnum_t	N_se2 = 0;
 static player_t		N_players = 0;
 
 static player_t	*	Group_belong;
-static player_t		N_groups;
 
 static player_t *	Get_new_id;
 
@@ -351,7 +350,6 @@ supporting_groupmem_done (void)
 	Gnode = NULL;
 	CHAIN = NULL;
 
-	N_groups = 0;
 	Group_final_list_n = 0;
 	N_players = 0;
 
@@ -1392,8 +1390,7 @@ scan_encounters (const struct ENC *enc, gamesnum_t n_enc, player_t n_plyrs)
 {
 /*
 	static variables modified:
-		N_groups
-		Groups_belong
+		Group_belong
 		SE
 		N_se
 		SE2
@@ -1412,7 +1409,6 @@ scan_encounters (const struct ENC *enc, gamesnum_t n_enc, player_t n_plyrs)
 	N_se  = 0;
 	N_se2 = 0;
 
-	N_groups = n_plyrs;
 	for (i = 0; i < n_plyrs; i++) {
 		Group_belong[i] = (int32_t)i;
 	}
@@ -1434,7 +1430,6 @@ scan_encounters (const struct ENC *enc, gamesnum_t n_enc, player_t n_plyrs)
 						Group_belong[i] = lowerg;
 					}
 				}
-				N_groups--;
 			}
 		}
 	} 
