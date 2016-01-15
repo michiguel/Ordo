@@ -538,6 +538,81 @@ add_revconn (group_t *g, player_t i)
 	}		
 }
 
+static bool_t encounter_is_SW (const struct ENC *e) 
+{
+	return e->W > 0 && e->D == 0 && e->L == 0;
+}
+
+static bool_t encounter_is_SL (const struct ENC *e) 
+{
+	return e->W == 0 && e->D == 0 && e->L > 0;
+}
+
+void
+scan_encounters (const struct ENC *enc, gamesnum_t n_enc, player_t n_plyrs)
+{
+/*
+	static variables modified:
+		Group_belong
+		SE
+		N_se
+		SE2
+		N_se2
+*/
+	player_t i;
+	gamesnum_t e;
+	const struct ENC *pe;
+	player_t gw, gb, lowerg, higherg;
+
+	assert (SE != NULL);
+	assert (SE2!= NULL);
+	assert (N_se  == 0);
+	assert (N_se2 == 0);
+
+	N_se  = 0;
+	N_se2 = 0;
+
+	for (i = 0; i < n_plyrs; i++) {
+		Group_belong[i] = (int32_t)i;
+	}
+
+	for (e = 0; e < n_enc; e++) {
+
+		pe = &enc[e];
+		if (encounter_is_SL(pe) || encounter_is_SW(pe)) {
+			SE[N_se++] = *pe;
+		} else {
+			gw = Group_belong[pe->wh];
+			gb = Group_belong[pe->bl];
+			if (gw != gb) {
+				lowerg   = gw < gb? gw : gb;
+				higherg  = gw > gb? gw : gb;
+				// join
+				for (i = 0; i < n_plyrs; i++) {
+					if (Group_belong[i] == higherg) {
+						Group_belong[i] = lowerg;
+					}
+				}
+			}
+		}
+	} 
+
+	for (e = 0, N_se2 = 0 ; e < N_se; e++) {
+		player_t x,y;
+		x = SE[e].wh;
+		y = SE[e].bl;	
+		if (Group_belong[x] != Group_belong[y]) {
+			SE2[N_se2++] = SE[e];
+		}
+	}
+
+	// SE:  list of "Super" encounters
+	// SE2: list of "Super" encounters that do not belong to the same group
+
+	return;
+}
+
+
 static player_t get_iwin (struct ENC *pe) {return pe->wscore > 0.5? pe->wh: pe->bl;}
 static player_t get_ilos (struct ENC *pe) {return pe->wscore > 0.5? pe->bl: pe->wh;}
 
@@ -548,6 +623,7 @@ enc2groups (struct ENC *pe)
 	group_t *glw, *gll, *g;
 
 	assert(pe);
+	assert(encounter_is_SL(pe) || encounter_is_SW(pe));
 
 	iwin = get_iwin(pe);
 	ilos = get_ilos(pe);
@@ -563,6 +639,7 @@ enc2groups (struct ENC *pe)
 			Node[iwin].group = g;
 		}
 		glw = g;
+//		assert(g == Node[iwin].group); not true?
 	} else {
 		glw = Node[iwin].group;
 	}
@@ -578,6 +655,7 @@ enc2groups (struct ENC *pe)
 			Node[ilos].group = g;
 		}
 		gll = g;
+//		assert(g == Node[ilos].group); not true?
 	} else {
 		gll = Node[ilos].group;
 	}
@@ -668,6 +746,7 @@ convert_to_groups (FILE *f, player_t n_plyrs, const char **name, const struct PL
 	}
 	return groups_counter() ;
 }
+
 
 static player_t
 group_belonging (player_t plyr)
@@ -1373,80 +1452,6 @@ group_output (FILE *f, group_t *s)
 	if (winconnections == 0 && lossconnections == 0) {
 		fprintf (f," \\---> this group is isolated from the rest\n");
 	} 
-}
-
-static bool_t encounter_is_SW (const struct ENC *e) 
-{
-	return e->W > 0 && e->D == 0 && e->L == 0;
-}
-
-static bool_t encounter_is_SL (const struct ENC *e) 
-{
-	return e->W == 0 && e->D == 0 && e->L > 0;
-}
-
-void
-scan_encounters (const struct ENC *enc, gamesnum_t n_enc, player_t n_plyrs)
-{
-/*
-	static variables modified:
-		Group_belong
-		SE
-		N_se
-		SE2
-		N_se2
-*/
-	player_t i;
-	gamesnum_t e;
-	const struct ENC *pe;
-	player_t gw, gb, lowerg, higherg;
-
-	assert (SE != NULL);
-	assert (SE2!= NULL);
-	assert (N_se  == 0);
-	assert (N_se2 == 0);
-
-	N_se  = 0;
-	N_se2 = 0;
-
-	for (i = 0; i < n_plyrs; i++) {
-		Group_belong[i] = (int32_t)i;
-	}
-
-	for (e = 0; e < n_enc; e++) {
-
-		pe = &enc[e];
-		if (encounter_is_SL(pe) || encounter_is_SW(pe)) {
-			SE[N_se++] = *pe;
-		} else {
-			gw = Group_belong[pe->wh];
-			gb = Group_belong[pe->bl];
-			if (gw != gb) {
-				lowerg   = gw < gb? gw : gb;
-				higherg  = gw > gb? gw : gb;
-				// join
-				for (i = 0; i < n_plyrs; i++) {
-					if (Group_belong[i] == higherg) {
-						Group_belong[i] = lowerg;
-					}
-				}
-			}
-		}
-	} 
-
-	for (e = 0, N_se2 = 0 ; e < N_se; e++) {
-		player_t x,y;
-		x = SE[e].wh;
-		y = SE[e].bl;	
-		if (Group_belong[x] != Group_belong[y]) {
-			SE2[N_se2++] = SE[e];
-		}
-	}
-
-	// SE:  list of "Super" encounters
-	// SE2: list of "Super" encounters that do not belong to the same group
-
-	return;
 }
 
 
