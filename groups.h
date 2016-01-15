@@ -89,15 +89,6 @@ extern void 	scan_encounters	( const struct ENC Encounter[]
 
 extern player_t	convert_to_groups(FILE *f, player_t N_plyers, const char **name, const struct PLAYERS *players);
 
-/*
-extern void		sieve_encounters( const struct ENC *enc
-								, gamesnum_t N_enc
-								, struct ENC *enca
-								, gamesnum_t *N_enca
-								, struct ENC *encb
-								, gamesnum_t *N_encb);
-*/
-
 extern bool_t 	supporting_encmem_init (gamesnum_t nenc);
 
 extern void 	supporting_encmem_done (void);

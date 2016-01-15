@@ -1,2 +1,2 @@
-#define VERSION "1.0-mf6-fmt23-syn12"
+#define VERSION "1.0-mf6-fmt23-syn13"
 

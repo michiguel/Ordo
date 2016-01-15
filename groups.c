@@ -145,7 +145,7 @@ static player_t *	Get_new_id;
 static group_t 	**	Group_final_list;
 static player_t		Group_final_list_n = 0;
 
-static node_t	*	Gnode;
+static node_t	*	Node;
 
 static player_t	*	CHAIN;
 
@@ -314,7 +314,7 @@ supporting_groupmem_init (player_t nplayers, gamesnum_t nenc)
 	Group_belong = a;
 	Get_new_id = b;
 	Group_final_list = c;
-	Gnode = d;
+	Node = d;
 	CHAIN = e;
 
 	N_players = nplayers;
@@ -341,13 +341,13 @@ supporting_groupmem_done (void)
 	if (Group_belong)	 	memrel (Group_belong );
 	if (Get_new_id) 		memrel (Get_new_id);
 	if (Group_final_list) 	memrel (Group_final_list);
-	if (Gnode) 				memrel (Gnode);
+	if (Node) 				memrel (Node);
 	if (CHAIN) 				memrel (CHAIN);
 
 	Group_belong = NULL;
 	Get_new_id = NULL;
 	Group_final_list = NULL;
-	Gnode = NULL;
+	Node = NULL;
 	CHAIN = NULL;
 
 	Group_final_list_n = 0;
@@ -486,10 +486,10 @@ add_connection (group_t *g, player_t i)
 	player_t group_id;
 	connection_t *nw = connection_new();
 	nw->next = NULL;
-	nw->node = &Gnode[i];
+	nw->node = &Node[i];
 
 	group_id = NO_ID;
-	if (Gnode[i].group) group_id = Gnode[i].group->id;
+	if (Node[i].group) group_id = Node[i].group->id;
 
 	if (g->cstart == NULL) {
 		g->cstart = nw; 
@@ -515,10 +515,10 @@ add_revconn (group_t *g, player_t i)
 	player_t group_id;
 	connection_t *nw = connection_new();
 	nw->next = NULL;
-	nw->node = &Gnode[i];
+	nw->node = &Node[i];
 
 	group_id = NO_ID;
-	if (Gnode[i].group) group_id = Gnode[i].group->id;
+	if (Node[i].group) group_id = Node[i].group->id;
 
 	if (g->lstart == NULL) {
 		g->lstart = nw; 
@@ -552,7 +552,7 @@ enc2groups (struct ENC *pe)
 	iwin = get_iwin(pe);
 	ilos = get_ilos(pe);
 
-	if (Gnode[iwin].group == NULL) {
+	if (Node[iwin].group == NULL) {
 
 		g = groupset_find (Group_belong[iwin]);
 		if (g == NULL) {
@@ -560,14 +560,14 @@ enc2groups (struct ENC *pe)
 			g = group_reset(group_new());	
 			g->id = Group_belong[iwin];
 			groupset_add(g);
-			Gnode[iwin].group = g;
+			Node[iwin].group = g;
 		}
 		glw = g;
 	} else {
-		glw = Gnode[iwin].group;
+		glw = Node[iwin].group;
 	}
 
-	if (Gnode[ilos].group == NULL) {
+	if (Node[ilos].group == NULL) {
 
 		g = groupset_find (Group_belong[ilos]);
 		if (g == NULL) {
@@ -575,15 +575,15 @@ enc2groups (struct ENC *pe)
 			g = group_reset(group_new());	
 			g->id = Group_belong[ilos];
 			groupset_add(g);
-			Gnode[ilos].group = g;
+			Node[ilos].group = g;
 		}
 		gll = g;
 	} else {
-		gll = Gnode[ilos].group;
+		gll = Node[ilos].group;
 	}
 
-	Gnode[iwin].group = glw;
-	Gnode[ilos].group = gll;
+	Node[iwin].group = glw;
+	Node[ilos].group = gll;
 	add_connection (glw, ilos);
 	add_revconn (gll, iwin);
 }
@@ -596,16 +596,16 @@ ifisolated2group (player_t x)
 {
 	group_t *g;
 
-	if (Gnode[x].group == NULL) {
+	if (Node[x].group == NULL) {
 		g = groupset_find (Group_belong[x]);
 		if (g == NULL) {
 			// creation
 			g = group_reset(group_new());	
 			g->id = Group_belong[x];
 			groupset_add(g);
-			Gnode[x].group = g;
+			Node[x].group = g;
 		}
-		Gnode[x].group = g;
+		Node[x].group = g;
 	} 
 }
 
@@ -617,7 +617,7 @@ convert_general_init (player_t n_plyrs)
 	participant_init();
 	groupset_init();
 	for (i = 0; i < n_plyrs; i++) {
-		Gnode[i].group = NULL;
+		Node[i].group = NULL;
 	}
 	return;
 }
@@ -672,7 +672,7 @@ convert_to_groups (FILE *f, player_t n_plyrs, const char **name, const struct PL
 static player_t
 group_belonging (player_t plyr)
 {
-	group_t *g = group_pointed_by_node (&Gnode[plyr]);
+	group_t *g = group_pointed_by_node (&Node[plyr]);
 	if (g) 
 		return g->id;
 	else
@@ -1184,8 +1184,8 @@ finish_it (void)
 						for (p = chain; p < chain_end; p++) { //FIXME for and the next break looks like wrong
 							group_t *x, *y;
 							//printf("combine x=%d y=%d\n",own_id, *p);
-							x = group_pointed_by_node(Gnode + own_id);
-							y = group_pointed_by_node(Gnode + *p);
+							x = group_pointed_by_node(Node + own_id);
+							y = group_pointed_by_node(Node + *p);
 							group_gocombine(x,y);
 							combined = TRUE;
 							startover = TRUE;
