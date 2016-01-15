@@ -814,11 +814,20 @@ int main (int argc, char *argv[])
 
 	if (group_is_output) {
 		bool_t ok;
-		ok = groups_process (&Encounters, &Players, groupf, quiet_mode);
+		player_t groups_n;
+		gamesnum_t intra;
+		gamesnum_t inter;
+		ok = groups_process (&Encounters, &Players, groupf, &groups_n, &intra, &inter);
 		if (!ok) {
 			fprintf (stderr, "not enough memory for encounters allocation\n");
 			exit(EXIT_FAILURE);
 		}
+		if (!quiet_mode) {
+			printf ("Groups=%ld\n", (long)groups_n);
+			printf ("Encounters: Total=%ld, within groups=%ld, @ interface between groups=%ld\n"
+						,(long)Encounters.n, (long)intra, (long)inter);
+		}
+
 		if (textstr == NULL && csvstr == NULL)	{
 			exit(EXIT_SUCCESS);
 		}

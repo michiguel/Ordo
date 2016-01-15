@@ -1462,13 +1462,13 @@ groups_process
 		( const struct ENCOUNTERS *encounters
 		, const struct PLAYERS *players
 		, FILE *groupf
-		, bool_t quiet
+		, player_t *pn
+		, gamesnum_t * pN_intra
+		, gamesnum_t * pN_inter
 		)
 {
-	gamesnum_t		N_intra = 0;
-	gamesnum_t 		N_inter = 0;
 	gamesnum_t 		nenc = encounters->n;
-	player_t n;
+	player_t n = 0;
 	bool_t ok = FALSE;
 
 	assert (nenc > 0);
@@ -1479,12 +1479,8 @@ groups_process
 
 			scan_encounters(encounters->enc, encounters->n, players->n); 
 			n = convert_to_groups(groupf, players->n, players->name, players);
-			sieve_encounters (encounters->enc, encounters->n, &N_intra, &N_inter);
-			if (!quiet) {
-				printf ("Groups=%ld\n", (long)n);
-				printf ("Encounters: Total=%ld, within groups=%ld, @ interface between groups=%ld\n"
-							,(long)encounters->n, (long)N_intra, (long)N_inter);
-			}
+			sieve_encounters (encounters->enc, encounters->n, pN_intra, pN_inter);
+
 			ok = TRUE;
 			supporting_groupmem_done ();
 		} else {
@@ -1493,7 +1489,7 @@ groups_process
 
 		supporting_encmem_done ();
 	} 
-
+	*pn = n;
 	return ok;
 }
 

@@ -109,9 +109,10 @@ extern void 	supporting_groupmem_done (void);
 extern bool_t	groups_process	( const struct ENCOUNTERS *encounters
 								, const struct PLAYERS *players
 								, FILE *groupf
-								, bool_t quiet
+								, player_t *pn
+								, gamesnum_t * pN_intra
+								, gamesnum_t * pN_inter
 								);
-
 
 extern bool_t	groups_process_to_count ( const struct ENCOUNTERS *encounters
 										, const struct PLAYERS *players
