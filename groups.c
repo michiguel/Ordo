@@ -446,6 +446,7 @@ static group_t * group_combined (group_t *g)
 	return g;
 }
 
+//no globals
 static void
 add_participant (group_t *g, player_t i, const char *name)
 {
@@ -599,20 +600,15 @@ scan_encounters ( const struct ENC *enc, gamesnum_t n_enc
 	return;
 }
 
-
-//static player_t get_iwin (struct ENC *pe) {return pe->wscore > 0.5? pe->wh: pe->bl;}
-//static player_t get_ilos (struct ENC *pe) {return pe->wscore > 0.5? pe->bl: pe->wh;}
-
 static player_t get_iwin (struct ENC *pe) {return pe->W > 0? pe->wh: pe->bl;}
 static player_t get_ilos (struct ENC *pe) {return pe->W > 0? pe->bl: pe->wh;}
-
 
 static void
 sup_enc2group (struct ENC *pe)
 {	
 	// sort super encounter
 	// into their respective groups	
-	player_t iwin, ilos;
+	player_t iwin, ilos, x;
 	group_t *g;
 
 	assert(pe);
@@ -621,30 +617,24 @@ sup_enc2group (struct ENC *pe)
 	iwin = get_iwin(pe);
 	ilos = get_ilos(pe);
 
-	if (Node[iwin].group == NULL) {
-
-		g = groupset_find (Group_belong[iwin]);
-		if (g == NULL) {
-			// creation
+	x = iwin;
+	if (Node[x].group == NULL) {
+		if (NULL == (g = groupset_find (Group_belong[x]))) {
 			g = group_reset(group_new());	
-			g->id = Group_belong[iwin];
+			g->id = Group_belong[x];
 			groupset_add(g);
-			Node[iwin].group = g;
 		}
-		Node[iwin].group = g;
+		Node[x].group = g;
 	} 
 
-	if (Node[ilos].group == NULL) {
-
-		g = groupset_find (Group_belong[ilos]);
-		if (g == NULL) {
-			// creation
+	x = ilos;
+	if (Node[x].group == NULL) {
+		if (NULL == (g = groupset_find (Group_belong[x]))) {
 			g = group_reset(group_new());	
-			g->id = Group_belong[ilos];
+			g->id = Group_belong[x];
 			groupset_add(g);
-			Node[ilos].group = g;
 		}
-		Node[ilos].group = g;
+		Node[x].group = g;
 	} 
 
 	add_beat_connection	(Node[iwin].group, &Node[ilos]);
