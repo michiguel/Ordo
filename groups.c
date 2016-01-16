@@ -476,13 +476,12 @@ add_beat_connection (group_t *g, struct NODE *pnode)
 	assert(pnode);
 	assert(pnode->group);
 
-	nw = connection_new();
-	nw->next = NULL;
-	nw->node = pnode;
-
 	group_id = pnode->group->id;
 
 	if (g->cstart == NULL) {
+		nw = connection_new();
+		nw->next = NULL;
+		nw->node = pnode;
 		g->cstart = nw; 
 		g->clast = nw;	
 	} else {
@@ -493,6 +492,9 @@ add_beat_connection (group_t *g, struct NODE *pnode)
 			found = nd && nd->group && nd->group->id == group_id;
 		}
 		if (!found) {
+			nw = connection_new();
+			nw->next = NULL;
+			nw->node = pnode;
 			l = g->clast;
 			l->next  = nw;
 			g->clast = nw;
@@ -510,13 +512,12 @@ add_lost_connection (group_t *g, struct NODE *pnode)
 	assert(pnode);
 	assert(pnode->group);
 
-	nw = connection_new();
-	nw->next = NULL;
-	nw->node = pnode;
-
 	group_id = pnode->group->id;
 
 	if (g->lstart == NULL) {
+		nw = connection_new();
+		nw->next = NULL;
+		nw->node = pnode;
 		g->lstart = nw; 
 		g->llast = nw;	
 	} else {
@@ -527,6 +528,9 @@ add_lost_connection (group_t *g, struct NODE *pnode)
 			found = nd && nd->group && nd->group->id == group_id;
 		}
 		if (!found) {
+			nw = connection_new();
+			nw->next = NULL;
+			nw->node = pnode;
 			l = g->llast;
 			l->next  = nw;
 			g->llast = nw;
