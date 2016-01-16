@@ -586,12 +586,17 @@ scan_encounters ( const struct ENC *enc, gamesnum_t n_enc
 }
 
 
-static player_t get_iwin (struct ENC *pe) {return pe->wscore > 0.5? pe->wh: pe->bl;}
-static player_t get_ilos (struct ENC *pe) {return pe->wscore > 0.5? pe->bl: pe->wh;}
+//static player_t get_iwin (struct ENC *pe) {return pe->wscore > 0.5? pe->wh: pe->bl;}
+//static player_t get_ilos (struct ENC *pe) {return pe->wscore > 0.5? pe->bl: pe->wh;}
+
+static player_t get_iwin (struct ENC *pe) {return pe->W > 0? pe->wh: pe->bl;}
+static player_t get_ilos (struct ENC *pe) {return pe->W > 0? pe->bl: pe->wh;}
 
 static void
-enc2groups (struct ENC *pe)
-{
+sup_enc2group (struct ENC *pe)
+{	
+	// sort super encounter
+	// into their respective groups	
 	player_t iwin, ilos;
 	group_t *glw, *gll, *g;
 
@@ -690,7 +695,7 @@ convert_to_groups (FILE *f, player_t n_plyrs, const char **name, const struct PL
 	convert_general_init (n_plyrs);
 
 	for (e = 0 ; e < N_se2; e++) {
-		enc2groups(&SE2[e]);
+		sup_enc2group (&SE2[e]);
 	}
 	for (i = 0; i < n_plyrs; i++) {
 		ifisolated2group(i);
