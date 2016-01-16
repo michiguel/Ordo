@@ -631,7 +631,7 @@ sup_enc2group (struct ENC *pe)
 	iwin = get_iwin(pe);
 	ilos = get_ilos(pe);
 
-	iif_nodeempty_add_group(iwin);
+	if_nodeempty_add_group(iwin);
 	if_nodeempty_add_group(ilos);
 
 	add_beat_connection	(Node[iwin].group, &Node[ilos]);
