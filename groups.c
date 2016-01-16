@@ -467,15 +467,20 @@ add_participant (group_t *g, player_t i)
 }
 
 static void
-add_connection (group_t *g, player_t i)
+add_beat_connection (group_t *g, struct NODE *pnode)
 {
 	player_t group_id;
-	connection_t *nw = connection_new();
-	nw->next = NULL;
-	nw->node = &Node[i];
+	connection_t *nw;
 
-	group_id = NO_ID;
-	if (Node[i].group) group_id = Node[i].group->id;
+	assert(g);
+	assert(pnode);
+	assert(pnode->group);
+
+	nw = connection_new();
+	nw->next = NULL;
+	nw->node = pnode;
+
+	group_id = pnode->group->id;
 
 	if (g->cstart == NULL) {
 		g->cstart = nw; 
@@ -496,15 +501,20 @@ add_connection (group_t *g, player_t i)
 }
 
 static void
-add_revconn (group_t *g, player_t i)
+add_lost_connection (group_t *g, struct NODE *pnode)
 {
 	player_t group_id;
-	connection_t *nw = connection_new();
-	nw->next = NULL;
-	nw->node = &Node[i];
+	connection_t *nw;
 
-	group_id = NO_ID;
-	if (Node[i].group) group_id = Node[i].group->id;
+	assert(g);
+	assert(pnode);
+	assert(pnode->group);
+
+	nw = connection_new();
+	nw->next = NULL;
+	nw->node = pnode;
+
+	group_id = pnode->group->id;
 
 	if (g->lstart == NULL) {
 		g->lstart = nw; 
@@ -633,8 +643,8 @@ sup_enc2group (struct ENC *pe)
 		Node[ilos].group = g;
 	} 
 
-	add_connection 	(Node[iwin].group, ilos);
-	add_revconn 	(Node[ilos].group, iwin);
+	add_beat_connection	(Node[iwin].group, &Node[ilos]);
+	add_lost_connection	(Node[ilos].group, &Node[iwin]);
 }
 
 static void
