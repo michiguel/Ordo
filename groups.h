@@ -83,10 +83,6 @@ struct CONNECT_BUFFER {
 	gamesnum_t		max;
 };
 
-extern void 	scan_encounters	( const struct ENC Encounter[]
-								, gamesnum_t N_encounters
-								, player_t N_players);
-
 extern player_t	convert_to_groups(FILE *f, player_t N_plyers, const char **name, const struct PLAYERS *players);
 
 extern bool_t 	supporting_encmem_init (gamesnum_t nenc);

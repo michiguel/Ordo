@@ -126,12 +126,9 @@ static void		connection_buffer_done (struct CONNECT_BUFFER *x);
 
 	// enc
 
-	// SE:  list of "Super" encounters
 	// SE2: list of "Super" encounters that do not belong to the same group
 
-static struct ENC *	SE   = NULL;
 static struct ENC *	SE2  = NULL;
-static gamesnum_t	N_se  = 0;
 static gamesnum_t	N_se2 = 0;
 
 	// groups
@@ -244,28 +241,17 @@ bool_t
 supporting_encmem_init (gamesnum_t nenc)
 {
 	struct ENC *a;
-	struct ENC *b;
-
 	if (NULL == (a = memnew (sizeof(struct ENC) * (size_t)nenc))) {
 		return FALSE;
-	} else 
-	if (NULL == (b = memnew (sizeof(struct ENC) * (size_t)nenc))) {
-		memrel(a);
-		return FALSE;
-	}
-
-	SE  = a;
-	SE2 = b;
-
+	} 
+	SE2 = a;
 	return TRUE;
 }
 
 void
 supporting_encmem_done (void)
 {
-	if (SE ) memrel (SE );
 	if (SE2) memrel (SE2);
-	N_se  = 0;
 	N_se2 = 0;
 	return;
 }
@@ -538,76 +524,63 @@ add_revconn (group_t *g, player_t i)
 	}		
 }
 
-static bool_t encounter_is_SW (const struct ENC *e) 
-{
-	return e->W > 0 && e->D == 0 && e->L == 0;
-}
+static bool_t encounter_is_SW (const struct ENC *e) {return e->W  > 0 && e->D == 0 && e->L == 0;}
+static bool_t encounter_is_SL (const struct ENC *e) {return e->W == 0 && e->D == 0 && e->L  > 0;}
 
-static bool_t encounter_is_SL (const struct ENC *e) 
+// no globals
+static void
+scan_encounters ( const struct ENC *enc, gamesnum_t n_enc
+				, player_t *belongto, player_t n_plyrs
+				, struct ENC *sup_enc, gamesnum_t *pn_enc)
 {
-	return e->W == 0 && e->D == 0 && e->L > 0;
-}
+	// sup_enc: list of "Super" encounters that do not belong to the same group
 
-void
-scan_encounters (const struct ENC *enc, gamesnum_t n_enc, player_t n_plyrs)
-{
-/*
-	static variables modified:
-		Group_belong
-		SE
-		N_se
-		SE2
-		N_se2
-*/
 	player_t i;
 	gamesnum_t e;
 	const struct ENC *pe;
+	gamesnum_t n_a, n_b;
 	player_t gw, gb, lowerg, higherg;
 
-	assert (SE != NULL);
-	assert (SE2!= NULL);
-	assert (N_se  == 0);
-	assert (N_se2 == 0);
-
-	N_se  = 0;
-	N_se2 = 0;
+	assert (sup_enc != NULL);
+	assert (pn_enc != NULL);
+	assert (belongto != NULL);
 
 	for (i = 0; i < n_plyrs; i++) {
-		Group_belong[i] = (int32_t)i;
+		belongto[i] = i;
 	}
 
-	for (e = 0; e < n_enc; e++) {
-
+	for (e = 0, n_a = 0; e < n_enc; e++) {
 		pe = &enc[e];
 		if (encounter_is_SL(pe) || encounter_is_SW(pe)) {
-			SE[N_se++] = *pe;
+			sup_enc[n_a++] = *pe;
 		} else {
-			gw = Group_belong[pe->wh];
-			gb = Group_belong[pe->bl];
+			gw = belongto[pe->wh];
+			gb = belongto[pe->bl];
 			if (gw != gb) {
 				lowerg   = gw < gb? gw : gb;
 				higherg  = gw > gb? gw : gb;
 				// join
 				for (i = 0; i < n_plyrs; i++) {
-					if (Group_belong[i] == higherg) {
-						Group_belong[i] = lowerg;
+					if (belongto[i] == higherg) {
+						belongto[i] = lowerg;
 					}
 				}
 			}
 		}
 	} 
 
-	for (e = 0, N_se2 = 0 ; e < N_se; e++) {
+	for (e = 0, n_b = 0 ; e < n_a; e++) {
 		player_t x,y;
-		x = SE[e].wh;
-		y = SE[e].bl;	
-		if (Group_belong[x] != Group_belong[y]) {
-			SE2[N_se2++] = SE[e];
+		x = sup_enc[e].wh;
+		y = sup_enc[e].bl;	
+		if (belongto[x] != belongto[y]) {
+			if (e != n_b)
+				sup_enc[n_b] = sup_enc[e];
+			n_b++;
 		}
 	}
 
-	// SE:  list of "Super" encounters
-	// SE2: list of "Super" encounters that do not belong to the same group
+	*pn_enc = n_b; 	// number of "Super" encounters that do not belong to the same group
 
 	return;
 }
@@ -1478,7 +1451,7 @@ groups_process
 
 		if (supporting_groupmem_init (players->n, encounters->n)) {
 
-			scan_encounters(encounters->enc, encounters->n, players->n); 
+			scan_encounters(encounters->enc, encounters->n, Group_belong, players->n, SE2, &N_se2); 
 			n = convert_to_groups(groupf, players->n, players->name, players);
 			sieve_encounters (encounters->enc, encounters->n, pN_intra, pN_inter);
 
@@ -1512,7 +1485,7 @@ groups_process_to_count
 
 		if (supporting_groupmem_init (players->n, encounters->n)) {
 
-			scan_encounters(encounters->enc, encounters->n, players->n); 
+			scan_encounters(encounters->enc, encounters->n, Group_belong, players->n, SE2, &N_se2); 
 			n = convert_to_groups(NULL, players->n, players->name, players);
 			ok = TRUE;
 			supporting_groupmem_done ();
@@ -1542,7 +1515,7 @@ groups_are_ok
 
 		if (supporting_groupmem_init (players->n, encounters->n)) {
 
-			scan_encounters(encounters->enc, encounters->n, players->n); 
+			scan_encounters(encounters->enc, encounters->n, Group_belong, players->n, SE2, &N_se2); 
 			n = convert_to_groups(NULL, players->n, players->name, players);
 			ok = (1 == n) || 1 == non_empty_groups_population(players); // single ones have been purged;
 			supporting_groupmem_done ();
