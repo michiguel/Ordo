@@ -592,13 +592,14 @@ scan_encounters ( const struct ENC *enc, gamesnum_t n_enc
 static player_t get_iwin (struct ENC *pe) {return pe->W > 0? pe->wh: pe->bl;}
 static player_t get_ilos (struct ENC *pe) {return pe->W > 0? pe->bl: pe->wh;}
 
+
 static void
 sup_enc2group (struct ENC *pe)
 {	
 	// sort super encounter
 	// into their respective groups	
 	player_t iwin, ilos;
-	group_t *glw, *gll, *g;
+	group_t *g;
 
 	assert(pe);
 	assert(encounter_is_SL(pe) || encounter_is_SW(pe));
@@ -616,11 +617,8 @@ sup_enc2group (struct ENC *pe)
 			groupset_add(g);
 			Node[iwin].group = g;
 		}
-		glw = g;
-//		assert(g == Node[iwin].group); not true?
-	} else {
-		glw = Node[iwin].group;
-	}
+		Node[iwin].group = g;
+	} 
 
 	if (Node[ilos].group == NULL) {
 
@@ -632,16 +630,11 @@ sup_enc2group (struct ENC *pe)
 			groupset_add(g);
 			Node[ilos].group = g;
 		}
-		gll = g;
-//		assert(g == Node[ilos].group); not true?
-	} else {
-		gll = Node[ilos].group;
-	}
+		Node[ilos].group = g;
+	} 
 
-	Node[iwin].group = glw;
-	Node[ilos].group = gll;
-	add_connection (glw, ilos);
-	add_revconn (gll, iwin);
+	add_connection 	(Node[iwin].group, ilos);
+	add_revconn 	(Node[ilos].group, iwin);
 }
 
 static void
