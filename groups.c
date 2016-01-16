@@ -600,6 +600,21 @@ scan_encounters ( const struct ENC *enc, gamesnum_t n_enc
 	return;
 }
 
+static void
+if_nodeempty_add_group (player_t x)
+{
+	group_t *g;
+
+	if (Node[x].group == NULL) {
+		if (NULL == (g = groupset_find (Group_belong[x]))) {
+			g = group_reset(group_new());	
+			g->id = Group_belong[x];
+			groupset_add(g);
+		}
+		Node[x].group = g;
+	} 
+}
+
 static player_t get_iwin (struct ENC *pe) {return pe->W > 0? pe->wh: pe->bl;}
 static player_t get_ilos (struct ENC *pe) {return pe->W > 0? pe->bl: pe->wh;}
 
@@ -608,8 +623,7 @@ sup_enc2group (struct ENC *pe)
 {	
 	// sort super encounter
 	// into their respective groups	
-	player_t iwin, ilos, x;
-	group_t *g;
+	player_t iwin, ilos;
 
 	assert(pe);
 	assert(encounter_is_SL(pe) || encounter_is_SW(pe));
@@ -617,25 +631,8 @@ sup_enc2group (struct ENC *pe)
 	iwin = get_iwin(pe);
 	ilos = get_ilos(pe);
 
-	x = iwin;
-	if (Node[x].group == NULL) {
-		if (NULL == (g = groupset_find (Group_belong[x]))) {
-			g = group_reset(group_new());	
-			g->id = Group_belong[x];
-			groupset_add(g);
-		}
-		Node[x].group = g;
-	} 
-
-	x = ilos;
-	if (Node[x].group == NULL) {
-		if (NULL == (g = groupset_find (Group_belong[x]))) {
-			g = group_reset(group_new());	
-			g->id = Group_belong[x];
-			groupset_add(g);
-		}
-		Node[x].group = g;
-	} 
+	iif_nodeempty_add_group(iwin);
+	if_nodeempty_add_group(ilos);
 
 	add_beat_connection	(Node[iwin].group, &Node[ilos]);
 	add_lost_connection	(Node[ilos].group, &Node[iwin]);
@@ -644,23 +641,7 @@ sup_enc2group (struct ENC *pe)
 static void
 group_gocombine (group_t *g, group_t *h);
 
-static void
-ifisolated2group (player_t x)
-{
-	group_t *g;
 
-	if (Node[x].group == NULL) {
-		g = groupset_find (Group_belong[x]);
-		if (g == NULL) {
-			// creation
-			g = group_reset(group_new());	
-			g->id = Group_belong[x];
-			groupset_add(g);
-			Node[x].group = g;
-		}
-		Node[x].group = g;
-	} 
-}
 
 static void
 convert_general_init (player_t n_plyrs)
@@ -693,7 +674,7 @@ convert_to_groups (FILE *f, player_t n_plyrs, const char **name, const struct PL
 		sup_enc2group (&SE2[e]);
 	}
 	for (i = 0; i < n_plyrs; i++) {
-		ifisolated2group(i);
+		if_nodeempty_add_group(i);
 	}
 
 	for (i = 0; i < n_plyrs; i++) {
