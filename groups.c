@@ -107,8 +107,6 @@ ba_done(struct BITARRAY *ba)
 
 //---------------------------------------------------------------------
 
-static const char 		**Namelist = NULL;
-
 static struct GROUP_BUFFER 			Group_buffer;
 static struct PARTICIPANT_BUFFER	Participant_buffer;
 static struct CONNECT_BUFFER		Connection_buffer;
@@ -449,12 +447,12 @@ static group_t * group_combined (group_t *g)
 }
 
 static void
-add_participant (group_t *g, player_t i)
+add_participant (group_t *g, player_t i, const char *name)
 {
 	participant_t *nw;
 	nw = participant_new();
 	nw->next = NULL;
-	nw->name = Namelist[i];
+	nw->name = name;
 	nw->id = i; 
 
 	if (g->pstart == NULL) {
@@ -466,6 +464,7 @@ add_participant (group_t *g, player_t i)
 	}
 }
 
+//no globals
 static void
 add_beat_connection (group_t *g, struct NODE *pnode)
 {
@@ -502,6 +501,7 @@ add_beat_connection (group_t *g, struct NODE *pnode)
 	}		
 }
 
+// no globals
 static void
 add_lost_connection (group_t *g, struct NODE *pnode)
 {
@@ -697,8 +697,6 @@ convert_to_groups (FILE *f, player_t n_plyrs, const char **name, const struct PL
 	player_t i;
 	gamesnum_t e;
 
-	Namelist = name;
-
 	convert_general_init (n_plyrs);
 
 	for (e = 0 ; e < N_se2; e++) {
@@ -715,7 +713,7 @@ convert_to_groups (FILE *f, player_t n_plyrs, const char **name, const struct PL
 		gb = Group_belong[i];
 		g = groupset_find(gb);
 		assert(g);
-		add_participant(g, i);	
+		add_participant(g, i, name[i]);	
 		//}
 	}
 
