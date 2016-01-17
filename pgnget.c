@@ -471,7 +471,7 @@ csvline_syn_apply (csv_line_t *pcsvln, struct DATA *d, bool_t quiet)
 	bool_t ok = TRUE;
 	int i;
 	for (i = 1; ok && i < pcsvln->n; i++) {
-		if (!quiet) printf ("[%s] synonym of [%s]\n",pcsvln->s[0],pcsvln->s[i]);
+		// if (!quiet) printf ("[%s] synonym of [%s]\n",pcsvln->s[0],pcsvln->s[i]);
 		ok = ok && syn_apply_pair (d, pcsvln->s[0], pcsvln->s[i]);
 	}
 	return ok;
