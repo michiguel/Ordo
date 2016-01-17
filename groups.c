@@ -177,12 +177,11 @@ static void			group_output (FILE *f, group_t *s);
 static bool_t
 groupset_sanity_check(void)
 { 
-	// verify c is properly double-linked
-	group_t *c = Group_buffer.prehead;
-	if (c == NULL) return FALSE;
-	c = c->next;
-	for (; c != NULL; c = c->next) {
-		if (c->prev == NULL) return FALSE;
+	// verify g is properly double-linked
+	group_t *g = Group_buffer.prehead;
+	if (g == NULL) return FALSE;
+	for (g = g->next; g != NULL; g = g->next) {
+		if (g->prev == NULL) return FALSE;
 	}
 	return TRUE;
 }
@@ -662,6 +661,9 @@ groups_counter (void)
 	return Group_final_list_n;
 }
 
+static player_t
+group_belonging (player_t plyr);
+
 player_t
 convert_to_groups (FILE *f, player_t n_plyrs, const char **name, const struct PLAYERS *players)
 {
@@ -673,17 +675,17 @@ convert_to_groups (FILE *f, player_t n_plyrs, const char **name, const struct PL
 	for (e = 0 ; e < N_se2; e++) {
 		sup_enc2group (&SE2[e]);
 	}
+
 	for (i = 0; i < n_plyrs; i++) {
-		if_nodeempty_add_group(i);
+		if (players->present_in_games[i])
+			if_nodeempty_add_group(i);
 	}
 
 	for (i = 0; i < n_plyrs; i++) {
-		//if (players->present_in_games[i]) {
-		player_t gb = Group_belong[i];
-		group_t *g = groupset_find(gb);
-		assert(g);
-		if (g) add_participant(g, i, name[i]);	
-		//}
+		if (Node[i].group != NULL) {
+			group_t *g = groupset_find(Group_belong[i]);
+			if (g) add_participant(g, i, name[i]);	
+		}
 	}
 
 	simplify_all();
@@ -742,20 +744,22 @@ group_gocombine (group_t *g, group_t *h)
 	group_t *pr = h->prev;
 	group_t *ne = h->next;
 
+	assert(pr);
+
 	if (h->combined == g) {
 		return;
 	}	
 
+	// unlink h
 	h->prev = NULL;
 	h->next = NULL;
-
-	assert(pr);
 	pr->next = ne;
-
 	if (ne) ne->prev = pr;
 	
+	// if h is called, go to h
 	h->combined = g;
 	
+	// inherit information from h to g
 	g->plast->next = h->pstart;
 	g->plast = h->plast;
 	h->plast = NULL;
@@ -791,18 +795,7 @@ group_pointed_by_node (node_t *nd)
 static group_t *
 group_pointed_by_conn (connection_t *c)
 {
-	node_t *nd; 
-	if (c == NULL) return NULL;
-	nd = c->node;
-	if (nd) {
-		group_t *gr = nd->group;
-		if (gr) {
-			gr = group_combined(gr);
-		} 
-		return gr;
-	} else {
-		return NULL;
-	}
+	return c == NULL? NULL: group_pointed_by_node (c->node);
 }
 
 
@@ -821,6 +814,7 @@ simplify_all (void)
 
 	g = groupset_head();
 	assert(g);
+
 	while(g) {
 		simplify(g);
 		g = group_next(g);
@@ -880,7 +874,7 @@ simplify_shrink__ (group_t *g)
 
 	oid = g->id; // own id
 
-	// loop connections, examine id if repeated or self point (delete them)
+	// loop connections, examine id, if repeated or self point (delete them)
 	beat_to = NULL;
 	do {
 		c = g->cstart; 
@@ -978,15 +972,15 @@ simplify_shrink (group_t *g)
 static void
 simplify (group_t *g)
 {
-	bitarray_t 	bA;
-	bitarray_t	bB;
+	bitarray_t 		bA;
+	bitarray_t		bB;
 	group_t 		*beat_to, *lost_to, *combine_with=NULL;
 	connection_t 	*c, *p;
 	player_t		id, oid;
 	bool_t 			gotta_combine = FALSE;
 	bool_t			combined = FALSE;
 
-	id=NO_ID;
+	id = NO_ID;
 
 	do {
 		simplify_shrink (g);
