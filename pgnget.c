@@ -466,7 +466,7 @@ syn_apply_pair (struct DATA *d, const char *m, const char *s)
 }
 
 static bool_t
-csvline_syn_apply (csv_line_t *pcsvln, struct DATA *d, bool_t quiet)
+csvline_syn_apply (csv_line_t *pcsvln, struct DATA *d /*, bool_t quiet*/)
 {
 	bool_t ok = TRUE;
 	int i;
@@ -512,11 +512,11 @@ syn_preload (bool_t quietmode, const char *fsyns_name, struct DATA *d)
 
 			if (csv_line_init(&csvln, myline)) {
 				if (csvln.n >= 1) {
-					success = csvline_syn_apply (&csvln, d, quietmode);
+					success = csvline_syn_apply (&csvln, d /*, quietmode*/);
 				}
 				csv_line_done(&csvln);		
 			} else {
-				printf ("Failure to input synonym file\n");
+				fprintf (stderr,"Failure to input synonym file\n");
 				exit(EXIT_FAILURE);
 			}
 			file_success = success;
@@ -531,6 +531,9 @@ syn_preload (bool_t quietmode, const char *fsyns_name, struct DATA *d)
 	if (!file_success) {
 			fprintf (stderr, "Errors in file \"%s\"\n",fsyns_name);
 			exit(EXIT_FAILURE);
+	} else {
+		if (!quietmode)
+			printf ("Synonyms uploaded succesfully\n");
 	}
 	if (!line_success) {
 			fprintf (stderr, "Errors in file \"%s\" (not matching names)\n",fsyns_name);

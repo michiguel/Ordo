@@ -873,109 +873,71 @@ beat_lost_output (group_t *g)
 }
 #endif
 
+static player_t
+id_pointed_by_conn(connection_t *c)
+{
+	group_t *gg;
+	return NULL != c && NULL != (gg = group_pointed_by_conn(c))? gg->id: NO_ID;
+}
+
 static void
 simplify_shrink__ (group_t *g)
 {
 	bitarray_t 		bA;
-	bitarray_t		bB;
-	group_t 		*beat_to, *lost_to;
-	connection_t 	*c, *p;
-	player_t		id, oid;
+	connection_t 	*c, *p, *pre;
+	player_t		id;
+	connection_t 	pre_connection = {NULL, NULL};
+	
+	pre = &pre_connection;
+	assert(g);
 
-	id = NO_ID;
-
-	if (!ba_init(&bA, N_players) || !ba_init(&bB, N_players)) {
+	if (!ba_init(&bA, N_players)) {
 		fprintf(stderr, "No memory to initialize internal arrays\n");
 		exit(EXIT_FAILURE);			  
 	}
 
-	oid = g->id; // own id
-
-	// loop connections, examine id, if repeated or self point (delete them)
-	beat_to = NULL;
-	do {
-		c = g->cstart; 
-		if (c && NULL != (beat_to = group_pointed_by_conn(c))) {
-			id = beat_to->id;
-			if (id == oid) { 
-				// remove connection
-				g->cstart = c->next; //no mem leak, allocated buffer
-			}
-		}
-	} while (c && beat_to && id == oid);
-
-
-	if (c && beat_to) {
-
-		ba_put(&bA, id);
-		p = c;
-		c = c->next;
-
-		while (c != NULL) {
-			beat_to = group_pointed_by_conn(c);
-			id = beat_to->id;
-			if (id == oid || ba_ison(&bA, id)) {
-				// remove connection and advance
-				c = c->next; //no mem leak, allocated buffer
-				p->next = c; 
-			}
-			else {
-				// remember and advance
-				ba_put(&bA, id);
-				p = c;
-				c = c->next;
-			}
-		}
-
+	// beat list
+	pre->next = g->cstart;
+	
+	ba_clear(&bA);
+	ba_put(&bA, g->id);
+	for (p = pre, c = p->next; NULL != c; c = c->next) {
+		if (NO_ID != (id = id_pointed_by_conn(c)) && ba_ison(&bA, id)) {
+			p->next = c->next;
+		 } else {
+			p = c;
+			if (id != NO_ID) ba_put(&bA, id);
+		}	
 	}
 
-	// loop connections, examine id if repeated or self point (delete them)
+	g->cstart = pre->next;
+	g->clast  = p;
 
-	lost_to = NULL;
+	// lost list
+	pre->next = g->lstart;
 
-	do {
-		c = g->lstart; 
-		if (c && NULL != (lost_to = group_pointed_by_conn(c))) {
-			id = lost_to->id;
-			if (id == oid) { 
-				// remove connection
-				g->lstart = c->next; //no mem leak, allocated buffer
-			}
-		}
-	} while (c && lost_to && id == oid);
-
-
-	if (c && lost_to) {
-
-		ba_put(&bB, id);
-		p = c;
-		c = c->next;
-
-		while (c != NULL) {
-			lost_to = group_pointed_by_conn(c);
-			id = lost_to->id;
-			if (id == oid || ba_ison(&bB, id)) {
-				// remove connection and advance
-				c = c->next;		
-				p->next = c; //no mem leak, allocated buffer
-			}
-			else {
-				// remember and advance
-				ba_put(&bB, id);
-				p = c;
-				c = c->next;
-			}
-		}
+	ba_clear(&bA);
+	ba_put(&bA, g->id);
+	for (p = pre, c = p->next; NULL != c; c = c->next) {
+		if (NO_ID != (id = id_pointed_by_conn(c)) && ba_ison(&bA, id)) {
+			p->next = c->next;
+		 } else {
+			p = c;
+			if (id != NO_ID) ba_put(&bA, id);
+		}	
 	}
+
+	g->lstart = pre->next;
+	g->llast  = p;
 
 	ba_done(&bA);
-	ba_done(&bB);
 
 	return;
 }
 
+
 static void
-simplify_shrink (group_t *g)
+simplify_shrink_redundancy (group_t *g)
 {
 	#if 0
 	printf("-------------\n");
@@ -1006,7 +968,7 @@ simplify (group_t *g)
 	id = NO_ID;
 
 	do {
-		simplify_shrink (g);
+		simplify_shrink_redundancy (g);
 
 		assert(groupset_sanity_check());
 
@@ -1140,7 +1102,7 @@ simplify (group_t *g)
 	} while (combined);
 
 	//printf("----final----\n");
-	simplify_shrink (g);
+	simplify_shrink_redundancy (g);
 
 	return;
 }
@@ -1284,7 +1246,7 @@ final_list_output (FILE *f)
 		fprintf (f,"\nGroup %ld\n",(long)Get_new_id[g->id]);
 
 		//printf("-post-final--\n");
-		simplify_shrink (g);
+		simplify_shrink_redundancy (g);
 
 		group_output(f,g);
 	}
@@ -1346,7 +1308,7 @@ non_empty_groups_population (const struct PLAYERS *players)
 
 	for (i = 0; i < Group_final_list_n; i++) {
 		g = Group_final_list[i];
-		simplify_shrink (g);
+		simplify_shrink_redundancy (g);
 		x = group_number_of_actives (g,players);
 		#if 0
 		 p = participants_list_population (g->pstart);
