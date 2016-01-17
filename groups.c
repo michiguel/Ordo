@@ -679,12 +679,10 @@ convert_to_groups (FILE *f, player_t n_plyrs, const char **name, const struct PL
 
 	for (i = 0; i < n_plyrs; i++) {
 		//if (players->present_in_games[i]) {
-		player_t gb; 
-		group_t *g;
-		gb = Group_belong[i];
-		g = groupset_find(gb);
+		player_t gb = Group_belong[i];
+		group_t *g = groupset_find(gb);
 		assert(g);
-		add_participant(g, i, name[i]);	
+		if (g) add_participant(g, i, name[i]);	
 		//}
 	}
 
@@ -777,6 +775,20 @@ group_gocombine (group_t *g, group_t *h)
 //-----------------------------------------------
 
 static group_t *
+group_pointed_by_node (node_t *nd)
+{
+	if (nd) {
+		group_t *gr = nd->group;
+		if (gr) {
+			gr = group_combined(gr);
+		} 
+		return gr;
+	} else {
+		return NULL;
+	}
+}
+
+static group_t *
 group_pointed_by_conn (connection_t *c)
 {
 	node_t *nd; 
@@ -793,19 +805,6 @@ group_pointed_by_conn (connection_t *c)
 	}
 }
 
-static group_t *
-group_pointed_by_node (node_t *nd)
-{
-	if (nd) {
-		group_t *gr = nd->group;
-		if (gr) {
-			gr = group_combined(gr);
-		} 
-		return gr;
-	} else {
-		return NULL;
-	}
-}
 
 static void simplify (group_t *g);
 
