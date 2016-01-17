@@ -829,26 +829,26 @@ beat_lost_output (group_t *g)
 	group_t 		*beat_to, *lost_to;
 	connection_t 	*c;
 
-	printf ("G=%d, beat_to: ",g->id);
+	printf ("  G=%ld, beat_to: ",g->id);
 
 		// loop connections, examine id if repeated or self point (delete them)
 		beat_to = NULL;
 		c = g->cstart; 
 		do {
 			if (c && NULL != (beat_to = group_pointed_by_conn(c))) {
-				printf ("%d, ",beat_to->id);
+				printf ("%ld, ",beat_to->id);
 				c = c->next;
 			}
 		} while (c && beat_to);
 
 	printf ("\n");
-	printf ("G=%d, lost_to: ",g->id);
+	printf ("  G=%ld, lost_to: ",g->id);
 
 		lost_to = NULL;
 		c = g->lstart; 
 		do {
 			if (c && NULL != (lost_to = group_pointed_by_conn(c))) {
-				printf ("%d, ",lost_to->id);
+				printf ("%ld, ",lost_to->id);
 				c = c->next;
 			}
 		} while (c && lost_to);
@@ -960,13 +960,19 @@ simplify_shrink__ (group_t *g)
 static void
 simplify_shrink (group_t *g)
 {
-	//printf("-------------\n");
-	//printf("before shrink\n");
-	//beat_lost_output (g);
+	#if 0
+	printf("-------------\n");
+	printf("before shrink\n");
+	beat_lost_output (g);
+	#endif
+
 	simplify_shrink__ (g);
-	//printf("after  shrink\n");
-	//beat_lost_output (g);
-	//printf("-------------\n");
+	
+	#if 0
+	printf("after  shrink\n");
+	beat_lost_output (g);
+	printf("-------------\n");
+	#endif
 }
 
 static void
