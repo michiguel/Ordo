@@ -185,6 +185,18 @@ groupset_sanity_check(void)
 	}
 	return TRUE;
 }
+
+static bool_t
+groupset_sanity_check_nocombines(void)
+{ 
+	// verify g is properly double-linked
+	group_t *g = Group_buffer.prehead;
+	if (g == NULL) return FALSE;
+	for (g = g->next; g != NULL; g = g->next) {
+		if (g->combined != NULL) return FALSE;
+	}
+	return TRUE;
+}
 #endif
 
 static void 
@@ -599,19 +611,43 @@ scan_encounters ( const struct ENC *enc, gamesnum_t n_enc
 	return;
 }
 
+static bool_t node_is_occupied (player_t x) {return Node[x].group != NULL;}
+
 static void
-if_nodeempty_add_group (player_t x)
+node_add_group (player_t x)
 {
 	group_t *g;
+	assert (!node_is_occupied(x)); 
+	if (NULL == (g = groupset_find (Group_belong[x]))) {
+		g = group_reset(group_new());	
+		g->id = Group_belong[x];
+		groupset_add(g);
+	}
+	assert (g->id == Group_belong[x]);
+	Node[x].group = g;
+}
 
-	if (Node[x].group == NULL) {
-		if (NULL == (g = groupset_find (Group_belong[x]))) {
-			g = group_reset(group_new());	
-			g->id = Group_belong[x];
-			groupset_add(g);
-		}
-		Node[x].group = g;
-	} 
+static player_t
+group_belonging (player_t x)
+{
+	group_t *g = group_pointed_by_node (&Node[x]);
+	return NULL == g? NO_ID: g->id;
+}
+
+static group_t *
+group_pointed_by_node (node_t *nd)
+{
+	if (nd && nd->group) {
+		return group_combined(nd->group);
+	} else {
+		return NULL;
+	}
+}
+
+static group_t *
+group_pointed_by_conn (connection_t *c)
+{
+	return c == NULL? NULL: group_pointed_by_node (c->node);
 }
 
 static player_t get_iwin (struct ENC *pe) {return pe->W > 0? pe->wh: pe->bl;}
@@ -630,8 +666,8 @@ sup_enc2group (struct ENC *pe)
 	iwin = get_iwin(pe);
 	ilos = get_ilos(pe);
 
-	if_nodeempty_add_group(iwin);
-	if_nodeempty_add_group(ilos);
+	if (!node_is_occupied (iwin)) node_add_group (iwin);
+	if (!node_is_occupied (ilos)) node_add_group (ilos);
 
 	add_beat_connection	(Node[iwin].group, &Node[ilos]);
 	add_lost_connection	(Node[ilos].group, &Node[iwin]);
@@ -661,56 +697,57 @@ groups_counter (void)
 	return Group_final_list_n;
 }
 
-static player_t
-group_belonging (player_t plyr);
 
 player_t
-convert_to_groups (FILE *f, player_t n_plyrs, const char **name, const struct PLAYERS *players)
+convert_to_groups (FILE *f, player_t n_plyrs, const char **name, const struct PLAYERS *players, const struct ENCOUNTERS *encounters)
 {
 	player_t i;
 	gamesnum_t e;
 
-	convert_general_init (n_plyrs);
+	scan_encounters(encounters->enc, encounters->n, Group_belong, players->n, SE2, &N_se2); 
 
+	convert_general_init (n_plyrs);
+	
+	// Initiate groups from critical "super" encounters
 	for (e = 0 ; e < N_se2; e++) {
 		sup_enc2group (&SE2[e]);
 	}
 
+	// Initiate groups for each player present in the database that did not have 
+	// critical super encounters
 	for (i = 0; i < n_plyrs; i++) {
-		if (players->present_in_games[i])
-			if_nodeempty_add_group(i);
+		if (players->present_in_games[i] && !node_is_occupied (i)) 
+			node_add_group (i);
 	}
 
+	// for all the previous added groups, add respective list of participants
 	for (i = 0; i < n_plyrs; i++) {
-		if (Node[i].group != NULL) {
+		if (node_is_occupied(i)) {
 			group_t *g = groupset_find(Group_belong[i]);
 			if (g) add_participant(g, i, name[i]);	
 		}
 	}
 
+	assert(groupset_sanity_check_nocombines());
+
 	simplify_all();
 	finish_it();
+
 	if (NULL != f) {
 		if (groups_counter() > 1) {
+			fprintf (f,"Group connectivity: **FAILED**\n");
 			final_list_output(f);
 		} else {
 			assert (1 == groups_counter());
+			fprintf (f,"Group connectivity: **PASSED**\n");
 			fprintf (f,"All players are connected into only one group.\n");
+
 		}	
 	}
+
 	return groups_counter() ;
 }
 
-
-static player_t
-group_belonging (player_t plyr)
-{
-	group_t *g = group_pointed_by_node (&Node[plyr]);
-	if (g) 
-		return g->id;
-	else
-		return NO_ID;
-}
 
 static void
 sieve_encounters	( const struct ENC *enc
@@ -777,26 +814,6 @@ group_gocombine (group_t *g, group_t *h)
 }
 
 //-----------------------------------------------
-
-static group_t *
-group_pointed_by_node (node_t *nd)
-{
-	if (nd) {
-		group_t *gr = nd->group;
-		if (gr) {
-			gr = group_combined(gr);
-		} 
-		return gr;
-	} else {
-		return NULL;
-	}
-}
-
-static group_t *
-group_pointed_by_conn (connection_t *c)
-{
-	return c == NULL? NULL: group_pointed_by_node (c->node);
-}
 
 
 static void simplify (group_t *g);
@@ -1431,8 +1448,7 @@ groups_process
 
 		if (supporting_groupmem_init (players->n, encounters->n)) {
 
-			scan_encounters(encounters->enc, encounters->n, Group_belong, players->n, SE2, &N_se2); 
-			n = convert_to_groups(groupf, players->n, players->name, players);
+			n = convert_to_groups(groupf, players->n, players->name, players, encounters);
 			sieve_encounters (encounters->enc, encounters->n, pN_intra, pN_inter);
 
 			ok = TRUE;
@@ -1465,8 +1481,7 @@ groups_process_to_count
 
 		if (supporting_groupmem_init (players->n, encounters->n)) {
 
-			scan_encounters(encounters->enc, encounters->n, Group_belong, players->n, SE2, &N_se2); 
-			n = convert_to_groups(NULL, players->n, players->name, players);
+			n = convert_to_groups(NULL, players->n, players->name, players, encounters);
 			ok = TRUE;
 			supporting_groupmem_done ();
 		} else {
@@ -1495,8 +1510,8 @@ groups_are_ok
 
 		if (supporting_groupmem_init (players->n, encounters->n)) {
 
-			scan_encounters(encounters->enc, encounters->n, Group_belong, players->n, SE2, &N_se2); 
-			n = convert_to_groups(NULL, players->n, players->name, players);
+			n = convert_to_groups(NULL, players->n, players->name, players, encounters);
+
 			ok = (1 == n) || 1 == non_empty_groups_population(players); // single ones have been purged;
 			supporting_groupmem_done ();
 		} else {
