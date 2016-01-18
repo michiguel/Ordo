@@ -891,6 +891,13 @@ simplify_shrink__ (group_t *g)
 	pre = &pre_connection;
 	assert(g);
 
+	if (g->combined) {
+		assert(g->cstart == NULL);
+		assert(g->lstart == NULL);
+		assert(g->pstart == NULL);
+		return;
+	}
+
 	if (!ba_init(&bA, N_players)) {
 		fprintf(stderr, "No memory to initialize internal arrays\n");
 		exit(EXIT_FAILURE);			  
@@ -954,156 +961,57 @@ simplify_shrink_redundancy (group_t *g)
 	#endif
 }
 
+static group_t *
+find_combine_candidate (group_t *g)
+{
+	group_t 		*comb_candidate = NULL;
+	bitarray_t 		bA;
+	connection_t 	*c;
+	player_t		id;
+
+	assert(g);
+
+	if (!ba_init(&bA, N_players)) {
+		fprintf(stderr, "No memory to initialize internal arrays\n");
+		exit(EXIT_FAILURE);			  
+	}
+
+	//ba_clear(&bA);
+	//ba_put(&bA, g->id);
+
+	// beat list
+	for (c = g->cstart; NULL != c; c = c->next) {
+		id = id_pointed_by_conn(c);
+		if (id != NO_ID) ba_put(&bA, id);
+	}
+
+	// lost list
+	for (c = g->lstart; NULL != c; c = c->next) {
+		id = id_pointed_by_conn(c);
+		if (id != NO_ID && ba_ison(&bA, id)) {
+			comb_candidate = group_pointed_by_conn(c);			
+			break;
+		}
+	}
+
+	ba_done(&bA);
+
+	return comb_candidate;
+}
+
 static void
 simplify (group_t *g)
 {
-	bitarray_t 		bA;
-	bitarray_t		bB;
-	group_t 		*beat_to, *lost_to, *combine_with=NULL;
-	connection_t 	*c, *p;
-	player_t		id, oid;
-	bool_t 			gotta_combine = FALSE;
-	bool_t			combined = FALSE;
-
-	id = NO_ID;
-
+	group_t	*combine_with = NULL;
 	do {
 		simplify_shrink_redundancy (g);
-
 		assert(groupset_sanity_check());
-
-		if (!ba_init(&bA, N_players) || !ba_init(&bB, N_players)) {
-			fprintf(stderr, "No memory to initialize internal arrays\n");
-			exit(EXIT_FAILURE);			  
-		}
-
-		oid = g->id; // own id
-
-		gotta_combine = FALSE;
-
-		// loop connections, examine id if repeated or self point (delete them)
-		beat_to = NULL;
-		do {
-			c = g->cstart; 
-			if (c && NULL != (beat_to = group_pointed_by_conn(c))) {
-				id = beat_to->id;
-				if (id == oid) { 
-					// remove connection
-					g->cstart = c->next; //no mem leak, allocated buffer
-				}
-			}
-		} while (c && beat_to && id == oid);
-
-
-		if (c && beat_to) {
-
-			ba_put(&bA, id);
-			p = c;
-			c = c->next;
-
-			while (c != NULL) {
-				beat_to = group_pointed_by_conn(c);
-				id = beat_to->id;
-				if (id == oid || ba_ison(&bA, id)) {
-					// remove connection and advance
-					c = c->next; //no mem leak, allocated buffer
-					p->next = c; 
-				}
-				else {
-					// remember and advance
-					ba_put(&bA, id);
-					p = c;
-					c = c->next;
-				}
-			}
-
-		}
-
-		//=====
-		// loop connections, examine id if repeated or self point (delete them)
-
-		lost_to = NULL;
-
-		assert(groupset_sanity_check());
-
-		do {
-			c = g->lstart; 
-			if (c && NULL != (lost_to = group_pointed_by_conn(c))) {
-				id = lost_to->id;
-				if (id == oid) { 
-					// remove connection
-					g->lstart = c->next; //no mem leak, allocated buffer
-				}
-			}
-		} while (c && lost_to && id == oid);
-
-		//if (lost_to) printf ("found=%d\n",lost_to->id); else printf("no lost to found\n");
-
-		assert(groupset_sanity_check());
-
-		if (c && lost_to) {
-
-			// GOTTACOMBINE?
-			if (ba_ison(&bA, id)) {
-
-				assert(groupset_sanity_check());
-
-				gotta_combine = TRUE;
-				combine_with = lost_to;
-			}
-			else gotta_combine = FALSE;
-
-			ba_put(&bB, id);
-			p = c;
-			c = c->next;
-
-			assert(groupset_sanity_check());
-
-			while (c != NULL && !gotta_combine) {
-				lost_to = group_pointed_by_conn(c);
-				id = lost_to->id;
-				if (id == oid || ba_ison(&bB, id)) {
-					// remove connection and advance
-					c = c->next;		
-					p->next = c; //no mem leak, allocated buffer
-				}
-				else {
-					// remember and advance
-					ba_put(&bB, id);
-					p = c;
-					c = c->next;
-	
-					// GOTTACOMBINE?
-					if (ba_ison(&bA, id)) {
-						gotta_combine = TRUE;
-						combine_with = lost_to;
-					}
-					else gotta_combine = FALSE;
-				}
-			}
-
-			assert(groupset_sanity_check());
-		}
-
-		ba_done(&bA);
-		ba_done(&bB);
-
-		if (gotta_combine) {
+		if (NULL != (combine_with = find_combine_candidate (g))) {
 			//printf("combine g=%d combine_with=%d\n",g->id, combine_with->id);
-			assert(groupset_sanity_check());
-
-			group_gocombine(g,combine_with);
-
-			combined = TRUE;
-		} else {
-			combined = FALSE;
-		}
-	
-	} while (combined);
-
-	//printf("----final----\n");
+			group_gocombine (g, combine_with);
+		} 
+	} while (combine_with);
 	simplify_shrink_redundancy (g);
-
 	return;
 }
 
@@ -1282,7 +1190,6 @@ participants_list_actives (participant_t *pstart, const struct PLAYERS *players)
 
 	for (p = pstart, accum = 0; p != NULL; p = p->next) {
 		j = p->id;
-//		accum += players->performance_type[j] == PERF_NOGAMES? (player_t)0: (player_t)1;
 		accum += players->present_in_games[j]? (player_t)1: (player_t)0;
 	}
 	return accum;
