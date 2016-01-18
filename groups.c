@@ -1039,21 +1039,15 @@ static group_t *
 group_next_pointed_by_beat (group_t *g)
 {
 	group_t *gp;
-	connection_t *b;
+	connection_t *c;
 	player_t own_id;
-	if (g == NULL)	return NULL; 
+	if (NULL == g || NULL == (c = group_beathead(g)))	
+		return NULL;
 	own_id = g->id;
-	b = group_beathead(g);
-	if (b == NULL)	return NULL; 
-
-	gp = group_pointed_by_conn(b);
-	while (gp == NULL || gp->isolated || gp->id == own_id) {
-		b = beat_next(b);
-		if (b == NULL) return NULL;
-		gp = group_pointed_by_conn(b);
+	while ( c && (NULL == (gp = group_pointed_by_conn(c)) || gp->isolated || gp->id == own_id)) {
+		c = beat_next(c);
 	} 
-
-	return gp;
+	return c == NULL? NULL: gp;
 }
 
 static void
