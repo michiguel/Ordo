@@ -1017,7 +1017,7 @@ simplify (group_t *g)
 
 //======================
 
-static connection_t *group_beathead (group_t *g) {return g->cstart;} 
+static connection_t *group_beat_head (group_t *g) {return g->cstart;} 
 static connection_t *beat_next (connection_t *b) {return b->next;} 
 
 static group_t *
@@ -1041,7 +1041,7 @@ group_next_pointed_by_beat (group_t *g)
 	group_t *gp;
 	connection_t *c;
 	player_t own_id;
-	if (NULL == g || NULL == (c = group_beathead(g)))	
+	if (NULL == g || NULL == (c = group_beat_head(g)))	
 		return NULL;
 	own_id = g->id;
 	while ( c && (NULL == (gp = group_pointed_by_conn(c)) || gp->isolated || gp->id == own_id)) {
@@ -1054,13 +1054,11 @@ static void
 finish_it (void)
 {
 	bitarray_t 	bA;
-	player_t *chain_end;
-	group_t *g, *h, *gp;
+	player_t *chain, *chain_end, *p;
+	group_t *g, *gp, *prev_g, *x;
 	connection_t *b;
 	player_t own_id, bi;
-	player_t *chain;
-	bool_t startover;
-	bool_t combined;
+	bool_t startover, combined;
 
 	if (!ba_init(&bA, N_players)) {
 		fprintf(stderr, "No memory to initialize internal arrays\n");
@@ -1076,40 +1074,39 @@ finish_it (void)
 		g = groupset_head();
 		if (g == NULL) break;
 		own_id = g->id; // own id
+
 		do {
 			ba_put(&bA, own_id);
 			*chain++ = own_id;
-			h = group_next_pointed_by_beat(g);
+			prev_g = g;
+			g = group_next_pointed_by_beat(g);
 
-			if (h != NULL) {
-				g = h;
+			if (g != NULL) {
 				own_id = g->id;
-				for (b = group_beathead(g); b != NULL; b = beat_next(b)) {
+				for (b = group_beat_head(g); b != NULL; b = beat_next(b)) {
 					gp = group_pointed_by_conn(b);
 					bi = gp->id;
 					if (ba_ison(&bA, bi)) {
 						//	findprevious bi, combine... remember to include own id;
-						player_t *p;
+
 						chain_end = chain;
 						while (chain-->CHAIN) {
 							if (*chain == bi) break;
 						}
-						for (p = chain; p < chain_end; p++) { //FIXME for and the next break looks like wrong
-							group_t *x, *y;
-							//printf("combine x=%d y=%d\n",own_id, *p);
-							x = group_pointed_by_node(Node + own_id);
-							y = group_pointed_by_node(Node + *p);
-							group_gocombine(x,y);
+
+						x = group_pointed_by_node(Node + own_id);
+						for (p = chain; p < chain_end; p++) { 
+							group_gocombine (x, group_pointed_by_node(Node + *p));
 							combined = TRUE;
-							startover = TRUE;
-							break; //FIXME
 						}
+						simplify_shrink_redundancy(x);
+
 						break;
 					}
 				}
 
 			} else {
-				Group_final_list[Group_final_list_n++] = group_unlink(g);
+				Group_final_list[Group_final_list_n++] = group_unlink(prev_g);
 				startover = TRUE;
 			}
 
@@ -1117,7 +1114,7 @@ finish_it (void)
 
 		ba_clear(&bA);			
 
-	} while (startover);
+	} while (startover || combined);
 
 	ba_done(&bA);	
 
@@ -1146,10 +1143,7 @@ final_list_output (FILE *f)
 	for (i = 0; i < Group_final_list_n; i++) {
 		g = Group_final_list[i];
 		fprintf (f,"\nGroup %ld\n",(long)Get_new_id[g->id]);
-
-		//printf("-post-final--\n");
 		simplify_shrink_redundancy (g);
-
 		group_output(f,g);
 	}
 
