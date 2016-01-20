@@ -976,9 +976,6 @@ find_combine_candidate (group_t *g)
 		exit(EXIT_FAILURE);			  
 	}
 
-	//ba_clear(&bA);
-	//ba_put(&bA, g->id);
-
 	// beat list
 	for (c = g->cstart; NULL != c; c = c->next) {
 		id = id_pointed_by_conn(c);
@@ -1054,7 +1051,7 @@ static void
 finish_it (void)
 {
 	bitarray_t 	bA;
-	player_t *chain, *chain_end, *p;
+	player_t *chain, *chain_end;
 	group_t *g, *gp, *prev_g, *x;
 	connection_t *b;
 	player_t own_id, bi;
@@ -1088,19 +1085,14 @@ finish_it (void)
 					bi = gp->id;
 					if (ba_ison(&bA, bi)) {
 						//	findprevious bi, combine... remember to include own id;
-
-						chain_end = chain;
-						while (chain-->CHAIN) {
-							if (*chain == bi) break;
-						}
-
+						for (chain_end = chain; *chain != bi && chain > CHAIN; )
+							chain--;
 						x = group_pointed_by_node(Node + own_id);
-						for (p = chain; p < chain_end; p++) { 
-							group_gocombine (x, group_pointed_by_node(Node + *p));
+						for (; chain < chain_end; chain++) { 
+							group_gocombine (x, group_pointed_by_node(Node + *chain));
 							combined = TRUE;
 						}
 						simplify_shrink_redundancy(x);
-
 						break;
 					}
 				}
