@@ -196,5 +196,13 @@ struct output_qualifiers {
 	gamesnum_t	mingames; 
 };
 
+//
+struct OUT_INFO {
+	gamesnum_t 	W;
+	gamesnum_t 	D;
+	gamesnum_t 	L;
+	double		opprat; // opponent rating average
+};
+
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

@@ -56,6 +56,17 @@ calc_expected 	( const struct ENC *enc
 				, double *expected
 				, double beta);
 
+// no globals
+extern void
+calc_output_info
+			 	( const struct ENC *enc
+				, gamesnum_t N_enc
+				, const double *ratingof
+				, player_t n_players
+				, struct OUT_INFO *oi
+				);
+
+
 #if !defined(NDEBUG)
 extern bool_t
 ratings_sanity (player_t n_players, const double *ratingof);

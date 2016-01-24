@@ -244,3 +244,43 @@ shrink_ENC (struct ENC *enc, gamesnum_t N_enc)
 	return g; // New N_encounters
 }
 
+// no globals
+void
+calc_output_info
+			 	( const struct ENC *enc
+				, gamesnum_t N_enc
+				, const double *ratingof
+				, player_t n_players
+				, struct OUT_INFO *oi
+				)
+{
+	player_t 	wh, bl;
+	player_t 	j;
+	gamesnum_t 	e, n;
+
+	for (j = 0; j < n_players; j++) {
+		oi[j].W = 0;
+		oi[j].D = 0;	
+		oi[j].L = 0;	
+		oi[j].opprat = 0;
+	}	
+	for (e = 0; e < N_enc; e++) {
+		n  = enc[e].W + enc[e].D + enc[e].L;
+		wh = enc[e].wh;
+		bl = enc[e].bl;
+		oi[wh].W += enc[e].W;
+		oi[wh].D += enc[e].D;
+		oi[wh].L += enc[e].L;
+		oi[bl].W += enc[e].L;
+		oi[bl].D += enc[e].D;
+		oi[bl].L += enc[e].W;
+		oi[wh].opprat += ratingof[bl] * (double)n;
+		oi[bl].opprat += ratingof[wh] * (double)n;
+
+	}
+	for (j = 0; j < n_players; j++) {
+		n =	oi[j].W + oi[j].D + oi[j].L;
+		oi[j].opprat /= (double)n;
+	}
+}
+

@@ -327,14 +327,30 @@ cegt_output	( bool_t quiet
 	output_cegt_style (quiet, "general.dat", "rating.dat", "programs.dat", &cegt);
 }
 
+#define Player_str  "PLAYER"
+#define Rating_str  "RATING"
+#define Error_str   "ERROR"
+#define Points_str  "POINTS"
+#define Played_str  "PLAYED"
+#define Percent_str "(%)"
+#define Cfsnext_str "CFS(next)"
 
-static const char *Player_str = "PLAYER";
-static const char *Rating_str = "RATING";
-static const char *Error_str  = "ERROR";
-static const char *Points_str = "POINTS";
-static const char *Played_str = "PLAYED";
-static const char *Percent_str = "(%)";
-static const char *Cfsnext_str = "CFS(next)";
+static const char *Header[MAX_prnt] = {
+	Player_str,
+	Rating_str,
+	Error_str, 
+	Points_str,
+	Played_str,
+	Percent_str,
+	Cfsnext_str,
+	"W",
+	"D",
+	"L",
+	"D(%)",
+	"OppAvg"
+};
+
+static int Shift[MAX_prnt] = {0, 6, 6, 9, 7, 7, 11, 7, 7, 7, 7, 7 };
 
 // Function provided to have all head to head information
 
@@ -457,16 +473,25 @@ prnt_singleitem_
 			, const char *rankbuf
 			, const char *sdev_str
 			, const char *cfs_str
+			, const struct OUT_INFO *oi
 )
 {
+	int sh;
+	assert(item < MAX_prnt);
+	sh = Shift[item];
 	switch (item) {
-		case 0:	fprintf(f, "%*s %-*s %s :", 4,	rankbuf, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) ); break;
-		case 1:	fprintf(f, " %*.*f", 6, decimals, rating_round (r->ratingof_results[j], decimals) ); break;
-		case 2:	fprintf(f, " %s", sdev_str ); break;
-		case 3:	fprintf(f, " %*.1f", 9, r->obtained_results[j] ); break;
-		case 4:	fprintf(f, " %*ld" , 7, (long)r->playedby_results[j] ); break;
-		case 5:	fprintf(f, " %*.1f%s", 6, r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], "%"); break;
-		case 6:	fprintf(f, " %s    " , cfs_str); break;
+		case  0: fprintf(f, "%*s %-*s %s :", 4,	rankbuf, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) ); break;
+		case  1: fprintf(f, " %*.*f"	, sh  , decimals, rating_round (r->ratingof_results[j], decimals) ); break;
+		case  2: fprintf(f, " %*s"		, sh  , sdev_str ); break;
+		case  3: fprintf(f, " %*.1f"	, sh  , r->obtained_results[j] ); break;
+		case  4: fprintf(f, " %*ld" 	, sh  , (long)r->playedby_results[j] ); break;
+		case  5: fprintf(f, " %*.1f%s"	, sh-1, r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], "%"); break;
+		case  6: fprintf(f, " %*s    " 	, sh-4, cfs_str); break;
+		case  7: fprintf(f, " %*ld"		, sh  , (long)oi[j].W ); break;
+		case  8: fprintf(f, " %*ld"		, sh  , (long)oi[j].D ); break;
+		case  9: fprintf(f, " %*ld"		, sh  , (long)oi[j].L ); break;
+		case 10: fprintf(f, " %*.1f"	, sh  , 0==oi[j].D?0.0:(100.0*(double)oi[j].D/(double)(oi[j].W+oi[j].D+oi[j].L)) ); break;
+		case 11: fprintf(f, " %*.*f"	, sh  , decimals, oi[j].opprat);  break;
 		default:  break;
 	}
 }
@@ -483,6 +508,7 @@ prnt_item_(	FILE *f
 			, int *list
 			, struct outextra *pq
 			, int x
+			, const struct OUT_INFO *oi
 )
 {
 	int item;
@@ -493,22 +519,25 @@ prnt_item_(	FILE *f
 	cfs_str = pq[x].cfs_is_ok? cfs_buf : "    ---";
 
 	for (item = 0; list[item] != -1; item++)
-		prnt_singleitem_(list[item], f, decimals, p, r, j, ml, rankbuf, sdev_str, cfs_str);
+		prnt_singleitem_(list[item], f, decimals, p, r, j, ml, rankbuf, sdev_str, cfs_str, oi);
 }
 
 
 static void
 prnt_header_single (int item, FILE *f, size_t ml)
 {
+	int sh;
+	assert(item < MAX_prnt);
+	sh = Shift[item];
+	if (item >= MAX_prnt)
+		return;
 	switch (item) {
-		case 0: fprintf(f, "\n%s %-*s    :","   #", (int)ml, Player_str); break;
-		case 1: fprintf(f, " %*s"  , 6, Rating_str); break;
-		case 2: fprintf(f, " %*s"  , 6, Error_str); break;
-		case 3: fprintf(f, " %*s"  , 9, Points_str); break;
-		case 4: fprintf(f, " %*s"  , 7, Played_str); break;
-		case 5: fprintf(f, " %*s " , 6, Percent_str); break;
-		case 6: fprintf(f, "   %s" , Cfsnext_str); break;
-		default: break;
+		case 0: fprintf(f, "\n%*s %-*s    :"
+						 		 ,  4, "#"
+								 , (int)ml, Player_str); break;
+		default:
+				fprintf(f, " %*s", sh, Header[item]); break;
+		break;
 	}
 }
 
@@ -524,17 +553,15 @@ static void
 prnt_header_single_csv (int item, FILE *f)
 {
 	char buffer[80];
-
+	assert(item < MAX_prnt);
+	if (item >= MAX_prnt)
+		return;
 	switch (item) {
-		case 0: fprintf(f,  "%s", quoted_str(        "#",buffer)); 
-		        fprintf(f, ",%s", quoted_str( Player_str,buffer)); break;
-		case 1: fprintf(f, ",%s", quoted_str( Rating_str,buffer)); break;
-		case 2: fprintf(f, ",%s", quoted_str(  Error_str,buffer)); break;
-		case 3: fprintf(f, ",%s", quoted_str( Points_str,buffer)); break;
-		case 4: fprintf(f, ",%s", quoted_str( Played_str,buffer)); break;
-		case 5: fprintf(f, ",%s", quoted_str(Percent_str,buffer)); break;
-		case 6: fprintf(f, ",%s", quoted_str(Cfsnext_str,buffer)); break;
-		default: break;
+		case 0: fprintf(f,  "%s", quoted_str(          "#",buffer)); 
+		        fprintf(f, ",%s", quoted_str(   Player_str,buffer)); break;
+		default:
+				fprintf(f, ",%s", quoted_str( Header[item],buffer)); break;
+		break;
 	}
 }
 
@@ -557,8 +584,10 @@ prnt_singleitem_csv
 			, int rank
 			, const char *sdev_str
 			, const char *cfs_str
+			, const struct OUT_INFO *oi
 )
 {
+	assert(item < MAX_prnt);
 	switch (item) {
 		case 0:	
 				fprintf(f, "%d,"	,rank);
@@ -569,7 +598,12 @@ prnt_singleitem_csv
 		case 3:	fprintf(f, ",%.2f"	,r->obtained_results[j]); break;
 		case 4:	fprintf(f, ",%ld"	,(long)r->playedby_results[j]); break;
 		case 5:	fprintf(f, ",%.2f"	,r->playedby_results[j]==0?0:100.0*r->obtained_results[j]/(double)r->playedby_results[j]); break;
-		case 6:	fprintf(f, ",%s" , cfs_str); break;
+		case 6:	fprintf(f, ",%s"	,cfs_str); break;
+		case 7:	fprintf(f, ",%ld"	,(long)oi[j].W ); break;
+		case 8:	fprintf(f, ",%ld"	,(long)oi[j].D ); break;
+		case 9:	fprintf(f, ",%ld"	,(long)oi[j].L ); break;
+		case 10:fprintf(f, ",%.1f"	,0==oi[j].D?0.0:(100.0*(double)oi[j].D/(double)(oi[j].W+oi[j].D+oi[j].L)) ); break;
+		case 11:fprintf(f, ",%.*f"	,decimals, oi[j].opprat);  break;
 		default:  break;
 	}
 }
@@ -586,6 +620,7 @@ prnt_item_csv
 			, int *list
 			, struct outextra *pq
 			, int x
+			, const struct OUT_INFO *oi
 )
 {
 	int item;
@@ -596,7 +631,7 @@ prnt_item_csv
 	cfs_str = pq[x].cfs_is_ok? cfs_buf : "\"-\"";
 
 	for (item = 0; list[item] != -1; item++)
-		prnt_singleitem_csv (list[item], f, decimals, p, r, j, rank, sdev_str, cfs_str);
+		prnt_singleitem_csv (list[item], f, decimals, p, r, j, rank, sdev_str, cfs_str, oi);
 }
 
 static void
@@ -633,6 +668,12 @@ addabsent (int *list_chosen, int a)
 |
 \--------------------------------*/
 
+static void fatal_mem(const char *s)
+{
+	fprintf(stderr, "%s\n",s);
+	exit (EXIT_FAILURE);
+}
+
 void
 all_report 	( const struct GAMES 			*g
 			, const struct PLAYERS 			*p
@@ -657,6 +698,7 @@ all_report 	( const struct GAMES 			*g
 			)
 {
 	struct outextra *q;
+	struct OUT_INFO *Out_info;
 
 	int *list_chosen = NULL;
 	int *listbuff = NULL;
@@ -679,33 +721,32 @@ all_report 	( const struct GAMES 			*g
 	assert (e);
 	assert (rps);
 
+	if (NULL == (Out_info = memnew (sizeof(struct OUT_INFO) * (size_t)p->n))) {
+		fatal_mem("Not enough memory for reporting results");
+	}
+	if (NULL == (q = memnew (((size_t)p->n + 1) * sizeof(struct outextra)))) {
+		memrel(Out_info);
+		fatal_mem("Not enough memory for creation of internal buffers for reporting results");
+	}
+	if (NULL == (listbuff = memnew ( sizeof (inp_list[0]) * (listlen (inp_list) + 2)))) {
+		memrel(Out_info);
+		memrel(q);
+		fatal_mem("Not enough memory for list creation");
+	}
+	listcopy (inp_list, listbuff);
+
+
 	calc_encounters__(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
 
 	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
+
+	calc_output_info( e->enc, e->n, r->ratingof_results, p->n, Out_info);
 
 	for (j = 0; j < p->n; j++) {
 		r->sorted[j] = j; 
 	}
 
 	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
-
-	q = malloc (((size_t)p->n + 1) * sizeof(struct outextra));
-	if (NULL == q) {
-		fprintf(stderr, "Not enough memory for creation of internal buffers for reporting results\n");
-		exit (EXIT_FAILURE);
-	}
-
-	// initialize listbuff
-	{
-		size_t ll = listlen (inp_list);
-		listbuff = malloc ( (sizeof (inp_list[0])) * (ll + 2));
-		if (NULL == listbuff) {
-			fprintf(stderr, "Not enough memory for list creation\n");
-			free(q);
-			exit (EXIT_FAILURE);
-		}
-		listcopy (inp_list, listbuff);
-	}
 
 	list_chosen = listbuff;
 	if (simulate < 2) 
@@ -774,7 +815,7 @@ all_report 	( const struct GAMES 			*g
 			sdev_str = sdev? get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer, decimals): NOSDEV;
 			rank_str = q[x].rnk_is_ok? get_rank_str (q[x].rnk_value, rank_str_buffer): "";
 
-			prnt_item_ (f, decimals, p, r, j, ml, rank_str, sdev_str, list_chosen, q, x);
+			prnt_item_ (f, decimals, p, r, j, ml, rank_str, sdev_str, list_chosen, q, x, Out_info);
 			fprintf (f, "\n");
 		}
 
@@ -819,13 +860,14 @@ all_report 	( const struct GAMES 			*g
 
 			sdev_str = sdev? get_sdev_str_csv (sdev[j], confidence_factor, sdev_str_buffer, decimals): NOSDEV_csv;
 			rank_int = q[x].rnk_value;
-			prnt_item_csv (f, decimals, p, r, j, rank_int, sdev_str, list_chosen, q, x);
+			prnt_item_csv (f, decimals, p, r, j, rank_int, sdev_str, list_chosen, q, x, Out_info);
 			fprintf (f, "\n");
 		}
 	}
 
-	free (q);
-	free (listbuff);
+	memrel (Out_info);
+	memrel (q);
+	memrel (listbuff);
 	return;
 }
 
