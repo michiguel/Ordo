@@ -151,7 +151,7 @@ static void usage (void);
 		" -N <value>  number of decimals in output, minimum is 0 (default=1)\n"
 		" -M          force maximum-likelihood estimation to obtain ratings\n"
 		" -n <value>  number of processors for parallel calculation of simulations\n"
-		" -U <a,..,z> info in output. Default columns are \"1,2,3,4,5\"\n"
+		" -U <a,..,z> info in output. Default columns are \"0,1,2,3,4,5\"\n"
 		" -Y <file>   Name synonyms (csv format). Each line: main,syn1,syn2 etc.\n"
 		"\n"
 		;

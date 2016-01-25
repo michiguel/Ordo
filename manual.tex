@@ -147,6 +147,37 @@ For that reason, the switch \swtch{-p} can be omitted and all files could be lis
 
 	\cmdln{ordo -a 2500 -o ratings.txt -c rating.csv \swtch{-}\swtch{-} g1.pgn g2.pgn g3.pgn "Other games.pgn"}
 
+\subsubsection*{Name synonyms}
+Sometimes, the same player (engine) has been named differently in tournaments.
+The user can speficify what names are actually synonyms, so Ordo will consider them one.
+The switch \swtch{-Y <file>} indicates that the file (.csv format) will contain a list of synonyms. 
+Each line has the following information: main,syn1,syn2 etc.
+An example of a synonym file with two lines would be:
+
+	\cmdln{"Gaviota 1.0","Gaviota v1","gaviota v1.0"}
+	\cmdln{"Stockfish 6","Stockfish 6.0"}
+
+In this example, Gaviota 1.0 and Stockfish 6 would be the names used by Ordo.
+The other ones will be converted.
+
+\subsubsection*{Output information (columns)}
+The user can select what information is displayed with the switch \swtch{-U}.
+For instance, \swtch{-U "0,1,3"} will select and print "rank and name", "rating", and "points total" columns in that order (each column has a predefined number see below). 
+The default output is \swtch{"0,1,2,3,4,5"}.
+
+\cmdln{0 rank and name\\
+ 1 rating\\
+ 2 error\\
+ 3 points total\\
+ 4 games total\\
+ 5 score percent\\
+ 6 confidence for superiority\\
+ 7 won games\\
+ 8 draw games\\
+ 9 losses\\
+10 draw rate\\
+11 opponent average rating}
+
 \subsubsection*{Anchor}
 The switch \swtch{-A} will fix the rating of a given player as a reference (\textit{anchor}) for the whole pool.
 
@@ -184,7 +215,7 @@ The more simulations, the longer it takes to complete the runs.
 The errors calculated will be more accurate, but more than 1000 simulations is probably not needed. 
 This is an example to use these switches:
 
-\cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W -s1000 -e errors.csv}
+\cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W -s1000 -e errs.csv}
 
 It is important to emphasize that the errors displayed in the output are always against the reference (anchor). 
 For example, if the anchor is Engine X (Deep Shredder 12 in the example above) set at 2800, and Engine Y is 2900 with an error of 20, then the interpretation is that the difference between Y and X is 100 $\pm$ 20. 
@@ -198,7 +229,7 @@ For that purpose, the switch \swtch{-e} needs to be provided to obtain a matrix 
 If an anchor (reference) is provided, but the user wants relative errors to the average of the pool, the switch \swtch{-V} should be used. 
 This is what other rating software has as default.
 
-\cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W -s1000 -e errors.csv -V}
+\cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W -s1000 -e errs.csv -V}
 
 In this case, you will see that the rating of \swtch{Deep Shredder 12} will not have an error of zero.
 
@@ -224,7 +255,7 @@ Alternatively, the (highly recommended) switch \swtch{-D} lets Ordo calculate it
 It makes sense if the user wants to calculate more accurate errors, or just for informative purposes.
 For instance:
 
-\cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W -s1000 -e errors.csv -V -D}
+\cmdln{ordo -a 2800 -A "Deep Shredder 12" -p games.pgn -o ratings.txt -W -s1000 -e errs.csv -V -D}
 
 Will calculate the draw rate and outputs it at the end of \cmdln{ratings.txt} (or the screen, if the switch \swtch{-o} is omitted). 
 Similarly to the calculation of the white advantage, the user can provide prior information for the draw rate.
