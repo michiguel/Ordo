@@ -66,11 +66,6 @@
 |
 \*--------------------------------------------------------------*/
 
-#if 0
-#define SAVE_SIMULATION
-#define SAVE_SIMULATION_N 2
-#endif
-
 const char *license_str = "\n"
 "   Copyright (c) 2015 Miguel A. Ballicora\n"
 "   Ordo is program for calculating ratings of engine or chess players\n"
