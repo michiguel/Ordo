@@ -191,6 +191,7 @@ players_copy (const struct PLAYERS *source, struct PLAYERS *target)
 	for (i = 0; i < n; i++) {
 		y->name[i] 				= x->name[i];
 		y->flagged[i] 			= x->flagged[i];
+		y->present_in_games[i] 	= x->present_in_games[i];
 		y->prefed[i] 			= x->prefed[i];
 		y->priored[i] 			= x->priored[i];
 		y->performance_type[i]	= x->performance_type[i]; 
