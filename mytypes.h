@@ -202,6 +202,8 @@ struct OUT_INFO {
 	gamesnum_t 	D;
 	gamesnum_t 	L;
 	double		opprat; // opponent rating average
+	player_t	n_opp;
+	double		diversity;
 };
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/

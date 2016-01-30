@@ -244,6 +244,8 @@ shrink_ENC (struct ENC *enc, gamesnum_t N_enc)
 	return g; // New N_encounters
 }
 
+#include "mymem.h"
+
 // no globals
 void
 calc_output_info
@@ -255,7 +257,7 @@ calc_output_info
 				)
 {
 	player_t 	wh, bl;
-	player_t 	j;
+	player_t 	j, o, *p;
 	gamesnum_t 	e, n;
 
 	for (j = 0; j < n_players; j++) {
@@ -263,6 +265,8 @@ calc_output_info
 		oi[j].D = 0;	
 		oi[j].L = 0;	
 		oi[j].opprat = 0;
+		oi[j].n_opp = 0;
+		oi[j].diversity = 0.0;
 	}	
 	for (e = 0; e < N_enc; e++) {
 		n  = enc[e].W + enc[e].D + enc[e].L;
@@ -282,5 +286,48 @@ calc_output_info
 		n =	oi[j].W + oi[j].D + oi[j].L;
 		oi[j].opprat /= (double)n;
 	}
+
+	if (NULL != (p = memnew(sizeof(gamesnum_t) * (size_t)n_players))) {
+		player_t n_opp;
+		gamesnum_t n_games;
+		double sum;
+
+		for (j = 0; j < n_players; j++) p[j] = 0;
+
+		for (j = 0; j < n_players; j++) {
+			for (o = 0; o < n_players; o++) p[o] = 0;
+
+			for (e = 0; e < N_enc; e++) {
+				n  = enc[e].W + enc[e].D + enc[e].L;
+				wh = enc[e].wh;
+				bl = enc[e].bl;
+				if (wh == j || bl == j) {
+					p[wh==j?bl:wh] += n;
+				}
+			}	
+
+			n_games = 0;
+			n_opp = 0;
+			for (o = 0; o < n_players; o++) {
+				if (p[o] > 0) {
+					n_opp++;
+					n_games += p[o];
+				}
+			}
+
+			sum = 0;
+			for (o = 0; o < n_players; o++) {
+				if (p[o] > 0) {
+					double pi = (double)p[o]/(double)n_games;
+					sum +=  -pi * log(pi);
+				}
+			}
+
+			oi[j].n_opp = n_opp;
+			oi[j].diversity = exp(sum);
+		}
+		memrel(p);
+	}
+
 }
 

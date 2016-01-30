@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include "mytypes.h"
 
-#define MAX_prnt 12
+#define MAX_prnt 14
 
 void 
 cegt_output	( bool_t 				quiet

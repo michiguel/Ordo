@@ -347,10 +347,12 @@ static const char *Header[MAX_prnt] = {
 	"D",
 	"L",
 	"D(%)",
-	"OppAvg"
+	"OppAvg",
+	"OppN",
+	"OppDiv"
 };
 
-static int Shift[MAX_prnt] = {0, 6, 6, 9, 7, 7, 11, 7, 7, 7, 7, 7 };
+static int Shift[MAX_prnt] = {0, 6, 6, 9, 7, 7, 11, 7, 7, 7, 7, 7, 7, 7 };
 
 // Function provided to have all head to head information
 
@@ -492,6 +494,8 @@ prnt_singleitem_
 		case  9: fprintf(f, " %*ld"		, sh  , (long)oi[j].L ); break;
 		case 10: fprintf(f, " %*.1f"	, sh  , 0==oi[j].D?0.0:(100.0*(double)oi[j].D/(double)(oi[j].W+oi[j].D+oi[j].L)) ); break;
 		case 11: fprintf(f, " %*.*f"	, sh  , decimals, oi[j].opprat);  break;
+		case 12: fprintf(f, " %*ld"		, sh  , (long)oi[j].n_opp ); break;
+		case 13: fprintf(f, " %*.*f"	, sh  , 1, oi[j].diversity);  break;
 		default:  break;
 	}
 }
@@ -604,6 +608,8 @@ prnt_singleitem_csv
 		case 9:	fprintf(f, ",%ld"	,(long)oi[j].L ); break;
 		case 10:fprintf(f, ",%.1f"	,0==oi[j].D?0.0:(100.0*(double)oi[j].D/(double)(oi[j].W+oi[j].D+oi[j].L)) ); break;
 		case 11:fprintf(f, ",%.*f"	,decimals, oi[j].opprat);  break;
+		case 12:fprintf(f, ",%ld"	,oi[j].n_opp);  break;
+		case 13:fprintf(f, ",%.*f"	,1, oi[j].diversity);  break;
 		default:  break;
 	}
 }
