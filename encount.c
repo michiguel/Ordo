@@ -328,30 +328,18 @@ calc_output_info
 			oi[j].n_opp = n_opp;
 			oi[j].diversity = exp(sum);
 
-
-#if 1
-//
-if (sdev) {
-
-			sum = 0;
-			for (o = 0; o < n_players; o++) {
-				if (p[o] > 0) {
-					sum += (double)p[o] * sdev[o];
+			if (sdev) {
+				sum = 0;
+				for (o = 0; o < n_players; o++) {
+					if (p[o] > 0) {
+						sum += (double)p[o] * sdev[o];
+					}
 				}
+				oi[j].opperr = sum/(double)n_games;
 			}
-			oi[j].opperr = sum/(double)n_games;
-//
-
-}
-#endif
 		}
-
-
-
-
 
 		memrel(p);
 	}
-
 }
 
