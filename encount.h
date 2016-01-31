@@ -63,6 +63,7 @@ calc_output_info
 				, gamesnum_t N_enc
 				, const double *ratingof
 				, player_t n_players
+				, double *sdev
 				, struct OUT_INFO *oi
 				);
 

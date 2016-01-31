@@ -253,6 +253,7 @@ calc_output_info
 				, gamesnum_t N_enc
 				, const double *ratingof
 				, player_t n_players
+				, double *sdev
 				, struct OUT_INFO *oi
 				)
 {
@@ -265,6 +266,7 @@ calc_output_info
 		oi[j].D = 0;	
 		oi[j].L = 0;	
 		oi[j].opprat = 0;
+		oi[j].opperr = 0;
 		oi[j].n_opp = 0;
 		oi[j].diversity = 0.0;
 	}	
@@ -325,7 +327,29 @@ calc_output_info
 
 			oi[j].n_opp = n_opp;
 			oi[j].diversity = exp(sum);
+
+
+#if 1
+//
+if (sdev) {
+
+			sum = 0;
+			for (o = 0; o < n_players; o++) {
+				if (p[o] > 0) {
+					sum += (double)p[o] * sdev[o];
+				}
+			}
+			oi[j].opperr = sum/(double)n_games;
+//
+
+}
+#endif
 		}
+
+
+
+
+
 		memrel(p);
 	}
 

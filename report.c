@@ -348,11 +348,12 @@ static const char *Header[MAX_prnt] = {
 	"L",
 	"D(%)",
 	"OppAvg",
+	"OppErr",
 	"OppN",
 	"OppDiv"
 };
 
-static int Shift[MAX_prnt] = {0, 6, 6, 9, 7, 7, 11, 7, 7, 7, 7, 7, 7, 7 };
+static int Shift[MAX_prnt] = {0, 6, 6, 9, 7, 7, 11, 7, 7, 7, 7, 7, 7, 7, 7 };
 
 // Function provided to have all head to head information
 
@@ -474,6 +475,7 @@ prnt_singleitem_
 			, size_t ml
 			, const char *rankbuf
 			, const char *sdev_str
+			, const char *oerr_str
 			, const char *cfs_str
 			, const struct OUT_INFO *oi
 )
@@ -494,36 +496,41 @@ prnt_singleitem_
 		case  9: fprintf(f, " %*ld"		, sh  , (long)oi[j].L ); break;
 		case 10: fprintf(f, " %*.1f"	, sh  , 0==oi[j].D?0.0:(100.0*(double)oi[j].D/(double)(oi[j].W+oi[j].D+oi[j].L)) ); break;
 		case 11: fprintf(f, " %*.*f"	, sh  , decimals, oi[j].opprat);  break;
-		case 12: fprintf(f, " %*ld"		, sh  , (long)oi[j].n_opp ); break;
-		case 13: fprintf(f, " %*.*f"	, sh  , 1, oi[j].diversity);  break;
+		case 12: fprintf(f, " %*s"		, sh  , oerr_str ); break;
+		case 13: fprintf(f, " %*ld"		, sh  , (long)oi[j].n_opp ); break;
+		case 14: fprintf(f, " %*.*f"	, sh  , 1, oi[j].diversity);  break;
 		default:  break;
 	}
 }
 
 static void
-prnt_item_(	FILE *f
+prnt_itemlist_(	FILE *f
 			, int decimals
 			, const struct PLAYERS 	*p
 			, const struct RATINGS 	*r
 			, player_t j
 			, size_t ml
-			, const char *rankbuf
-			, const char *sdev_str
+			, double *sdev
 			, int *list
 			, struct outextra *pq
 			, int x
+			, double confidence_factor
 			, const struct OUT_INFO *oi
 )
 {
 	int item;
-	const char *cfs_str;
-	char cfs_buf[80];
+	const char *cfs_str, *sdev_str, *rank_str, *oerr_str;
+	char cfs_buf[80], sdev_buf[80], rank_buf[80], oerr_buf[80];
 
 	sprintf(cfs_buf, "%7.0lf", pq[x].cfs_value);
-	cfs_str = pq[x].cfs_is_ok? cfs_buf : "    ---";
+	cfs_str  = pq[x].cfs_is_ok? cfs_buf : "    ---";
+	sdev_str = sdev? get_sdev_str (sdev[j]     , confidence_factor, sdev_buf, decimals): NOSDEV;
+	oerr_str = sdev? get_sdev_str (oi[j].opperr, confidence_factor, oerr_buf, decimals): NOSDEV;
+	rank_str = pq[x].rnk_is_ok? get_rank_str (pq[x].rnk_value, rank_buf): "";
+
 
 	for (item = 0; list[item] != -1; item++)
-		prnt_singleitem_(list[item], f, decimals, p, r, j, ml, rankbuf, sdev_str, cfs_str, oi);
+		prnt_singleitem_(list[item], f, decimals, p, r, j, ml, rank_str, sdev_str, oerr_str, cfs_str, oi);
 }
 
 
@@ -587,6 +594,7 @@ prnt_singleitem_csv
 			, player_t j
 			, int rank
 			, const char *sdev_str
+			, const char *oerr_str
 			, const char *cfs_str
 			, const struct OUT_INFO *oi
 )
@@ -608,36 +616,41 @@ prnt_singleitem_csv
 		case 9:	fprintf(f, ",%ld"	,(long)oi[j].L ); break;
 		case 10:fprintf(f, ",%.1f"	,0==oi[j].D?0.0:(100.0*(double)oi[j].D/(double)(oi[j].W+oi[j].D+oi[j].L)) ); break;
 		case 11:fprintf(f, ",%.*f"	,decimals, oi[j].opprat);  break;
-		case 12:fprintf(f, ",%ld"	,oi[j].n_opp);  break;
-		case 13:fprintf(f, ",%.*f"	,1, oi[j].diversity);  break;
+		case 12:fprintf(f, ",%s"	,oerr_str); break;
+		case 13:fprintf(f, ",%ld"	,oi[j].n_opp);  break;
+		case 14:fprintf(f, ",%.*f"	,1, oi[j].diversity);  break;
 		default:  break;
 	}
 }
 
 static void
-prnt_item_csv
+prnt_itemlist_csv
 			( FILE *f
 			, int decimals
 			, const struct PLAYERS 	*p
 			, const struct RATINGS 	*r
 			, player_t j
 			, int rank
-			, const char *sdev_str
+			, double *sdev
 			, int *list
 			, struct outextra *pq
 			, int x
+			, double confidence_factor
 			, const struct OUT_INFO *oi
 )
 {
 	int item;
-	const char *cfs_str;
-	char cfs_buf[80];
+	const char *cfs_str, *sdev_str, *oerr_str;
+	char cfs_buf[80], sdev_buf[80], oerr_buf[80];
 
 	sprintf(cfs_buf, "%.0lf", pq[x].cfs_value);
-	cfs_str = pq[x].cfs_is_ok? cfs_buf : "\"-\"";
+	cfs_str  = pq[x].cfs_is_ok? cfs_buf : "\"-\"";
+
+	sdev_str = sdev? get_sdev_str_csv (sdev[j]     , confidence_factor, sdev_buf, decimals): NOSDEV_csv;
+	oerr_str = sdev? get_sdev_str_csv (oi[j].opperr, confidence_factor, oerr_buf, decimals): NOSDEV_csv;
 
 	for (item = 0; list[item] != -1; item++)
-		prnt_singleitem_csv (list[item], f, decimals, p, r, j, rank, sdev_str, cfs_str, oi);
+		prnt_singleitem_csv (list[item], f, decimals, p, r, j, rank, sdev_str, oerr_str, cfs_str, oi);
 }
 
 static void
@@ -716,8 +729,6 @@ all_report 	( const struct GAMES 			*g
 	player_t i;
 	player_t j;
 	size_t ml;
-	char sdev_str_buffer[80];
-	const char *sdev_str = "";
 	int rank = 0;
 	bool_t showrank = TRUE;
 
@@ -746,7 +757,7 @@ all_report 	( const struct GAMES 			*g
 
 	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
 
-	calc_output_info( e->enc, e->n, r->ratingof_results, p->n, Out_info);
+	calc_output_info( e->enc, e->n, r->ratingof_results, p->n, sdev, Out_info);
 
 	for (j = 0; j < p->n; j++) {
 		r->sorted[j] = j; 
@@ -804,9 +815,6 @@ all_report 	( const struct GAMES 			*g
 	f = textf;
 	if (f != NULL) {
 
-		const char *rank_str = NULL;
-		char rank_str_buffer[80];
-
 		ml = find_maxlen (p->name, (size_t)p->n);
 		if (ml > 50) ml = 50;
 		if (ml < strlen(Player_str)) ml = strlen(Player_str);
@@ -817,11 +825,7 @@ all_report 	( const struct GAMES 			*g
 		/* actual printing */
 		for (x = 0; x < x_max; x++) {
 			j = q[x].j;
-
-			sdev_str = sdev? get_sdev_str (sdev[j], confidence_factor, sdev_str_buffer, decimals): NOSDEV;
-			rank_str = q[x].rnk_is_ok? get_rank_str (q[x].rnk_value, rank_str_buffer): "";
-
-			prnt_item_ (f, decimals, p, r, j, ml, rank_str, sdev_str, list_chosen, q, x, Out_info);
+			prnt_itemlist_ (f, decimals, p, r, j, ml, sdev, list_chosen, q, x, confidence_factor, Out_info);
 			fprintf (f, "\n");
 		}
 
@@ -863,10 +867,8 @@ all_report 	( const struct GAMES 			*g
 		for (x = 0; x < x_max; x++) {
 			int rank_int;
 			j = q[x].j;
-
-			sdev_str = sdev? get_sdev_str_csv (sdev[j], confidence_factor, sdev_str_buffer, decimals): NOSDEV_csv;
 			rank_int = q[x].rnk_value;
-			prnt_item_csv (f, decimals, p, r, j, rank_int, sdev_str, list_chosen, q, x, Out_info);
+			prnt_itemlist_csv (f, decimals, p, r, j, rank_int, sdev, list_chosen, q, x, confidence_factor, Out_info);
 			fprintf (f, "\n");
 		}
 	}
