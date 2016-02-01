@@ -617,7 +617,7 @@ prnt_singleitem_csv
 		case 10:fprintf(f, ",%.1f"	,0==oi[j].D?0.0:(100.0*(double)oi[j].D/(double)(oi[j].W+oi[j].D+oi[j].L)) ); break;
 		case 11:fprintf(f, ",%.*f"	,decimals, oi[j].opprat);  break;
 		case 12:fprintf(f, ",%s"	,oerr_str); break;
-		case 13:fprintf(f, ",%ld"	,oi[j].n_opp);  break;
+		case 13:fprintf(f, ",%ld"	,(long)oi[j].n_opp);  break;
 		case 14:fprintf(f, ",%.*f"	,1, oi[j].diversity);  break;
 		default:  break;
 	}
