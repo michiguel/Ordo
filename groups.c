@@ -26,86 +26,12 @@
 #include "groups.h"
 #include "mytypes.h"
 #include "mymem.h"
+#include "bitarray.h"
 
 #define NO_ID -1
 
-//------------- Bit array begin --------------------------------------- 
 
-typedef uint64_t pod_t;
 
-struct BITARRAY {
-	pod_t *		pod;
-	player_t 	max;
-};
-
-typedef struct BITARRAY bitarray_t;
-
-static void
-ba_put(struct BITARRAY *ba, player_t x)
-{
-	assert(ba);
-	assert(ba->pod && ba->max);
-	if (x < ba->max) {
-		ba->pod[x/64] |= (uint64_t)1 << (x & 63);
-	}
-}
-
-static bool_t
-ba_ison(struct BITARRAY *ba, player_t x)
-{
-	uint64_t y;
-	bool_t ret;
-	assert(ba);
-	assert(ba->pod && ba->max);
-	assert(x < ba->max);
-	y = (uint64_t)1 & (ba->pod[x/64] >> (x & 63));	
-	ret = y == 1;
-	return ret;
-}
-
-static void
-ba_clear (struct BITARRAY *ba)
-{
-	size_t i;
-	player_t max; 
-	size_t max_p;
-
-	max = ba->max; 
-	max_p = (size_t)max/64 + (max % 64 > 0?1:0);
-	for (i = 0; i < max_p; i++) ba->pod[i] = 0;
-}
-
-static bool_t
-ba_init(struct BITARRAY *ba, player_t max)
-{
-	bool_t ok;
-	uint64_t *ptr;
-	size_t i;
-	size_t max_p = (size_t)max/64 + (max % 64 > 0?1:0);
-
-	assert(ba);
-	ba->max = 0;
-	ba->pod = NULL;
-	ok = NULL != (ptr = memnew (sizeof(pod_t)*max_p));
-	if (ok) {
-		ba->max = max;
-		ba->pod = ptr;
-		for (i = 0; i < max_p; i++) ba->pod[i] = 0;
-	} 
-	return ok;
-}
-
-static void
-ba_done(struct BITARRAY *ba)
-{
-	assert(ba);
-	assert(ba->pod);
-	if (ba->pod) memrel (ba->pod);
-	ba->pod = NULL;
-	ba->max = 0;
-}
-
-//---------------------------------------------------------------------
 
 static struct GROUP_BUFFER 			Group_buffer;
 static struct PARTICIPANT_BUFFER	Participant_buffer;
