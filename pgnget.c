@@ -260,8 +260,10 @@ database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, st
 			g->ga[i].score       =      db->gb[blk]->score[idx];
 			if (g->ga[i].score <= DISCARD) gamestat[g->ga[i].score]++;
 
-p->present_in_games[wp] = TRUE;
-p->present_in_games[bp] = TRUE;
+			if (g->ga[i].score != DISCARD) {
+				p->present_in_games[wp] = TRUE;
+				p->present_in_games[bp] = TRUE;
+			}
 			
 			i++;
 		}
@@ -277,12 +279,13 @@ p->present_in_games[bp] = TRUE;
 			g->ga[i].score       =      db->gb[blk]->score[idx];
 			if (g->ga[i].score <= DISCARD) gamestat[g->ga[i].score]++;
 
-p->present_in_games[wp] = TRUE;
-p->present_in_games[bp] = TRUE;
+			if (g->ga[i].score != DISCARD) {
+				p->present_in_games[wp] = TRUE;
+				p->present_in_games[bp] = TRUE;
+			}
 
 			i++;
 		}
-
 
 	if (i != db->n_games) {
 		fprintf (stderr, "Error, games not loaded propely\n");

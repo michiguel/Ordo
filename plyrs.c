@@ -162,7 +162,7 @@ players_set_super (bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl
 				if (!quiet) printf ("detected (all-wins player)   --> %s: seed rating present = %s\n", name[j], gotprior? "Yes":"No");
 			}
 		}
-		if (perftype[j] != PERF_NORMAL) super++;
+		if (perftype[j] != PERF_NORMAL || pl->flagged[j]) super++;
 	}
 	for (j = 0; j < n_players; j++) {
 		obt[j] = 0.0;	
