@@ -489,7 +489,7 @@ prnt_singleitem_
 		case  2: fprintf(f, " %*s"		, sh  , sdev_str ); break;
 		case  3: fprintf(f, " %*.1f"	, sh  , r->obtained_results[j] ); break;
 		case  4: fprintf(f, " %*ld" 	, sh  , (long)r->playedby_results[j] ); break;
-		case  5: fprintf(f, " %*.1f%s"	, sh-1, r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j], "%"); break;
+		case  5: fprintf(f, " %*.1f"	, sh  , r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j]); break;
 		case  6: fprintf(f, " %*s    " 	, sh-4, cfs_str); break;
 		case  7: fprintf(f, " %*ld"		, sh  , (long)oi[j].W ); break;
 		case  8: fprintf(f, " %*ld"		, sh  , (long)oi[j].D ); break;
