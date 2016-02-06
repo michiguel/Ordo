@@ -160,6 +160,16 @@ An example of a synonym file with two lines would be:
 In this example, Gaviota 1.0 and Stockfish 6 would be the names used by Ordo.
 The other ones will be converted.
 
+\subsubsection*{Excluding games}
+In certain situations, the user may want to include/discard in the calculation only a subset of the games present in the input file/s.
+Switches \swtch{-i <file>} and \swtch{-x <file>} are used for this purpose.
+Switch \swtch{-i} includes \textit{only} the games of participants listed in \swtch{<file>}.
+In this file, each participant name has to be in different lines. 
+Also, each of those names may or may not be surrounded by quotes.
+Both are accepted.
+For this reason, if a .csv file is provided as a list of participants, only the first column is read.
+In addition, \swtch{-x} could be use to \textit{exclude} games of participants listed in \swtch{<file>}.
+
 \subsubsection*{Output information (columns)}
 The user can select what information is displayed with the switch \swtch{-U}.
 For instance, \swtch{-U "0,1,3"} will select and print "rank and name", "rating", and "points total" columns in that order (each column has a predefined number see below). 
@@ -183,6 +193,12 @@ The default output is \swtch{"0,1,2,3,4,5"}.
 
 Option 14 is will be equal to option 13 if the number of games among opponents is equally distributed.
 
+	\begin{equation}
+	OppDiv = e^{ -\left(\sum\limits_{i=1}^N f_{i} ln(f_{i})\right) } 
+	\end{equation}
+
+where $f_{i} = n_{i}/N$. $N$ is the total number of games played by a given participant, and $n_{i}$ is the number of games played agains opponent $i$.
+ 
 \subsubsection*{Anchor}
 The switch \swtch{-A} will fix the rating of a given player as a reference (\textit{anchor}) for the whole pool.
 
