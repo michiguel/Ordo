@@ -148,6 +148,9 @@ static void usage (void);
 		" -n <value>  number of processors for parallel calculation of simulations\n"
 		" -U <a,..,z> info in output. Default columns are \"0,1,2,3,4,5\"\n"
 		" -Y <file>   Name synonyms (csv format). Each line: main,syn1,syn2 etc.\n"
+		" -i <file>   include only games of participants present in <file>\n"
+		" -x <file>   names in <file> will not have their games included\n"
+
 		"\n"
 		;
 
@@ -157,7 +160,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:JTF:Xt:N:Mn:U:Y:";
+	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:JTF:Xt:N:Mn:U:Y:i:x:";
 
 /*
 |
@@ -231,6 +234,123 @@ calc_encounters__
 					, e->enc);
 }
 
+#if 1
+#define TEST_INCLUDES
+#endif
+
+#if defined(TEST_INCLUDES)
+static bool_t
+name2player (struct DATA *d, const char *namestr, player_t *plyr)
+{
+	player_t p;
+	uint32_t hsh = namehash(namestr);
+	if (name_ispresent (d, namestr, hsh, &p)) {
+		*plyr = p;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+
+#include "bitarray.h"
+
+static void 
+database_include_only (struct DATA *db, bitarray_t *pba)
+{
+	player_t wp, bp;
+	size_t blk;
+	size_t idx;
+	size_t blk_filled = db->gb_filled;
+	size_t idx_last   = db->gb_idx;
+
+	for (blk = 0; blk < blk_filled; blk++) {
+		for (idx = 0; idx < MAXGAMESxBLOCK; idx++) {
+			wp = db->gb[blk]->white[idx];
+			bp = db->gb[blk]->black[idx];
+			if (!ba_ison(pba, wp) || !ba_ison(pba, bp))
+				db->gb[blk]->score[idx] = DISCARD;
+		}
+	}
+
+	blk = blk_filled;
+
+		for (idx = 0; idx < idx_last; idx++) {
+			wp = db->gb[blk]->white[idx];
+			bp = db->gb[blk]->black[idx];
+			if (!ba_ison(pba, wp) || !ba_ison(pba, bp))
+				db->gb[blk]->score[idx] = DISCARD;
+		}
+
+	return;
+}
+
+
+static char *skipblanks(char *p) {while (isspace(*p)) p++; return p;}
+
+static bool_t
+do_tick (struct DATA *d, const char *namestr, bitarray_t *pba) 
+{
+	player_t p;
+	bool_t ok = name2player (d, namestr, &p);
+	if (ok)	ba_put (pba, p);
+	return ok;
+}
+
+static void
+namelist_preload (bool_t quietmode, const char *finp_name, struct DATA *d, bitarray_t *pba)
+{
+	FILE *finp;
+	char myline[MAXSIZE_CSVLINE];
+	char *p;
+	bool_t line_success = TRUE;
+	bool_t file_success = TRUE;
+
+	assert (pba);
+	assert (d);
+
+	ba_clear (pba);
+
+	if (NULL == finp_name) {
+		return;
+	}
+
+	if (NULL != (finp = fopen (finp_name, "r"))) {
+
+		csv_line_t csvln;
+		line_success = TRUE;
+
+		while ( line_success && NULL != fgets(myline, MAXSIZE_CSVLINE, finp)) {
+
+			p = skipblanks(myline);
+			if (*p == '\0') continue;
+
+			if (csv_line_init(&csvln, myline)) {
+				line_success = csvln.n == 1 && do_tick (d, csvln.s[0], pba);
+				csv_line_done(&csvln);		
+			} else {
+				line_success = FALSE;
+			}
+		}
+
+		fclose(finp);
+	} else {
+		file_success = FALSE;
+	}
+
+	if (!file_success) {
+		fprintf (stderr, "Errors in file \"%s\"\n",finp_name);
+		exit(EXIT_FAILURE);
+	} else 
+	if (!line_success) {
+		fprintf (stderr, "Errors in file \"%s\" (not matching names)\n",finp_name);
+		exit(EXIT_FAILURE);
+	} 
+	if (!quietmode)	printf ("Names uploaded succesfully\n");
+
+	return;
+}
+//
+#endif
 
 /*
 |
@@ -283,6 +403,7 @@ int main (int argc, char *argv[])
 	const char *head2head_str;
 	const char *ctsmatstr, *synstr;
 	const char *output_columns;
+	const char *includes_str, *excludes_str;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
 	bool_t group_is_output, Elostat_output, Ignore_draws, groups_no_check, Forces_ML, cfs_column;
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE, switch_d=FALSE, switch_k=FALSE, switch_D=FALSE;
@@ -308,6 +429,8 @@ int main (int argc, char *argv[])
 	priorsstr	 	= NULL;
 	relstr		 	= NULL;
 	synstr			= NULL;
+	includes_str	= NULL;
+	excludes_str	= NULL;
 	output_columns  = NULL;
 	group_is_output = FALSE;
 	groups_no_check = FALSE;
@@ -468,6 +591,10 @@ int main (int argc, char *argv[])
 						break;
 			case 'Y': 	synstr = opt_arg;
 						break;
+			case 'i': 	includes_str = opt_arg;
+						break;
+			case 'x': 	excludes_str = opt_arg;
+						break;
 			case '?': 	parameter_error();
 						exit(EXIT_FAILURE);
 						break;
@@ -555,6 +682,10 @@ int main (int argc, char *argv[])
 		fprintf (stderr, "Switches -g and -G cannot be used at the same time\n\n");
 		exit(EXIT_FAILURE);
 	}				
+	if (includes_str && excludes_str) {
+		fprintf (stderr, "Switches -x and -i cannot be used at the same time\n\n");
+		exit(EXIT_FAILURE);
+	}	
 
 	Prior_mode = switch_k || switch_u || NULL != relstr || NULL != priorsstr;
 
@@ -573,6 +704,33 @@ int main (int argc, char *argv[])
 			return EXIT_FAILURE; 			
 		}
 		if (Ignore_draws) database_ignore_draws(pdaba);
+
+//
+#if defined(TEST_INCLUDES)
+		if (NULL != includes_str) {
+			bitarray_t ba;
+			if (ba_init (&ba,pdaba->n_players)) {
+				namelist_preload (quiet_mode, includes_str, pdaba, &ba);
+				database_include_only(pdaba, &ba);
+			} else {
+				fprintf (stderr, "ERROR\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+		if (NULL != excludes_str) {
+			bitarray_t ba;
+			if (ba_init (&ba,pdaba->n_players)) {
+				namelist_preload (quiet_mode, excludes_str, pdaba, &ba);
+				ba_setnot(&ba);
+				database_include_only(pdaba, &ba);
+			} else {
+				fprintf (stderr, "ERROR\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+#endif
+//
+
 	} else {
 		fprintf (stderr, "Problems reading results\n");
 		return EXIT_FAILURE; 
@@ -656,6 +814,13 @@ int main (int argc, char *argv[])
 		return EXIT_FAILURE; 
 	}
 
+	#if 0
+	// to ignore a given player --> test_player
+	// here, set:
+	// Players.flagged[test_player] = TRUE;
+	// Players.present_in_games[test_player] = FALSE;
+	#endif
+
 	assert(players_have_clear_flags(&Players));
 	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
@@ -667,16 +832,16 @@ int main (int argc, char *argv[])
 	/*==== report, input checked ====*/
 
 	if (!quiet_mode) {
-		printf ("Total games         %8ld\n",(long)
+		printf ("Total games            %8ld\n",(long)
 											 (Game_stats.white_wins
 											 +Game_stats.draws
 											 +Game_stats.black_wins
 											 +Game_stats.noresult));
-		printf (" - White wins       %8ld\n", (long) Game_stats.white_wins);
-		printf (" - Draws            %8ld\n", (long) Game_stats.draws);
-		printf (" - Black wins       %8ld\n", (long) Game_stats.black_wins);
-		printf (" - Truncated        %8ld\n", (long) Game_stats.noresult);
-		printf ("Unique head to head %8.2f%s\n", 100.0*(double)Encounters.n/(double)Games.n, "%");
+		printf (" - White wins          %8ld\n", (long) Game_stats.white_wins);
+		printf (" - Draws               %8ld\n", (long) Game_stats.draws);
+		printf (" - Black wins          %8ld\n", (long) Game_stats.black_wins);
+		printf (" - Truncated/Discarded %8ld\n", (long) Game_stats.noresult);
+		printf ("Unique head to head    %8.2f%s\n", 100.0*(double)Encounters.n/(double)Games.n, "%");
 		if (Anchor_use) {
 			printf ("Reference rating    %8.1lf",General_average);
 			printf (" (set to \"%s\")\n", Anchor_name);

@@ -61,6 +61,18 @@ ba_clear (struct BITARRAY *ba)
 	for (i = 0; i < max_p; i++) ba->pod[i] = 0;
 }
 
+void
+ba_setnot (struct BITARRAY *ba)
+{
+	size_t i;
+	player_t max; 
+	size_t max_p;
+
+	max = ba->max; 
+	max_p = (size_t)max/64 + (max % 64 > 0?1:0);
+	for (i = 0; i < max_p; i++) ba->pod[i] = ~ba->pod[i];
+}
+
 bool_t
 ba_init(struct BITARRAY *ba, player_t max)
 {
