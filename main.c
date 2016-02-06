@@ -242,7 +242,7 @@ calc_encounters__
 static bool_t
 name2player (struct DATA *d, const char *namestr, player_t *plyr)
 {
-	player_t p;
+	player_t p = 0; // to silence warning
 	uint32_t hsh = namehash(namestr);
 	if (name_ispresent (d, namestr, hsh, &p)) {
 		*plyr = p;
