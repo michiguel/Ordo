@@ -147,7 +147,7 @@ static void usage (void);
 		" -M          force maximum-likelihood estimation to obtain ratings\n"
 		" -n <value>  number of processors for parallel calculation of simulations\n"
 		" -U <a,..,z> info in output. Default columns are \"0,1,2,3,4,5\"\n"
-		" -Y <file>   Name synonyms (csv format). Each line: main,syn1,syn2 etc.\n"
+		" -Y <file>   name synonyms (csv format). Each line: main,syn1,syn2 etc.\n"
 		" -i <file>   include only games of participants present in <file>\n"
 		" -x <file>   names in <file> will not have their games included\n"
 
