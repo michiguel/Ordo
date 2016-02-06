@@ -290,7 +290,7 @@ static char *skipblanks(char *p) {while (isspace(*p)) p++; return p;}
 static bool_t
 do_tick (struct DATA *d, const char *namestr, bitarray_t *pba) 
 {
-	player_t p;
+	player_t p = 0; // to silence warnings
 	bool_t ok = name2player (d, namestr, &p);
 	if (ok)	ba_put (pba, p);
 	return ok;
