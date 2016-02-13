@@ -240,7 +240,7 @@ calc_encounters__
 
 #if defined(TEST_INCLUDES)
 static bool_t
-name2player (struct DATA *d, const char *namestr, player_t *plyr)
+name2player (const struct DATA *d, const char *namestr, player_t *plyr)
 {
 	player_t p = 0; // to silence warning
 	uint32_t hsh = namehash(namestr);
@@ -288,7 +288,7 @@ database_include_only (struct DATA *db, bitarray_t *pba)
 static char *skipblanks(char *p) {while (isspace(*p)) p++; return p;}
 
 static bool_t
-do_tick (struct DATA *d, const char *namestr, bitarray_t *pba) 
+do_tick (const struct DATA *d, const char *namestr, bitarray_t *pba) 
 {
 	player_t p = 0; // to silence warnings
 	bool_t ok = name2player (d, namestr, &p);
@@ -297,7 +297,7 @@ do_tick (struct DATA *d, const char *namestr, bitarray_t *pba)
 }
 
 static void
-namelist_preload (bool_t quietmode, const char *finp_name, struct DATA *d, bitarray_t *pba)
+namelist_preload (bool_t quietmode, const char *finp_name, const struct DATA *d, bitarray_t *pba)
 {
 	FILE *finp;
 	char myline[MAXSIZE_CSVLINE];

@@ -48,9 +48,9 @@ struct NAMEPEA {
 
 static bool_t name_tree_init(void);
 static void   name_tree_done(void);
-static bool_t name_ispresent_hashtable (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
+static bool_t name_ispresent_hashtable (const struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
 static bool_t name_register_hashtable (uint32_t hash, player_t i, player_t i_out);
-static bool_t name_ispresent_tree (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
+static bool_t name_ispresent_tree (const struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index);
 static bool_t name_register_tree (uint32_t hash, player_t i, player_t i_out);
 
 //*************************** GENERAL **************************************
@@ -69,7 +69,7 @@ name_storage_done(void)
 }
 
 bool_t
-name_ispresent (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
+name_ispresent (const struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
 {
 	return	name_ispresent_hashtable (d, s, hash, out_index)
 		||	name_ispresent_tree (d, s, hash, out_index);
@@ -96,7 +96,7 @@ static struct NAMEPOD Namehashtab[PODMAX];
 
 
 static bool_t
-name_ispresent_hashtable (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
+name_ispresent_hashtable (const struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
 {
 	struct NAMEPOD *ppod = &Namehashtab[hash & PODMASK];
 	struct NAMEPEA *ppea;
@@ -237,7 +237,7 @@ name_register_tree (uint32_t hash, player_t i, player_t i_out)
 
 
 static bool_t
-name_ispresent_tree (struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
+name_ispresent_tree (const struct DATA *d, const char *s, uint32_t hash, /*out*/ player_t *out_index)
 {
 	bool_t hit = FALSE;
 	struct NODETREE *pnode;
