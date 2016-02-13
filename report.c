@@ -335,7 +335,7 @@ cegt_output	( bool_t quiet
 #define Percent_str "(%)"
 #define Cfsnext_str "CFS(next)"
 
-static const char *Header[MAX_prnt] = {
+static const char *Header_INI[MAX_prnt] = {
 	Player_str,
 	Rating_str,
 	Error_str, 
@@ -353,7 +353,62 @@ static const char *Header[MAX_prnt] = {
 	"OppDiv"
 };
 
-static int Shift[MAX_prnt] = {0, 6, 6, 9, 7, 7, 11, 7, 7, 7, 7, 7, 7, 7, 7 };
+static int Shift_INI[MAX_prnt] = {0, 6, 6, 9, 7, 7, 11, 7, 7, 7, 7, 7, 7, 7, 7 };
+
+static char *Header[MAX_prnt];
+static int Shift[MAX_prnt];
+
+
+static char *string_dup (const char *s);
+static void string_free (char *s);
+
+void
+report_columns_unset (int i)
+{
+	if (i < MAX_prnt && Header[i] != NULL) {
+		string_free(Header[i]);
+		Header[i] = NULL;
+	}
+}
+
+bool_t
+report_columns_set (int i, int shft, const char *hdr)
+{
+	char *h;
+	bool_t ok = i < MAX_prnt && NULL != (h = string_dup(hdr));
+	if (ok) {
+		report_columns_unset (i);	
+		Header[i] = h;		
+		Shift[i] = shft;	
+	}
+	return ok;
+}
+
+bool_t
+report_columns_init (void)
+{
+	bool_t ok = TRUE;
+	int i;
+	for (i = 0; ok && i < MAX_prnt; i++) {
+		Header[i] = NULL;
+	}
+	for (i = 0; ok && i < MAX_prnt; i++) {
+		ok = ok && report_columns_set (i, Shift_INI[i], Header_INI[i]);
+	}
+	if (!ok) {
+		while (i-->0) report_columns_unset (i);
+	}
+	return ok;
+}
+
+void
+report_columns_done (void)
+{
+	int i;
+	for (i = 0; i < MAX_prnt; i++) {
+		report_columns_unset (i);
+	}
+}
 
 // Function provided to have all head to head information
 
@@ -893,6 +948,12 @@ string_dup (const char *s)
 	return q;
 }
 
+static void
+string_free (char *s)
+{
+	free(s);
+}
+
 bool_t
 str2list (const char *inp_str, int max, int *n, int *t)
 {
@@ -919,7 +980,7 @@ str2list (const char *inp_str, int max, int *n, int *t)
 			s = p;
 		}
 
-		free(d);
+		string_free(d);
 	}
 
 	if (ok)	*t = -1;

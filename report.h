@@ -120,5 +120,18 @@ str2list
 			, int *n
 			, int *t);
 
+bool_t
+report_columns_set (int i, int shft, const char *hdr);
+
+void
+report_columns_unset (int i);
+
+bool_t
+report_columns_init (void);
+
+void
+report_columns_done (void);
+
+
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

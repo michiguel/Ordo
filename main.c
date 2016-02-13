@@ -696,6 +696,13 @@ int main (int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
+	/*==== report init ====*/
+
+	if (!report_columns_init()) {
+		fprintf (stderr, "Problem initializing report settings.\n");	
+		exit(EXIT_FAILURE);
+	}
+
 	/*==== set input ====*/
 
 	if (NULL != (pdaba = database_init_frompgn (inputfile, synstr, quiet_mode))) {
@@ -1230,6 +1237,7 @@ int main (int argc, char *argv[])
 		relpriors_done2 (&RPset, &RPset_store);
 
 	name_storage_done();
+	report_columns_done();
 
 	mythread_mutex_destroy (&Smpcount);
 	mythread_mutex_destroy (&Groupmtx);
