@@ -175,7 +175,8 @@ The user can select what information is displayed with the switch \swtch{-U}.
 For instance, \swtch{-U "0,1,3"} will select and print "rank and name", "rating", and "points total" columns in that order (each column has a predefined number see below). 
 The default output is \swtch{"0,1,2,3,4,5"}.
 
-\cmdln{0 rank and name\\
+\cmdln{\\
+ 0 rank and name\\
  1 rating\\
  2 error\\
  3 points total\\
@@ -194,11 +195,38 @@ The default output is \swtch{"0,1,2,3,4,5"}.
 Option 14 is will be equal to option 13 if the number of games among opponents is equally distributed.
 
 	\begin{equation}
-	OppDiv = e^{ -\left(\sum\limits_{i=1}^N f_{i} ln(f_{i})\right) } 
+	OppDiv = e^{ -\left(\sum\limits_{i=1}^N f_{i} ln(f_{i})\right) }
 	\end{equation}
 
 where $f_{i} = n_{i}/N$. $N$ is the total number of games played by a given participant, and $n_{i}$ is the number of games played agains opponent $i$.
- 
+
+Another switch (\swtch{-b <file>}) controls the width of each column in the output and the header of each column.
+This \swtch{<file>} consists of a text in which each line has \swtch{<item>,<width>,"HeaderName"}.
+For instance, if you want to have the item 4 (games total, see above), to be 5 characters wide and be named "Points", you will have to include a line like this:
+
+\cmdln{4,8,"Points"}
+
+In a file named \swtch{columns.txt} (or whatever name you choose) and then include the switch \swtch{-b columns.txt}
+Note that the width selected for item 0 (rank and name), will be ingnored since it is automatically adjusted.
+A default file would look like this (spaces are ignored):
+
+\cmdln{\\
+ 0,  0, "PLAYER"\\
+ 1,  6, "RATING"\\
+ 2,  6, "ERROR"\\ 
+ 3,  9, "POINTS"\\
+ 4,  7, "PLAYED"\\
+ 5,  7, "(\%)"\\
+ 6, 11, "CFS(next)"\\
+ 7,  7, "W"\\
+ 8,  7, "D"\\
+ 9,  7, "L"\\
+10,  7, "D(\%)"\\
+11,  7, "OppAvg"\\
+12,  7, "OppErr"\\
+13,  7, "OppN"\\
+14,  7, "OppDiv"}
+
 \subsubsection*{Anchor}
 The switch \swtch{-A} will fix the rating of a given player as a reference (\textit{anchor}) for the whole pool.
 
