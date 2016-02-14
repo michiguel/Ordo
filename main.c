@@ -352,6 +352,54 @@ namelist_preload (bool_t quietmode, const char *finp_name, const struct DATA *d,
 //
 #endif
 
+static void
+report_columns_load_settings (bool_t quietmode, const char *finp_name)
+{
+	FILE *finp;
+	char myline[MAXSIZE_CSVLINE];
+	char *p;
+	bool_t line_success = TRUE;
+	bool_t file_success = TRUE;
+
+	if (NULL == finp_name) {
+		return;
+	}
+
+	if (NULL != (finp = fopen (finp_name, "r"))) {
+
+		csv_line_t csvln;
+		line_success = TRUE;
+
+		while ( line_success && NULL != fgets(myline, MAXSIZE_CSVLINE, finp)) {
+
+			p = skipblanks(myline);
+			if (*p == '\0') continue;
+
+			if (csv_line_init(&csvln, myline)) {
+				line_success = csvln.n == 3 && report_columns_set_str (csvln.s[0], csvln.s[1], csvln.s[2]);
+				csv_line_done(&csvln);		
+			} else {
+				line_success = FALSE;
+			}
+		}
+
+		fclose(finp);
+	} else {
+		file_success = FALSE;
+	}
+
+	if (!file_success) {
+		fprintf (stderr, "Errors in file \"%s\"\n",finp_name);
+		exit(EXIT_FAILURE);
+	} else 
+	if (!line_success) {
+		fprintf (stderr, "Errors in file \"%s\"\n",finp_name);
+		exit(EXIT_FAILURE);
+	} 
+	if (!quietmode)	printf ("Column settings uploaded succesfully\n");
+
+	return;
+}
 /*
 |
 |	MAIN
@@ -702,6 +750,8 @@ int main (int argc, char *argv[])
 		fprintf (stderr, "Problem initializing report settings.\n");	
 		exit(EXIT_FAILURE);
 	}
+
+	report_columns_load_settings (quiet_mode, "headers.txt");
 
 	/*==== set input ====*/
 

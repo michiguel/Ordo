@@ -123,6 +123,9 @@ str2list
 bool_t
 report_columns_set (int i, int shft, const char *hdr);
 
+bool_t
+report_columns_set_str (const char *i_str, const char *s_str, const char *hdr);
+
 void
 report_columns_unset (int i);
 

@@ -385,6 +385,18 @@ report_columns_set (int i, int shft, const char *hdr)
 }
 
 bool_t
+report_columns_set_str (const char *i_str, const char *s_str, const char *hdr)
+{
+	int int1 = 0, int2 = 0;
+	bool_t ok = TRUE;
+	ok = ok && 1 == sscanf (i_str, "%d", &int1);
+	ok = ok && 1 == sscanf (s_str, "%d", &int2);
+	ok = ok && report_columns_set (int1, int2, hdr);
+	return ok;
+}
+
+
+bool_t
 report_columns_init (void)
 {
 	bool_t ok = TRUE;
