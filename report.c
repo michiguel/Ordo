@@ -173,19 +173,6 @@ my_qsort (const double *reference, size_t n, player_t *vect)
 
 //==== end my qsort
 
-static size_t
-find_maxlen (const char *nm[], size_t n)
-{
-	size_t maxl = 0;
-	size_t length;
-	size_t i;
-	for (i = 0; i < n; i++) {
-		length = strlen(nm[i]);
-		if (length > maxl) maxl = length;
-	}
-	return maxl;
-}
-
 
 #define MAXSYMBOLS_STR 5
 static const char *SP_symbolstr[MAXSYMBOLS_STR] = {"<",">","*"," ","X"};
@@ -580,7 +567,7 @@ prnt_itemlist_(	FILE *f
 			, double *sdev
 			, int *list
 			, struct outextra *pq
-			, int x
+			, size_t x
 			, double confidence_factor
 			, const struct OUT_INFO *oi
 )
@@ -701,7 +688,7 @@ prnt_itemlist_csv
 			, double *sdev
 			, int *list
 			, struct outextra *pq
-			, int x
+			, size_t x
 			, double confidence_factor
 			, const struct OUT_INFO *oi
 )
@@ -760,6 +747,37 @@ static void fatal_mem(const char *s)
 	exit (EXIT_FAILURE);
 }
 
+#if 0
+static size_t
+find_maxlen (const char *nm[], size_t n, struct outextra *q, size_t x_max)
+{
+	size_t maxl = 0;
+	size_t length;
+	size_t i;
+	for (i = 0; i < n; i++) {
+		length = strlen(nm[i]);
+		if (length > maxl) maxl = length;
+	}
+	return maxl;
+}
+#else
+static size_t
+find_maxlen (const char *nm[], struct outextra *q, size_t x_max)
+{
+	size_t maxl = 0;
+	size_t length;
+	size_t x;
+	player_t j;
+	for (x = 0; x < x_max; x++) {
+		j = q[x].j;
+		length = strlen(nm[j]);
+		if (length > maxl) maxl = length;	
+	}
+	return maxl;
+}
+#endif
+
+
 void
 all_report 	( const struct GAMES 			*g
 			, const struct PLAYERS 			*p
@@ -789,8 +807,8 @@ all_report 	( const struct GAMES 			*g
 	int *list_chosen = NULL;
 	int *listbuff = NULL;
 
-	int	x = 0;
-	int x_max = 0;
+	size_t	x = 0;
+	size_t  x_max = 0;
 
 	FILE *f;
 	player_t i;
@@ -882,7 +900,7 @@ all_report 	( const struct GAMES 			*g
 	f = textf;
 	if (f != NULL) {
 
-		ml = find_maxlen (p->name, (size_t)p->n);
+		ml = find_maxlen (p->name, q, x_max);
 		if (ml > 50) ml = 50;
 		if (ml < strlen(Player_str)) ml = strlen(Player_str);
 

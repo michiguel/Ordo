@@ -150,7 +150,7 @@ static void usage (void);
 		" -Y <file>   name synonyms (csv format). Each line: main,syn1,syn2 etc.\n"
 		" -i <file>   include only games of participants present in <file>\n"
 		" -x <file>   names in <file> will not have their games included\n"
-
+		" -b <file>   format column output, each line being <column>,<width>,\"Header\"\n"
 		"\n"
 		;
 
@@ -160,7 +160,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:JTF:Xt:N:Mn:U:Y:i:x:";
+	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:JTF:Xt:N:Mn:U:Y:i:x:b:";
 
 /*
 |
@@ -451,7 +451,7 @@ int main (int argc, char *argv[])
 	const char *head2head_str;
 	const char *ctsmatstr, *synstr;
 	const char *output_columns;
-	const char *includes_str, *excludes_str;
+	const char *includes_str, *excludes_str, *columns_format_str;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
 	bool_t group_is_output, Elostat_output, Ignore_draws, groups_no_check, Forces_ML, cfs_column;
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE, switch_d=FALSE, switch_k=FALSE, switch_D=FALSE;
@@ -479,6 +479,7 @@ int main (int argc, char *argv[])
 	synstr			= NULL;
 	includes_str	= NULL;
 	excludes_str	= NULL;
+	columns_format_str = NULL;
 	output_columns  = NULL;
 	group_is_output = FALSE;
 	groups_no_check = FALSE;
@@ -643,6 +644,8 @@ int main (int argc, char *argv[])
 						break;
 			case 'x': 	excludes_str = opt_arg;
 						break;
+			case 'b': 	columns_format_str = opt_arg;
+						break;
 			case '?': 	parameter_error();
 						exit(EXIT_FAILURE);
 						break;
@@ -751,7 +754,8 @@ int main (int argc, char *argv[])
 		exit(EXIT_FAILURE);
 	}
 
-	report_columns_load_settings (quiet_mode, "headers.txt");
+	if (columns_format_str)
+		report_columns_load_settings (quiet_mode, columns_format_str);
 
 	/*==== set input ====*/
 
