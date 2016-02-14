@@ -314,22 +314,14 @@ cegt_output	( bool_t quiet
 	output_cegt_style (quiet, "general.dat", "rating.dat", "programs.dat", &cegt);
 }
 
-#define Player_str  "PLAYER"
-#define Rating_str  "RATING"
-#define Error_str   "ERROR"
-#define Points_str  "POINTS"
-#define Played_str  "PLAYED"
-#define Percent_str "(%)"
-#define Cfsnext_str "CFS(next)"
-
 static const char *Header_INI[MAX_prnt] = {
-	Player_str,
-	Rating_str,
-	Error_str, 
-	Points_str,
-	Played_str,
-	Percent_str,
-	Cfsnext_str,
+	"PLAYER",
+	"RATING",
+	"ERROR", 
+	"POINTS",
+	"PLAYED",
+	"(%)",
+	"CFS(next)",
 	"W",
 	"D",
 	"L",
@@ -600,7 +592,7 @@ prnt_header_single (int item, FILE *f, size_t ml)
 	switch (item) {
 		case 0: fprintf(f, "\n%*s %-*s    :"
 						 		 ,  4, "#"
-								 , (int)ml, Player_str); break;
+								 , (int)ml, Header[item]); break;
 		default:
 				fprintf(f, " %*s", sh, Header[item]); break;
 		break;
@@ -624,7 +616,7 @@ prnt_header_single_csv (int item, FILE *f)
 		return;
 	switch (item) {
 		case 0: fprintf(f,  "%s", quoted_str(          "#",buffer)); 
-		        fprintf(f, ",%s", quoted_str(   Player_str,buffer)); break;
+		        fprintf(f, ",%s", quoted_str( Header[item],buffer)); break;
 		default:
 				fprintf(f, ",%s", quoted_str( Header[item],buffer)); break;
 		break;
@@ -903,7 +895,7 @@ all_report 	( const struct GAMES 			*g
 
 		ml = find_maxlen (p->name, q, x_max);
 		if (ml > 50) ml = 50;
-		if (ml < strlen(Player_str)) ml = strlen(Player_str);
+		if (ml < strlen(Header[0])) ml = strlen(Header[0]);
 
 		prnt_header (f, ml, list_chosen);
 		fprintf(f, "\n");
