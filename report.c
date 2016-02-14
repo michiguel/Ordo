@@ -376,9 +376,10 @@ report_columns_set_str (const char *i_str, const char *s_str, const char *hdr)
 {
 	int int1 = 0, int2 = 0;
 	bool_t ok = TRUE;
+	size_t min_len = 1 + strlen(hdr);
 	ok = ok && 1 == sscanf (i_str, "%d", &int1);
 	ok = ok && 1 == sscanf (s_str, "%d", &int2);
-	ok = ok && report_columns_set (int1, int2, hdr);
+	ok = ok && report_columns_set (int1, (int2 < min_len? min_len: int2), hdr);
 	return ok;
 }
 
