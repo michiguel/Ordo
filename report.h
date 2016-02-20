@@ -135,6 +135,8 @@ report_columns_init (void);
 void
 report_columns_done (void);
 
+void
+report_columns_load_settings (bool_t quietmode, const char *finp_name);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif
