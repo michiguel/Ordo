@@ -27,6 +27,7 @@
 #include "ordolim.h"
 #include "datatype.h"
 #include "strlist.h"
+#include "bitarray.h"
 
 enum RESULTS {
 	WHITE_WIN = 0,
@@ -43,6 +44,9 @@ extern void 			database_done (struct DATA *p);
 extern void database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct GAMESTATS *gs);
 extern void database_ignore_draws (struct DATA *db);
 extern const char *database_getname (const struct DATA *db, player_t i);
+extern void database_include_only (struct DATA *db, bitarray_t *pba);
+
+extern void namelist_preload (bool_t quietmode, const char *finp_name, const struct DATA *d, bitarray_t *pba);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif

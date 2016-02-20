@@ -336,6 +336,39 @@ database_ignore_draws (struct DATA *db)
 	return;
 }
 
+#include "bitarray.h"
+
+void 
+database_include_only (struct DATA *db, bitarray_t *pba)
+{
+	player_t wp, bp;
+	size_t blk;
+	size_t idx;
+	size_t blk_filled = db->gb_filled;
+	size_t idx_last   = db->gb_idx;
+
+	for (blk = 0; blk < blk_filled; blk++) {
+		for (idx = 0; idx < MAXGAMESxBLOCK; idx++) {
+			wp = db->gb[blk]->white[idx];
+			bp = db->gb[blk]->black[idx];
+			if (!ba_ison(pba, wp) || !ba_ison(pba, bp))
+				db->gb[blk]->score[idx] = DISCARD;
+		}
+	}
+
+	blk = blk_filled;
+
+		for (idx = 0; idx < idx_last; idx++) {
+			wp = db->gb[blk]->white[idx];
+			bp = db->gb[blk]->black[idx];
+			if (!ba_ison(pba, wp) || !ba_ison(pba, bp))
+				db->gb[blk]->score[idx] = DISCARD;
+		}
+
+	return;
+}
+
+
 /*--------------------------------------------------------------*\
 |
 |
@@ -549,6 +582,85 @@ syn_preload (bool_t quietmode, const char *fsyns_name, struct DATA *d)
 	return;
 }
 
+
+//---- for name preload
+
+static bool_t
+name2player (const struct DATA *d, const char *namestr, player_t *plyr)
+{
+	player_t p = 0; // to silence warning
+	uint32_t hsh = namehash(namestr);
+	if (name_ispresent (d, namestr, hsh, &p)) {
+		*plyr = p;
+		return TRUE;
+	}
+	return FALSE;
+}
+
+static bool_t
+do_tick (const struct DATA *d, const char *namestr, bitarray_t *pba) 
+{
+	player_t p = 0; // to silence warnings
+	bool_t ok = name2player (d, namestr, &p);
+	if (ok)	ba_put (pba, p);
+	return ok;
+}
+
+void
+namelist_preload (bool_t quietmode, const char *finp_name, const struct DATA *d, bitarray_t *pba)
+{
+	FILE *finp;
+	char myline[MAXSIZE_CSVLINE];
+	char *p;
+	bool_t line_success = TRUE;
+	bool_t file_success = TRUE;
+
+	assert (pba);
+	assert (d);
+
+	ba_clear (pba);
+
+	if (NULL == finp_name) {
+		return;
+	}
+
+	if (NULL != (finp = fopen (finp_name, "r"))) {
+
+		csv_line_t csvln;
+		line_success = TRUE;
+
+		while ( line_success && NULL != fgets(myline, MAXSIZE_CSVLINE, finp)) {
+
+			p = skipblanks(myline);
+			if (*p == '\0') continue;
+
+			if (csv_line_init(&csvln, myline)) {
+				line_success = csvln.n == 1 && do_tick (d, csvln.s[0], pba);
+				csv_line_done(&csvln);		
+			} else {
+				line_success = FALSE;
+			}
+		}
+
+		fclose(finp);
+	} else {
+		file_success = FALSE;
+	}
+
+	if (!file_success) {
+		fprintf (stderr, "Errors in file \"%s\"\n",finp_name);
+		exit(EXIT_FAILURE);
+	} else 
+	if (!line_success) {
+		fprintf (stderr, "Errors in file \"%s\" (not matching names)\n",finp_name);
+		exit(EXIT_FAILURE);
+	} 
+	if (!quietmode)	printf ("Names uploaded succesfully\n");
+
+	return;
+}
+
+//--------------------------------------
 
 static void
 pgn_result_reset (struct pgn_result *p)
