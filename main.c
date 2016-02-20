@@ -406,6 +406,7 @@ report_columns_load_settings (bool_t quietmode, const char *finp_name)
 |
 \*--------------------------------------------------------------*/
 
+#include "strlist.h"
 
 int main (int argc, char *argv[])
 {
@@ -456,6 +457,9 @@ int main (int argc, char *argv[])
 	bool_t group_is_output, Elostat_output, Ignore_draws, groups_no_check, Forces_ML, cfs_column;
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE, switch_d=FALSE, switch_k=FALSE, switch_D=FALSE;
 
+	strlist_t SL;
+	strlist_t *psl = &SL;
+
 	/* defaults */
 	input_n = 0;
 	inputfile[input_n] = NULL;
@@ -490,6 +494,8 @@ int main (int argc, char *argv[])
 	Forces_ML 	 	= FALSE;
 	cfs_column      = FALSE;
 
+	strlist_init(psl);
+
 	while (END_OF_OPTIONS != (op = options (argc, argv, OPTION_LIST))) {
 		switch (op) {
 			case 'v':	version_mode = TRUE; 	break;
@@ -499,8 +505,7 @@ int main (int argc, char *argv[])
 			case 'h':	help_mode = TRUE;		break;
 			case 'H':	switch_mode = TRUE;		break;
 			case 'p': 	input_mode = TRUE;
-						inputfile[input_n++] = opt_arg;
-						inputfile[input_n] = NULL;
+						strlist_push(psl,opt_arg);
 						break;
 			case 'c': 	csvstr = opt_arg;
 						break;
@@ -701,14 +706,14 @@ int main (int argc, char *argv[])
 			exit(EXIT_FAILURE);		
 		}
 	}
-	/* get folder, should be only one at this point */
-	while (opt_index < argc && input_n < INPUTMAX) {
-		inputfile[input_n++] = argv[opt_index++];
-		inputfile[input_n] = NULL;
-	}
-	if (opt_index < argc && input_n == INPUTMAX) {
-		fprintf (stderr, "Too many input files\n\n");
-		exit(EXIT_FAILURE);
+	
+	/* -------- input remaining parameters --------- */
+
+	while (opt_index < argc) {
+		if (!strlist_push(psl,argv[opt_index++])) {
+			fprintf (stderr, "Too many input files\n\n");
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	/*==== Incorrect combination of switches ====*/
@@ -759,6 +764,24 @@ int main (int argc, char *argv[])
 
 	/*==== set input ====*/
 
+if (1) // prepare inputfile
+{ 
+	const char *p;
+	input_n = 0;
+	inputfile[input_n] = NULL;
+
+	strlist_rwnd(psl);
+	while (input_n < INPUTMAX && NULL != (p = strlist_next(psl))) {
+		inputfile[input_n++] = p;
+		inputfile[input_n] = NULL;
+	}
+	if (input_n == INPUTMAX) {
+		fprintf (stderr, "Too many input files\n\n");
+		exit(EXIT_FAILURE);
+	}
+}
+
+
 	if (NULL != (pdaba = database_init_frompgn (inputfile, synstr, quiet_mode))) {
 		if (0 == pdaba->n_players || 0 == pdaba->n_games) {
 			fprintf (stderr, "ERROR: Input file contains no games\n");
@@ -796,6 +819,8 @@ int main (int argc, char *argv[])
 		fprintf (stderr, "Problems reading results\n");
 		return EXIT_FAILURE; 
 	}
+
+	strlist_done(psl); // not used anymore
 
 	/*==== memory initialization ====*/
 	{
