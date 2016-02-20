@@ -172,8 +172,10 @@ structdata_done (struct DATA *d)
 |
 \*--------------------------------------------------------------*/
 
+#include "strlist.h"
+
 struct DATA *
-database_init_frompgn (const char *pgn_i[], const char *synfile_name, bool_t quiet)
+database_init_frompgn (strlist_t *sl, const char *synfile_name, bool_t quiet)
 {
 
 	struct DATA *pDAB = NULL;
@@ -186,7 +188,9 @@ database_init_frompgn (const char *pgn_i[], const char *synfile_name, bool_t qui
 	if (NULL != synfile_name) // not provided
 		syn_preload (quiet, synfile_name, pDAB); 
 
-	pgn = *pgn_i++;
+	strlist_rwnd(sl);
+
+	pgn = strlist_next(sl);
 	while (ok && pgn) {
 		if (!quiet)	printf ("\nFile: %s\n",pgn);
 		if (NULL != (fpgn = fopen (pgn, "r"))) {
@@ -195,7 +199,7 @@ database_init_frompgn (const char *pgn_i[], const char *synfile_name, bool_t qui
 		} else {
 			ok = FALSE;
 		}
-		if (ok) pgn = *pgn_i++;
+		if (ok) pgn = strlist_next(sl);
 	}
 	return ok? pDAB: NULL;
 

@@ -439,9 +439,6 @@ int main (int argc, char *argv[])
 	bool_t adjust_white_advantage;
 	bool_t adjust_draw_rate;
 
-	int input_n;
-	const char *inputfile[INPUTMAX+1];
-
 	int columns_n;
 	int columns[COLSMAX+1];
 
@@ -461,8 +458,6 @@ int main (int argc, char *argv[])
 	strlist_t *psl = &SL;
 
 	/* defaults */
-	input_n = 0;
-	inputfile[input_n] = NULL;
 	adjust_white_advantage = FALSE;
 	adjust_draw_rate = FALSE;
 	quiet_mode   	= FALSE;
@@ -764,25 +759,7 @@ int main (int argc, char *argv[])
 
 	/*==== set input ====*/
 
-if (1) // prepare inputfile
-{ 
-	const char *p;
-	input_n = 0;
-	inputfile[input_n] = NULL;
-
-	strlist_rwnd(psl);
-	while (input_n < INPUTMAX && NULL != (p = strlist_next(psl))) {
-		inputfile[input_n++] = p;
-		inputfile[input_n] = NULL;
-	}
-	if (input_n == INPUTMAX) {
-		fprintf (stderr, "Too many input files\n\n");
-		exit(EXIT_FAILURE);
-	}
-}
-
-
-	if (NULL != (pdaba = database_init_frompgn (inputfile, synstr, quiet_mode))) {
+	if (NULL != (pdaba = database_init_frompgn (psl, synstr, quiet_mode))) {
 		if (0 == pdaba->n_players || 0 == pdaba->n_games) {
 			fprintf (stderr, "ERROR: Input file contains no games\n");
 			return EXIT_FAILURE; 			

@@ -26,6 +26,7 @@
 #include "boolean.h"
 #include "ordolim.h"
 #include "datatype.h"
+#include "strlist.h"
 
 enum RESULTS {
 	WHITE_WIN = 0,
@@ -34,7 +35,7 @@ enum RESULTS {
 	DISCARD = 3
 };
 
-extern struct DATA * 	database_init_frompgn (const char *pgn_i[], const char *synfile_name, bool_t quiet);
+extern struct DATA * 	database_init_frompgn (strlist_t *sl, const char *synfile_name, bool_t quiet);
 extern void 			database_done (struct DATA *p);
 
 #include "mytypes.h"
