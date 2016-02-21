@@ -327,38 +327,38 @@ int main (int argc, char *argv[])
 	strlist_t *psl = &SL;
 
 	/* defaults */
-	adjust_white_advantage = FALSE;
-	adjust_draw_rate = FALSE;
-	quiet_mode   	= FALSE;
-	sim_updates  	= FALSE;
-	version_mode 	= FALSE;
-	license_mode 	= FALSE;
-	help_mode    	= FALSE;
-	switch_mode  	= FALSE;
-	input_mode   	= FALSE;
-	table_mode   	= FALSE;
-	textstr 	 	= NULL;
-	csvstr       	= NULL;
-	ematstr 	 	= NULL;
-	ctsmatstr	 	= NULL;
-	pinsstr		 	= NULL;
-	priorsstr	 	= NULL;
-	relstr		 	= NULL;
-	synstr			= NULL;
-	includes_str	= NULL;
-	excludes_str	= NULL;
-	columns_format_str = NULL;
-	single_pgn		= NULL;
-	multi_pgn       = NULL;
-	output_columns  = NULL;
-	group_is_output = FALSE;
-	groups_no_check = FALSE;
-	groupstr 	 	= NULL;
-	Elostat_output 	= FALSE;
-	head2head_str	= NULL;
-	Ignore_draws 	= FALSE;
-	Forces_ML 	 	= FALSE;
-	cfs_column      = FALSE;
+	adjust_white_advantage 	= FALSE;
+	adjust_draw_rate 		= FALSE;
+	quiet_mode   			= FALSE;
+	sim_updates  			= FALSE;
+	version_mode 			= FALSE;
+	license_mode 			= FALSE;
+	help_mode    			= FALSE;
+	switch_mode  			= FALSE;
+	input_mode   			= FALSE;
+	table_mode   			= FALSE;
+	textstr 	 			= NULL;
+	csvstr       			= NULL;
+	ematstr 	 			= NULL;
+	ctsmatstr	 			= NULL;
+	pinsstr		 			= NULL;
+	priorsstr	 			= NULL;
+	relstr		 			= NULL;
+	synstr					= NULL;
+	includes_str			= NULL;
+	excludes_str			= NULL;
+	columns_format_str 		= NULL;
+	single_pgn				= NULL;
+	multi_pgn       		= NULL;
+	output_columns  		= NULL;
+	group_is_output			= FALSE;
+	groups_no_check			= FALSE;
+	groupstr 	 			= NULL;
+	Elostat_output 			= FALSE;
+	head2head_str			= NULL;
+	Ignore_draws 			= FALSE;
+	Forces_ML 	 			= FALSE;
+	cfs_column      		= FALSE;
 
 	strlist_init(psl);
 
@@ -681,7 +681,7 @@ int main (int argc, char *argv[])
 		return EXIT_FAILURE; 
 	}
 
-	strlist_done(psl); // not used anymore
+	strlist_done(psl); // string list not used anymore from this point on
 
 	/*==== memory initialization ====*/
 	{
