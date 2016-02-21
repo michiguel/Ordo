@@ -151,6 +151,7 @@ static void usage (void);
 		" -i <file>   include only games of participants present in <file>\n"
 		" -x <file>   names in <file> will not have their games included\n"
 		" -b <file>   format column output, each line being <column>,<width>,\"Header\"\n"
+		" -P <file>   ---------------------\n"
 		"\n"
 		;
 
@@ -160,7 +161,7 @@ static void usage (void);
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
 		
 
-	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:JTF:Xt:N:Mn:U:Y:i:x:b:";
+	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:JTF:Xt:N:Mn:U:Y:i:x:b:P:";
 
 /*
 |
@@ -235,6 +236,52 @@ calc_encounters__
 }
 
 
+static char *skipblanks(char *p) {while (isspace(*p)) p++; return p;}
+
+static void
+file_to_strlist (const char *finp_name, strlist_t *sl)
+{
+	FILE *finp;
+	char myline[MAXSIZE_CSVLINE];
+	char *p;
+	bool_t line_success = TRUE;
+	bool_t file_success = TRUE;
+
+	if (NULL == finp_name) {
+		return;
+	}
+
+	if (NULL != (finp = fopen (finp_name, "r"))) {
+
+		csv_line_t csvln;
+		line_success = TRUE;
+
+		while ( line_success && NULL != fgets(myline, MAXSIZE_CSVLINE, finp)) {
+
+			p = skipblanks(myline);
+			if (*p == '\0') continue;
+
+			if (csv_line_init(&csvln, myline)) {
+				line_success = csvln.n == 1 && strlist_push (sl, csvln.s[0]);
+				csv_line_done(&csvln);		
+			} else {
+				line_success = FALSE;
+			}
+		}
+
+		fclose(finp);
+	} else {
+		file_success = FALSE;
+	}
+
+	if (!file_success || !line_success) {
+		fprintf (stderr, "Errors in file \"%s\", or lack of memory\n",finp_name);
+		exit(EXIT_FAILURE);
+	}
+
+	return;
+}
+
 /*
 |
 |	MAIN
@@ -284,7 +331,7 @@ int main (int argc, char *argv[])
 	const char *head2head_str;
 	const char *ctsmatstr, *synstr;
 	const char *output_columns;
-	const char *includes_str, *excludes_str, *columns_format_str;
+	const char *includes_str, *excludes_str, *columns_format_str, *multi_pgn, *single_pgn;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
 	bool_t group_is_output, Elostat_output, Ignore_draws, groups_no_check, Forces_ML, cfs_column;
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE, switch_d=FALSE, switch_k=FALSE, switch_D=FALSE;
@@ -314,6 +361,8 @@ int main (int argc, char *argv[])
 	includes_str	= NULL;
 	excludes_str	= NULL;
 	columns_format_str = NULL;
+	single_pgn		= NULL;
+	multi_pgn       = NULL;
 	output_columns  = NULL;
 	group_is_output = FALSE;
 	groups_no_check = FALSE;
@@ -335,7 +384,10 @@ int main (int argc, char *argv[])
 			case 'h':	help_mode = TRUE;		break;
 			case 'H':	switch_mode = TRUE;		break;
 			case 'p': 	input_mode = TRUE;
-						strlist_push(psl,opt_arg);
+						single_pgn = opt_arg;
+						break;
+			case 'P': 	input_mode = TRUE;
+						multi_pgn = opt_arg;
 						break;
 			case 'c': 	csvstr = opt_arg;
 						break;
@@ -537,7 +589,17 @@ int main (int argc, char *argv[])
 		}
 	}
 	
-	/* -------- input remaining parameters --------- */
+	/* -------- input files, remaining args --------- */
+
+	if (single_pgn) {
+		if (!strlist_push(psl,single_pgn)) {
+			fprintf (stderr, "Lack of memory\n\n");
+			exit(EXIT_FAILURE);		
+		}
+	}
+
+	if (multi_pgn)
+		file_to_strlist (multi_pgn, psl);
 
 	while (opt_index < argc) {
 		if (!strlist_push(psl,argv[opt_index++])) {
