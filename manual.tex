@@ -138,7 +138,7 @@ If you want both, you can use:
 	\cmdln{ordo -a 2500 -p games.pgn -o ratings.txt -c rating.csv}
 
 \subsubsection*{Multiple input files}
-Ordo can use several pgn input files at the same time (up to 1024 files), which means that it is not needed to combine them beforehand.
+Ordo can use several pgn input files at the same time (limited by the memory of the system), which means that it is not needed to combine them beforehand.
 Each file could be listed after the switch \swtch{-}\swtch{-} like this
 
 	\cmdln{ordo -a 2500 -p g1.pgn -o ratings.txt -c rating.csv \swtch{-}\swtch{-} g2.pgn g3.pgn "Other games.pgn"}
@@ -146,6 +146,16 @@ Each file could be listed after the switch \swtch{-}\swtch{-} like this
 For that reason, the switch \swtch{-p} can be omitted and all files could be listed after \swtch{-}\swtch{-}
 
 	\cmdln{ordo -a 2500 -o ratings.txt -c rating.csv \swtch{-}\swtch{-} g1.pgn g2.pgn g3.pgn "Other games.pgn"}
+
+Another option to input multiple pgn files is to list them in one text file and provide the name with the switch \swtch{-P <file>}
+
+	\cmdln{ordo -a 2500 -o ratings.txt -c rating.csv -P list.txt}
+
+where \swtch{list.txt} contains for instance
+
+\cmdln{g1.pgn\\
+g2.pgn\\
+g3.pgn}
 
 \subsubsection*{Name synonyms}
 Sometimes, the same player (engine) has been named differently in tournaments.

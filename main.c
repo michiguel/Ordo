@@ -130,6 +130,7 @@ static void usage (void);
 		" -z <value>  scaling: set rating for winning expectancy of 76% (default=202)\n"
 		" -T          display winning expectancy table\n"
 		" -p <file>   input file in PGN format\n"
+		" -P <file>   text file containing a list of PGN file names (multiple input)\n"
 		" -c <file>   output file (comma separated value format)\n"
 		" -o <file>   output file (text format), goes to the screen if not present\n"
 		" -E          output in Elostat format (rating.dat, programs.dat & general.dat)\n"
@@ -151,7 +152,6 @@ static void usage (void);
 		" -i <file>   include only games of participants present in <file>\n"
 		" -x <file>   names in <file> will not have their games included\n"
 		" -b <file>   format column output, each line being <column>,<width>,\"Header\"\n"
-		" -P <file>   ---------------------\n"
 		"\n"
 		;
 
