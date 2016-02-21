@@ -238,48 +238,35 @@ calc_encounters__
 
 static char *skipblanks(char *p) {while (isspace(*p)) p++; return p;}
 
-static void
-file_to_strlist (const char *finp_name, strlist_t *sl)
-{
+static bool_t
+strlist_multipush (strlist_t *sl, const char *finp_name)
+{		
+	csv_line_t csvln;
 	FILE *finp;
 	char myline[MAXSIZE_CSVLINE];
 	char *p;
 	bool_t line_success = TRUE;
-	bool_t file_success = TRUE;
 
-	if (NULL == finp_name) {
-		return;
+	if (NULL == finp_name || NULL == (finp = fopen (finp_name, "r"))) {
+		return FALSE;
 	}
 
-	if (NULL != (finp = fopen (finp_name, "r"))) {
+	while (line_success && NULL != fgets(myline, MAXSIZE_CSVLINE, finp)) {
 
-		csv_line_t csvln;
-		line_success = TRUE;
+		p = skipblanks(myline);
+		if (*p == '\0') continue;
 
-		while ( line_success && NULL != fgets(myline, MAXSIZE_CSVLINE, finp)) {
-
-			p = skipblanks(myline);
-			if (*p == '\0') continue;
-
-			if (csv_line_init(&csvln, myline)) {
-				line_success = csvln.n == 1 && strlist_push (sl, csvln.s[0]);
-				csv_line_done(&csvln);		
-			} else {
-				line_success = FALSE;
-			}
+		if (csv_line_init(&csvln, myline)) {
+			line_success = csvln.n == 1 && strlist_push (sl, csvln.s[0]);
+			csv_line_done(&csvln);		
+		} else {
+			line_success = FALSE;
 		}
-
-		fclose(finp);
-	} else {
-		file_success = FALSE;
 	}
 
-	if (!file_success || !line_success) {
-		fprintf (stderr, "Errors in file \"%s\", or lack of memory\n",finp_name);
-		exit(EXIT_FAILURE);
-	}
+	fclose(finp);
 
-	return;
+	return line_success;
 }
 
 /*
@@ -598,8 +585,12 @@ int main (int argc, char *argv[])
 		}
 	}
 
-	if (multi_pgn)
-		file_to_strlist (multi_pgn, psl);
+	if (multi_pgn) {
+		if (!strlist_multipush (psl, multi_pgn)) {
+			fprintf (stderr, "Errors in file \"%s\", or lack of memory\n", multi_pgn);
+			exit(EXIT_FAILURE);
+		}
+	}
 
 	while (opt_index < argc) {
 		if (!strlist_push(psl,argv[opt_index++])) {
