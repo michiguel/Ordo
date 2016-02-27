@@ -233,6 +233,9 @@ database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, st
 	player_t topn;
 	gamesnum_t gamestat[4] = {0,0,0,0};
 
+	assert(db && p && g && gs);
+	assert(p->name && p->flagged && p->present_in_games && p->prefed && p->priored && p->performance_type);
+
 	p->n = db->n_players; 
 	g->n = db->n_games; 
 
