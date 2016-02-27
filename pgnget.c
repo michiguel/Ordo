@@ -607,7 +607,7 @@ do_tick (const struct DATA *d, const char *namestr, bitarray_t *pba)
 }
 
 void
-namelist_preload (bool_t quietmode, const char *finp_name, const struct DATA *d, bitarray_t *pba)
+namelist_to_bitarray (bool_t quietmode, const char *finp_name, const struct DATA *d, bitarray_t *pba)
 {
 	FILE *finp;
 	char myline[MAXSIZE_CSVLINE];

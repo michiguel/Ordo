@@ -657,7 +657,7 @@ int main (int argc, char *argv[])
 		if (NULL != includes_str) {
 			bitarray_t ba;
 			if (ba_init (&ba,pdaba->n_players)) {
-				namelist_preload (quiet_mode, includes_str, pdaba, &ba);
+				namelist_to_bitarray (quiet_mode, includes_str, pdaba, &ba);
 				database_include_only(pdaba, &ba);
 			} else {
 				fprintf (stderr, "ERROR\n");
@@ -667,7 +667,7 @@ int main (int argc, char *argv[])
 		if (NULL != excludes_str) {
 			bitarray_t ba;
 			if (ba_init (&ba,pdaba->n_players)) {
-				namelist_preload (quiet_mode, excludes_str, pdaba, &ba);
+				namelist_to_bitarray (quiet_mode, excludes_str, pdaba, &ba);
 				ba_setnot(&ba);
 				database_include_only(pdaba, &ba);
 			} else {
