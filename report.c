@@ -963,7 +963,7 @@ string_dup (const char *s)
 	char *p;
 	char *q;
 	size_t len = strlen(s);
-	p = malloc (len + 1);
+	p = memnew (len + 1);
 	if (p == NULL) return NULL;
 	q = p;
 	while (*s) *p++ = *s++;
@@ -974,7 +974,7 @@ string_dup (const char *s)
 static void
 string_free (char *s)
 {
-	free(s);
+	memrel(s);
 }
 
 bool_t
@@ -1132,7 +1132,7 @@ look_at_individual_deviation
 				printf ("player[%lu] = %+lf\n", (long unsigned) j, diff);
 			}
 		}		
-		free (expected);
+		memrel (expected);
 	} else {
 		fprintf(stderr, "Lack of memory to show individual deviations\n");
 	}
