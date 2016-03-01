@@ -23,6 +23,7 @@
 #include <assert.h>
 
 #include "strlist.h"
+#include "mymem.h"
 
 bool_t
 strlist_init (strlist_t *sl)
@@ -35,20 +36,13 @@ strlist_init (strlist_t *sl)
 	return TRUE;
 }
 
-static strnode_t *
-newnode(void)
-{
-	strnode_t *p = malloc(sizeof(strnode_t));
-	return p;
-}
-
 static char *
 string_dup (const char *s)
 {
 	char *p;
 	char *q;
 	size_t len = strlen(s);
-	p = malloc (len + 1);
+	p = memnew (len + 1);
 	if (p == NULL) return NULL;
 	q = p;
 	while (*s) *p++ = *s++;
@@ -59,9 +53,31 @@ string_dup (const char *s)
 static void
 string_free (char *s)
 {
-	free(s);
+	memrel(s);
 }
 
+static strnode_t *
+newnode(void)
+{
+	strnode_t *p = memnew(sizeof(strnode_t));
+	if (p) {
+		p->str = NULL;
+		p->nxt = NULL;
+	}
+	return p;
+}
+
+static void
+freenode(strnode_t *n)
+{
+	assert(n);
+	if (n) {
+		if (n->str) string_free(n->str);
+		n->str = NULL; // not really needed, safe
+		n->nxt = NULL; // not really needed, safe
+		memrel(n);
+	}
+}
 
 bool_t
 strlist_push (strlist_t *sl, const char *s)
@@ -74,7 +90,7 @@ strlist_push (strlist_t *sl, const char *s)
 		if (NULL != (ns = string_dup (s))) {
 			ok = TRUE;
 		} else {
-			free(nn);
+			freenode(nn);
 			ok = FALSE;
 		}
 	} else {
@@ -89,15 +105,6 @@ strlist_push (strlist_t *sl, const char *s)
 	}
 
 	return ok;
-}
-
-static void
-freenode(strnode_t *n)
-{
-	if (n) {
-		if (n->str) string_free(n->str);
-		free(n);
-	}
 }
 
 void
