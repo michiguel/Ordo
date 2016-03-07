@@ -332,7 +332,7 @@ static const char *Header_INI[MAX_prnt] = {
 	"OppDiv"
 };
 
-static int Shift_INI[MAX_prnt] = {0, 6, 6, 9, 7, 7, 11, 7, 7, 7, 7, 7, 7, 7, 7 };
+static int Shift_INI[MAX_prnt] = {0, 6, 6, 7, 7, 5, 7, 4, 4, 4, 5, 7, 7, 5, 7 };
 
 static char *Header[MAX_prnt];
 static int Shift[MAX_prnt];
