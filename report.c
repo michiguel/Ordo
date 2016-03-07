@@ -321,7 +321,7 @@ static const char *Header_INI[MAX_prnt] = {
 	"POINTS",
 	"PLAYED",
 	"(%)",
-	"CFS(next)",
+	"CFS(%)",
 	"W",
 	"D",
 	"L",
@@ -537,7 +537,7 @@ prnt_singleitem_
 		case  3: fprintf(f, " %*.1f"	, sh  , r->obtained_results[j] ); break;
 		case  4: fprintf(f, " %*ld" 	, sh  , (long)r->playedby_results[j] ); break;
 		case  5: fprintf(f, " %*.1f"	, sh  , r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j]); break;
-		case  6: fprintf(f, " %*s    " 	, sh-4, cfs_str); break;
+		case  6: fprintf(f, " %*s" 		, sh  , cfs_str); break;
 		case  7: fprintf(f, " %*ld"		, sh  , (long)oi[j].W ); break;
 		case  8: fprintf(f, " %*ld"		, sh  , (long)oi[j].D ); break;
 		case  9: fprintf(f, " %*ld"		, sh  , (long)oi[j].L ); break;
@@ -551,7 +551,8 @@ prnt_singleitem_
 }
 
 static void
-prnt_itemlist_(	FILE *f
+prnt_itemlist_
+			(	FILE *f
 			, int decimals
 			, const struct PLAYERS 	*p
 			, const struct RATINGS 	*r
@@ -569,8 +570,8 @@ prnt_itemlist_(	FILE *f
 	const char *cfs_str, *sdev_str, *rank_str, *oerr_str;
 	char cfs_buf[80], sdev_buf[80], rank_buf[80], oerr_buf[80];
 
-	sprintf(cfs_buf, "%7.0lf", pq[x].cfs_value);
-	cfs_str  = pq[x].cfs_is_ok? cfs_buf : "    ---";
+	sprintf(cfs_buf, "%3.0lf", pq[x].cfs_value);
+	cfs_str  = pq[x].cfs_is_ok? cfs_buf : "---";
 	sdev_str = sdev? get_sdev_str (sdev[j]     , confidence_factor, sdev_buf, decimals): NOSDEV;
 	oerr_str = sdev? get_sdev_str (oi[j].opperr, confidence_factor, oerr_buf, decimals): NOSDEV;
 	rank_str = pq[x].rnk_is_ok? get_rank_str (pq[x].rnk_value, rank_buf): "";
