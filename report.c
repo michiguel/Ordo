@@ -226,7 +226,7 @@ get_sdev_str (double sdev, double confidence_factor, char *str, int decimals)
 {
 	double x = sdev * confidence_factor;
 	if (sdev > 0.00000001) {
-		sprintf(str, "%6.*f", decimals, rating_round(x, decimals));
+		sprintf(str, "%.*f", decimals, rating_round(x, decimals));
 	} else {
 		sprintf(str, "%s", NOSDEV);
 	}
@@ -573,7 +573,6 @@ prnt_singleitem_
 	sdev 				= p_rprt_info->sdev;
 	pq 					= p_rprt_info->pq;
 	confidence_factor	= p_rprt_info->confidence_factor;
-
 
 	sprintf(cfs_buf, "%3.0lf", pq[x].cfs_value);
 	cfs_str  = pq[x].cfs_is_ok? cfs_buf : "---";
@@ -939,9 +938,6 @@ all_report 	( const struct GAMES 			*g
 		if (ml > 50) ml = 50;
 		if (ml < strlen(Header[0])) ml = strlen(Header[0]);
 
-		prnt_header (f, ml, list_chosen);
-		fprintf(f, "\n");
-
 		rprt_info.decimals			= decimals;
 		rprt_info.p					= p;
 		rprt_info.r					= r;
@@ -951,7 +947,28 @@ all_report 	( const struct GAMES 			*g
 		rprt_info.pq				= q;
 		rprt_info.confidence_factor = confidence_factor;
 
+		// find max length for each column
+		{
+			size_t width, width_max, top;
+			int item, z;
+			for (z = 0; list_chosen[z] != -1; z++) {
+				item = list_chosen[z];
+				width = 0;
+				width_max = stripped_len(Header[item]);
+				for (x = 0; x < x_max; x++) {
+					j = q[x].j;
+					prnt_singleitem_( item, x, j, &rprt_info, NULL, &width);
+					if (width > width_max) width_max = width;
+				}
+				top = width_max + 1;
+				if (Shift[item] < (int)top) Shift[item] = (int)top;
+			}
+		}
+
 		/* actual printing */
+		prnt_header (f, ml, list_chosen);
+		fprintf(f, "\n");
+
 		for (x = 0; x < x_max; x++) {
 			j = q[x].j;
 			prnt_itemlist_ (list_chosen, x, j, &rprt_info, f);
