@@ -511,6 +511,7 @@ struct outextra {
 	double 		cfs_value;
 };
 
+
 #include <ctype.h>
 
 static size_t
@@ -529,26 +530,38 @@ stripped_len(const char *s)
 static void
 prnt_singleitem_
 			( int item
+			, size_t x
+
 			, FILE *f
 			, int decimals
 			, const struct PLAYERS 	*p
 			, const struct RATINGS 	*r
 			, player_t j
 			, size_t ml
-			, const char *rankbuf
-			, const char *sdev_str
-			, const char *oerr_str
-			, const char *cfs_str
 			, const struct OUT_INFO *oi
+
+			, double *sdev
+			, struct outextra *pq
+			, double confidence_factor
+
 			, size_t *plen
 )
 {
 	char s[1024];
 	int sh;
+	const char *cfs_str, *sdev_str, *rank_str, *oerr_str;
+	char cfs_buf[80], sdev_buf[80], rank_buf[80], oerr_buf[80];
+
+	sprintf(cfs_buf, "%3.0lf", pq[x].cfs_value);
+	cfs_str  = pq[x].cfs_is_ok? cfs_buf : "---";
+	sdev_str = sdev? get_sdev_str (sdev[j]     , confidence_factor, sdev_buf, decimals): NOSDEV;
+	oerr_str = sdev? get_sdev_str (oi[j].opperr, confidence_factor, oerr_buf, decimals): NOSDEV;
+	rank_str = pq[x].rnk_is_ok? get_rank_str (pq[x].rnk_value, rank_buf): "";
+
 	assert(item < MAX_prnt);
 	sh = Shift[item];
 	switch (item) {
-		case  0: sprintf(s, "%*s %-*s %s :", 4,	rankbuf, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) ); break;
+		case  0: sprintf(s, "%*s %-*s %s :", 4,	rank_str, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) ); break;
 		case  1: sprintf(s, " %*.*f"	, sh  , decimals, rating_round (r->ratingof_results[j], decimals) ); break;
 		case  2: sprintf(s, " %*s"		, sh  , sdev_str ); break;
 		case  3: sprintf(s, " %*.1f"	, sh  , r->obtained_results[j] ); break;
@@ -572,32 +585,39 @@ prnt_singleitem_
 
 static void
 prnt_itemlist_
-			( FILE *f
+			( size_t x
+			, int *list
+			, FILE *f
 			, int decimals
 			, const struct PLAYERS 	*p
 			, const struct RATINGS 	*r
 			, player_t j
 			, size_t ml
-			, double *sdev
-			, int *list
-			, struct outextra *pq
-			, size_t x
-			, double confidence_factor
 			, const struct OUT_INFO *oi
+			, double *sdev
+			, struct outextra *pq
+			, double confidence_factor
 )
 {
-	int item;
-	const char *cfs_str, *sdev_str, *rank_str, *oerr_str;
-	char cfs_buf[80], sdev_buf[80], rank_buf[80], oerr_buf[80];
+	int item, i;
 
-	sprintf(cfs_buf, "%3.0lf", pq[x].cfs_value);
-	cfs_str  = pq[x].cfs_is_ok? cfs_buf : "---";
-	sdev_str = sdev? get_sdev_str (sdev[j]     , confidence_factor, sdev_buf, decimals): NOSDEV;
-	oerr_str = sdev? get_sdev_str (oi[j].opperr, confidence_factor, oerr_buf, decimals): NOSDEV;
-	rank_str = pq[x].rnk_is_ok? get_rank_str (pq[x].rnk_value, rank_buf): "";
-
-	for (item = 0; list[item] != -1; item++)
-		prnt_singleitem_(list[item], f, decimals, p, r, j, ml, rank_str, sdev_str, oerr_str, cfs_str, oi, NULL);
+	for (i = 0; list[i] != -1; i++) {
+		item = list[i];
+		prnt_singleitem_( item
+						, x
+						, f
+						, decimals
+						, p
+						, r
+						, j
+						, ml
+						, oi
+						, sdev
+						, pq
+						, confidence_factor		
+						, NULL
+						);
+	}
 }
 
 
@@ -923,7 +943,7 @@ all_report 	( const struct GAMES 			*g
 		/* actual printing */
 		for (x = 0; x < x_max; x++) {
 			j = q[x].j;
-			prnt_itemlist_ (f, decimals, p, r, j, ml, sdev, list_chosen, q, x, confidence_factor, Out_info);
+			prnt_itemlist_ (x, list_chosen, f, decimals, p, r, j, ml, Out_info, sdev, q, confidence_factor);
 			fprintf (f, "\n");
 		}
 
