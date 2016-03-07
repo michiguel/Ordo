@@ -511,6 +511,17 @@ struct outextra {
 	double 		cfs_value;
 };
 
+struct REPORT_INFO {
+	int 					decimals;
+	const struct PLAYERS *	p;
+	const struct RATINGS *	r;
+	size_t 					ml;
+	const struct OUT_INFO *	oi;
+	double *				sdev;
+	struct outextra *		pq;
+	double 					confidence_factor;
+};
+
 
 #include <ctype.h>
 
@@ -531,26 +542,36 @@ static void
 prnt_singleitem_
 			( int item
 			, size_t x
-
-			, FILE *f
-			, int decimals
-			, const struct PLAYERS 	*p
-			, const struct RATINGS 	*r
 			, player_t j
-			, size_t ml
-			, const struct OUT_INFO *oi
-
-			, double *sdev
-			, struct outextra *pq
-			, double confidence_factor
-
+			, const struct REPORT_INFO *p_rprt_info
+			, FILE *f
 			, size_t *plen
 )
 {
+	int decimals;
+	const struct PLAYERS 	*p;
+	const struct RATINGS 	*r;
+	size_t ml;
+	const struct OUT_INFO *oi;
+
+	double *sdev;
+	struct outextra *pq;
+	double confidence_factor;
+
 	char s[1024];
 	int sh;
 	const char *cfs_str, *sdev_str, *rank_str, *oerr_str;
 	char cfs_buf[80], sdev_buf[80], rank_buf[80], oerr_buf[80];
+
+	decimals 			= p_rprt_info->decimals;
+	p 					= p_rprt_info->p;
+	r 					= p_rprt_info->r;
+	ml 					= p_rprt_info->ml;
+	oi 	 				= p_rprt_info->oi;
+	sdev 				= p_rprt_info->sdev;
+	pq 					= p_rprt_info->pq;
+	confidence_factor	= p_rprt_info->confidence_factor;
+
 
 	sprintf(cfs_buf, "%3.0lf", pq[x].cfs_value);
 	cfs_str  = pq[x].cfs_is_ok? cfs_buf : "---";
@@ -585,18 +606,11 @@ prnt_singleitem_
 
 static void
 prnt_itemlist_
-			( size_t x
-			, int *list
-			, FILE *f
-			, int decimals
-			, const struct PLAYERS 	*p
-			, const struct RATINGS 	*r
+			( int *list
+			, size_t x
 			, player_t j
-			, size_t ml
-			, const struct OUT_INFO *oi
-			, double *sdev
-			, struct outextra *pq
-			, double confidence_factor
+			, const struct REPORT_INFO *p_rprt_info
+			, FILE *f
 )
 {
 	int item, i;
@@ -605,16 +619,9 @@ prnt_itemlist_
 		item = list[i];
 		prnt_singleitem_( item
 						, x
-						, f
-						, decimals
-						, p
-						, r
 						, j
-						, ml
-						, oi
-						, sdev
-						, pq
-						, confidence_factor		
+						, p_rprt_info
+						, f
 						, NULL
 						);
 	}
@@ -835,7 +842,8 @@ all_report 	( const struct GAMES 			*g
 			)
 {
 	struct outextra *q;
-	struct OUT_INFO *Out_info;
+	struct OUT_INFO *out_info;
+	struct REPORT_INFO rprt_info;
 
 	int *list_chosen = NULL;
 	int *listbuff = NULL;
@@ -856,15 +864,15 @@ all_report 	( const struct GAMES 			*g
 	assert (e);
 	assert (rps);
 
-	if (NULL == (Out_info = memnew (sizeof(struct OUT_INFO) * (size_t)p->n))) {
+	if (NULL == (out_info = memnew (sizeof(struct OUT_INFO) * (size_t)p->n))) {
 		fatal_mem("Not enough memory for reporting results");
 	}
 	if (NULL == (q = memnew (((size_t)p->n + 1) * sizeof(struct outextra)))) {
-		memrel(Out_info);
+		memrel(out_info);
 		fatal_mem("Not enough memory for creation of internal buffers for reporting results");
 	}
 	if (NULL == (listbuff = memnew ( sizeof (inp_list[0]) * (listlen (inp_list) + 2)))) {
-		memrel(Out_info);
+		memrel(out_info);
 		memrel(q);
 		fatal_mem("Not enough memory for list creation");
 	}
@@ -875,7 +883,7 @@ all_report 	( const struct GAMES 			*g
 
 	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
 
-	calc_output_info( e->enc, e->n, r->ratingof_results, p->n, sdev, Out_info);
+	calc_output_info( e->enc, e->n, r->ratingof_results, p->n, sdev, out_info);
 
 	for (j = 0; j < p->n; j++) {
 		r->sorted[j] = j; 
@@ -940,10 +948,19 @@ all_report 	( const struct GAMES 			*g
 		prnt_header (f, ml, list_chosen);
 		fprintf(f, "\n");
 
+		rprt_info.decimals			= decimals;
+		rprt_info.p					= p;
+		rprt_info.r					= r;
+		rprt_info.ml				= ml;
+		rprt_info.oi				= out_info;
+		rprt_info.sdev				= sdev;
+		rprt_info.pq				= q;
+		rprt_info.confidence_factor = confidence_factor;
+
 		/* actual printing */
 		for (x = 0; x < x_max; x++) {
 			j = q[x].j;
-			prnt_itemlist_ (x, list_chosen, f, decimals, p, r, j, ml, Out_info, sdev, q, confidence_factor);
+			prnt_itemlist_ (list_chosen, x, j, &rprt_info, f);
 			fprintf (f, "\n");
 		}
 
@@ -986,12 +1003,12 @@ all_report 	( const struct GAMES 			*g
 			int rank_int;
 			j = q[x].j;
 			rank_int = q[x].rnk_value;
-			prnt_itemlist_csv (f, decimals, p, r, j, rank_int, sdev, list_chosen, q, x, confidence_factor, Out_info);
+			prnt_itemlist_csv (f, decimals, p, r, j, rank_int, sdev, list_chosen, q, x, confidence_factor, out_info);
 			fprintf (f, "\n");
 		}
 	}
 
-	memrel (Out_info);
+	memrel (out_info);
 	memrel (q);
 	memrel (listbuff);
 	return;
