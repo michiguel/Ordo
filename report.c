@@ -563,6 +563,8 @@ prnt_singleitem_
 	const char *cfs_str, *sdev_str, *rank_str, *oerr_str;
 	char cfs_buf[80], sdev_buf[80], rank_buf[80], oerr_buf[80];
 
+	assert(item < MAX_prnt);
+
 	decimals 			= p_rprt_info->decimals;
 	p 					= p_rprt_info->p;
 	r 					= p_rprt_info->r;
@@ -579,7 +581,6 @@ prnt_singleitem_
 	oerr_str = sdev? get_sdev_str (oi[j].opperr, confidence_factor, oerr_buf, decimals): NOSDEV;
 	rank_str = pq[x].rnk_is_ok? get_rank_str (pq[x].rnk_value, rank_buf): "";
 
-	assert(item < MAX_prnt);
 	sh = Shift[item];
 	switch (item) {
 		case  0: sprintf(s, "%*s %-*s %s :", 4,	rank_str, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) ); break;
@@ -614,16 +615,9 @@ prnt_itemlist_
 )
 {
 	int item, i;
-
 	for (i = 0; list[i] != -1; i++) {
 		item = list[i];
-		prnt_singleitem_( item
-						, x
-						, j
-						, p_rprt_info
-						, f
-						, NULL
-						);
+		prnt_singleitem_( item, x, j, p_rprt_info, f, NULL);
 	}
 }
 
