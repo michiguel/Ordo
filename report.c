@@ -511,7 +511,9 @@ struct outextra {
 	double 		cfs_value;
 };
 
-size_t
+#include <ctype.h>
+
+static size_t
 stripped_len(const char *s)
 {
 	const char *p, *q;
@@ -521,7 +523,7 @@ stripped_len(const char *s)
 	if (p == q) return 0;
 	q--;
 	while (isspace(*q)) q--;
-	return q - p + 1;
+	return (size_t) (q - p + 1);
 }
 
 static void
