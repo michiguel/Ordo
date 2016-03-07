@@ -511,6 +511,19 @@ struct outextra {
 	double 		cfs_value;
 };
 
+size_t
+stripped_len(const char *s)
+{
+	const char *p, *q;
+	p = s;
+	q = s + strlen(s);
+	while (isspace(*p)) p++;
+	if (p == q) return 0;
+	q--;
+	while (isspace(*q)) q--;
+	return q - p + 1;
+}
+
 static void
 prnt_singleitem_
 			( int item
@@ -525,34 +538,39 @@ prnt_singleitem_
 			, const char *oerr_str
 			, const char *cfs_str
 			, const struct OUT_INFO *oi
+			, size_t *plen
 )
 {
+	char s[1024];
 	int sh;
 	assert(item < MAX_prnt);
 	sh = Shift[item];
 	switch (item) {
-		case  0: fprintf(f, "%*s %-*s %s :", 4,	rankbuf, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) ); break;
-		case  1: fprintf(f, " %*.*f"	, sh  , decimals, rating_round (r->ratingof_results[j], decimals) ); break;
-		case  2: fprintf(f, " %*s"		, sh  , sdev_str ); break;
-		case  3: fprintf(f, " %*.1f"	, sh  , r->obtained_results[j] ); break;
-		case  4: fprintf(f, " %*ld" 	, sh  , (long)r->playedby_results[j] ); break;
-		case  5: fprintf(f, " %*.1f"	, sh  , r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j]); break;
-		case  6: fprintf(f, " %*s" 		, sh  , cfs_str); break;
-		case  7: fprintf(f, " %*ld"		, sh  , (long)oi[j].W ); break;
-		case  8: fprintf(f, " %*ld"		, sh  , (long)oi[j].D ); break;
-		case  9: fprintf(f, " %*ld"		, sh  , (long)oi[j].L ); break;
-		case 10: fprintf(f, " %*.1f"	, sh  , 0==oi[j].D?0.0:(100.0*(double)oi[j].D/(double)(oi[j].W+oi[j].D+oi[j].L)) ); break;
-		case 11: fprintf(f, " %*.*f"	, sh  , decimals, oi[j].opprat);  break;
-		case 12: fprintf(f, " %*s"		, sh  , oerr_str ); break;
-		case 13: fprintf(f, " %*ld"		, sh  , (long)oi[j].n_opp ); break;
-		case 14: fprintf(f, " %*.*f"	, sh  , 1, oi[j].diversity);  break;
+		case  0: sprintf(s, "%*s %-*s %s :", 4,	rankbuf, (int)ml+1,	p->name[j],	get_super_player_symbolstr(j,p) ); break;
+		case  1: sprintf(s, " %*.*f"	, sh  , decimals, rating_round (r->ratingof_results[j], decimals) ); break;
+		case  2: sprintf(s, " %*s"		, sh  , sdev_str ); break;
+		case  3: sprintf(s, " %*.1f"	, sh  , r->obtained_results[j] ); break;
+		case  4: sprintf(s, " %*ld" 	, sh  , (long)r->playedby_results[j] ); break;
+		case  5: sprintf(s, " %*.1f"	, sh  , r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j]); break;
+		case  6: sprintf(s, " %*s" 		, sh  , cfs_str); break;
+		case  7: sprintf(s, " %*ld"		, sh  , (long)oi[j].W ); break;
+		case  8: sprintf(s, " %*ld"		, sh  , (long)oi[j].D ); break;
+		case  9: sprintf(s, " %*ld"		, sh  , (long)oi[j].L ); break;
+		case 10: sprintf(s, " %*.1f"	, sh  , 0==oi[j].D?0.0:(100.0*(double)oi[j].D/(double)(oi[j].W+oi[j].D+oi[j].L)) ); break;
+		case 11: sprintf(s, " %*.*f"	, sh  , decimals, oi[j].opprat);  break;
+		case 12: sprintf(s, " %*s"		, sh  , oerr_str ); break;
+		case 13: sprintf(s, " %*ld"		, sh  , (long)oi[j].n_opp ); break;
+		case 14: sprintf(s, " %*.*f"	, sh  , 1, oi[j].diversity);  break;
 		default:  break;
 	}
+
+	if (f) fprintf(f,"%s",s);
+	if (plen) *plen = stripped_len(s);
 }
 
 static void
 prnt_itemlist_
-			(	FILE *f
+			( FILE *f
 			, int decimals
 			, const struct PLAYERS 	*p
 			, const struct RATINGS 	*r
@@ -576,9 +594,8 @@ prnt_itemlist_
 	oerr_str = sdev? get_sdev_str (oi[j].opperr, confidence_factor, oerr_buf, decimals): NOSDEV;
 	rank_str = pq[x].rnk_is_ok? get_rank_str (pq[x].rnk_value, rank_buf): "";
 
-
 	for (item = 0; list[item] != -1; item++)
-		prnt_singleitem_(list[item], f, decimals, p, r, j, ml, rank_str, sdev_str, oerr_str, cfs_str, oi);
+		prnt_singleitem_(list[item], f, decimals, p, r, j, ml, rank_str, sdev_str, oerr_str, cfs_str, oi, NULL);
 }
 
 
