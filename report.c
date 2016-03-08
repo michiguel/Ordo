@@ -629,13 +629,10 @@ prnt_header_single (int item, FILE *f, size_t ml)
 	sh = Shift[item];
 	if (item >= MAX_prnt)
 		return;
-	switch (item) {
-		case 0: fprintf(f, "\n%*s %-*s    :"
-						 		 ,  4, "#"
-								 , (int)ml, Header[item]); break;
-		default:
-				fprintf(f, " %*s", sh, Header[item]); break;
-		break;
+	if (item == 0) {
+		fprintf(f, "\n%*s %-*s    :",  4, "#", (int)ml, Header[item]);
+	} else {
+		fprintf(f, " %*s", sh, Header[item]);
 	}
 }
 
@@ -654,12 +651,11 @@ prnt_header_single_csv (int item, FILE *f)
 	assert(item < MAX_prnt);
 	if (item >= MAX_prnt)
 		return;
-	switch (item) {
-		case 0: fprintf(f,  "%s", quoted_str(          "#",buffer)); 
-		        fprintf(f, ",%s", quoted_str( Header[item],buffer)); break;
-		default:
-				fprintf(f, ",%s", quoted_str( Header[item],buffer)); break;
-		break;
+	if (item == 0) {
+		fprintf(f,  "%s", quoted_str(          "#",buffer)); 
+		fprintf(f, ",%s", quoted_str( Header[item],buffer));
+	} else {
+		fprintf(f, ",%s", quoted_str( Header[item],buffer));
 	}
 }
 
@@ -780,20 +776,6 @@ static void fatal_mem(const char *s)
 	exit (EXIT_FAILURE);
 }
 
-#if 0
-static size_t
-find_maxlen (const char *nm[], size_t n, struct outextra *q, size_t x_max)
-{
-	size_t maxl = 0;
-	size_t length;
-	size_t i;
-	for (i = 0; i < n; i++) {
-		length = strlen(nm[i]);
-		if (length > maxl) maxl = length;
-	}
-	return maxl;
-}
-#else
 static size_t
 find_maxlen (const char *nm[], struct outextra *q, size_t x_max)
 {
@@ -808,8 +790,6 @@ find_maxlen (const char *nm[], struct outextra *q, size_t x_max)
 	}
 	return maxl;
 }
-#endif
-
 
 void
 all_report 	( const struct GAMES 			*g
