@@ -144,7 +144,7 @@ static void usage (void);
 		" -F <value>  confidence (%) to estimate error margins. Default is 95.0\n"
 		" -X          ignore draws\n"
 		" -t <value>  threshold of minimum games played for a participant to be included\n"
-		" -N <value>  number of decimals in output, minimum is 0 (default=1)\n"
+		" -N <a,b>    a=rating decimals (default=1), b=score(%) decimals (optional)\n"
 		" -M          force maximum-likelihood estimation to obtain ratings\n"
 		" -n <value>  number of processors for parallel calculation of simulations\n"
 		" -U <a,..,z> info in output. Default columns are \"0,1,2,3,4,5\"\n"
@@ -191,7 +191,7 @@ static double	Rtng_76 = 202;
 static double	BETA = 1.0/INVBETA;
 static double	Confidence_factor = 1.0;
 
-static int		OUTDECIMALS = 1;
+static int		OUTDECIMALS = 1; //FIXME Replace by decimals array
 static bool_t	Decimals_set = FALSE;
 
 static struct GAMESTATS	Game_stats;
@@ -277,9 +277,20 @@ strlist_multipush (strlist_t *sl, const char *finp_name)
 
 #include "strlist.h"
 
+static bool_t
+validate_dec_array (int max, int decimals_array_n, int *decimals_array)
+{
+	int i;
+	bool_t ok = decimals_array_n <= max;
+	for (i = 0; ok && i < decimals_array_n; i++) {
+		ok = decimals_array[i] >= 0;
+	}
+	return ok;
+}
+
 int main (int argc, char *argv[])
 {
-	enum mainlimits {INPUTMAX=1024, COLSMAX=256};
+	enum mainlimits {INPUTMAX=1024, COLSMAX=256, DECMAX=2};
 
 	struct summations sfe; // summations for errors
 
@@ -311,6 +322,9 @@ int main (int argc, char *argv[])
 	int columns_n;
 	int columns[COLSMAX+1];
 
+	int decimals_array_n;
+	int decimals_array[DECMAX+1];
+
 	int cpus = 1;
 	int op;
 	const char *textstr, *csvstr, *ematstr, *groupstr, *pinsstr;
@@ -318,6 +332,7 @@ int main (int argc, char *argv[])
 	const char *head2head_str;
 	const char *ctsmatstr, *synstr;
 	const char *output_columns;
+	const char *output_decimals;
 	const char *includes_str, *excludes_str, *columns_format_str, *multi_pgn, *single_pgn;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
 	bool_t group_is_output, Elostat_output, Ignore_draws, groups_no_check, Forces_ML, cfs_column;
@@ -351,6 +366,7 @@ int main (int argc, char *argv[])
 	single_pgn				= NULL;
 	multi_pgn       		= NULL;
 	output_columns  		= NULL;
+	output_decimals  		= NULL;
 	group_is_output			= FALSE;
 	groups_no_check			= FALSE;
 	groupstr 	 			= NULL;
@@ -490,12 +506,7 @@ int main (int argc, char *argv[])
 						break;
 			case 'E':	Elostat_output = TRUE;	break;
 			case 'X':	Ignore_draws = TRUE;	break;
-			case 'N': 	if (1 != sscanf(opt_arg,"%d", &OUTDECIMALS) || OUTDECIMALS < 0) {
-							fprintf(stderr, "wrong decimals parameter\n");
-							exit(EXIT_FAILURE);
-						} else {
-							Decimals_set = TRUE;
-						}
+			case 'N': 	output_decimals = opt_arg;
 						break;
 			case 't': 	if (1 != sscanf(opt_arg,"%ld", &mingames) || mingames < 0) {
 							fprintf(stderr, "wrong threshold parameter\n");
@@ -574,6 +585,25 @@ int main (int argc, char *argv[])
 			fprintf (stderr, "Default number of columns is wrong or exceeded limit (%d)\n\n", COLSMAX);
 			exit(EXIT_FAILURE);		
 		}
+	}
+	if (output_decimals != NULL) {
+		if (!str2list (output_decimals, DECMAX, &decimals_array_n, decimals_array)) {
+			fprintf (stderr, "Decimals number provided are wrong or exceeded limit (%d)\n\n", DECMAX);
+			exit(EXIT_FAILURE);		
+		}
+		if (!validate_dec_array (DECMAX, decimals_array_n, decimals_array) || decimals_array_n == 0) {
+			fprintf (stderr, "Decimals cannot be negative or exceeded limit\n\n");
+			exit(EXIT_FAILURE);	
+		}
+		OUTDECIMALS = decimals_array[0];
+		Decimals_set = TRUE;
+	} else {
+		if (!str2list ("3,4", DECMAX, &decimals_array_n, decimals_array)) {
+			fprintf (stderr, "Default number of decimals is wrong or exceeded limit (%d)\n\n", DECMAX);
+			exit(EXIT_FAILURE);		
+		}
+		OUTDECIMALS = decimals_array[0];
+		Decimals_set = TRUE;
 	}
 	
 	/* -------- input files, remaining args --------- */
@@ -1089,7 +1119,8 @@ int main (int argc, char *argv[])
 				, textf
 				, white_advantage_result
 				, drawrate_evenmatch_result
-				, OUTDECIMALS
+				, decimals_array_n > 0? decimals_array[0]: 1 //OUTDECIMALS
+				, decimals_array_n > 1? decimals_array[1]: 1 //OUTDECIMALS
 				, outqual
 				, sfe.wa_sdev
 				, sfe.dr_sdev

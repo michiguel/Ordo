@@ -513,6 +513,7 @@ struct outextra {
 
 struct REPORT_INFO {
 	int 					decimals;
+	int						decimals_score;
 	const struct PLAYERS *	p;
 	const struct RATINGS *	r;
 	size_t 					ml;
@@ -548,7 +549,7 @@ prnt_singleitem_
 			, size_t *plen
 )
 {
-	int decimals;
+	int decimals, decperc;
 	const struct PLAYERS 	*p;
 	const struct RATINGS 	*r;
 	size_t ml;
@@ -566,6 +567,7 @@ prnt_singleitem_
 	assert(item < MAX_prnt);
 
 	decimals 			= p_rprt_info->decimals;
+	decperc				= p_rprt_info->decimals_score; 
 	p 					= p_rprt_info->p;
 	r 					= p_rprt_info->r;
 	ml 					= p_rprt_info->ml;
@@ -587,12 +589,12 @@ prnt_singleitem_
 		case  2: sprintf(s, " %*s"		, sh  , sdev_str ); break;
 		case  3: sprintf(s, " %*.1f"	, sh  , r->obtained_results[j] ); break;
 		case  4: sprintf(s, " %*ld" 	, sh  , (long)r->playedby_results[j] ); break;
-		case  5: sprintf(s, " %*.1f"	, sh  , r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j]); break;
+		case  5: sprintf(s, " %*.*f"	, sh  , decperc, r->playedby_results[j]==0? 0: 100.0*r->obtained_results[j]/(double)r->playedby_results[j]); break;
 		case  6: sprintf(s, " %*s" 		, sh  , cfs_str); break;
 		case  7: sprintf(s, " %*ld"		, sh  , (long)oi[j].W ); break;
 		case  8: sprintf(s, " %*ld"		, sh  , (long)oi[j].D ); break;
 		case  9: sprintf(s, " %*ld"		, sh  , (long)oi[j].L ); break;
-		case 10: sprintf(s, " %*.1f"	, sh  , 0==oi[j].D?0.0:(100.0*(double)oi[j].D/(double)(oi[j].W+oi[j].D+oi[j].L)) ); break;
+		case 10: sprintf(s, " %*.*f"	, sh  , decperc, 0==oi[j].D?0.0:(100.0*(double)oi[j].D/(double)(oi[j].W+oi[j].D+oi[j].L)) ); break;
 		case 11: sprintf(s, " %*.*f"	, sh  , decimals, oi[j].opprat);  break;
 		case 12: sprintf(s, " %*s"		, sh  , oerr_str ); break;
 		case 13: sprintf(s, " %*ld"		, sh  , (long)oi[j].n_opp ); break;
@@ -806,6 +808,7 @@ all_report 	( const struct GAMES 			*g
 			, double 						white_advantage
 			, double 						drawrate_evenmatch
 			, int							decimals
+			, int							decimals_score
 			, struct output_qualifiers		outqual
 			, double						wa_sdev				
 			, double						dr_sdev
@@ -919,6 +922,7 @@ all_report 	( const struct GAMES 			*g
 		if (ml < strlen(Header[0])) ml = strlen(Header[0]);
 
 		rprt_info.decimals			= decimals;
+		rprt_info.decimals_score	= decimals_score;
 		rprt_info.p					= p;
 		rprt_info.r					= r;
 		rprt_info.ml				= ml;
