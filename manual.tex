@@ -224,18 +224,25 @@ A default file would look like this (spaces are ignored):
  0,  0, "PLAYER"\\
  1,  6, "RATING"\\
  2,  6, "ERROR"\\ 
- 3,  9, "POINTS"\\
+ 3,  7, "POINTS"\\
  4,  7, "PLAYED"\\
- 5,  7, "(\%)"\\
- 6, 11, "CFS(next)"\\
- 7,  7, "W"\\
- 8,  7, "D"\\
- 9,  7, "L"\\
-10,  7, "D(\%)"\\
+ 5,  5, "(\%)"\\
+ 6,  7, "CFS(next)"\\
+ 7,  4, "W"\\
+ 8,  4, "D"\\
+ 9,  4, "L"\\
+10,  5, "D(\%)"\\
 11,  7, "OppAvg"\\
 12,  7, "OppErr"\\
-13,  7, "OppN"\\
+13,  5, "OppN"\\
 14,  7, "OppDiv"}
+
+\subsubsection*{Decimals}
+The switch \swtch{-N} provides the ability to control the precision displayed for the ratings.
+For instance, \swtch{-N2} will output ratings with two decimals.
+If an extra parameter is provided separated by comma, it will control the number of decimals for the score percentage.
+For example, the default is actually \swtch{-N0,1} or \swtch{-N "0,1"}.
+If a second parameter is not provided, the default is used.
 
 \subsubsection*{Anchor}
 The switch \swtch{-A} will fix the rating of a given player as a reference (\textit{anchor}) for the whole pool.
