@@ -119,26 +119,15 @@ char OPTION_LIST[1024];
 static struct option *long_options;
 
 struct helpline SH[] = {
-#if 0
-{'h',	"help",				no_argument,		NULL,	0,	"print this help"},
-{'H',	"show-switches",	no_argument,		NULL,	0,	"print just the switches"},
-{'v',	"version",			no_argument,		NULL,	0,	"print version number and exit"},
-{'L',	"license",			no_argument,		NULL,	0,	"display license information"},
-{'q',	"quiet",			no_argument,		NULL,	0,	"quiet (no screen progress updates)"},
-{'\0',	"silent",			no_argument,		NULL,	0,	"same as --quiet"},
-{'Q',	"terse",			no_argument,		NULL,	0,	"quiet (no screen progress updates)"},
-{'a',	"average",			required_argument,	"NUM",	0,	"set rating for the pool average"},
-#else
-{'h',	NULL,				no_argument,		NULL,	0,	"print this help"},
-{'H',	NULL,	no_argument,		NULL,	0,	"print just the switches"},
-{'v',	NULL,			no_argument,		NULL,	0,	"print version number and exit"},
-{'L',	NULL,			no_argument,		NULL,	0,	"display the license information"},
-{'q',	NULL,			no_argument,		NULL,	0,	"quiet mode (no screen progress updates)"},
-//{'\0',	"",			no_argument,		NULL,	0,	"same as --quiet"},
-{'Q',	NULL,			no_argument,		NULL,	0,	"quiet mode (no screen progress except simulation count)"},
-{'a',	NULL,			required_argument,	"<avg>",	0,	"set rating for the pool average"},
-#endif
 
+{'h',	"help",			no_argument,		NULL,		0,	"print this help"},
+{'H',	"show-switches",no_argument,		NULL,		0,	"print just the switches"},
+{'v',	"version",		no_argument,		NULL,		0,	"print version number and exit"},
+{'L',	"license",		no_argument,		NULL,		0,	"display the license information"},
+{'q',	"quiet",		no_argument,		NULL,		0,	"quiet mode (no screen progress updates)"},
+{'\0',	"silent",		no_argument,		NULL,		0,	"same as --quiet"},
+{'Q',	"terse",		no_argument,		NULL,		0,	"quiet mode (no screen progress except simulation count)"},
+{'a',	"average",		required_argument,	"<avg>",	0,	"set rating for the pool average"},
 {'A',	NULL,	required_argument,	"<player>",	0,	"anchor: rating given by '-a' is fixed for <player>, if provided"},
 {'V',	NULL,	no_argument,		NULL,	0,	"errors relative to pool average, not to the anchor"},
 {'m',	NULL,	required_argument,	"<file>",		0,	"multiple anchors: file contains rows of \"AnchorName\",AnchorRating"},

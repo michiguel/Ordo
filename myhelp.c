@@ -91,7 +91,7 @@ build_head (char *head, struct helpline *h)
 				h->c!='\0'?'-' :' ',
 				h->c!='\0'?h->c:' ', 
 				h->longc!=NULL && h->c!='\0'?",":"",////
-				h->longc!=NULL?"--":"", 
+				h->longc!=NULL?(h->c!='\0'?"--":" --"):"", 
 				h->longc!=NULL?h->longc:"", 
 				h->has_arg==optional_argument && h->longc!=NULL?"[":"",
 				h->has_arg!=no_argument && h->longc!=NULL? "=" :"",
