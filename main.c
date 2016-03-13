@@ -593,7 +593,7 @@ int main (int argc, char *argv[])
 		exit (EXIT_SUCCESS);
 	}
 	if (switch_mode && !help_mode) {
-		usage(stderr);
+		usage(stdout);
 		exit (EXIT_SUCCESS);
 	}
 	if (table_mode) {
