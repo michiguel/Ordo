@@ -40,9 +40,13 @@ _Memnew(size_t x)
 {
 	void *p;
 	assert(x > 0);
-	p = malloc(x);
-//printf("new --> %lu size=%lu\n", (long unsigned)p, x);
-	if (p) memset(p, GARBAGE, x);
+	if (x > 0) {
+		p = malloc(x);
+	//printf("new --> %lu size=%lu\n", (long unsigned)p, x);
+		if (p) memset(p, GARBAGE, x);
+	} else {
+		p = NULL;
+	}
 	return p;
 }
 
