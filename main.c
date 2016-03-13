@@ -627,7 +627,7 @@ int main (int argc, char *argv[])
 		OUTDECIMALS = decimals_array[0];
 		Decimals_set = TRUE;
 	} else {
-		if (!str2list ("3,4", DECMAX, &decimals_array_n, decimals_array)) {
+		if (!str2list ("1,0", DECMAX, &decimals_array_n, decimals_array)) {
 			fprintf (stderr, "Default number of decimals is wrong or exceeded limit (%d)\n\n", DECMAX);
 			exit(EXIT_FAILURE);		
 		}
