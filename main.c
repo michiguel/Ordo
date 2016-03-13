@@ -144,12 +144,12 @@ struct helpline SH[] = {
 {'z',	"scale",		required_argument,	"NUM",		0,	"set rating for winning expectancy of 76% (default=202)"},
 {'T',	"table",		no_argument,		NULL,		0,	"display winning expectancy table"},
 {'p',	"pgn",			required_argument,	"FILE",		0,	"input file in PGN format"},
-{'P',	"pgn-list",		required_argument,	"FILE",		0,	"text file containing a list of PGN file names (multiple input)"},
+{'P',	"pgn-list",		required_argument,	"FILE",		0,	"file with a list of PGN files (multiple input)"},
 {'c',	"csv",			required_argument,	"FILE",		0,	"output file (comma separated value format)"},
 
 {'o',	"output",		required_argument,	"FILE",		0,	"text file output (to the screen if not present)"},
 {'E',	"elostat",		no_argument,		NULL,		0,	"output in Elostat format (rating.dat, programs.dat & general.dat)"},
-{'g',	"groups",		required_argument,	"FILE",		0,	"output file with group connection info (no rating output on screen)"},
+{'g',	"groups",		required_argument,	"FILE",		0,	"outputs group connection info (no rating output)"},
 {'G',	"force",		no_argument,		NULL,		0,	"force program to run ignoring isolated-groups warning"},
 {'j',	"head2head",	required_argument,	"FILE",		0,	"output file with head to head information"},
 
@@ -161,7 +161,7 @@ struct helpline SH[] = {
 	
 {'X',	"ignore-draws",	no_argument,		NULL,		0,	"draws are not taking into account in the calculation"},
 {'t',	"threshold",	required_argument,	"NUM",		0,	"threshold of games for a participant to be included"},
-{'N',	"decimals",		required_argument,	"<a,b>",	0,	"a=rating decimals (default=1), b=score(%) decimals (optional)"},
+{'N',	"decimals",		required_argument,	"<a,b>",	0,	"a=rating decimals, b=score(%) decimals (optional)"},
 {'M',	"ML",			no_argument,		NULL,		0,	"force maximum-likelihood estimation to obtain ratings"},
 {'n',	"cpus",			required_argument,	"NUM",		0,	"number of processors used in simulations"},
 
