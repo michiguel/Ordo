@@ -86,7 +86,7 @@ const char *license_str = "\n"
 
 static void parameter_error(void);
 static void example (void);
-static void usage (void);
+static void usage (FILE *outf);
 
 /* VARIABLES */
 
@@ -599,12 +599,12 @@ int main (int argc, char *argv[])
 	if (help_mode) {
 		printf ("\n%s", intro_str);
 		example();
-		usage();
+		usage(stdout);
 		printf ("%s\n", copyright_str);
 		exit (EXIT_SUCCESS);
 	}
 	if (switch_mode && !help_mode) {
-		usage();
+		usage(stderr);
 		exit (EXIT_SUCCESS);
 	}
 	if (table_mode) {
@@ -1280,40 +1280,19 @@ example (void)
 	return;
 }
 
-#if 0
 static void
-usage (void)
-{
-	printf ("\n"
-		"usage: %s %s\n"
-		"%s"
-		, proginfo_name()
-		, usage_options
-		, help_str);
-}
-
-#else
-
-static void
-usage (void)
+usage (FILE *outf)
 {
 	const char *usage_options = "[-OPTION]";
-	fprintf (stderr, "\n"
+	fprintf (outf, "\n"
 		"usage: %s %s\n"
 		, proginfo_name()
 		, usage_options
 		);
 
-#if 0
-	fprintf (stderr, 
-		"%s"
-		, help_str
-		);
-#else
-		printlonghelp(stdout, SH);
-#endif
+		printlonghelp(outf, SH);
 }
-#endif
+
 
 
 /*--------------------------------------------------------------*\
