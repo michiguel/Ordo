@@ -132,11 +132,11 @@ struct helpline SH[] = {
 {'h',	NULL,				no_argument,		NULL,	0,	"print this help"},
 {'H',	NULL,	no_argument,		NULL,	0,	"print just the switches"},
 {'v',	NULL,			no_argument,		NULL,	0,	"print version number and exit"},
-{'L',	NULL,			no_argument,		NULL,	0,	"display license information"},
-{'q',	NULL,			no_argument,		NULL,	0,	"quiet (no screen progress updates)"},
-{'\0',	"",			no_argument,		NULL,	0,	"same as --quiet"},
-{'Q',	NULL,			no_argument,		NULL,	0,	"quiet (no screen progress updates)"},
-{'a',	NULL,			required_argument,	"NUM",	0,	"set rating for the pool average"},
+{'L',	NULL,			no_argument,		NULL,	0,	"display the license information"},
+{'q',	NULL,			no_argument,		NULL,	0,	"quiet mode (no screen progress updates)"},
+//{'\0',	"",			no_argument,		NULL,	0,	"same as --quiet"},
+{'Q',	NULL,			no_argument,		NULL,	0,	"quiet mode (no screen progress except simulation count)"},
+{'a',	NULL,			required_argument,	"<avg>",	0,	"set rating for the pool average"},
 #endif
 
 {'A',	NULL,	required_argument,	"<player>",	0,	"anchor: rating given by '-a' is fixed for <player>, if provided"},
@@ -154,17 +154,17 @@ struct helpline SH[] = {
 
 {'z',	NULL,	required_argument,	"<value>",	0,	"scaling: set rating for winning expectancy of 76% (default=202)"},
 {'T',	NULL,	no_argument,		NULL,		0,	"display winning expectancy table"},
-{'P',	NULL,	required_argument,	"<file>",	0,	"input file in PGN format"},
-{'p',	NULL,	required_argument,	"<file>",	0,	"text file containing a list of PGN file names (multiple input)"},
+{'p',	NULL,	required_argument,	"<file>",	0,	"input file in PGN format"},
+{'P',	NULL,	required_argument,	"<file>",	0,	"text file containing a list of PGN file names (multiple input)"},
 {'c',	NULL,	required_argument,	"<file>",	0,	"output file (comma separated value format)"},
 
 {'o',	NULL,	required_argument,	"<file>",	0,	"output file (text format), goes to the screen if not present"},
 {'E',	NULL,	no_argument,		NULL,		0,	"output in Elostat format (rating.dat, programs.dat & general.dat)"},
 {'g',	NULL,	required_argument,	"<file>",	0,	"output file with group connection info (no rating output on screen)"},
-{'G',	NULL,	no_argument,		NULL,		0,	"force program to run and ignore warnings for isolated groups"},
+{'G',	NULL,	no_argument,		NULL,		0,	"force program to run and ignore warnings for isolated groups "},
 {'j',	NULL,	required_argument,	"<file>",	0,	"output file with head to head information"},
 
-{'s',	NULL,	required_argument,	"#",		0,	"perform # simulations to calculate errors"},
+{'s',	NULL,	required_argument,	" #",		0,	"perform # simulations to calculate errors"},
 {'e',	NULL,	required_argument,	"<file>",	0,	"save an error matrix, if -s was used"},
 {'C',	NULL,	required_argument,	"<file>",	0,	"save a matrix (.csv) with confidence for superiority (-s was used)"},
 {'J',	NULL,	no_argument,		NULL,		0,	"add an output column with confidence for superiority (next player)"},
@@ -174,7 +174,7 @@ struct helpline SH[] = {
 {'t',	NULL,	required_argument,	"<value>",	0,	"threshold of minimum games played for a participant to be included"},
 {'N',	NULL,	required_argument,	"<a,b>",	0,	"a=rating decimals (default=1), b=score(%) decimals (optional)"},
 {'M',	NULL,	no_argument,		NULL,		0,	"force maximum-likelihood estimation to obtain ratings"},
-{'n',	NULL,	required_argument,	"<a,b>",	0,	"number of processors for parallel calculation of simulations"},
+{'n',	NULL,	required_argument,	"<value>",	0,	"number of processors for parallel calculation of simulations"},
 
 {'U',	NULL,	required_argument,	"<a,..,z>",	0,	"info in output. Default columns are \"0,1,2,3,4,5\""},
 {'Y',	NULL,	required_argument,	"<file>",	0,	"name synonyms (csv format). Each line: main,syn1,syn2 etc."},
@@ -1310,7 +1310,7 @@ usage (void)
 		, help_str
 		);
 #else
-		printlonghelp(stderr, SH);
+		printlonghelp(stdout, SH);
 #endif
 }
 #endif
