@@ -1,2 +1,2 @@
-#define VERSION "1.1.8-man1"
+#define VERSION "1.1.8-man1-opt1"
 

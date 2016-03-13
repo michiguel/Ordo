@@ -107,61 +107,86 @@ static void usage (void);
 		"  - The general pool will have an average of 2500\n"
 		;
 
-	static const char *help_str =
-		" -h          print this help\n"
-		" -H          print just the switches\n"
-		" -v          print version number and exit\n"
-		" -L          display the license information\n"
-		" -q          quiet mode (no screen progress updates)\n"
-		" -Q          quiet mode (no screen progress except simulation count)\n"
-		" -a <avg>    set rating for the pool average\n"
-		" -A <player> anchor: rating given by '-a' is fixed for <player>, if provided\n"
-		" -V          errors relative to pool average, not to the anchor\n"
-		" -m <file>   multiple anchors: file contains rows of \"AnchorName\",AnchorRating\n"
-		" -y <file>   loose anchors: file contains rows of \"Player\",Rating,Uncertainty\n"
-		" -r <file>   relations: rows of \"PlayerA\",\"PlayerB\",delta_rating,uncertainty\n"
-		" -R          remove older player versions (given by -r) from the output\n"
-		" -w <value>  white advantage value (default=0.0)\n"
-		" -u <value>  white advantage uncertainty value (default=0.0)\n"
-		" -W          white advantage will be automatically adjusted\n"
-		" -d <value>  draw rate value % (default=50.0)\n"
-		" -k <value>  draw rate uncertainty value % (default=0.0 %)\n"
-		" -D          draw rate value will be automatically adjusted\n"
-		" -z <value>  scaling: set rating for winning expectancy of 76% (default=202)\n"
-		" -T          display winning expectancy table\n"
-		" -p <file>   input file in PGN format\n"
-		" -P <file>   text file containing a list of PGN file names (multiple input)\n"
-		" -c <file>   output file (comma separated value format)\n"
-		" -o <file>   output file (text format), goes to the screen if not present\n"
-		" -E          output in Elostat format (rating.dat, programs.dat & general.dat)\n"
-		" -g <file>   output file with group connection info (no rating output on screen)\n"
-		" -G          force program to run and ignore warnings for isolated groups \n"
-		" -j <file>   output file with head to head information\n"
-		" -s  #       perform # simulations to calculate errors\n"
-		" -e <file>   save an error matrix, if -s was used\n"
-		" -C <file>   save a matrix (.csv) with confidence for superiority (-s was used)\n"
-		" -J          add an output column with confidence for superiority (next player)\n"
-		" -F <value>  confidence (%) to estimate error margins. Default is 95.0\n"
-		" -X          ignore draws\n"
-		" -t <value>  threshold of minimum games played for a participant to be included\n"
-		" -N <a,b>    a=rating decimals (default=1), b=score(%) decimals (optional)\n"
-		" -M          force maximum-likelihood estimation to obtain ratings\n"
-		" -n <value>  number of processors for parallel calculation of simulations\n"
-		" -U <a,..,z> info in output. Default columns are \"0,1,2,3,4,5\"\n"
-		" -Y <file>   name synonyms (csv format). Each line: main,syn1,syn2 etc.\n"
-		" -i <file>   include only games of participants present in <file>\n"
-		" -x <file>   names in <file> will not have their games included\n"
-		" -b <file>   format column output, each line being <column>,<width>,\"Header\"\n"
-		"\n"
-		;
 
-	static const char *usage_options = 
-		"[-OPTION]";
-		;
 	/*	 ....5....|....5....|....5....|....5....|....5....|....5....|....5....|....5....|*/
-		
 
-	static const char *OPTION_LIST = "vhHp:qQWDLa:A:Vm:r:y:Ro:EGg:j:c:s:w:u:d:k:z:e:C:JTF:Xt:N:Mn:U:Y:i:x:b:P:";
+//-------------------
+
+#include "myhelp.h"
+
+char OPTION_LIST[1024];
+
+static struct option *long_options;
+
+struct helpline SH[] = {
+#if 0
+{'h',	"help",				no_argument,		NULL,	0,	"print this help"},
+{'H',	"show-switches",	no_argument,		NULL,	0,	"print just the switches"},
+{'v',	"version",			no_argument,		NULL,	0,	"print version number and exit"},
+{'L',	"license",			no_argument,		NULL,	0,	"display license information"},
+{'q',	"quiet",			no_argument,		NULL,	0,	"quiet (no screen progress updates)"},
+{'\0',	"silent",			no_argument,		NULL,	0,	"same as --quiet"},
+{'Q',	"terse",			no_argument,		NULL,	0,	"quiet (no screen progress updates)"},
+{'a',	"average",			required_argument,	"NUM",	0,	"set rating for the pool average"},
+#else
+{'h',	NULL,				no_argument,		NULL,	0,	"print this help"},
+{'H',	NULL,	no_argument,		NULL,	0,	"print just the switches"},
+{'v',	NULL,			no_argument,		NULL,	0,	"print version number and exit"},
+{'L',	NULL,			no_argument,		NULL,	0,	"display license information"},
+{'q',	NULL,			no_argument,		NULL,	0,	"quiet (no screen progress updates)"},
+{'\0',	"",			no_argument,		NULL,	0,	"same as --quiet"},
+{'Q',	NULL,			no_argument,		NULL,	0,	"quiet (no screen progress updates)"},
+{'a',	NULL,			required_argument,	"NUM",	0,	"set rating for the pool average"},
+#endif
+
+{'A',	NULL,	required_argument,	"<player>",	0,	"anchor: rating given by '-a' is fixed for <player>, if provided"},
+{'V',	NULL,	no_argument,		NULL,	0,	"errors relative to pool average, not to the anchor"},
+{'m',	NULL,	required_argument,	"<file>",		0,	"multiple anchors: file contains rows of \"AnchorName\",AnchorRating"},
+{'y',	NULL,	required_argument,	"<file>",		0,	"loose anchors: file contains rows of \"Player\",Rating,Uncertainty"},
+{'r',	NULL,	required_argument,	"<file>",		0,	"relations: rows of \"PlayerA\",\"PlayerB\",delta_rating,uncertainty"},
+{'R',	NULL,	no_argument,		NULL,	0,	"remove older player versions (given by -r) from the output"},
+{'w',	NULL,	required_argument,	"<value>",		0,	"white advantage value (default=0.0)"},
+{'u',	NULL,	required_argument,	"<value>",		0,	"white advantage uncertainty value (default=0.0)"},
+{'W',	NULL,	no_argument,		NULL,	0,	"white advantage will be automatically adjusted"},
+{'d',	NULL,	required_argument,	"<value>",		0,	"draw rate value % (default=50.0)"},
+{'k',	NULL,	required_argument,	"<value>",		0,	"draw rate uncertainty value % (default=0.0 %)"},
+{'D',	NULL,	no_argument,		NULL,	0,	"draw rate value will be automatically adjusted"},
+
+{'z',	NULL,	required_argument,	"<value>",	0,	"scaling: set rating for winning expectancy of 76% (default=202)"},
+{'T',	NULL,	no_argument,		NULL,		0,	"display winning expectancy table"},
+{'P',	NULL,	required_argument,	"<file>",	0,	"input file in PGN format"},
+{'p',	NULL,	required_argument,	"<file>",	0,	"text file containing a list of PGN file names (multiple input)"},
+{'c',	NULL,	required_argument,	"<file>",	0,	"output file (comma separated value format)"},
+
+{'o',	NULL,	required_argument,	"<file>",	0,	"output file (text format), goes to the screen if not present"},
+{'E',	NULL,	no_argument,		NULL,		0,	"output in Elostat format (rating.dat, programs.dat & general.dat)"},
+{'g',	NULL,	required_argument,	"<file>",	0,	"output file with group connection info (no rating output on screen)"},
+{'G',	NULL,	no_argument,		NULL,		0,	"force program to run and ignore warnings for isolated groups"},
+{'j',	NULL,	required_argument,	"<file>",	0,	"output file with head to head information"},
+
+{'s',	NULL,	required_argument,	"#",		0,	"perform # simulations to calculate errors"},
+{'e',	NULL,	required_argument,	"<file>",	0,	"save an error matrix, if -s was used"},
+{'C',	NULL,	required_argument,	"<file>",	0,	"save a matrix (.csv) with confidence for superiority (-s was used)"},
+{'J',	NULL,	no_argument,		NULL,		0,	"add an output column with confidence for superiority (next player)"},
+{'F',	NULL,	required_argument,	"<value>",	0,	"confidence (%) to estimate error margins. Default is 95.0"},
+
+{'X',	NULL,	no_argument,		NULL,		0,	"ignore draws"},
+{'t',	NULL,	required_argument,	"<value>",	0,	"threshold of minimum games played for a participant to be included"},
+{'N',	NULL,	required_argument,	"<a,b>",	0,	"a=rating decimals (default=1), b=score(%) decimals (optional)"},
+{'M',	NULL,	no_argument,		NULL,		0,	"force maximum-likelihood estimation to obtain ratings"},
+{'n',	NULL,	required_argument,	"<a,b>",	0,	"number of processors for parallel calculation of simulations"},
+
+{'U',	NULL,	required_argument,	"<a,..,z>",	0,	"info in output. Default columns are \"0,1,2,3,4,5\""},
+{'Y',	NULL,	required_argument,	"<file>",	0,	"name synonyms (csv format). Each line: main,syn1,syn2 etc."},
+{'i',	NULL,	required_argument,	"<file>",	0,	"include only games of participants present in <file>"},
+{'x',	NULL,	required_argument,	"<file>",	0,	"names in <file> will not have their games included"},
+{'b',	NULL,	required_argument,	"<file>",	0,	"format column output, each line being <column>,<width>,\"Header\""},
+
+{0,		NULL,				0,					NULL,	0,	NULL},
+
+};
+
+
 
 /*
 |
@@ -326,7 +351,10 @@ int main (int argc, char *argv[])
 	int decimals_array[DECMAX+1];
 
 	int cpus = 1;
+
 	int op;
+	int longoidx=0;
+
 	const char *textstr, *csvstr, *ematstr, *groupstr, *pinsstr;
 	const char *priorsstr, *relstr;
 	const char *head2head_str;
@@ -378,7 +406,17 @@ int main (int argc, char *argv[])
 
 	strlist_init(psl);
 
-	while (END_OF_OPTIONS != (op = options (argc, argv, OPTION_LIST))) {
+
+
+	if (NULL == (long_options = optionlist_new (SH))) {
+		fprintf(stderr, "Memory error to initialize options\n");
+		exit(EXIT_FAILURE);
+	}
+
+	optionshort_build(SH, OPTION_LIST);
+
+	while (END_OF_OPTIONS != (op = options_l (argc, argv, OPTION_LIST, long_options, &longoidx))) {
+
 		switch (op) {
 			case 'v':	version_mode = TRUE; 	break;
 			case 'L':	version_mode = TRUE; 	
@@ -539,6 +577,8 @@ int main (int argc, char *argv[])
 						break;
 		}		
 	}
+
+	optionlist_done (long_options);
 
 	/*
 	|	Deal with switches & input
@@ -1240,6 +1280,7 @@ example (void)
 	return;
 }
 
+#if 0
 static void
 usage (void)
 {
@@ -1250,6 +1291,30 @@ usage (void)
 		, usage_options
 		, help_str);
 }
+
+#else
+
+static void
+usage (void)
+{
+	const char *usage_options = "[-OPTION]";
+	fprintf (stderr, "\n"
+		"usage: %s %s\n"
+		, proginfo_name()
+		, usage_options
+		);
+
+#if 0
+	fprintf (stderr, 
+		"%s"
+		, help_str
+		);
+#else
+		printlonghelp(stderr, SH);
+#endif
+}
+#endif
+
 
 /*--------------------------------------------------------------*\
 |
