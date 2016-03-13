@@ -120,53 +120,49 @@ static struct option *long_options;
 
 struct helpline SH[] = {
 
-{'h',	"help",			no_argument,		NULL,		0,	"print this help"},
-{'H',	"show-switches",no_argument,		NULL,		0,	"print just the switches"},
+{'h',	"help",			no_argument,		NULL,		0,	"print this help and exit"},
+{'H',	"show-switches",no_argument,		NULL,		0,	"print switch information and exit"},
 {'v',	"version",		no_argument,		NULL,		0,	"print version number and exit"},
-{'L',	"license",		no_argument,		NULL,		0,	"display the license information"},
-{'q',	"quiet",		no_argument,		NULL,		0,	"quiet mode (no screen progress updates)"},
+{'L',	"license",		no_argument,		NULL,		0,	"print license information  and exit"},
+{'q',	"quiet",		no_argument,		NULL,		0,	"quiet mode (no progress updates on screen)"},
 {'\0',	"silent",		no_argument,		NULL,		0,	"same as --quiet"},
-{'Q',	"terse",		no_argument,		NULL,		0,	"no screen progress updates except simulation count)"},
+{'Q',	"terse",		no_argument,		NULL,		0,	"same as --quiet, but shows simulation counter"},
 {'a',	"average",		required_argument,	"NUM",		0,	"set rating for the pool average"},
 {'A',	"anchor",		required_argument,	"<player>",	0,	"anchor: rating given by '-a' is fixed for <player>"},
 {'V',	"pool-relative",no_argument,		NULL,		0,	"errors relative to pool average, not to the anchor"},
-{'m',	"multiple",		required_argument,	"FILE",		0,	"multiple anchors: file contains rows of \"AnchorName\",AnchorRating"},
+{'m',	"multi-anchors",required_argument,	"FILE",		0,	"multiple anchors: file contains rows of \"AnchorName\",AnchorRating"},
 {'y',	"loose-anchors",required_argument,	"FILE",		0,	"loose anchors: file contains rows of \"Player\",Rating,Uncertainty"},
 {'r',	"relations",	required_argument,	"FILE",		0,	"relations: rows of \"PlayerA\",\"PlayerB\",delta_rating,uncertainty"},
-{'R',	"remove-older",	no_argument,		NULL,		0,	"don't output older player versions (given by -r)"},
-{'w',	"white-adv",	required_argument,	"NUM",		0,	"white advantage value (default=0.0)"},
+{'R',	"remove-older",	no_argument,		NULL,		0,	"no output of older 'related' versions (given by -r)"},
+{'w',	"white-rating", required_argument,	"NUM",		0,	"white advantage value (default=0.0)"},
 {'u',	"white-error",	required_argument,	"NUM",		0,	"white advantage uncertainty value (default=0.0)"},
-{'W',	"white-adjust",	no_argument,		NULL,		0,	"white advantage will be automatically adjusted"},
+{'W',	"white-auto",	no_argument,		NULL,		0,	"white advantage will be automatically adjusted"},
 {'d',	"draw-rate",	required_argument,	"NUM",		0,	"draw rate value % (default=50.0)"},
 {'k',	"draw-error",	required_argument,	"NUM",		0,	"draw rate uncertainty value % (default=0.0 %)"},
-{'D',	"draw-adjust",	no_argument,		NULL,		0,	"draw rate value will be automatically adjusted"},
-
+{'D',	"draw-auto",	no_argument,		NULL,		0,	"draw rate value will be automatically adjusted"},
 {'z',	"scale",		required_argument,	"NUM",		0,	"set rating for winning expectancy of 76% (default=202)"},
 {'T',	"table",		no_argument,		NULL,		0,	"display winning expectancy table"},
-{'p',	"pgn",			required_argument,	"FILE",		0,	"input file in PGN format"},
-{'P',	"pgn-list",		required_argument,	"FILE",		0,	"file with a list of PGN files (multiple input)"},
-{'c',	"csv",			required_argument,	"FILE",		0,	"output file (comma separated value format)"},
-
-{'o',	"output",		required_argument,	"FILE",		0,	"text file output (to the screen if not present)"},
-{'E',	"elostat",		no_argument,		NULL,		0,	"output in Elostat format (rating.dat, programs.dat & general.dat)"},
+{'p',	"pgn-input",	required_argument,	"FILE",		0,	"input file, PGN format"},
+{'P',	"pgn-list",		required_argument,	"FILE",		0,	"multiple input: file with a list of PGN files"},
+{'o',	"output",		required_argument,	"FILE",		0,	"output file, text format"},
+{'c',	"csv",			required_argument,	"FILE",		0,	"output file, comma separated value format"},
+{'E',	"elostat",		no_argument,		NULL,		0,	"output files in elostat format (rating.dat, programs.dat & general.dat)"},
+{'j',	"head2head",	required_argument,	"FILE",		0,	"output file with head to head information"},
 {'g',	"groups",		required_argument,	"FILE",		0,	"outputs group connection info (no rating output)"},
 {'G',	"force",		no_argument,		NULL,		0,	"force program to run ignoring isolated-groups warning"},
-{'j',	"head2head",	required_argument,	"FILE",		0,	"output file with head to head information"},
-
 {'s',	"simulations",	required_argument,	"NUM",		0,	"perform NUM simulations to calculate errors"},
-{'e',	"error-matrix",	required_argument,	"FILE",		0,	"save an error matrix, if -s was used"},
+{'e',	"error-matrix",	required_argument,	"FILE",		0,	"save an error matrix (use of -s required)"},
 {'C',	"cfs-matrix",	required_argument,	"FILE",		0,	"save a matrix (comma separated value .csv) with confidence for superiority (-s was used)"},
-{'J',	"cfs-show",		no_argument,		NULL,		0,	"add an output column with confidence for superiority (value relative to the next player)"},
-{'F',	"confidence",	required_argument,	"NUM",		0,	"confidence (%) to estimate error margins. Default=95.0"},
-	
-{'X',	"ignore-draws",	no_argument,		NULL,		0,	"draws are not taking into account in the calculation"},
+{'J',	"cfs-show",		no_argument,		NULL,		0,	"output an extra column with confidence for superiority (relative to the player in the next row)"},
+{'F',	"confidence",	required_argument,	"NUM",		0,	"confidence to estimate error margins (default=95.0)"},
+{'X',	"ignore-draws",	no_argument,		NULL,		0,	"do not take into account draws in the calculation"},
 {'t',	"threshold",	required_argument,	"NUM",		0,	"threshold of games for a participant to be included"},
-{'N',	"decimals",		required_argument,	"<a,b>",	0,	"a=rating decimals, b=score(%) decimals (optional)"},
+{'N',	"decimals",		required_argument,	"<a,b>",	0,	"a=rating decimals, b=score decimals (optional)"},
 {'M',	"ML",			no_argument,		NULL,		0,	"force maximum-likelihood estimation to obtain ratings"},
 {'n',	"cpus",			required_argument,	"NUM",		0,	"number of processors used in simulations"},
-
-{'U',	"columns",		required_argument,	"<a,..,z>",	0,	"info in output. Default columns are \"0,1,2,3,4,5\""},
+{'U',	"columns",		required_argument,	"<a,..,z>",	0,	"info in output (default columns are \"0,1,2,3,4,5\")"},
 {'Y',	"synonyms",		required_argument,	"FILE",		0,	"name synonyms (comma separated value format). Each line: main,syn1,syn2 or \"main\",\"syn1\",\"syn2\""},
+{'\0',	"aliases",		required_argument,	"FILE",		0,	"same as --synonyms FILE"},
 {'i',	"include-only",	required_argument,	"FILE",		0,	"include only games of participants present in FILE"},
 {'x',	"exclude",		required_argument,	"FILE",		0,	"names in FILE will not have their games included"},
 {'b',	"column-format",required_argument,	"FILE",		0,	"format column output, each line being <column>,<width>,\"Header\""},
@@ -407,6 +403,19 @@ int main (int argc, char *argv[])
 	while (END_OF_OPTIONS != (op = options_l (argc, argv, OPTION_LIST, long_options, &longoidx))) {
 
 		switch (op) {
+
+			case '\0':
+						if (!strcmp(long_options[longoidx].name, "silent")) {
+							quiet_mode = TRUE;
+						} else
+						if (!strcmp(long_options[longoidx].name, "aliases")) {
+							synstr = opt_arg;
+						} else {
+							fprintf (stderr, "ERROR: %d\n", op);
+							exit(EXIT_FAILURE);
+						}
+
+						break;
 			case 'v':	version_mode = TRUE; 	break;
 			case 'L':	version_mode = TRUE; 	
 						license_mode = TRUE;
@@ -516,7 +525,7 @@ int main (int argc, char *argv[])
 						break;
 			case 'J':	cfs_column = TRUE;	break;
 			case 'T':	table_mode = TRUE;	break;
-			case 'q':	quiet_mode = TRUE;	break;
+			case 'q':	quiet_mode = TRUE;	sim_updates = FALSE; break;
 			case 'Q':	quiet_mode = TRUE;	sim_updates = TRUE; break;
 			case 'R':	Hide_old_ver=TRUE;	break;
 			case 'W':	adjust_white_advantage = TRUE;	
