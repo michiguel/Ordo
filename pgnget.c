@@ -229,9 +229,10 @@ database_getname(const struct DATA *d, player_t i)
 void 
 database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, struct GAMESTATS *gs)
 {
+	enum maxresults {MAXRESTYPE = 8};
 	player_t j;
 	player_t topn;
-	gamesnum_t gamestat[4] = {0,0,0,0};
+	gamesnum_t gamestat[MAXRESTYPE] = {0,0,0,0,0,0,0,0};
 
 	assert(db && p && g && gs);
 	assert(p->name && p->flagged && p->present_in_games && p->prefed && p->priored && p->performance_type);
@@ -265,9 +266,9 @@ database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, st
 			g->ga[i].whiteplayer = wp = db->gb[blk]->white[idx];
 			g->ga[i].blackplayer = bp = db->gb[blk]->black[idx]; 
 			g->ga[i].score       =      db->gb[blk]->score[idx];
-			if (g->ga[i].score <= DISCARD) gamestat[g->ga[i].score]++;
+			if (g->ga[i].score < MAXRESTYPE) gamestat[g->ga[i].score]++;
 
-			if (g->ga[i].score != DISCARD) {
+			if (g->ga[i].score < DISCARD) {
 				p->present_in_games[wp] = TRUE;
 				p->present_in_games[bp] = TRUE;
 			}
@@ -284,9 +285,9 @@ database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, st
 			g->ga[i].whiteplayer = wp = db->gb[blk]->white[idx];
 			g->ga[i].blackplayer = bp = db->gb[blk]->black[idx]; 
 			g->ga[i].score       =      db->gb[blk]->score[idx];
-			if (g->ga[i].score <= DISCARD) gamestat[g->ga[i].score]++;
+			if (g->ga[i].score < MAXRESTYPE) gamestat[g->ga[i].score]++;
 
-			if (g->ga[i].score != DISCARD) {
+			if (g->ga[i].score < DISCARD) {
 				p->present_in_games[wp] = TRUE;
 				p->present_in_games[bp] = TRUE;
 			}
@@ -303,7 +304,11 @@ database_transform(const struct DATA *db, struct GAMES *g, struct PLAYERS *p, st
 	gs->white_wins	= gamestat[WHITE_WIN];
 	gs->draws		= gamestat[RESULT_DRAW];
 	gs->black_wins	= gamestat[BLACK_WIN];
-	gs->noresult	= gamestat[DISCARD];
+	gs->noresult	= gamestat[DISCARD] 
+					+ gamestat[IGNORED|WHITE_WIN]
+					+ gamestat[IGNORED|RESULT_DRAW]
+					+ gamestat[IGNORED|BLACK_WIN]
+					;
 
 	assert ((long)g->n == (gs->white_wins + gs->draws + gs->black_wins + gs->noresult));
 
@@ -325,7 +330,7 @@ database_ignore_draws (struct DATA *db)
 	for (blk = 0; blk < blk_filled; blk++) {
 		for (idx = 0; idx < MAXGAMESxBLOCK; idx++) {
 			if (db->gb[blk]->score[idx] == RESULT_DRAW)
-				db->gb[blk]->score[idx] = DISCARD;
+				db->gb[blk]->score[idx] |= IGNORED;
 		}
 	}
 
@@ -333,7 +338,7 @@ database_ignore_draws (struct DATA *db)
 
 		for (idx = 0; idx < idx_last; idx++) {
 			if (db->gb[blk]->score[idx] == RESULT_DRAW)
-				db->gb[blk]->score[idx] = DISCARD;
+				db->gb[blk]->score[idx] |= IGNORED;
 		}
 
 	return;
@@ -355,7 +360,7 @@ database_include_only (struct DATA *db, bitarray_t *pba)
 			wp = db->gb[blk]->white[idx];
 			bp = db->gb[blk]->black[idx];
 			if (!ba_ison(pba, wp) || !ba_ison(pba, bp))
-				db->gb[blk]->score[idx] = DISCARD;
+				db->gb[blk]->score[idx] |= IGNORED;
 		}
 	}
 
@@ -365,7 +370,7 @@ database_include_only (struct DATA *db, bitarray_t *pba)
 			wp = db->gb[blk]->white[idx];
 			bp = db->gb[blk]->black[idx];
 			if (!ba_ison(pba, wp) || !ba_ison(pba, bp))
-				db->gb[blk]->score[idx] = DISCARD;
+				db->gb[blk]->score[idx] |= IGNORED;
 		}
 
 	return;
@@ -609,12 +614,26 @@ do_tick (const struct DATA *d, const char *namestr, bitarray_t *pba)
 	return ok;
 }
 
+static void
+warning(bool_t do_warning, const char *filename, const char *myline, size_t linenumber)
+{
+	if (!do_warning) return;
+	fprintf(stderr, "WARNING (not matching name): file \"%s\", line %ld = %s\n", filename, (long)linenumber, myline);
+}
+
+static bool_t
+isblankline(const char *s)
+{
+	while (isspace(*s)) s++; 
+	return *s == '\0';
+}
+
 void
-namelist_to_bitarray (bool_t quietmode, const char *finp_name, const struct DATA *d, bitarray_t *pba)
+namelist_to_bitarray (bool_t quietmode, bool_t do_warning, const char *finp_name, const struct DATA *d, bitarray_t *pba)
 {
 	FILE *finp;
 	char myline[MAXSIZE_CSVLINE];
-	char *p;
+	size_t linenumber = 0;
 	bool_t line_success = TRUE;
 	bool_t file_success = TRUE;
 
@@ -634,14 +653,14 @@ namelist_to_bitarray (bool_t quietmode, const char *finp_name, const struct DATA
 
 		while ( line_success && NULL != fgets(myline, MAXSIZE_CSVLINE, finp)) {
 
-			p = skipblanks(myline);
-			if (*p == '\0') continue;
+			linenumber++;
+			if (isblankline(myline)) continue;
 
-			if (csv_line_init(&csvln, myline)) {
-				line_success = csvln.n == 1 && do_tick (d, csvln.s[0], pba);
+			if (TRUE == (line_success = csv_line_init(&csvln, myline))) {
+				if (!(csvln.n == 1 && do_tick (d, csvln.s[0], pba))) {
+					warning(do_warning, finp_name, myline, linenumber);
+				}
 				csv_line_done(&csvln);		
-			} else {
-				line_success = FALSE;
 			}
 		}
 
@@ -655,7 +674,7 @@ namelist_to_bitarray (bool_t quietmode, const char *finp_name, const struct DATA
 		exit(EXIT_FAILURE);
 	} else 
 	if (!line_success) {
-		fprintf (stderr, "Errors in file \"%s\" (not matching names)\n",finp_name);
+		fprintf (stderr, "Errors in file \"%s\", line %ld (line parsing problem or lack of memory)\n",finp_name, (long)linenumber);
 		exit(EXIT_FAILURE);
 	} 
 	if (!quietmode)	printf ("Names uploaded succesfully\n");

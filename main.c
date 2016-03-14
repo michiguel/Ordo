@@ -328,6 +328,7 @@ int main (int argc, char *argv[])
 	bool_t sim_updates;
 	bool_t adjust_white_advantage;
 	bool_t adjust_draw_rate;
+	bool_t dowarning;
 
 	int columns_n;
 	int columns[COLSMAX+1];
@@ -388,6 +389,7 @@ int main (int argc, char *argv[])
 	Ignore_draws 			= FALSE;
 	Forces_ML 	 			= FALSE;
 	cfs_column      		= FALSE;
+	dowarning				= TRUE;
 
 	strlist_init(psl);
 
@@ -725,7 +727,7 @@ int main (int argc, char *argv[])
 		if (NULL != includes_str) {
 			bitarray_t ba;
 			if (ba_init (&ba,pdaba->n_players)) {
-				namelist_to_bitarray (quiet_mode, includes_str, pdaba, &ba);
+				namelist_to_bitarray (quiet_mode, dowarning, includes_str, pdaba, &ba);
 				database_include_only(pdaba, &ba);
 			} else {
 				fprintf (stderr, "ERROR\n");
@@ -735,7 +737,7 @@ int main (int argc, char *argv[])
 		if (NULL != excludes_str) {
 			bitarray_t ba;
 			if (ba_init (&ba,pdaba->n_players)) {
-				namelist_to_bitarray (quiet_mode, excludes_str, pdaba, &ba);
+				namelist_to_bitarray (quiet_mode, dowarning, excludes_str, pdaba, &ba);
 				ba_setnot(&ba);
 				database_include_only(pdaba, &ba);
 			} else {
