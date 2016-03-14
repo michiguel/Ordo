@@ -1,2 +1,2 @@
-#define VERSION "1.1.9-mem1-pgn2"
+#define VERSION "1.2"
 
