@@ -163,8 +163,9 @@ struct helpline SH[] = {
 {'U',	"columns",		required_argument,	"<a,..,z>",	0,	"info in output (default columns are \"0,1,2,3,4,5\")"},
 {'Y',	"synonyms",		required_argument,	"FILE",		0,	"name synonyms (comma separated value format). Each line: main,syn1,syn2 or \"main\",\"syn1\",\"syn2\""},
 {'\0',	"aliases",		required_argument,	"FILE",		0,	"same as --synonyms FILE"},
-{'i',	"include-only",	required_argument,	"FILE",		0,	"include only games of participants present in FILE"},
+{'i',	"include",		required_argument,	"FILE",		0,	"include only games of participants present in FILE"},
 {'x',	"exclude",		required_argument,	"FILE",		0,	"names in FILE will not have their games included"},
+{'\0',	"no-warnings",	no_argument,		NULL,		0,	"~~~~~~~~~~~~~~~~~~~"},
 {'b',	"column-format",required_argument,	"FILE",		0,	"format column output, each line being <column>,<width>,\"Header\""},
 
 {0,		NULL,				0,					NULL,	0,	NULL},
@@ -409,9 +410,10 @@ int main (int argc, char *argv[])
 			case '\0':
 						if (!strcmp(long_options[longoidx].name, "silent")) {
 							quiet_mode = TRUE;
-						} else
-						if (!strcmp(long_options[longoidx].name, "aliases")) {
+						} else if (!strcmp(long_options[longoidx].name, "aliases")) {
 							synstr = opt_arg;
+						} else if (!strcmp(long_options[longoidx].name, "no-warnings")) {
+							dowarning = FALSE;
 						} else {
 							fprintf (stderr, "ERROR: %d\n", op);
 							exit(EXIT_FAILURE);
