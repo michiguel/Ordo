@@ -445,10 +445,20 @@ calc_rating_bayes
 	if (!quiet && super_players_present(n_players, performance_type)) 
 		printf ("Post-Convergence rating estimation for all-wins / all-losses players\n\n");
 
-	n_enc = calc_encounters(ENCOUNTERS_FULL, g, flagged, enc);
+//	n_enc = calc_encounters(ENCOUNTERS_FULL, g, flagged, enc);
+
+	encounters_calculate(ENCOUNTERS_FULL, g, flagged, encount);
+	enc   = encount->enc;
+	n_enc = encount->n;
+
 	calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
 	rate_super_players(quiet, enc, n_enc, performance_type, n_players, ratingof, white_advantage, flagged, name, deq, beta); 
-	n_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, flagged, enc);
+//	n_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, flagged, enc);
+
+	encounters_calculate(ENCOUNTERS_NOFLAGGED, g, flagged, encount);
+	enc   = encount->enc;
+	n_enc = encount->n;
+
 	calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby); 
 
 	if (anchored_n == 1 && priored_n == 0)

@@ -49,9 +49,31 @@ static int compare_ENC (const void * a, const void * b)
 	return 0;	
 }
 
+static gamesnum_t
+calc_encounters ( int selectivity
+				, const struct GAMES *g
+				, const bool_t *flagged
+				, struct ENC *enc // out
+);
+
+void
+encounters_calculate
+				( int selectivity
+				, const struct GAMES *g
+				, const bool_t *flagged
+				, struct ENCOUNTERS	*e
+) 
+{
+	e->n = 
+	calc_encounters	( selectivity
+					, g
+					, flagged
+					, e->enc);
+}
+
 
 // no globals
-gamesnum_t
+static gamesnum_t
 calc_encounters ( int selectivity
 				, const struct GAMES *g
 				, const bool_t *flagged
@@ -72,10 +94,7 @@ calc_encounters ( int selectivity
 		player_t wp_i = gam[i].whiteplayer;
 		player_t bp_i = gam[i].blackplayer;
 
-		skip = score_i >= DISCARD
-			|| (selectivity == ENCOUNTERS_NOFLAGGED 
-				&& (flagged[wp_i] || flagged[bp_i])
-				);
+		skip = score_i >= DISCARD || (selectivity == ENCOUNTERS_NOFLAGGED && (flagged[wp_i] || flagged[bp_i]));
 
 		if (!skip)	{
 			enc[e].wh = wp_i;

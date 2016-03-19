@@ -49,22 +49,6 @@ simulate_scores ( const double 	*ratingof_results
 );
 
 static void
-calc_encounters__
-				( int selectivity
-				, const struct GAMES *g
-				, const bool_t *flagged
-				, struct ENCOUNTERS	*e
-) 
-{
-
-	e->n = 
-	calc_encounters	( selectivity
-					, g
-					, flagged
-					, e->enc);
-};
-
-static void
 ratings_set_to	( double general_average	
 				, const struct PLAYERS *pPlayers
 				, struct RATINGS *pRA /*@out@*/
@@ -113,12 +97,12 @@ get_a_simulated_run	( int 					limit
 
 		assert(players_have_clear_flags(pPlayers));
 
-		calc_encounters__(ENCOUNTERS_FULL, pGames, pPlayers->flagged, pEncounters);
+		encounters_calculate(ENCOUNTERS_FULL, pGames, pPlayers->flagged, pEncounters);
 
 		players_set_priored_info (PP, pRPset, pPlayers);
 		if (0 < players_set_super (quiet_mode, pEncounters, pPlayers)) {
 			players_purge (quiet_mode, pPlayers);
-			calc_encounters__(ENCOUNTERS_NOFLAGGED, pGames, pPlayers->flagged, pEncounters);
+			encounters_calculate(ENCOUNTERS_NOFLAGGED, pGames, pPlayers->flagged, pEncounters);
 		}
 
 	} while (failed_sim++ < limit && !groups_are_ok (pEncounters, pPlayers));

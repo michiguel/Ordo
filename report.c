@@ -47,21 +47,6 @@ head2head_idx_sdev (ptrdiff_t x, ptrdiff_t y)
 
 //==================================
 
-static void
-calc_encounters__
-				( int selectivity
-				, const struct GAMES *g
-				, const bool_t *flagged
-				, struct ENCOUNTERS	*e
-) 
-{
-	e->n = calc_encounters	
-					( selectivity
-					, g
-					, flagged
-					, e->enc);
-}
-
 static int
 compare__ (const player_t *a, const player_t *b, const double *reference )
 {	
@@ -282,7 +267,7 @@ cegt_output	( bool_t quiet
 	assert (e);
 	assert (pgame_stats);
 
-	calc_encounters__(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
+	encounters_calculate(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
 	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
 	for (j = 0; j < p->n; j++) {
 		r->sorted[j] = j;
@@ -427,7 +412,7 @@ head2head_output( const struct GAMES 	*		g
 	assert (pgame_stats);
 	assert (s);
 
-	calc_encounters__(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
+	encounters_calculate(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
 	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
 	for (j = 0; j < p->n; j++) {
 		r->sorted[j] = j; 
@@ -855,7 +840,7 @@ all_report 	( const struct GAMES 			*g
 	listcopy (inp_list, listbuff);
 
 
-	calc_encounters__(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
+	encounters_calculate(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
 
 	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
 

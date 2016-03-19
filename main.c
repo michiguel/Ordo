@@ -168,7 +168,7 @@ struct helpline SH[] = {
 {'\0',	"no-warnings",	no_argument,		NULL,		0,	"supress warnings of names from -x or -i that do not match names in input file"},
 {'b',	"column-format",required_argument,	"FILE",		0,	"format column output, each line being <column>,<width>,\"Header\""},
 
-{0,		NULL,				0,					NULL,	0,	NULL},
+{0,		NULL,			0,					NULL,		0,	NULL},
 
 };
 
@@ -230,22 +230,6 @@ static bool_t	Prior_mode;
 static void 		table_output(double Rtng_76);
 
 static int 			compare_GAME (const void * a, const void * b);
-
-static void
-calc_encounters__
-				( int selectivity
-				, const struct GAMES *g
-				, const bool_t *flagged
-				, struct ENCOUNTERS	*e
-) 
-{
-	e->n = 
-	calc_encounters	( selectivity
-					, g
-					, flagged
-					, e->enc);
-}
-
 
 static char *skipblanks(char *p) {while (isspace(*p)) p++; return p;}
 
@@ -763,22 +747,22 @@ int main (int argc, char *argv[])
 		gamesnum_t me  	= pdaba->n_games;
 
 		if (!ratings_init (mpr, &RA)) {
-			fprintf (stderr, "Could not initialize rating memory\n"); exit(0);	
+			fprintf (stderr, "Could not initialize rating memory\n"); exit(EXIT_FAILURE);	
 		} else 
 		if (!games_init (mg, &Games)) {
 			ratings_done (&RA);
-			fprintf (stderr, "Could not initialize Games memory\n"); exit(0);
+			fprintf (stderr, "Could not initialize Games memory\n"); exit(EXIT_FAILURE);
 		} else 
 		if (!encounters_init (me, &Encounters)) {
 			ratings_done (&RA);
 			games_done (&Games);
-			fprintf (stderr, "Could not initialize Encounters memory\n"); exit(0);
+			fprintf (stderr, "Could not initialize Encounters memory\n"); exit(EXIT_FAILURE);
 		} else 
 		if (!players_init (mpp, &Players)) {
 			ratings_done (&RA);
 			games_done (&Games);
 			encounters_done (&Encounters);
-			fprintf (stderr, "Could not initialize Players memory\n"); exit(0);
+			fprintf (stderr, "Could not initialize Players memory\n"); exit(EXIT_FAILURE);
 		} 
 	}
 	assert(players_have_clear_flags(&Players));
@@ -799,7 +783,7 @@ int main (int argc, char *argv[])
 		games_done (&Games);
 		encounters_done (&Encounters);
 		players_done(&Players);
-		fprintf (stderr, "Could not initialize auxiliary Players memory\n"); exit(0);
+		fprintf (stderr, "Could not initialize auxiliary Players memory\n"); exit(EXIT_FAILURE);
 	}
 
 	/*==== process anchor ====*/
@@ -841,7 +825,7 @@ int main (int argc, char *argv[])
 	#endif
 
 	assert(players_have_clear_flags(&Players));
-	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
+	encounters_calculate(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 	if (0 == Encounters.n) {
 		fprintf (stderr, "ERROR: Input file contains no games to process\n");
@@ -989,7 +973,7 @@ int main (int argc, char *argv[])
 	/*===== groups ========*/
 
 	assert(players_have_clear_flags (&Players));
-	calc_encounters__ (ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
+	encounters_calculate (ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 	if (group_is_output) {
 		bool_t ok;
@@ -1030,12 +1014,12 @@ int main (int argc, char *argv[])
 	/*==== ratings calc ===*/
 
 	assert(players_have_clear_flags(&Players));
-	calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
+	encounters_calculate(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 	players_set_priored_info (PP, &RPset, &Players);
 	if (0 < players_set_super (quiet_mode, &Encounters, &Players)) {
 		players_purge (quiet_mode, &Players);
-		calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
+		encounters_calculate(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
 
 	if (!groups_no_check && !groups_are_ok (&Encounters, &Players)) {
@@ -1136,12 +1120,12 @@ int main (int argc, char *argv[])
 		qsort (Games.ga, (size_t)Games.n, sizeof(struct gamei), compare_GAME);
 	
 		/* recalculate encounters */
-		calc_encounters__(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
+		encounters_calculate(ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 		players_set_priored_info (PP, &RPset, &Players);
 		if (0 < players_set_super (quiet_mode, &Encounters, &Players)) {
 			players_purge (quiet_mode, &Players);
-			calc_encounters__(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
+			encounters_calculate(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 		}
 	}
 

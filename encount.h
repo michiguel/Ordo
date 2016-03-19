@@ -31,11 +31,12 @@ enum SELECTIVITY {
 	ENCOUNTERS_NOFLAGGED = 1
 };
 
-gamesnum_t
-calc_encounters ( int selectivity
+extern void
+encounters_calculate
+				( int selectivity
 				, const struct GAMES *g
 				, const bool_t *flagged
-				, struct ENC *enc // out
+				, struct ENCOUNTERS	*e
 );
 
 // no globals
