@@ -27,6 +27,7 @@
 #include "mytypes.h"
 #include "pgnget.h"
 #include "xpect.h"
+#include "mymem.h"
 
 //Statics
 
@@ -56,6 +57,65 @@ calc_encounters ( int selectivity
 				, struct ENC *enc // out
 );
 
+
+//-----------------------------------------------------------------------
+
+bool_t 
+encounters_init (gamesnum_t n, struct ENCOUNTERS *e)
+{
+	struct ENC 	*p;
+
+	assert (n > 0);
+
+	if (NULL == (p = memnew (sizeof(struct ENC) * (size_t)n))) {
+		e->n	 	= 0; 
+		e->size 	= 0;
+		e->enc		= NULL;
+		return FALSE; // failed
+	}
+
+	e->n	 	= 0; /* empty for now */
+	e->size 	= n;
+	e->enc		= p;
+	return TRUE;
+}
+
+void 
+encounters_done (struct ENCOUNTERS *e)
+{
+	memrel(e->enc);
+	e->n	 = 0;
+	e->size	 = 0;
+	e->enc	 = NULL;
+} 
+
+
+void
+encounters_copy (const struct ENCOUNTERS *src, struct ENCOUNTERS *tgt)
+{
+	gamesnum_t i, n = src->n;
+	struct ENC *s = src->enc;
+	struct ENC *t = tgt->enc; 
+	tgt->n = src->n;
+	tgt->size = src->size;
+	for (i = 0; i < n; i++) {
+		t[i] = s[i];
+	}
+}
+
+bool_t
+encounters_replicate (const struct ENCOUNTERS *src, struct ENCOUNTERS *tgt)
+{
+	bool_t ok;
+	ok = encounters_init (src->size, tgt);
+	if (ok) {
+		encounters_copy (src, tgt);
+	}
+	return ok;
+}
+
+
+
 void
 encounters_calculate
 				( int selectivity
@@ -70,7 +130,6 @@ encounters_calculate
 					, flagged
 					, e->enc);
 }
-
 
 // no globals
 static gamesnum_t

@@ -1,2 +1,2 @@
-#define VERSION "1.2-enc1"
+#define VERSION "1.2-enc2"
 

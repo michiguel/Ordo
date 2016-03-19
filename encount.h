@@ -31,6 +31,11 @@ enum SELECTIVITY {
 	ENCOUNTERS_NOFLAGGED = 1
 };
 
+extern bool_t 	encounters_init (gamesnum_t n, struct ENCOUNTERS *e);
+extern void 	encounters_done (struct ENCOUNTERS *e);
+extern void		encounters_copy (const struct ENCOUNTERS *src, struct ENCOUNTERS *tgt);
+extern bool_t	encounters_replicate (const struct ENCOUNTERS *src, struct ENCOUNTERS *tgt);
+
 extern void
 encounters_calculate
 				( int selectivity
