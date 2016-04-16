@@ -23,8 +23,6 @@
 #define H_TIMER
 /*>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>*/
 
-#include "sysport/sysport.h"
-
 extern void 	timer_reset(void);
 extern double 	timer_get(void);
 
