@@ -31,6 +31,8 @@
 #include "mymem.h"
 #include "fit1d.h"
 
+#include "mytimer.h"
+
 #define START_DELTA           100
 #define MIN_DEVIA             0.0000001
 #define MIN_RESOL             0.000001
@@ -38,8 +40,6 @@
 #define ACCEPTABLE_RESOL      MIN_RESOL
 #define PRECISIONERROR        (1E-16)
 #define DRAWRATE_RESOLUTION   0.0000001
-
-//-------------------------------------------------------------------------
 
 #if !defined(NDEBUG)
 static bool_t is_nan (double x) {if (x != x) return TRUE; else return FALSE;}
@@ -766,17 +766,17 @@ calc_rating_ordo
 		correct_excess (n_players, flagged, excess, ratingof);
 	}
 
-	if (!quiet) printf ("Post-Convergence rating estimation\n");
-
-//	n_enc = calc_encounters(ENCOUNTERS_FULL, g, flagged, enc);
+printf ("%8.2lf | Post-Convergence rating estimation... \n", timer_get());
 
 	encounters_calculate(ENCOUNTERS_FULL, g, flagged, encount);
 	enc   = encount->enc;
 	n_enc = encount->n;
 
 	calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
+
+printf ("%8.2lf | rate_super_players... \n", timer_get());
+
 	rate_super_players(quiet, enc, n_enc, Performance_type, n_players, ratingof, white_adv, flagged, name, draw_rate, BETA); 
-//	n_enc = calc_encounters(ENCOUNTERS_NOFLAGGED, g, flagged, enc);
 
 	encounters_calculate(ENCOUNTERS_NOFLAGGED, g, flagged, encount);
 	enc   = encount->enc;
@@ -784,7 +784,8 @@ calc_rating_ordo
 
 	calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
 
-	if (!quiet) printf ("done\n");
+
+printf ("%8.2lf | done with rating calculation. \n", timer_get());
 
 	*pWhite_advantage = white_adv;
 	*pDraw_date = draw_rate;

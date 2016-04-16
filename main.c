@@ -60,6 +60,8 @@
 #include "myopt.h"
 #include "sysport/sysport.h"
 
+#include "mytimer.h"
+
 /*
 |
 |	GENERAL OPTIONS
@@ -703,6 +705,10 @@ int main (int argc, char *argv[])
 
 	/*==== set input ====*/
 
+timer_reset();
+printf ("%8.2lf | start \n", timer_get());
+printf ("%8.2lf | input... \n", timer_get());
+
 	if (NULL != (pdaba = database_init_frompgn (psl, synstr, quiet_mode))) {
 		if (0 == pdaba->n_players || 0 == pdaba->n_games) {
 			fprintf (stderr, "ERROR: Input file contains no games\n");
@@ -970,6 +976,9 @@ int main (int argc, char *argv[])
 
 	summations_init(&sfe);
 
+printf ("%8.2lf | done with input\n", timer_get());
+printf ("%8.2lf | process groups if needed...\n", timer_get());
+
 	/*===== groups ========*/
 
 	assert(players_have_clear_flags (&Players));
@@ -1035,6 +1044,8 @@ int main (int argc, char *argv[])
 			exit(EXIT_FAILURE);
 	}
 
+printf ("%8.2lf | calculate rating... \n", timer_get());
+
 	Encounters.n = calc_rating 	( quiet_mode
 								, Forces_ML || Prior_mode
 								, adjust_white_advantage
@@ -1076,7 +1087,7 @@ int main (int argc, char *argv[])
 
 	/* Simulation block, begin */
 	if (Simulate > 1) {
-
+printf ("%8.2lf | simulation block... \n", timer_get());
 		simul_smp
 				( cpus
 				, Simulate
@@ -1129,8 +1140,9 @@ int main (int argc, char *argv[])
 		}
 	}
 
-
 	/*==== reports ====*/
+
+printf ("%8.2lf | output reports... \n", timer_get());
 
 	all_report 	( &Games
 				, &Players
@@ -1183,6 +1195,7 @@ int main (int argc, char *argv[])
 	}
 
 	if (head2head_str != NULL) {
+printf ("%8.2lf | head to head output... \n", timer_get());
 		head2head_output
 					( &Games
 					, &Players
@@ -1199,6 +1212,7 @@ int main (int argc, char *argv[])
 	}
 
 	if (Elostat_output) {
+printf ("%8.2lf | output in elostat format... \n", timer_get());
 		cegt_output	( quiet_mode
 					, &Games
 					, &Players
@@ -1212,6 +1226,8 @@ int main (int argc, char *argv[])
 					, outqual
 					, Decimals_set? OUTDECIMALS: 0);
 	}
+
+printf ("%8.2lf | release memory... \n", timer_get());
 
 	/*==== clean up ====*/
 
@@ -1240,6 +1256,8 @@ int main (int argc, char *argv[])
 	mythread_mutex_destroy (&Groupmtx);
 	mythread_mutex_destroy (&Summamtx);
 	mythread_mutex_destroy (&Printmtx);
+
+printf ("%8.2lf | DONE!! \n", timer_get());
 
 	return EXIT_SUCCESS;
 }

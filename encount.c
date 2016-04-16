@@ -322,7 +322,49 @@ shrink_ENC (struct ENC *enc, gamesnum_t N_enc)
 	return g; // New N_encounters
 }
 
+//------------------------------------------------------------
+
+static int compare_plist (const void * a, const void * b)
+{
+	const player_t *ap = a;
+	const player_t *bp = b;
+	return *ap == *bp? 0: *ap > *bp;	
+}
+
+static player_t
+compact_plist (player_t *plist, player_t plist_n)
+{
+	player_t r, i;
+
+	qsort (plist, (size_t)plist_n, sizeof(player_t), compare_plist);
+
+	r = 0;
+	i = 1;		
+	while (i < plist_n) {
+
+		if (plist[i] == plist[r]) {
+			i++;
+		} else {
+			plist[r+1] = plist[i];
+			r++;
+			i++;
+		}
+	}
+
+	return plist_n > 0? r+1: 0;
+}
+
+
 #include "mymem.h"
+#include "string.h"
+
+typedef struct ENCNODE encnode_t;
+ 
+struct ENCNODE {
+	const struct ENC *encounter;
+	encnode_t *whitenext;
+	encnode_t *blacknext;
+};
 
 // no globals
 void
@@ -335,9 +377,34 @@ calc_output_info
 				, struct OUT_INFO *oi
 				)
 {
+	encnode_t * *pend;
+	encnode_t 	*ep;
+	gamesnum_t 	*p__;
+	player_t 	*plist;
+	player_t 	plist_n;
+
 	player_t 	wh, bl;
-	player_t 	j, o, *p;
+	player_t 	j, o, q;
 	gamesnum_t 	e, n;
+
+	if (NULL == (pend  = memnew(sizeof(encnode_t *) * (size_t)n_players))) {
+		fprintf(stderr, "No enough memory available, FILE %s, LINE %d\n", __FILE__, __LINE__); exit(EXIT_FAILURE);
+	}
+	if (NULL == (ep    = memnew(sizeof(encnode_t  ) * (size_t)N_enc    ))) {
+		memrel(pend);
+		fprintf(stderr, "No enough memory available, FILE %s, LINE %d\n", __FILE__, __LINE__); exit(EXIT_FAILURE);
+	}
+	if (NULL == (p__   = memnew(sizeof(gamesnum_t ) * (size_t)n_players))) {
+		memrel(pend);
+		memrel(ep);
+		fprintf(stderr, "No enough memory available, FILE %s, LINE %d\n", __FILE__, __LINE__); exit(EXIT_FAILURE);
+	}
+	if (NULL == (plist = memnew(sizeof(player_t   ) * (size_t)n_players * 2))) {
+		memrel(pend);
+		memrel(ep);
+		memrel(p__);
+		fprintf(stderr, "No enough memory available, FILE %s, LINE %d\n", __FILE__, __LINE__); exit(EXIT_FAILURE);
+	}
 
 	for (j = 0; j < n_players; j++) {
 		oi[j].W = 0;
@@ -367,57 +434,79 @@ calc_output_info
 		oi[j].opprat /= (double)n;
 	}
 
-	if (NULL != (p = memnew(sizeof(gamesnum_t) * (size_t)n_players))) {
-		player_t n_opp;
-		gamesnum_t n_games;
-		double sum;
+//
 
-		for (j = 0; j < n_players; j++) p[j] = 0;
+	for (j = 0; j < n_players; j++) {
+		pend[j] = NULL;
+	}
 
-		for (j = 0; j < n_players; j++) {
-			for (o = 0; o < n_players; o++) p[o] = 0;
+	for (e = 0; e < N_enc; e++) {
+		wh = enc[e].wh;
+		bl = enc[e].bl;
+		ep[e].encounter = &enc[e];
+		ep[e].whitenext = pend[wh];
+		ep[e].blacknext = pend[bl];
+		pend[wh] = &ep[e];
+		pend[bl] = &ep[e];
+	}
 
-			for (e = 0; e < N_enc; e++) {
-				n  = enc[e].W + enc[e].D + enc[e].L;
-				wh = enc[e].wh;
-				bl = enc[e].bl;
-				if (wh == j || bl == j) {
-					p[wh==j?bl:wh] += n;
-				}
-			}	
+	for (j = 0; j < n_players; j++) {
+		double sum = 0.0;
+		player_t n_opp = 0;
+		player_t opp;
+		encnode_t *x = pend[j];
+		gamesnum_t n_games = 0;
 
-			n_games = 0;
-			n_opp = 0;
-			for (o = 0; o < n_players; o++) {
-				if (p[o] > 0) {
-					n_opp++;
-					n_games += p[o];
-				}
-			}
+		memset (p__, 0, sizeof(p__[0])*(size_t)n_players);
+		plist_n = 0;
 
-			sum = 0;
-			for (o = 0; o < n_players; o++) {
-				if (p[o] > 0) {
-					double pi = (double)p[o]/(double)n_games;
-					sum +=  -pi * log(pi);
-				}
-			}
+		while (x) {
+			enc = x->encounter;
+			opp = enc->wh == j? enc->bl: enc->wh;
+			p__[opp] += enc->W + enc->D + enc->L;
+			plist[plist_n++] = opp;
+			x = enc->wh == j? x->whitenext: x->blacknext;
+		}
 
-			oi[j].n_opp = n_opp;
-			oi[j].diversity = exp(sum);
+		plist_n = compact_plist (plist, plist_n);
 
-			if (sdev) {
-				sum = 0;
-				for (o = 0; o < n_players; o++) {
-					if (p[o] > 0) {
-						sum += (double)p[o] * sdev[o];
-					}
-				}
-				oi[j].opperr = sum/(double)n_games;
+		n_games = 0;
+		n_opp = 0;
+		for (q = 0; q < plist_n; q++) {
+			o = plist[q];
+			if (p__[o] > 0) {
+				n_opp++;
+				n_games += p__[o];
 			}
 		}
 
-		memrel(p);
+		sum = 0;
+		for (q = 0; q < plist_n; q++) {
+			o = plist[q];
+			if (p__[o] > 0) {
+				double pi = (double)p__[o]/(double)n_games;
+				sum +=  -pi * log(pi);
+			}
+		}
+
+		oi[j].n_opp = n_opp;
+		oi[j].diversity = exp(sum);
+
+		if (sdev) {
+			sum = 0;
+			for (q = 0; q < plist_n; q++) {
+				o = plist[q];
+				if (p__[o] > 0) {
+					sum += (double)p__[o] * sdev[o];
+				}
+			}
+			oi[j].opperr = sum/(double)n_games;
+		}
 	}
+
+	memrel(pend);
+	memrel(ep);
+	memrel(p__);
+	memrel(plist);
 }
 

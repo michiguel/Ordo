@@ -32,6 +32,8 @@
 #include "xpect.h"
 #include "mymem.h"
 
+#include "mytimer.h"
+
 //=== duplicated in main.c =========
 
 static ptrdiff_t
@@ -778,6 +780,7 @@ find_maxlen (const char *nm[], struct outextra *q, size_t x_max)
 	return maxl;
 }
 
+
 void
 all_report 	( const struct GAMES 			*g
 			, const struct PLAYERS 			*p
@@ -839,16 +842,19 @@ all_report 	( const struct GAMES 			*g
 	}
 	listcopy (inp_list, listbuff);
 
-
 	encounters_calculate(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
 
 	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
+
+printf ("%8.2lf | calculate output info... \n", timer_get());
 
 	calc_output_info( e->enc, e->n, r->ratingof_results, p->n, sdev, out_info);
 
 	for (j = 0; j < p->n; j++) {
 		r->sorted[j] = j; 
 	}
+
+printf ("%8.2lf | sort... \n", timer_get());
 
 	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
 
@@ -859,6 +865,8 @@ all_report 	( const struct GAMES 			*g
 	if (csf_column) { // force 6 in list_chosen
 		addabsent (list_chosen, 6);
 	}
+
+printf ("%8.2lf | calculation for printing... \n", timer_get());
 
 	/* calculation for printing */
 	for (i = 0; i < p->n; i++) {
@@ -991,6 +999,9 @@ all_report 	( const struct GAMES 			*g
 	memrel (out_info);
 	memrel (q);
 	memrel (listbuff);
+
+printf ("%8.2lf | done with all reports. \n", timer_get());
+
 	return;
 }
 
