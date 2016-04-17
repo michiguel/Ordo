@@ -762,18 +762,19 @@ groupvar_build (group_var_t *gv, player_t n_plyrs, const char **name, const stru
 	super_t SP;
 	super_t *sp = &SP;
 
-	printf ("%8.2lf | memory initialization... \n", timer_get());
+	timelog("memory initialization...");
 
 	if (supporting_encmem_init (encounters->n, sp, &SElnk)) {
 
-		printf ("%8.2lf | scan games... \n", timer_get());
+		timelog("scan games...");
 		scan_encounters (encounters->enc, encounters->n, gv->groupbelong, players->n, sp->SE2, &sp->N_se2, SElnk , &SElnk_n); 
 
-		printf ("%8.2lf | general initialization...\n", timer_get());
+		timelog("general initialization...");
 		convert_general_init (gv, n_plyrs);
 
 		// Initiate groups from critical "super" encounters
-		printf ("%8.2lf | incorporate links into groups... N=%ld, Unique=%ld\n", timer_get(), (long)sp->N_se2, (long)SElnk_n);
+		timelog_ld("incorporate links into groups...      N=", (long)sp->N_se2);
+		timelog_ld("incorporate links into groups... Unique=", (long)SElnk_n);
 
 		groupset_reset_finding (gv);
 
@@ -788,7 +789,7 @@ groupvar_build (group_var_t *gv, player_t n_plyrs, const char **name, const stru
 		exit(EXIT_FAILURE);
 	}
 
-	printf ("%8.2lf | start groups for each player with no links...\n", timer_get());
+	timelog("start groups for each player with no links...");
 
 	// Initiate groups for each player present in the database that did not have 
 	// critical super encounters
@@ -797,7 +798,7 @@ groupvar_build (group_var_t *gv, player_t n_plyrs, const char **name, const stru
 			node_add_group (gv,i);
 	}
 
-	printf ("%8.2lf | add list of participants... \n", timer_get());
+	timelog("add list of participants...");
 	// for all the previous added groups, add respective list of participants
 	for (i = 0; i < n_plyrs; i++) {
 		if (node_is_occupied(gv,i)) {
@@ -808,17 +809,17 @@ groupvar_build (group_var_t *gv, player_t n_plyrs, const char **name, const stru
 
 	assert(groupset_sanity_check_nocombines(gv));
 
-	printf ("%8.2lf | group joining and simplification... \n", timer_get());
+	timelog("group joining and simplification...");
 	groupvar_simplify(gv);
 
-	printf ("%8.2lf | finish complex circuits... \n", timer_get());
+	timelog("finish complex circuits...");
 	groupvar_finish(gv);
 
-	printf ("%8.2lf | sort... \n", timer_get());
+	timelog("sort...");
 	groupvar_list_sort (gv);
 	groupvar_finallist_sort(gv);
 
-	printf ("%8.2lf | assign new indexes... \n", timer_get());
+	timelog("assign new indexes...");
 	groupvar_assign_newid (gv);
 
 	ret = groupvar_counter(gv) ;

@@ -846,7 +846,7 @@ all_report 	( const struct GAMES 			*g
 
 	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
 
-printf ("%8.2lf | calculate output info... \n", timer_get());
+	timelog("calculate output info...");
 
 	calc_output_info( e->enc, e->n, r->ratingof_results, p->n, sdev, out_info);
 
@@ -854,7 +854,7 @@ printf ("%8.2lf | calculate output info... \n", timer_get());
 		r->sorted[j] = j; 
 	}
 
-printf ("%8.2lf | sort... \n", timer_get());
+	timelog("sort...");
 
 	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
 
@@ -866,7 +866,7 @@ printf ("%8.2lf | sort... \n", timer_get());
 		addabsent (list_chosen, 6);
 	}
 
-printf ("%8.2lf | calculation for printing... \n", timer_get());
+	timelog("calculation for printing...");
 
 	/* calculation for printing */
 	for (i = 0; i < p->n; i++) {
@@ -1000,7 +1000,7 @@ printf ("%8.2lf | calculation for printing... \n", timer_get());
 	memrel (q);
 	memrel (listbuff);
 
-printf ("%8.2lf | done with all reports. \n", timer_get());
+	timelog("done with all reports.");
 
 	return;
 }

@@ -129,6 +129,7 @@ struct helpline SH[] = {
 {'q',	"quiet",		no_argument,		NULL,		0,	"quiet mode (no progress updates on screen)"},
 {'\0',	"silent",		no_argument,		NULL,		0,	"same as --quiet"},
 {'Q',	"terse",		no_argument,		NULL,		0,	"same as --quiet, but shows simulation counter"},
+{'\0',	"timelog",		no_argument,		NULL,		0,	"outputs elapsed time after each step"},
 {'a',	"average",		required_argument,	"NUM",		0,	"set rating for the pool average"},
 {'A',	"anchor",		required_argument,	"<player>",	0,	"anchor: rating given by '-a' is fixed for <player>"},
 {'V',	"pool-relative",no_argument,		NULL,		0,	"errors relative to pool average, not to the anchor"},
@@ -168,7 +169,7 @@ struct helpline SH[] = {
 {'i',	"include",		required_argument,	"FILE",		0,	"include only games of participants present in FILE"},
 {'x',	"exclude",		required_argument,	"FILE",		0,	"names in FILE will not have their games included"},
 {'\0',	"no-warnings",	no_argument,		NULL,		0,	"supress warnings of names from -x or -i that do not match names in input file"},
-{'b',	"column-format",required_argument,	"FILE",		0,	"format column output, each line being <column>,<width>,\"Header\""},
+{'b',	"column-format",required_argument,	"FILE",		0,	"format column output, each line form FILE being <column>,<width>,\"Header\""},
 
 {0,		NULL,			0,					NULL,		0,	NULL},
 
@@ -380,6 +381,9 @@ int main (int argc, char *argv[])
 	cfs_column      		= FALSE;
 	dowarning				= TRUE;
 
+	// global default
+	TIMELOG = FALSE;
+
 	strlist_init(psl);
 
 
@@ -402,6 +406,8 @@ int main (int argc, char *argv[])
 							synstr = opt_arg;
 						} else if (!strcmp(long_options[longoidx].name, "no-warnings")) {
 							dowarning = FALSE;
+						} else if (!strcmp(long_options[longoidx].name, "timelog")) {
+							TIMELOG = TRUE;
 						} else {
 							fprintf (stderr, "ERROR: %d\n", op);
 							exit(EXIT_FAILURE);
@@ -707,9 +713,9 @@ int main (int argc, char *argv[])
 
 	/*==== set input ====*/
 
-timer_reset();
-printf ("%8.2lf | start \n", timer_get());
-printf ("%8.2lf | input... \n", timer_get());
+	timer_reset();
+	timelog("start");
+	timelog("input...");
 
 	if (NULL != (pdaba = database_init_frompgn (psl, synstr, quiet_mode))) {
 		if (0 == pdaba->n_players || 0 == pdaba->n_games) {
@@ -978,8 +984,8 @@ printf ("%8.2lf | input... \n", timer_get());
 
 	summations_init(&sfe);
 
-printf ("%8.2lf | done with input\n", timer_get());
-printf ("%8.2lf | process groups if needed...\n", timer_get());
+	timelog("done with input");
+	timelog("process groups if needed...");
 
 	/*===== groups ========*/
 
@@ -989,19 +995,17 @@ printf ("%8.2lf | process groups if needed...\n", timer_get());
 	encounters_calculate (ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
 	if (group_is_output || groupcheck) {
-
-			printf ("%8.2lf | processing groups... \n", timer_get());
-			if (NULL == (gv = GV_make (&Encounters, &Players))) {
-				fprintf (stderr, "not enough memory for encounters allocation\n");
-				exit(EXIT_FAILURE);
-			}
+		timelog("processing groups...");
+		if (NULL == (gv = GV_make (&Encounters, &Players))) {
+			fprintf (stderr, "not enough memory for encounters allocation\n");
+			exit(EXIT_FAILURE);
+		}
 	}
 
 	if (group_is_output) {
-		gamesnum_t intra;
-		gamesnum_t inter;
+		gamesnum_t intra, inter;
 
-		printf ("%8.2lf | sieve groups... \n", timer_get());
+		timelog("sieve groups...");
 		GV_sieve (gv, &Encounters, &intra, &inter);
 
 		GV_out (gv, groupf);
@@ -1029,7 +1033,7 @@ printf ("%8.2lf | process groups if needed...\n", timer_get());
 		}
 	}
 
-	// Not used beyond this point
+	// Not used anymore beyond this point
 	if (gv) {
 		GV_kill(gv);
 		gv = NULL;
@@ -1056,13 +1060,10 @@ printf ("%8.2lf | process groups if needed...\n", timer_get());
 			fprintf (stderr, "*   Run switch -G to ignore warnings and force calculation  *\n");
 			fprintf (stderr, "*   (Attempting it may be very slow and may not converge)   *\n");
 			fprintf (stderr, "*************************************************************\n");
-
 			exit(EXIT_FAILURE);
 	}
 
-
-
-printf ("%8.2lf | calculate rating... \n", timer_get());
+	timelog("calculate rating...");
 
 	Encounters.n = calc_rating 	( quiet_mode
 								, Forces_ML || Prior_mode
@@ -1105,7 +1106,7 @@ printf ("%8.2lf | calculate rating... \n", timer_get());
 
 	/* Simulation block, begin */
 	if (Simulate > 1) {
-printf ("%8.2lf | simulation block... \n", timer_get());
+		timelog("simulation block...");
 		simul_smp
 				( cpus
 				, Simulate
@@ -1160,7 +1161,7 @@ printf ("%8.2lf | simulation block... \n", timer_get());
 
 	/*==== reports ====*/
 
-printf ("%8.2lf | output reports... \n", timer_get());
+	timelog("output reports...");
 
 	all_report 	( &Games
 				, &Players
@@ -1213,7 +1214,7 @@ printf ("%8.2lf | output reports... \n", timer_get());
 	}
 
 	if (head2head_str != NULL) {
-printf ("%8.2lf | head to head output... \n", timer_get());
+		timelog("head to head output...");
 		head2head_output
 					( &Games
 					, &Players
@@ -1230,7 +1231,7 @@ printf ("%8.2lf | head to head output... \n", timer_get());
 	}
 
 	if (Elostat_output) {
-printf ("%8.2lf | output in elostat format... \n", timer_get());
+		timelog("output in elostat format...");
 		cegt_output	( quiet_mode
 					, &Games
 					, &Players
@@ -1245,7 +1246,7 @@ printf ("%8.2lf | output in elostat format... \n", timer_get());
 					, Decimals_set? OUTDECIMALS: 0);
 	}
 
-printf ("%8.2lf | release memory... \n", timer_get());
+	timelog("release memory...");
 
 	/*==== clean up ====*/
 
@@ -1275,7 +1276,8 @@ printf ("%8.2lf | release memory... \n", timer_get());
 	mythread_mutex_destroy (&Summamtx);
 	mythread_mutex_destroy (&Printmtx);
 
-printf ("%8.2lf | DONE!! \n", timer_get());
+	timelog("DONE!!");
+	if (!quiet_mode) printf ("\ndone!\n");
 
 	return EXIT_SUCCESS;
 }

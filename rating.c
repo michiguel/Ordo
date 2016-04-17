@@ -766,7 +766,7 @@ calc_rating_ordo
 		correct_excess (n_players, flagged, excess, ratingof);
 	}
 
-printf ("%8.2lf | Post-Convergence rating estimation... \n", timer_get());
+	timelog("Post-Convergence rating estimation...");
 
 	encounters_calculate(ENCOUNTERS_FULL, g, flagged, encount);
 	enc   = encount->enc;
@@ -774,7 +774,7 @@ printf ("%8.2lf | Post-Convergence rating estimation... \n", timer_get());
 
 	calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
 
-printf ("%8.2lf | rate_super_players... \n", timer_get());
+	timelog("rate_super_players...");
 
 	rate_super_players(quiet, enc, n_enc, Performance_type, n_players, ratingof, white_adv, flagged, name, draw_rate, BETA); 
 
@@ -784,8 +784,7 @@ printf ("%8.2lf | rate_super_players... \n", timer_get());
 
 	calc_obtained_playedby(enc, n_enc, n_players, obtained, playedby);
 
-
-printf ("%8.2lf | done with rating calculation. \n", timer_get());
+	timelog("done with rating calculation.");
 
 	*pWhite_advantage = white_adv;
 	*pDraw_date = draw_rate;
