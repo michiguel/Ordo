@@ -85,7 +85,7 @@ relpriors_show (const struct PLAYERS *plyrs, const struct rel_prior_set *rps)
 	const struct relprior *rx = rps->x;
 	player_t i;
 	if (rn > 0) {
-		printf ("Relative Anchors {\n");
+		printf ("Relative Anchors = {\n");
 		for (i = 0; i < rn; i++) {
 			player_t a = rx[i].player_a;
 			player_t b = rx[i].player_b;
@@ -95,6 +95,7 @@ relpriors_show (const struct PLAYERS *plyrs, const struct rel_prior_set *rps)
 	} else {
 		printf ("Relative Anchors = none\n");
 	}
+	printf ("\n");
 }
 
 //==============================
