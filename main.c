@@ -336,7 +336,7 @@ int main (int argc, char *argv[])
 	const char *output_decimals;
 	const char *includes_str, *excludes_str, *columns_format_str, *multi_pgn, *single_pgn;
 	int version_mode, help_mode, switch_mode, license_mode, input_mode, table_mode;
-	bool_t group_is_output, Elostat_output, Ignore_draws, groups_no_check, Forces_ML, cfs_column;
+	bool_t group_is_output, Elostat_output, Ignore_draws, groupcheck, Forces_ML, cfs_column;
 	bool_t switch_w=FALSE, switch_W=FALSE, switch_u=FALSE, switch_d=FALSE, switch_k=FALSE, switch_D=FALSE;
 
 	strlist_t SL;
@@ -371,7 +371,7 @@ int main (int argc, char *argv[])
 	output_columns  		= NULL;
 	output_decimals  		= NULL;
 	group_is_output			= FALSE;
-	groups_no_check			= FALSE;
+	groupcheck					= TRUE;
 	groupstr 	 			= NULL;
 	Elostat_output 			= FALSE;
 	head2head_str			= NULL;
@@ -427,7 +427,7 @@ int main (int argc, char *argv[])
 			case 'g': 	group_is_output = TRUE;
 						groupstr = opt_arg;
 						break;
-			case 'G': 	groups_no_check = TRUE;
+			case 'G': 	groupcheck = FALSE;
 						break;
 			case 'j': 	head2head_str = opt_arg;
 						break;
@@ -677,7 +677,7 @@ int main (int argc, char *argv[])
 		fprintf (stderr, "Setting a general average (-a) is incompatible with having a file with rating seeds (-y)\n\n");
 		exit(EXIT_FAILURE);
 	}				
-	if (group_is_output && groups_no_check) {
+	if (group_is_output && !groupcheck) {
 		fprintf (stderr, "Switches -g and -G cannot be used at the same time\n\n");
 		exit(EXIT_FAILURE);
 	}				
@@ -988,7 +988,7 @@ printf ("%8.2lf | process groups if needed...\n", timer_get());
 	assert(players_have_clear_flags (&Players));
 	encounters_calculate (ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
-	if (group_is_output || !groups_no_check) {
+	if (group_is_output || groupcheck) {
 
 			printf ("%8.2lf | processing groups... \n", timer_get());
 			if (NULL == (gv = GV_make (&Encounters, &Players))) {
@@ -1016,7 +1016,7 @@ printf ("%8.2lf | process groups if needed...\n", timer_get());
 			GV_kill(gv);
 			exit(EXIT_SUCCESS);
 		}
- 	} else if (!groups_no_check) {
+ 	} else if (groupcheck) {
 
 		player_t groups_n = GV_counter (gv);
 		if (groups_n > 1) {
@@ -1046,7 +1046,7 @@ printf ("%8.2lf | process groups if needed...\n", timer_get());
 		encounters_calculate(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
 
-	if (!groups_no_check && !well_connected (&Encounters, &Players)) {
+	if (groupcheck && !well_connected (&Encounters, &Players)) {
 			fprintf (stderr, "\n\n");
 			fprintf (stderr, "*************************[ WARNING ]*************************\n");
 			fprintf (stderr, "*       Database is not well connected by games...          *\n");
