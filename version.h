@@ -1,2 +1,2 @@
-#define VERSION "1.2-enc2-opt2-grp3"
+#define VERSION "1.2.1"
 
