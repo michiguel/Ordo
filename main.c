@@ -342,6 +342,8 @@ int main (int argc, char *argv[])
 	strlist_t SL;
 	strlist_t *psl = &SL;
 
+	group_var_t *gv = NULL;
+
 	/* defaults */
 	adjust_white_advantage 	= FALSE;
 	adjust_draw_rate 		= FALSE;
@@ -981,35 +983,42 @@ printf ("%8.2lf | process groups if needed...\n", timer_get());
 
 	/*===== groups ========*/
 
+	gv = NULL;
+
 	assert(players_have_clear_flags (&Players));
 	encounters_calculate (ENCOUNTERS_FULL, &Games, Players.flagged, &Encounters);
 
+	if (group_is_output || !groups_no_check) {
+
+			printf ("%8.2lf | processing groups... \n", timer_get());
+			if (NULL == (gv = GV_make (&Encounters, &Players))) {
+				fprintf (stderr, "not enough memory for encounters allocation\n");
+				exit(EXIT_FAILURE);
+			}
+	}
+
 	if (group_is_output) {
-		bool_t ok;
-		player_t groups_n;
 		gamesnum_t intra;
 		gamesnum_t inter;
-		ok = groups_process (&Encounters, &Players, groupf, &groups_n, &intra, &inter);
-		if (!ok) {
-			fprintf (stderr, "not enough memory for encounters allocation\n");
-			exit(EXIT_FAILURE);
-		}
+
+		printf ("%8.2lf | sieve groups... \n", timer_get());
+		GV_sieve (gv, &Encounters, &intra, &inter);
+
+		GV_out (gv, groupf);
 		if (!quiet_mode) {
-			printf ("Groups=%ld\n", (long)groups_n);
+			printf ("\nGroups=%ld\n", (long)GV_counter(gv));
 			printf ("Encounters: Total=%ld, within groups=%ld, @ interface between groups=%ld\n"
-						,(long)Encounters.n, (long)intra, (long)inter);
+					, (long)Encounters.n, (long)intra, (long)inter);
 		}
+
 		if (textstr == NULL && csvstr == NULL)	{
+			if (groupf_opened) 	fclose(groupf);
+			GV_kill(gv);
 			exit(EXIT_SUCCESS);
 		}
  	} else if (!groups_no_check) {
-		player_t groups_n;
-		bool_t ok;
-		ok = groups_process_to_count (&Encounters, &Players, &groups_n);
-		if (!ok) {
-			fprintf (stderr, "not enough memory for encounters allocation\n");
-			exit(EXIT_FAILURE);
-		}
+
+		player_t groups_n = GV_counter (gv);
 		if (groups_n > 1) {
 			fprintf (stderr, "\n\n");
 			fprintf (stderr, "********************[ WARNING ]**********************\n");
@@ -1018,6 +1027,12 @@ printf ("%8.2lf | process groups if needed...\n", timer_get());
 			fprintf (stderr, "*****************************************************\n");
 			fprintf (stderr, " ====> Groups detected: %ld\n\n\n", (long) groups_n);
 		}
+	}
+
+	// Not used beyond this point
+	if (gv) {
+		GV_kill(gv);
+		gv = NULL;
 	}
 
 	/*==== ratings calc ===*/
@@ -1031,7 +1046,7 @@ printf ("%8.2lf | process groups if needed...\n", timer_get());
 		encounters_calculate(ENCOUNTERS_NOFLAGGED, &Games, Players.flagged, &Encounters);
 	}
 
-	if (!groups_no_check && !groups_are_ok (&Encounters, &Players)) {
+	if (!groups_no_check && !well_connected (&Encounters, &Players)) {
 			fprintf (stderr, "\n\n");
 			fprintf (stderr, "*************************[ WARNING ]*************************\n");
 			fprintf (stderr, "*       Database is not well connected by games...          *\n");
@@ -1041,8 +1056,11 @@ printf ("%8.2lf | process groups if needed...\n", timer_get());
 			fprintf (stderr, "*   Run switch -G to ignore warnings and force calculation  *\n");
 			fprintf (stderr, "*   (Attempting it may be very slow and may not converge)   *\n");
 			fprintf (stderr, "*************************************************************\n");
+
 			exit(EXIT_FAILURE);
 	}
+
+
 
 printf ("%8.2lf | calculate rating... \n", timer_get());
 

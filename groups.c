@@ -28,14 +28,9 @@
 #include "mymem.h"
 #include "bitarray.h"
 
+#include "mytimer.h"
+
 #define NO_ID -1
-
-
-
-
-static struct GROUP_BUFFER 			Group_buffer;
-static struct PARTICIPANT_BUFFER	Participant_buffer;
-static struct CONNECT_BUFFER		Connection_buffer;
 
 static bool_t	group_buffer_init (struct GROUP_BUFFER *g, player_t n);
 static void		group_buffer_done (struct GROUP_BUFFER *g);
@@ -48,63 +43,53 @@ static void		connection_buffer_done (struct CONNECT_BUFFER *x);
 
 // supporting memory
 
-	// enc
-
 	// SE2: list of "Super" encounters that do not belong to the same group
 
-static struct ENC *	SE2  = NULL;
-static gamesnum_t	N_se2 = 0;
+struct SUPER {
+	struct ENC *	SE2;
+	gamesnum_t		N_se2;
+};
 
-	// groups
-
-static player_t		N_players = 0;
-
-static player_t	*	Group_belong;
-
-static player_t *	Get_new_id;
-
-static group_t 	**	Group_final_list;
-static player_t		Group_final_list_n = 0;
-
-static node_t	*	Node;
-
-static player_t	*	CHAIN;
+typedef struct SUPER super_t;
 
 //----------------------------------------------------------------------
 
-static void				simplify_all (void);
-static void				finish_it (void);
-static void 			connect_init (void) {Connection_buffer.n = 0;}
-static connection_t *	connection_new (void) 
+static void				groupvar_simplify (group_var_t *gv);
+static void				groupvar_finish (group_var_t *gv);
+static void 			connect_init (group_var_t *gv) {gv->connectionbuffer.n = 0;}
+static connection_t *	connection_new (group_var_t *gv) 
 {
-	assert (Connection_buffer.n < Connection_buffer.max);
-	return &Connection_buffer.list[Connection_buffer.n++];
+	assert (gv->connectionbuffer.n < gv->connectionbuffer.max);
+	return &gv->connectionbuffer.list[gv->connectionbuffer.n++];
 }
 
-static void 			participant_init (void) {Participant_buffer.n = 0;}
-static participant_t *	participant_new (void) 
+static void 			participant_init (group_var_t *gv) {gv->participantbuffer.n = 0;}
+static participant_t *	participant_new (group_var_t *gv) 
 {
-	assert (Participant_buffer.n < Participant_buffer.max);	
-	return &Participant_buffer.list[Participant_buffer.n++];
+	assert (gv->participantbuffer.n < gv->participantbuffer.max);	
+	return &gv->participantbuffer.list[gv->participantbuffer.n++];
 }
 
 // prototypes
-static group_t * 	group_new (void);
+
+static group_t * 	group_new (group_var_t *gv);
 static group_t * 	group_reset (group_t *g);
 static group_t * 	group_combined (group_t *g);
 static group_t * 	group_pointed_by_conn (connection_t *c);
 static group_t *	group_pointed_by_node (node_t *nd);
-static void			final_list_output (FILE *f);
-static void			group_output (FILE *f, group_t *s);
+static void			groupvar_assign_newid (group_var_t *gv);
+static void			groupvar_list_sort (group_var_t *gv);
+static void			groupvar_list_output (group_var_t *gv, FILE *f);
+static void			group_output (group_t *s, group_var_t *gv, FILE *f, bool_t showlinks);
 
 // groupset functions
 
 #ifndef NDEBUG
 static bool_t
-groupset_sanity_check(void)
+groupset_sanity_check(group_var_t *gv)
 { 
 	// verify g is properly double-linked
-	group_t *g = Group_buffer.prehead;
+	group_t *g = gv->groupbuffer.prehead;
 	if (g == NULL) return FALSE;
 	for (g = g->next; g != NULL; g = g->next) {
 		if (g->prev == NULL) return FALSE;
@@ -113,10 +98,10 @@ groupset_sanity_check(void)
 }
 
 static bool_t
-groupset_sanity_check_nocombines(void)
+groupset_sanity_check_nocombines(group_var_t *gv)
 { 
 	// verify g is properly double-linked
-	group_t *g = Group_buffer.prehead;
+	group_t *g = gv->groupbuffer.prehead;
 	if (g == NULL) return FALSE;
 	for (g = g->next; g != NULL; g = g->next) {
 		if (g->combined != NULL) return FALSE;
@@ -126,25 +111,25 @@ groupset_sanity_check_nocombines(void)
 #endif
 
 static void 
-groupset_init (void) 
+groupset_init (group_var_t *gv) 
 {
-	Group_buffer.tail    = &Group_buffer.list[0];
-	Group_buffer.prehead = &Group_buffer.list[0];
-	group_reset(Group_buffer.prehead);
-	Group_buffer.n = 1;
+	gv->groupbuffer.tail    = &gv->groupbuffer.list[0];
+	gv->groupbuffer.prehead = &gv->groupbuffer.list[0];
+	group_reset(gv->groupbuffer.prehead);
+	gv->groupbuffer.n = 1;
 }
 
-static group_t * groupset_tail (void) {return Group_buffer.tail;}
-static group_t * groupset_head (void) {return Group_buffer.prehead->next;}
+static group_t * groupset_tail (group_var_t *gv) {return gv->groupbuffer.tail;}
+static group_t * groupset_head (group_var_t *gv) {return gv->groupbuffer.prehead->next;}
 
 #if 0
 // for debuggin purposes
-static void groupset_print(void)
+static void groupset_print(group_var_t *gv)
 {
 	group_t * s;
 	printf("ID added {\n");
-	for (s = groupset_head(); s != NULL; s = s->next) {
-		printf("  id=%d\n",s->id);
+	for (s = groupset_head(gv); s != NULL; s = s->next) {
+		printf("  id=%ld\n", (long)s->id);
 	}
 	printf("}\n");
 	return;
@@ -152,59 +137,95 @@ static void groupset_print(void)
 #endif
 
 static void 
-groupset_add (group_t *a) 
+groupset_add (group_var_t *gv, group_t *a) 
 {
-	group_t *t = groupset_tail();
+	group_t *t = groupset_tail(gv);
 	t->next = a;
 	a->prev = t;
-	Group_buffer.tail = a;
+	gv->groupbuffer.tail = a;
+}
+
+static void
+groupset_reset_finding (group_var_t *gv)
+{
+	group_t * s;
+	player_t i;
+
+	for (i = 0; i < gv->nplayers; i++) {
+		gv->tofindgroup[i] = NULL;
+	}
+	for (s = groupset_head(gv); s != NULL; s = s->next) {
+		gv->tofindgroup[s->id] = s;
+	}
 }
 
 static group_t * 
-groupset_find (player_t id)
+groupset_find (group_var_t *gv, player_t id)
 {
+#if 1
+	return gv->tofindgroup[id];
+#else
 	group_t * s;
-	for (s = groupset_head(); s != NULL; s = s->next) {
+	for (s = groupset_head(gv); s != NULL; s = s->next) {
 		if (id == s->id) return s;
 	}
 	return NULL;
+#endif
 }
 
 //---------------------------------- INITIALIZATION --------------------------
 
-bool_t
-supporting_encmem_init (gamesnum_t nenc)
+typedef struct SELINK selink_t;
+
+struct SELINK {
+	player_t iwin;
+	player_t ilos;
+};
+
+static bool_t
+supporting_encmem_init (gamesnum_t nenc, super_t *sp, selink_t **pse)
 {
 	struct ENC *a;
+	selink_t *b;
+
 	if (NULL == (a = memnew (sizeof(struct ENC) * (size_t)nenc))) {
 		return FALSE;
-	} 
-	SE2 = a;
+	} else
+	if (NULL == (b = memnew (sizeof(selink_t)   * (size_t)nenc))) {
+		memrel(a);
+		return FALSE;
+	}	
+	sp->SE2 = a;
+	*pse = b;
+
 	return TRUE;
 }
 
-void
-supporting_encmem_done (void)
+static void
+supporting_encmem_done (super_t *sp, selink_t *se)
 {
-	if (SE2) memrel (SE2);
-	N_se2 = 0;
+	if (sp->SE2) memrel (sp->SE2);
+	sp->N_se2 = 0;
+	if (se) memrel (se);
 	return;
 }
 
 bool_t
-supporting_groupmem_init (player_t nplayers, gamesnum_t nenc)
+groupvar_init (group_var_t *gv, player_t nplayers, gamesnum_t nenc)
 {
 	player_t 	*a;
 	player_t	*b;
-	group_t *	*c;
+	groupcell_t *c;
 	node_t 		*d;
 	player_t	*e;
+	group_t		**f;
 
 	size_t		sa = sizeof(player_t);
 	size_t		sb = sizeof(player_t);
-	size_t		sc = sizeof(group_t *);
+	size_t		sc = sizeof(groupcell_t *);
 	size_t		sd = sizeof(node_t);
 	size_t		se = sizeof(player_t);
+	size_t		sf = sizeof(group_t *);
 
 	if (NULL == (a = memnew (sa * (size_t)nplayers))) {
 		return FALSE;
@@ -230,26 +251,36 @@ supporting_groupmem_init (player_t nplayers, gamesnum_t nenc)
 		memrel(c);
 		memrel(d);
 		return FALSE;
-	}
-
-	Group_belong = a;
-	Get_new_id = b;
-	Group_final_list = c;
-	Node = d;
-	CHAIN = e;
-
-	N_players = nplayers;
-
-	if (!group_buffer_init (&Group_buffer, nplayers)) {
+	} else 
+	if (NULL == (f = memnew (sf * (size_t)nplayers))) {
+		memrel(a);
+		memrel(b);
+		memrel(c);
+		memrel(d);
+		memrel(e);
 		return FALSE;
 	}
-	if (!participant_buffer_init (&Participant_buffer, nplayers)) {
-		 group_buffer_done (&Group_buffer);
+
+	gv->groupbelong = a;
+	gv->getnewid = b;
+	gv->groupfinallist = c;
+	gv->node = d;
+	gv->gchain = e;
+	gv->tofindgroup = f;
+
+	gv->nplayers = nplayers;
+	gv->groupfinallist_n = 0;
+
+	if (!group_buffer_init (&gv->groupbuffer, nplayers)) {
 		return FALSE;
 	}
-	if (!connection_buffer_init (&Connection_buffer, nenc*2)) {
-		 group_buffer_done (&Group_buffer);
-		 participant_buffer_done (&Participant_buffer);
+	if (!participant_buffer_init (&gv->participantbuffer, nplayers)) {
+		 group_buffer_done (&gv->groupbuffer);
+		return FALSE;
+	}
+	if (!connection_buffer_init (&gv->connectionbuffer, nenc*2)) {
+		 group_buffer_done (&gv->groupbuffer);
+		 participant_buffer_done (&gv->participantbuffer);
 		return FALSE;
 	}
 
@@ -257,26 +288,31 @@ supporting_groupmem_init (player_t nplayers, gamesnum_t nenc)
 }
 
 void
-supporting_groupmem_done (void)
+groupvar_done (group_var_t *gv)
 {
-	if (Group_belong)	 	memrel (Group_belong );
-	if (Get_new_id) 		memrel (Get_new_id);
-	if (Group_final_list) 	memrel (Group_final_list);
-	if (Node) 				memrel (Node);
-	if (CHAIN) 				memrel (CHAIN);
+	assert(gv);
 
-	Group_belong = NULL;
-	Get_new_id = NULL;
-	Group_final_list = NULL;
-	Node = NULL;
-	CHAIN = NULL;
+	if (gv->groupbelong)	memrel (gv->groupbelong );
+	if (gv->getnewid) 		memrel (gv->getnewid);
+	if (gv->groupfinallist) memrel (gv->groupfinallist);
+	if (gv->node) 			memrel (gv->node);
+	if (gv->gchain) 		memrel (gv->gchain);
+	if (gv->tofindgroup) 	memrel (gv->tofindgroup);
 
-	Group_final_list_n = 0;
-	N_players = 0;
 
-	group_buffer_done (&Group_buffer);
-	participant_buffer_done (&Participant_buffer);
-	connection_buffer_done (&Connection_buffer);
+	gv->groupbelong = NULL;
+	gv->getnewid = NULL;
+	gv->groupfinallist = NULL;
+	gv->node = NULL;
+	gv->gchain = NULL;
+	gv->tofindgroup = NULL;
+
+	gv->groupfinallist_n = 0;
+	gv->nplayers = 0;
+
+	group_buffer_done (&gv->groupbuffer);
+	participant_buffer_done (&gv->participantbuffer);
+	connection_buffer_done (&gv->connectionbuffer);
 
 	return;
 }
@@ -357,9 +393,9 @@ connection_buffer_done (struct CONNECT_BUFFER *x)
 
 //----------------------------------------------------------------------------
 
-static group_t * group_new (void) 
+static group_t * group_new (group_var_t *gv) 
 {
-	return &Group_buffer.list[Group_buffer.n++];
+	return &gv->groupbuffer.list[gv->groupbuffer.n++];
 }
 
 static group_t * group_reset (group_t *g)
@@ -385,10 +421,10 @@ static group_t * group_combined (group_t *g)
 
 //no globals
 static void
-add_participant (group_t *g, player_t i, const char *name)
+add_participant (group_var_t *gv, group_t *g, player_t i, const char *name)
 {
 	participant_t *nw;
-	nw = participant_new();
+	nw = participant_new(gv);
 	nw->next = NULL;
 	nw->name = name;
 	nw->id = i; 
@@ -404,88 +440,131 @@ add_participant (group_t *g, player_t i, const char *name)
 
 //no globals
 static void
-add_beat_connection (group_t *g, struct NODE *pnode)
+add_beat_connection (group_var_t *gv, group_t *g, struct NODE *pnode)
 {
-	player_t group_id;
+	// Assume scan counters properly sorted and eliminated duplicates
+	// otherwise, duplicates could be added	
+
 	connection_t *nw;
 
-	assert(g);
-	assert(pnode);
-	assert(pnode->group);
+	assert(g && pnode && pnode->group);
 
-	group_id = pnode->group->id;
-
+	nw = connection_new(gv);
+	nw->next = NULL;
+	nw->node = pnode;
 	if (g->cstart == NULL) {
-		nw = connection_new();
-		nw->next = NULL;
-		nw->node = pnode;
 		g->cstart = nw; 
-		g->clast = nw;	
 	} else {
-		connection_t *l, *c;
-		bool_t found = FALSE;
-		for (c = g->cstart; !found && c != NULL; c = c->next) {
-			node_t *nd = c->node;
-			found = nd && nd->group && nd->group->id == group_id;
-		}
-		if (!found) {
-			nw = connection_new();
-			nw->next = NULL;
-			nw->node = pnode;
-			l = g->clast;
-			l->next  = nw;
-			g->clast = nw;
-		}
+		g->clast->next  = nw;
 	}		
+	g->clast = nw;
 }
 
 // no globals
 static void
-add_lost_connection (group_t *g, struct NODE *pnode)
+add_lost_connection (group_var_t *gv, group_t *g, struct NODE *pnode)
 {
-	player_t group_id;
+	// Assume scan counters properly sorted and eliminated duplicates
+	// otherwise, duplicates could be added	
+
 	connection_t *nw;
 
-	assert(g);
-	assert(pnode);
-	assert(pnode->group);
+	assert(g && pnode && pnode->group);
 
-	group_id = pnode->group->id;
-
+	nw = connection_new(gv);
+	nw->next = NULL;
+	nw->node = pnode;
 	if (g->lstart == NULL) {
-		nw = connection_new();
-		nw->next = NULL;
-		nw->node = pnode;
 		g->lstart = nw; 
-		g->llast = nw;	
 	} else {
-		connection_t *l, *c;
-		bool_t found = FALSE;
-		for (c = g->lstart; !found && c != NULL; c = c->next) {
-			node_t *nd = c->node;
-			found = nd && nd->group && nd->group->id == group_id;
-		}
-		if (!found) {
-			nw = connection_new();
-			nw->next = NULL;
-			nw->node = pnode;
-			l = g->llast;
-			l->next  = nw;
-			g->llast = nw;
-		}
+		g->llast->next  = nw;
 	}		
+	g->llast = nw;
 }
+
+//
+
+
+typedef struct PNODE pnode_t;
+
+struct PNODE {
+	player_t 	indx;
+	pnode_t *	next;
+	pnode_t	*	last;		
+};
+
+static void
+pnode_clear (pnode_t *pn, player_t n)
+{
+	player_t i;
+	for (i = 0; i < n; i++) {
+		pn[i].indx = i;
+		pn[i].next = NULL;
+		pn[i].last = NULL;
+	}
+}
+
+static void
+pnode_connect (pnode_t *pn, player_t i, player_t j)
+{
+	player_t z;
+	pnode_t *a, *b, *c, *l;
+
+	a = pn + i;
+	b = pn + j;
+	z = a->indx;
+
+	for (c = b; c != NULL; c = c->next) c->indx = z; // fill
+
+	l = b->last? b->last: b;
+
+	l->next = a->next;
+	a->next = b;	
+	if (a->last == NULL) a->last = l;
+	b->last = NULL;
+	
+}
+
+static int compare_selink (const void * a, const void * b)
+{
+	const selink_t *sa = a;
+	const selink_t *sb = b;
+
+	if (sa->iwin < sb->iwin) return -1;
+	if (sa->iwin > sb->iwin) return 1;
+
+	if (sa->ilos < sb->ilos) return -1;
+	if (sa->ilos > sb->ilos) return 1;
+
+	return 0;
+}
+
+static player_t get_iwin (struct ENC *pe);
+static player_t get_ilos (struct ENC *pe);
 
 static bool_t encounter_is_SW (const struct ENC *e) {return e->W  > 0 && e->D == 0 && e->L == 0;}
 static bool_t encounter_is_SL (const struct ENC *e) {return e->W == 0 && e->D == 0 && e->L  > 0;}
+
+static bool_t
+same_SE_link (selink_t *a, selink_t *b)
+{
+	return 	a->iwin == b->iwin && 
+			a->ilos == b->ilos;
+}
 
 // no globals
 static void
 scan_encounters ( const struct ENC *enc, gamesnum_t n_enc
 				, player_t *belongto, player_t n_plyrs
-				, struct ENC *sup_enc, gamesnum_t *pn_enc)
+				, struct ENC *sup_enc, gamesnum_t *pn_enc
+				 
+				, selink_t *sel
+				, gamesnum_t *psel_n
+				)
 {
 	// sup_enc: list of "Super" encounters that do not belong to the same group
+
+ 	pnode_t *xx;
 
 	player_t i;
 	gamesnum_t e;
@@ -501,26 +580,38 @@ scan_encounters ( const struct ENC *enc, gamesnum_t n_enc
 		belongto[i] = i;
 	}
 
-	for (e = 0, n_a = 0; e < n_enc; e++) {
-		pe = &enc[e];
-		if (encounter_is_SL(pe) || encounter_is_SW(pe)) {
-			sup_enc[n_a++] = *pe;
-		} else {
-			gw = belongto[pe->wh];
-			gb = belongto[pe->bl];
-			if (gw != gb) {
-				lowerg   = gw < gb? gw : gb;
-				higherg  = gw > gb? gw : gb;
-				// join
-				for (i = 0; i < n_plyrs; i++) {
-					if (belongto[i] == higherg) {
-						belongto[i] = lowerg;
-					}
+//
+	if (NULL != (xx = memnew( (size_t)n_plyrs * sizeof(pnode_t) ))) {
+
+		pnode_clear (xx, n_plyrs);
+
+		for (e = 0, n_a = 0; e < n_enc; e++) {
+			pe = &enc[e];
+			if (encounter_is_SL(pe) || encounter_is_SW(pe)) {
+				sup_enc[n_a++] = *pe;
+			} else {
+				gw = xx[pe->wh].indx;
+				gb = xx[pe->bl].indx;
+				if (gw != gb) {
+					lowerg   = gw < gb? gw : gb;
+					higherg  = gw > gb? gw : gb;
+					// join
+					pnode_connect(xx, lowerg, higherg);
 				}
 			}
-		}
-	} 
+		} 
 
+		for (i = 0; i < n_plyrs; i++) {
+			belongto[i] = xx[i].indx;
+		}
+
+		memrel(xx);
+
+	} else {
+		fprintf(stderr,"Not enough memory available, FILE=%s, LINE=%d\n",__FILE__, __LINE__);
+		exit(EXIT_FAILURE);
+	}
+//
 	for (e = 0, n_b = 0 ; e < n_a; e++) {
 		player_t x,y;
 		x = sup_enc[e].wh;
@@ -534,29 +625,52 @@ scan_encounters ( const struct ENC *enc, gamesnum_t n_enc
 
 	*pn_enc = n_b; 	// number of "Super" encounters that do not belong to the same group
 
+{
+	gamesnum_t r;
+
+	for (e = 0; e < n_b; e++) {
+		sel[e].iwin = belongto [ get_iwin(&sup_enc[e]) ];
+		sel[e].ilos = belongto [ get_ilos(&sup_enc[e]) ];
+	}
+
+	qsort (sel, (size_t)n_b, sizeof(selink_t), compare_selink);
+
+	*psel_n = n_b;
+
+	for (e = 1, r = 0 ; e < n_b; e++) {
+		if (!same_SE_link (&sel[r], &sel[e]) ) {
+			r++;
+			if (r != e) sel[r] = sel[e];
+		}
+	}
+	*psel_n = r + 1;
+}
+
 	return;
 }
 
-static bool_t node_is_occupied (player_t x) {return Node[x].group != NULL;}
+static bool_t node_is_occupied (group_var_t *gv, player_t x) {return gv->node[x].group != NULL;}
 
 static void
-node_add_group (player_t x)
+node_add_group (group_var_t *gv, player_t x)
 {
 	group_t *g;
-	assert (!node_is_occupied(x)); 
-	if (NULL == (g = groupset_find (Group_belong[x]))) {
-		g = group_reset(group_new());	
-		g->id = Group_belong[x];
-		groupset_add(g);
+	assert (!node_is_occupied(gv,x)); 
+	if (NULL == (g = groupset_find (gv, gv->groupbelong[x]))) {
+		g = group_reset(group_new(gv));	
+		g->id = gv->groupbelong[x];
+		groupset_add(gv,g);
+
+		gv->tofindgroup[gv->groupbelong[x]] = g;
 	}
-	assert (g->id == Group_belong[x]);
-	Node[x].group = g;
+	assert (g->id == gv->groupbelong[x]);
+	gv->node[x].group = g;
 }
 
 static player_t
-group_belonging (player_t x)
+group_belonging (group_var_t *gv, player_t x)
 {
-	group_t *g = group_pointed_by_node (&Node[x]);
+	group_t *g = group_pointed_by_node (&gv->node[x]);
 	return NULL == g? NO_ID: g->id;
 }
 
@@ -576,11 +690,23 @@ group_pointed_by_conn (connection_t *c)
 	return c == NULL? NULL: group_pointed_by_node (c->node);
 }
 
+// no globals
+static void
+selink2group (player_t iwin, player_t ilos, group_var_t *gv)
+{	
+	if (!node_is_occupied (gv,iwin)) node_add_group (gv,iwin);
+	if (!node_is_occupied (gv,ilos)) node_add_group (gv,ilos);
+	add_beat_connection	(gv, gv->node[iwin].group, &gv->node[ilos]);
+	add_lost_connection	(gv, gv->node[ilos].group, &gv->node[iwin]);
+}
+
 static player_t get_iwin (struct ENC *pe) {return pe->W > 0? pe->wh: pe->bl;}
 static player_t get_ilos (struct ENC *pe) {return pe->W > 0? pe->bl: pe->wh;}
 
+#if 0
+// no globals
 static void
-sup_enc2group (struct ENC *pe)
+sup_enc2group (struct ENC *pe, group_var_t *gv)
 {	
 	// sort super encounter
 	// into their respective groups	
@@ -591,13 +717,9 @@ sup_enc2group (struct ENC *pe)
 
 	iwin = get_iwin(pe);
 	ilos = get_ilos(pe);
-
-	if (!node_is_occupied (iwin)) node_add_group (iwin);
-	if (!node_is_occupied (ilos)) node_add_group (ilos);
-
-	add_beat_connection	(Node[iwin].group, &Node[ilos]);
-	add_lost_connection	(Node[ilos].group, &Node[iwin]);
+	selink2group (iwin, ilos, gv);
 }
+#endif
 
 static void
 group_gocombine (group_t *g, group_t *h);
@@ -605,78 +727,109 @@ group_gocombine (group_t *g, group_t *h);
 
 
 static void
-convert_general_init (player_t n_plyrs)
+convert_general_init (group_var_t *gv, player_t n_plyrs)
 {
 	player_t i;
-	connect_init();
-	participant_init();
-	groupset_init();
+
+	connect_init(gv);
+	participant_init(gv);
+	groupset_init(gv);
 	for (i = 0; i < n_plyrs; i++) {
-		Node[i].group = NULL;
+		gv->node[i].group = NULL;
 	}
 	return;
 }
 
 static player_t
-groups_counter (void)
+groupvar_counter (group_var_t *gv)
 {
-	return Group_final_list_n;
-}
-
-
-player_t
-convert_to_groups (FILE *f, player_t n_plyrs, const char **name, const struct PLAYERS *players, const struct ENCOUNTERS *encounters)
-{
-	player_t i;
-	gamesnum_t e;
-
-	scan_encounters(encounters->enc, encounters->n, Group_belong, players->n, SE2, &N_se2); 
-
-	convert_general_init (n_plyrs);
-	
-	// Initiate groups from critical "super" encounters
-	for (e = 0 ; e < N_se2; e++) {
-		sup_enc2group (&SE2[e]);
-	}
-
-	// Initiate groups for each player present in the database that did not have 
-	// critical super encounters
-	for (i = 0; i < n_plyrs; i++) {
-		if (players->present_in_games[i] && !node_is_occupied (i)) 
-			node_add_group (i);
-	}
-
-	// for all the previous added groups, add respective list of participants
-	for (i = 0; i < n_plyrs; i++) {
-		if (node_is_occupied(i)) {
-			group_t *g = groupset_find(Group_belong[i]);
-			if (g) add_participant(g, i, name[i]);	
-		}
-	}
-
-	assert(groupset_sanity_check_nocombines());
-
-	simplify_all();
-	finish_it();
-
-	if (NULL != f) {
-		if (groups_counter() > 1) {
-			fprintf (f,"Group connectivity: **FAILED**\n");
-			final_list_output(f);
-		} else {
-			assert (1 == groups_counter());
-			fprintf (f,"Group connectivity: **PASSED**\n");
-			fprintf (f,"All players are connected into only one group.\n");
-
-		}	
-	}
-
-	return groups_counter() ;
+	return gv->groupfinallist_n;
 }
 
 
 static void
-sieve_encounters	( const struct ENC *enc
+groupvar_finallist_sort(group_var_t *gv);
+
+player_t
+groupvar_build (group_var_t *gv, player_t n_plyrs, const char **name, const struct PLAYERS *players, const struct ENCOUNTERS *encounters)
+{
+	selink_t *SElnk;
+	gamesnum_t SElnk_n;
+
+	player_t ret;
+	player_t i;
+	gamesnum_t e;
+	super_t SP;
+	super_t *sp = &SP;
+
+	printf ("%8.2lf | memory initialization... \n", timer_get());
+
+	if (supporting_encmem_init (encounters->n, sp, &SElnk)) {
+
+		printf ("%8.2lf | scan games... \n", timer_get());
+		scan_encounters (encounters->enc, encounters->n, gv->groupbelong, players->n, sp->SE2, &sp->N_se2, SElnk , &SElnk_n); 
+
+		printf ("%8.2lf | general initialization...\n", timer_get());
+		convert_general_init (gv, n_plyrs);
+
+		// Initiate groups from critical "super" encounters
+		printf ("%8.2lf | incorporate links into groups... N=%ld, Unique=%ld\n", timer_get(), (long)sp->N_se2, (long)SElnk_n);
+
+		groupset_reset_finding (gv);
+
+		for (e = 0 ; e < SElnk_n; e++) {
+			selink2group (SElnk[e].iwin, SElnk[e].ilos, gv);
+		}
+
+		supporting_encmem_done (sp, SElnk);
+
+	} else {
+		fprintf (stderr, "No memory available\n");
+		exit(EXIT_FAILURE);
+	}
+
+	printf ("%8.2lf | start groups for each player with no links...\n", timer_get());
+
+	// Initiate groups for each player present in the database that did not have 
+	// critical super encounters
+	for (i = 0; i < n_plyrs; i++) {
+		if (players->present_in_games[i] && !node_is_occupied (gv,i)) 
+			node_add_group (gv,i);
+	}
+
+	printf ("%8.2lf | add list of participants... \n", timer_get());
+	// for all the previous added groups, add respective list of participants
+	for (i = 0; i < n_plyrs; i++) {
+		if (node_is_occupied(gv,i)) {
+			group_t *g = groupset_find(gv, gv->groupbelong[i]);
+			if (g) add_participant(gv, g, i, name[i]);	
+		}
+	}
+
+	assert(groupset_sanity_check_nocombines(gv));
+
+	printf ("%8.2lf | group joining and simplification... \n", timer_get());
+	groupvar_simplify(gv);
+
+	printf ("%8.2lf | finish complex circuits... \n", timer_get());
+	groupvar_finish(gv);
+
+	printf ("%8.2lf | sort... \n", timer_get());
+	groupvar_list_sort (gv);
+	groupvar_finallist_sort(gv);
+
+	printf ("%8.2lf | assign new indexes... \n", timer_get());
+	groupvar_assign_newid (gv);
+
+	ret = groupvar_counter(gv) ;
+
+	return ret;
+}
+
+
+static void
+groupvar_sieveenc	( group_var_t *gv
+					, const struct ENC *enc
 					, gamesnum_t n_enc
 					, gamesnum_t *N_enca
 					, gamesnum_t *N_encb
@@ -689,7 +842,7 @@ sieve_encounters	( const struct ENC *enc
 	for (e = 0; e < n_enc; e++) {
 		w = enc[e].wh; 
 		b = enc[e].bl; 
-		if (group_belonging(w) == group_belonging(b)) {
+		if (group_belonging(gv,w) == group_belonging(gv,b)) {
 			na += 1;
 		} else {
 			nb += 1;
@@ -742,7 +895,7 @@ group_gocombine (group_t *g, group_t *h)
 //-----------------------------------------------
 
 
-static void simplify (group_t *g);
+static void simplify (group_t *g, group_t **cmbbuf);
 
 static group_t *group_next (group_t *g)
 {
@@ -751,17 +904,29 @@ static group_t *group_next (group_t *g)
 }
 
 static void
-simplify_all (void)
+groupvar_simplify (group_var_t *gv)
 {
 	group_t *g;
+	group_t **cmbbuf;
+	size_t mem = (size_t)gv->nplayers * sizeof (group_t *);
 
-	g = groupset_head();
+if (NULL != (cmbbuf = memnew (mem))) {
+
+	g = groupset_head(gv);
 	assert(g);
 
 	while(g) {
-		simplify(g);
+		simplify(g,cmbbuf);
 		g = group_next(g);
 	}
+	assert(groupset_sanity_check(gv));
+
+	memrel(cmbbuf);
+} else {
+	fprintf (stderr, "No memory available for group detection\n");
+	exit (EXIT_FAILURE);
+}
+
 	return;
 }
 
@@ -806,6 +971,23 @@ id_pointed_by_conn(connection_t *c)
 	return NULL != c && NULL != (gg = group_pointed_by_conn(c))? gg->id: NO_ID;
 }
 
+static player_t
+find_top_id (group_t *g)
+{
+	connection_t *c;
+	player_t id;
+	player_t topid = g->id;
+	for (c = g->cstart; NULL != c; c = c->next) {
+		id = id_pointed_by_conn(c);
+		if (id > topid) topid = id;
+	}
+	for (c = g->lstart; NULL != c; c = c->next) {
+		id = id_pointed_by_conn(c);
+		if (id > topid) topid = id;
+	}
+	return topid;
+}
+
 static void
 simplify_shrink__ (group_t *g)
 {
@@ -813,6 +995,7 @@ simplify_shrink__ (group_t *g)
 	connection_t 	*c, *p, *pre;
 	player_t		id;
 	connection_t 	pre_connection = {NULL, NULL};
+	player_t		max_player;
 	
 	pre = &pre_connection;
 	assert(g);
@@ -824,10 +1007,14 @@ simplify_shrink__ (group_t *g)
 		return;
 	}
 
-	if (!ba_init(&bA, N_players)) {
+	max_player = 1 + find_top_id(g); // used to be max_player = gv->nplayers;
+
+	if (!ba_init(&bA, max_player)) {
 		fprintf(stderr, "No memory to initialize internal arrays\n");
 		exit(EXIT_FAILURE);			  
 	}
+
+	assert (g->id < max_player);
 
 	// beat list
 	pre->next = g->cstart;
@@ -841,6 +1028,7 @@ simplify_shrink__ (group_t *g)
 			p = c;
 			if (id != NO_ID) ba_put(&bA, id);
 		}	
+		assert(id < max_player);
 	}
 
 	g->cstart = pre->next;
@@ -858,6 +1046,7 @@ simplify_shrink__ (group_t *g)
 			p = c;
 			if (id != NO_ID) ba_put(&bA, id);
 		}	
+		assert(id < max_player);
 	}
 
 	g->lstart = pre->next;
@@ -887,17 +1076,22 @@ simplify_shrink_redundancy (group_t *g)
 	#endif
 }
 
-static group_t *
-find_combine_candidate (group_t *g)
+
+static player_t
+find_combine_candidate (group_t *g, group_t *comb[])
 {
 	group_t 		*comb_candidate = NULL;
 	bitarray_t 		bA;
 	connection_t 	*c;
 	player_t		id;
+	player_t		max_player;
+	player_t 		cmb = 0;
 
 	assert(g);
 
-	if (!ba_init(&bA, N_players)) {
+	max_player = 1 + find_top_id(g); // used to be max_player = gv->nplayers;
+
+	if (!ba_init(&bA, max_player)) {
 		fprintf(stderr, "No memory to initialize internal arrays\n");
 		exit(EXIT_FAILURE);			  
 	}
@@ -913,27 +1107,33 @@ find_combine_candidate (group_t *g)
 		id = id_pointed_by_conn(c);
 		if (id != NO_ID && ba_ison(&bA, id)) {
 			comb_candidate = group_pointed_by_conn(c);			
-			break;
+			comb[cmb++] = comb_candidate;
 		}
 	}
 
 	ba_done(&bA);
 
-	return comb_candidate;
+	return cmb;
 }
 
 static void
-simplify (group_t *g)
+simplify (group_t *g, group_t **combbuf)
 {
+	player_t cmb;
+	player_t n;
 	group_t	*combine_with = NULL;
+
 	do {
 		simplify_shrink_redundancy (g);
-		assert(groupset_sanity_check());
-		if (NULL != (combine_with = find_combine_candidate (g))) {
-			//printf("combine g=%d combine_with=%d\n",g->id, combine_with->id);
-			group_gocombine (g, combine_with);
+		n = find_combine_candidate (g, combbuf);
+		if (n > 0) {
+			// printf ("comb: %5ld \n", g->id);
+			for (cmb = 0; cmb < n; cmb++) {
+				combine_with = combbuf[cmb];
+				group_gocombine (g, combine_with);
+			}
 		} 
-	} while (combine_with);
+	} while (n);
 	simplify_shrink_redundancy (g);
 	return;
 }
@@ -973,9 +1173,45 @@ group_next_pointed_by_beat (group_t *g)
 	return c == NULL? NULL: gp;
 }
 
-static void
-finish_it (void)
+static player_t participants_list_population (participant_t *pstart);
+
+static player_t
+group_population (group_t *s)
 {
+	assert(s);
+	return participants_list_population(s->pstart);
+}
+
+static bool_t
+sorted (participant_t * a, participant_t * b);
+
+static int compare_cell (const void * a, const void * b)
+{
+	int r;
+	const groupcell_t *ap = a;
+	const groupcell_t *bp = b;
+
+	r = ap->count < bp->count? 1: (ap->count > bp->count? -1:0);
+
+	if (r == 0) {
+		r = sorted (ap->group->pstart, bp->group->pstart)? -1: 1;  
+	}
+
+	return r;
+}
+
+
+static void
+groupvar_finallist_sort(group_var_t *gv)
+{
+	qsort (gv->groupfinallist, (size_t)gv->groupfinallist_n, sizeof(groupcell_t), compare_cell);
+}
+
+static void
+groupvar_finish (group_var_t *gv)
+{
+	player_t i;
+
 	bitarray_t 	bA;
 	player_t *chain, *chain_end;
 	group_t *g, *gp, *prev_g, *x;
@@ -983,18 +1219,23 @@ finish_it (void)
 	player_t own_id, bi;
 	bool_t startover, combined;
 
-	if (!ba_init(&bA, N_players)) {
+	assert(gv);
+
+	if (!ba_init(&bA, gv->nplayers)) {
 		fprintf(stderr, "No memory to initialize internal arrays\n");
 		exit(EXIT_FAILURE);		
 	}
+
+	assert(gv->groupfinallist_n == 0); // should have been initialized
+	gv->groupfinallist_n = 0;
 
 	do {
 		startover = FALSE;
 		combined = FALSE;
 
-		chain = CHAIN;
+		chain = gv->gchain;
 
-		g = groupset_head();
+		g = groupset_head(gv);
 		if (g == NULL) break;
 		own_id = g->id; // own id
 
@@ -1004,28 +1245,28 @@ finish_it (void)
 			prev_g = g;
 			g = group_next_pointed_by_beat(g);
 
-			if (g != NULL) {
+			if (prev_g->lstart == NULL || g == NULL) { // no losses or no victories, quit now to optimize
+				gv->groupfinallist[gv->groupfinallist_n++].group = group_unlink(prev_g);
+				startover = TRUE;
+			} else {
+				assert (g != NULL);
 				own_id = g->id;
 				for (b = group_beat_head(g); b != NULL; b = beat_next(b)) {
 					gp = group_pointed_by_conn(b);
 					bi = gp->id;
 					if (ba_ison(&bA, bi)) {
 						//	findprevious bi, combine... remember to include own id;
-						for (chain_end = chain; *chain != bi && chain > CHAIN; )
+						for (chain_end = chain; *chain != bi && chain > gv->gchain; )
 							chain--;
-						x = group_pointed_by_node(Node + own_id);
+						x = group_pointed_by_node(gv->node + own_id);
 						for (; chain < chain_end; chain++) { 
-							group_gocombine (x, group_pointed_by_node(Node + *chain));
+							group_gocombine (x, group_pointed_by_node(gv->node + *chain));
 							combined = TRUE;
 						}
 						simplify_shrink_redundancy(x);
 						break;
 					}
 				}
-
-			} else {
-				Group_final_list[Group_final_list_n++] = group_unlink(prev_g);
-				startover = TRUE;
 			}
 
 		} while (!combined && !startover);
@@ -1036,55 +1277,398 @@ finish_it (void)
 
 	ba_done(&bA);	
 
+	// build groupcell_t
+	for (i = 0; i < gv->groupfinallist_n; i++) {
+		player_t pop = group_population(gv->groupfinallist[i].group);
+		gv->groupfinallist[i].count = pop;
+	}
+
+	groupvar_finallist_sort(gv);
+
+//	qsort (gv->groupfinallist, (size_t)gv->groupfinallist_n, sizeof(groupcell_t), compare_cell);
+
 	return;
 }
 
-
+// no globals
 static void
-final_list_output (FILE *f)
+groupvar_assign_newid (group_var_t *gv)
 {
 	group_t *g;
 	player_t i;
 	long new_id;
 
-	for (i = 0; i < N_players; i++) {
-		Get_new_id[i] = NO_ID;
+	for (i = 0; i < gv->nplayers; i++) {
+		gv->getnewid[i] = NO_ID;
 	}
 
 	new_id = 0;
-	for (i = 0; i < Group_final_list_n; i++) {
-		g = Group_final_list[i];
+	for (i = 0; i < gv->groupfinallist_n; i++) {
+		g = gv->groupfinallist[i].group;
 		new_id++;
-		Get_new_id[g->id] = new_id;
+		gv->getnewid[g->id] = new_id;
 	}
+}
 
-	for (i = 0; i < Group_final_list_n; i++) {
-		g = Group_final_list[i];
-		fprintf (f,"\nGroup %ld\n",(long)Get_new_id[g->id]);
+// no globals
+static void
+groupvar_list_output (group_var_t *gv, FILE *f)
+{
+	group_t *g;
+	player_t i;
+
+	for (i = 0; i < gv->groupfinallist_n; i++) {
+		g = gv->groupfinallist[i].group;
+		fprintf (f,"\nGroup %ld\n",(long)gv->getnewid[g->id]);
 		simplify_shrink_redundancy (g);
-		group_output(f,g);
+		group_output (g, gv, f, FALSE);
 	}
 
 	fprintf(f,"\n");
 }
 
-static int compare_str (const void * a, const void * b)
-{
-	const char * const *ap = a;
-	const char * const *bp = b;
-	return strcmp(*ap,*bp);
-}
 
-static size_t
+
+static player_t
 participants_list_population (participant_t *pstart)
 {
-	size_t group_n;
+	player_t group_n;
 	participant_t *p;
 
 	for (p = pstart, group_n = 0; p != NULL; p = p->next) {
 		group_n++;
 	}
 	return group_n;
+}
+
+
+/*
+static int compare_str (const void * a, const void * b)
+{
+	const char * const *ap = a;
+	const char * const *bp = b;
+	return strcmp(*ap,*bp);
+}
+*/
+
+
+
+static participant_t *
+plist_go_last (participant_t *pstart)
+{
+	participant_t *s, *p;
+	s = pstart;
+	p = NULL;
+	while (s) {
+		p = s;
+		s = s->next;
+	}
+	return p;
+}
+
+static bool_t
+sorted (participant_t * a, participant_t * b)
+{
+	assert(a && b);
+	return 0 > strcmp(a->name, b->name);	
+}
+
+static participant_t *
+plist_inssort (participant_t *pstart)
+{
+	participant_t head;
+	participant_t *h, *i, *j, *q, *p;
+
+	head.next = NULL;
+	head.name = NULL;
+	head.id   = NO_ID;
+	h = &head;
+
+	i = pstart;
+
+	while (i) {
+		j = i->next;
+
+		p = h;
+		while (p->next && !sorted (i, p->next))
+			p = p->next;
+
+		q = p->next;
+		p->next = i;
+		i->next = q;
+
+		i = j;
+	}
+
+	return h->next;
+}
+
+//--------------
+
+static bool_t
+too_short(participant_t *a)
+{
+	participant_t *p;
+	long unsigned i = 0;
+	for (p = a; p != NULL && i < 3; p = p->next) {
+		i++;
+	}
+	return i < 3;
+}
+
+#if 1
+static participant_t *
+get_half(participant_t *a)
+{
+	participant_t *p, *s, *b;
+	long unsigned i = 0;
+
+	if (a == NULL) return NULL;
+
+	for (p = a, s = a; p != NULL; p = p->next) {
+		if ((i & 1) == 1)
+			s = s->next;
+		i++;
+	}
+
+	b = s->next;
+	s->next = NULL;
+
+	return b;
+}
+#else
+static participant_t *
+get_half(participant_t *a)
+{
+	participant_t *r, *b;
+
+	if (a == NULL) return NULL;
+
+	r = b = a->next;
+
+	for (;;) {
+		if (NULL == b) break;
+		a->next = b->next;
+		a = b->next;
+		if (NULL == a) break;
+		b->next = a->next;
+		b = a->next;
+	}
+
+	return r;
+}
+#endif
+
+static participant_t *
+merge (participant_t *a, participant_t *b)
+{
+	participant_t head;
+	participant_t *l, *t;
+
+	assert(a && b);
+
+	head.next = NULL;
+	l = &head;
+
+	while (a && b) {
+		if (sorted(a,b)) {
+			t = a;
+			a = a->next;
+		} else {
+			t = b;
+			b = b->next;
+		}
+		l->next = t;
+		t->next = NULL;
+		l = t;	
+	}
+
+	if (a == NULL) {
+		l->next = b;
+	}
+	if (b == NULL) {
+		l->next = a;
+	}
+	return head.next;	
+	
+}
+
+
+static participant_t *
+plist_mrgsort (participant_t *a)
+{
+	participant_t *b, *r;
+
+	if (too_short(a))
+		return plist_inssort(a);
+
+	b = get_half(a);
+	a = plist_mrgsort(a);
+	b = plist_mrgsort(b);
+	r = merge(a,b);
+	return r;
+}
+
+//--------------
+
+static void
+groupvar_list_sort (group_var_t *gv)
+{
+	group_t *g;
+	player_t i;
+
+	for (i = 0; i < gv->groupfinallist_n; i++) {
+		g = gv->groupfinallist[i].group;
+		g->pstart = plist_mrgsort(g->pstart);
+		g->plast  = plist_go_last(g->pstart);
+	}
+}
+
+
+static void
+participants_list_print (FILE *f, participant_t *pstart)
+{
+	participant_t *p;
+	for (p = pstart; p != NULL; p = p->next) {
+		fprintf (f," | %s\n",p->name);
+	}
+}
+
+
+static void
+group_output (group_t *s, group_var_t *gv, FILE *f, bool_t showlinks)
+{		
+	connection_t *c;
+	player_t own_id;
+	int winconnections = 0, lossconnections = 0;
+	assert(s);
+	own_id = s->id;
+
+	participants_list_print (f, s->pstart);
+
+	for (c = s->cstart; c != NULL; c = c->next) {
+		group_t *gr = group_pointed_by_conn(c);
+		if (gr != NULL) {
+			if (gr->id != own_id) {
+				if (showlinks)
+					fprintf (f," \\---> there are (only) wins against group: %ld\n",(long)gv->getnewid[gr->id]);
+				winconnections++;
+			}
+		} else
+			fprintf (f,"point to node NULL\n");
+	}
+	for (c = s->lstart; c != NULL; c = c->next) {
+		group_t *gr = group_pointed_by_conn(c);
+		if (gr != NULL) {
+			if (gr->id != own_id) {
+				if (showlinks)
+					fprintf (f," \\---> there are (only) losses against group: %ld\n",(long)gv->getnewid[gr->id]);
+				lossconnections++;
+			}
+		} else
+			fprintf (f,"pointed by node NULL\n");
+	}
+	if (winconnections == 0 && lossconnections == 0) {
+		fprintf (f," \\---> this group is isolated from the rest\n");
+	} else {
+		if (!showlinks)
+			fprintf (f," \\---> this group has incomplete links with the rest (only wins or losses)\n");
+	}
+}
+
+
+//-----------------------------------------------------------------------------------
+
+static void
+groupvar_output_info (group_var_t *gv, FILE *groupf)
+{
+	if (NULL != groupf) {
+		if (groupvar_counter(gv) > 1) {
+			fprintf (groupf,"Group connectivity: **FAILED**\n");
+			groupvar_list_output(gv, groupf);
+		} else {
+			assert (1 == groupvar_counter(gv));
+			fprintf (groupf,"Group connectivity: **PASSED**\n");
+			fprintf (groupf,"All players are connected into only one group.\n");
+		}	
+	}
+}
+
+static void
+groupvar_to_groupid(group_var_t *gv, player_t *groupid_out)
+{
+	if (groupid_out) {
+		player_t i;
+		for (i = 0; i < gv->nplayers; i++) {
+			groupid_out[i] = gv->getnewid[group_belonging(gv,i)];
+		}
+	}
+}
+
+//----------------------------------------------------------
+
+group_var_t *
+GV_make
+		( const struct ENCOUNTERS *encounters
+		, const struct PLAYERS *players
+		)
+{
+	player_t n = 0;
+	bool_t ok = FALSE;
+	group_var_t *gv;
+
+	assert (encounters && players);
+	assert (encounters->n > 0);
+
+	if (NULL != (gv = memnew(sizeof(group_var_t)))) {
+		if (groupvar_init (gv, players->n, encounters->n)) {
+			n = groupvar_build(gv, players->n, players->name, players, encounters);
+			ok = n > 0 && TRUE;
+		} else {
+			ok = FALSE;
+		}
+		if (!ok) memrel(gv);
+	}
+
+	return ok? gv: NULL;
+}
+
+group_var_t *
+GV_kill (group_var_t *gv)
+{
+	assert(gv);
+	groupvar_done(gv);
+	memrel(gv);
+	return NULL;
+}
+
+void
+GV_out (group_var_t *gv, FILE *f)
+{
+	assert(f);
+	if (f)	groupvar_output_info (gv, f);
+}
+
+void
+GV_sieve (group_var_t *gv, const struct ENCOUNTERS *encounters, gamesnum_t * pN_intra, gamesnum_t * pN_inter)
+{
+	assert(gv && encounters && pN_intra && pN_inter);
+	groupvar_sieveenc (gv, encounters->enc, encounters->n, pN_intra, pN_inter);
+}
+
+
+player_t
+GV_counter (group_var_t *gv)
+{
+	assert(gv);
+	return groupvar_counter(gv);
+}
+
+void
+GV_groupid (group_var_t *gv, player_t *groupid_out)
+{
+	assert(gv && groupid_out);
+	groupvar_to_groupid(gv, groupid_out);
 }
 
 static player_t
@@ -1107,192 +1691,35 @@ group_number_of_actives (group_t *s, const struct PLAYERS *players)
 	return	participants_list_actives (s->pstart, players);
 }
 
-
-static player_t
-non_empty_groups_population (const struct PLAYERS *players)
+player_t
+GV_non_empty_groups_pop (group_var_t *gv, const struct PLAYERS *players)
 {
-	#if 0
-	player_t p;
-	#endif
 	group_t *g;
 	player_t i;
 	player_t x;
 	player_t counter = 0;
 
-	for (i = 0; i < Group_final_list_n; i++) {
-		g = Group_final_list[i];
+	for (i = 0; i < gv->groupfinallist_n; i++) {
+		g = gv->groupfinallist[i].group;
 		simplify_shrink_redundancy (g);
-		x = group_number_of_actives (g,players);
-		#if 0
-		 p = participants_list_population (g->pstart);
-		 printf ("population[%ld]=%ld, actives=%ld\n", i, p, x);
-		#endif
+		x = group_number_of_actives (g, players);
 		if (x > 0) counter++;
 	}
 	return counter;
 }
 
-
-static void
-participants_list_print (FILE *f, participant_t *pstart)
+bool_t
+well_connected (const struct ENCOUNTERS *pEncounters, const struct PLAYERS *pPlayers)
 {
-	size_t group_n, n, i;
-	const char **arr;
-	participant_t *p;
+	bool_t ok = FALSE;
+	group_var_t *gv;
 
-	group_n = participants_list_population (pstart); // how many?
-
-	if (NULL != (arr = memnew (sizeof(char *) * group_n))) {
-		
-		for (p = pstart, n = 0; p != NULL; p = p->next, n++) {
-			arr[n] = p->name;
-		}
-
-		qsort (arr, group_n, sizeof(char *), compare_str);
-
-		for (i = 0; i < group_n; i++) {
-			fprintf (f," | %s\n",arr[i]);
-		}
-
-		memrel(arr);
+	if (NULL != (gv = GV_make (pEncounters, pPlayers))) {
+		ok = GV_counter(gv) == 1 && GV_non_empty_groups_pop (gv, pPlayers) == 1;
+		GV_kill(gv);
 	} else {
-		// catch error, not enough memory, so print unordered
-		for (p = pstart; p != NULL; p = p->next) {
-			fprintf (f," | %s\n",p->name);
-		}
+		fprintf (stderr, "not enough memory for encounters allocation\n");
+		exit(EXIT_FAILURE);
 	}
-}
-
-static void
-group_output (FILE *f, group_t *s)
-{		
-	connection_t *c;
-	player_t own_id;
-	int winconnections = 0, lossconnections = 0;
-	assert(s);
-	own_id = s->id;
-
-	participants_list_print (f, s->pstart);
-
-	for (c = s->cstart; c != NULL; c = c->next) {
-		group_t *gr = group_pointed_by_conn(c);
-		if (gr != NULL) {
-			if (gr->id != own_id) {
-				fprintf (f," \\---> there are (only) wins against group: %ld\n",(long)Get_new_id[gr->id]);
-				winconnections++;
-			}
-		} else
-			fprintf (f,"point to node NULL\n");
-	}
-	for (c = s->lstart; c != NULL; c = c->next) {
-		group_t *gr = group_pointed_by_conn(c);
-		if (gr != NULL) {
-			if (gr->id != own_id) {
-				fprintf (f," \\---> there are (only) losses against group: %ld\n",(long)Get_new_id[gr->id]);
-				lossconnections++;
-			}
-		} else
-			fprintf (f,"pointed by node NULL\n");
-	}
-	if (winconnections == 0 && lossconnections == 0) {
-		fprintf (f," \\---> this group is isolated from the rest\n");
-	} 
-}
-
-
-//-----------------------------------------------------------------------------------
-
-bool_t
-groups_process
-		( const struct ENCOUNTERS *encounters
-		, const struct PLAYERS *players
-		, FILE *groupf
-		, player_t *pn
-		, gamesnum_t * pN_intra
-		, gamesnum_t * pN_inter
-		)
-{
-	player_t n = 0;
-	bool_t ok = FALSE;
-
-	assert (encounters && players && pn);
-	assert (pN_intra && pN_inter);
-	assert (encounters->n > 0);
-
-	if (supporting_encmem_init (encounters->n)) {
-
-		if (supporting_groupmem_init (players->n, encounters->n)) {
-
-			n = convert_to_groups(groupf, players->n, players->name, players, encounters);
-			sieve_encounters (encounters->enc, encounters->n, pN_intra, pN_inter);
-
-			ok = TRUE;
-			supporting_groupmem_done ();
-		} else {
-			ok = FALSE;
-		}
-
-		supporting_encmem_done ();
-	} 
-	*pn = n;
-	return ok;
-}
-
-
-bool_t
-groups_process_to_count 
-		( const struct ENCOUNTERS *encounters
-		, const struct PLAYERS *players
-		, player_t *pn
-		)
-{
-	player_t n = 0;
-	bool_t ok = FALSE;
-
-	assert (encounters && players && pn);
-	assert (encounters->n > 0);
-
-	if (supporting_encmem_init (encounters->n)) {
-
-		if (supporting_groupmem_init (players->n, encounters->n)) {
-
-			n = convert_to_groups(NULL, players->n, players->name, players, encounters);
-			ok = TRUE;
-			supporting_groupmem_done ();
-		} else {
-			ok = FALSE;
-		}
-		supporting_encmem_done ();
-	} 
-	*pn = n;
-	return ok;
-}
-
-
-bool_t
-groups_are_ok
-		( const struct ENCOUNTERS *encounters
-		, const struct PLAYERS *players
-		)
-{
-	player_t n = 0;
-	bool_t ok = FALSE;
-
-	assert (encounters && players);
-	assert (encounters->n > 0);
-
-	if (supporting_encmem_init (encounters->n)) {
-
-		if (supporting_groupmem_init (players->n, encounters->n)) {
-
-			n = convert_to_groups(NULL, players->n, players->name, players, encounters);
-
-			ok = (1 == n) || 1 == non_empty_groups_population(players); // single ones have been purged;
-			supporting_groupmem_done ();
-		} else {
-			ok = FALSE;
-		}
-		supporting_encmem_done ();
-	} 
 	return ok;
 }

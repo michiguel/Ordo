@@ -83,30 +83,52 @@ struct CONNECT_BUFFER {
 	gamesnum_t		max;
 };
 
-extern player_t	convert_to_groups(FILE *f, player_t N_plyers, const char **name, const struct PLAYERS *players, const struct ENCOUNTERS *encounters);
+struct GROUPCELL {
+	group_t * 	group;
+	player_t 	count;
+};
 
-extern bool_t 	supporting_encmem_init (gamesnum_t nenc);
+typedef struct GROUPCELL groupcell_t;
 
-extern void 	supporting_encmem_done (void);
+struct GROUPVAR {
+	player_t		nplayers;
+	player_t	*	groupbelong;
+	player_t *		getnewid;
+	groupcell_t	*	groupfinallist;
+	player_t		groupfinallist_n;
+	node_t	*		node;
+	player_t *		gchain;
 
-extern bool_t 	supporting_groupmem_init (player_t nplayers, gamesnum_t nenc);
+	group_t **		tofindgroup;
 
-extern void 	supporting_groupmem_done (void);
+	struct GROUP_BUFFER 		groupbuffer;
+	struct PARTICIPANT_BUFFER	participantbuffer;
+	struct CONNECT_BUFFER		connectionbuffer;
 
-extern bool_t	groups_process	( const struct ENCOUNTERS *encounters
-								, const struct PLAYERS *players
-								, FILE *groupf
-								, player_t *pn
-								, gamesnum_t * pN_intra
-								, gamesnum_t * pN_inter
-								);
+};
 
-extern bool_t	groups_process_to_count ( const struct ENCOUNTERS *encounters
-										, const struct PLAYERS *players
-										, player_t *n);
+typedef struct GROUPVAR group_var_t;
 
-extern bool_t	groups_are_ok			( const struct ENCOUNTERS *encounters
-										, const struct PLAYERS *players);
+
+
+extern player_t			groupvar_build(group_var_t *gv, player_t N_plyers
+											, const char **name, const struct PLAYERS *players, const struct ENCOUNTERS *encounters);
+extern bool_t 			groupvar_init (group_var_t *gv, player_t nplayers, gamesnum_t nenc);
+extern void 			groupvar_done (group_var_t *gv);
+
+extern group_var_t *	GV_make	(const struct ENCOUNTERS *encounters, const struct PLAYERS *players);
+extern group_var_t *	GV_kill (group_var_t *gv);
+extern void				GV_out (group_var_t *gv, FILE *f);
+extern void				GV_sieve (group_var_t *gv, const struct ENCOUNTERS *encounters, gamesnum_t * pN_intra, gamesnum_t * pN_inter);
+extern player_t			GV_counter (group_var_t *gv);
+extern void				GV_groupid (group_var_t *gv, player_t *groupid_out);
+
+extern player_t 		GV_non_empty_groups_pop (group_var_t *gv, const struct PLAYERS *players);
+
+extern bool_t			well_connected (const struct ENCOUNTERS *pEncounters, const struct PLAYERS *pPlayers);
+
+extern void 			timer_reset(void);
+extern double 			timer_get(void);
 
 /*<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<*/
 #endif
