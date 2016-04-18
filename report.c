@@ -412,7 +412,7 @@ head2head_output( const struct GAMES 	*		g
 	assert (r);
 	assert (e);
 	assert (pgame_stats);
-	assert (s);
+	//assert (s); // maybe NULL
 
 	encounters_calculate(ENCOUNTERS_NOFLAGGED, g, p->flagged, e);
 	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);

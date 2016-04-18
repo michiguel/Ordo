@@ -745,14 +745,13 @@ all_report_indiv_stats 	( FILE *textf
 				);
 //
 				if (simulate > 1 && p->sim != NULL) {
-				fprintf(f, 
-					", %*s, %*s"
-					, 4+decimals
-					, "SD"
-					, 6
-					, "CFS (%)"
-
-				);
+					fprintf(f, 
+						", %*s, %*s"
+						, 4+decimals
+						, "SD"
+						, 6
+						, "CFS (%)"
+					);
 				}
 
 				fprintf(f,"\n");

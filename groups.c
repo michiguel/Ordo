@@ -637,19 +637,30 @@ scan_encounters ( const struct ENC *enc, gamesnum_t n_enc
 
 	*psel_n = n_b;
 
-	for (e = 1, r = 0 ; e < n_b; e++) {
-		if (!same_SE_link (&sel[r], &sel[e]) ) {
-			r++;
-			if (r != e) sel[r] = sel[e];
+	if (n_b > 0) {
+		for (e = 1, r = 0 ; e < n_b; e++) {
+			if (!same_SE_link (&sel[r], &sel[e]) ) {
+				r++;
+				if (r != e) sel[r] = sel[e];
+			}
 		}
+		*psel_n = r + 1;
+	} else {
+		*psel_n = 0;
 	}
-	*psel_n = r + 1;
+
+
 }
 
 	return;
 }
 
-static bool_t node_is_occupied (group_var_t *gv, player_t x) {return gv->node[x].group != NULL;}
+static bool_t node_is_occupied (group_var_t *gv, player_t x) 
+{
+	assert(gv);
+	assert(gv->node);
+	return gv->node[x].group != NULL;
+}
 
 static void
 node_add_group (group_var_t *gv, player_t x)

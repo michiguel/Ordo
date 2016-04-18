@@ -464,6 +464,7 @@ calc_output_info
 			enc = x->encounter;
 			opp = enc->wh == j? enc->bl: enc->wh;
 			p__[opp] += enc->W + enc->D + enc->L;
+			assert(plist_n < (n_players * 2));
 			plist[plist_n++] = opp;
 			x = enc->wh == j? x->whitenext: x->blacknext;
 		}
