@@ -822,6 +822,8 @@ all_report 	( const struct GAMES 			*g
 	int rank = 0;
 	bool_t showrank = TRUE;
 
+	player_t sorted_n = 0;
+
 	assert (g);
 	assert (p);
 	assert (r);
@@ -850,13 +852,16 @@ all_report 	( const struct GAMES 			*g
 
 	calc_output_info( e->enc, e->n, r->ratingof_results, p->n, sdev, out_info);
 
-	for (j = 0; j < p->n; j++) {
-		r->sorted[j] = j; 
+	// build a list of players that will actually be printed
+	for (sorted_n = 0, j = 0; j < p->n; j++) {
+		if (ok_to_out (j, outqual, p, r)) {
+			r->sorted[sorted_n++] = j;
+		}
 	}
 
-	timelog("sort...");
+	timelog_ld("sort... N=",(long)sorted_n);
 
-	my_qsort(r->ratingof_results, (size_t)p->n, r->sorted);
+	my_qsort(r->ratingof_results, (size_t)sorted_n, r->sorted);
 
 	list_chosen = listbuff;
 	if (simulate < 2) 
@@ -869,7 +874,7 @@ all_report 	( const struct GAMES 			*g
 	timelog("calculation for printing...");
 
 	/* calculation for printing */
-	for (i = 0; i < p->n; i++) {
+	for (i = 0; i < sorted_n; i++) {
 		j = r->sorted[i]; 
 
 		assert(r->playedby_results[j] != 0 || is_empty_player(j,p));
