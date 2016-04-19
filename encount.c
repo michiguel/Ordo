@@ -328,7 +328,7 @@ static int compare_plist (const void * a, const void * b)
 {
 	const player_t *ap = a;
 	const player_t *bp = b;
-	return *ap == *bp? 0: *ap > *bp;	
+	return *ap > *bp? 1: (*ap < *bp? -1: 0);	
 }
 
 static player_t
