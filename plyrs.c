@@ -51,16 +51,25 @@ players_purge (bool_t quiet, struct PLAYERS *pl)
 	const int *performance_type = pl->performance_type;
 	const char **name = pl->name;
 	bool_t *flagged = pl->flagged;
-
+	player_t counter_purged;
+	
+	counter_purged = 0;
 	player_t j;
 	assert(pl->perf_set);
 	for (j = 0; j < n_players; j++) {
 		if (flagged[j]) continue;
 		if (performance_type[j] != PERF_NORMAL) {
 			flagged[j]= TRUE;
-			if (!quiet) printf ("purge --> %s\n", name[j]);
+			//if (!quiet) printf ("purge --> %s\n", name[j]);
+			counter_purged++;
 		} 
 	}
+
+	if (!quiet) {
+		printf ("players, total purged = %ld\n", counter_purged);
+		printf ("\n");
+	}
+
 }
 
 void
@@ -121,6 +130,8 @@ players_set_super (bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl
 	player_t 	w, b;
 	player_t 	super = 0;
 
+	player_t counter_nogames, counter_all_W, counter_all_L;
+
 	obt = memnew (sizeof(double) * (size_t)n_players);
 	pla = memnew (sizeof(gamesnum_t) * (size_t)n_players);
 	if (NULL==obt || NULL==pla) {
@@ -145,21 +156,29 @@ players_set_super (bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl
 		pla[b] += enc[e].played;
 
 	}
+
+	counter_nogames = 0;
+	counter_all_W = 0;
+	counter_all_L = 0;
+
 	for (j = 0; j < n_players; j++) {
 		//bool_t gotprior = has_a_prior(PP,j);
 		bool_t gotprior = ispriored[j];
 		perftype[j] = PERF_NORMAL;
 		if (pla[j] == 0) {
 			perftype[j] = PERF_NOGAMES;			
-			if (!quiet) printf ("detected (player without games) --> %s\n", name[j]);
+			//if (!quiet) printf ("detected (player without games) --> %s\n", name[j]);
+			counter_nogames++;
 		} else {
 			if (obt[j] < 0.001) {
 				perftype[j] = gotprior? PERF_NORMAL: PERF_SUPERLOSER;			
-				if (!quiet) printf ("detected (all-losses player) --> %s: seed rating present = %s\n", name[j], gotprior? "Yes":"No");
+				//if (!quiet) printf ("detected (all-losses player) --> %s: seed rating present = %s\n", name[j], gotprior? "Yes":"No");
+				counter_all_L++;
 			}	
 			if ((double)pla[j] - obt[j] < 0.001) {
 				perftype[j] = gotprior? PERF_NORMAL: PERF_SUPERWINNER;
-				if (!quiet) printf ("detected (all-wins player)   --> %s: seed rating present = %s\n", name[j], gotprior? "Yes":"No");
+				//if (!quiet) printf ("detected (all-wins player)   --> %s: seed rating present = %s\n", name[j], gotprior? "Yes":"No");
+				counter_all_W++;
 			}
 		}
 		if (perftype[j] != PERF_NORMAL || pl->flagged[j]) super++;
@@ -169,6 +188,13 @@ players_set_super (bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl
 		pla[j] = 0;
 	}	
 	pl->perf_set = TRUE;
+
+	if (!quiet) {
+		printf ("\n");
+		printf ("players with no games = %ld\n", counter_nogames);
+		printf ("players with all wins = %ld\n", counter_all_W);
+		printf ("players w/ all losses = %ld\n", counter_all_L);
+	}
 
 	memrel(obt);
 	memrel(pla);
