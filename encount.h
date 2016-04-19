@@ -71,8 +71,9 @@ calc_output_info
 				, player_t n_players
 				, double *sdev
 				, struct OUT_INFO *oi
+				, player_t *sorted
+				, player_t sorted_n
 				);
-
 
 #if !defined(NDEBUG)
 extern bool_t

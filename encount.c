@@ -375,6 +375,8 @@ calc_output_info
 				, player_t n_players
 				, double *sdev
 				, struct OUT_INFO *oi
+				, player_t *sorted
+				, player_t sorted_n
 				)
 {
 	encnode_t * *pend;
@@ -384,7 +386,7 @@ calc_output_info
 	player_t 	plist_n;
 
 	player_t 	wh, bl;
-	player_t 	j, o, q;
+	player_t 	j, o, q, z;
 	gamesnum_t 	e, n;
 
 	if (NULL == (pend  = memnew(sizeof(encnode_t *) * (size_t)n_players))) {
@@ -450,12 +452,16 @@ calc_output_info
 		pend[bl] = &ep[e];
 	}
 
-	for (j = 0; j < n_players; j++) {
+//	for (j = 0; j < n_players; j++) {
+	for (z = 0; z < sorted_n; z++) {
 		double sum = 0.0;
 		player_t n_opp = 0;
 		player_t opp;
-		encnode_t *x = pend[j];
+		encnode_t *x;
 		gamesnum_t n_games = 0;
+
+		j = sorted[z];
+		x = pend[j];
 
 		memset (p__, 0, sizeof(p__[0])*(size_t)n_players);
 		plist_n = 0;
@@ -464,7 +470,7 @@ calc_output_info
 			enc = x->encounter;
 			opp = enc->wh == j? enc->bl: enc->wh;
 			p__[opp] += enc->W + enc->D + enc->L;
-			assert(plist_n < (n_players * 2));
+			assert(plist_n < (sorted_n * 2));
 			plist[plist_n++] = opp;
 			x = enc->wh == j? x->whitenext: x->blacknext;
 		}

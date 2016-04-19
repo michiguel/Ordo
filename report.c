@@ -848,9 +848,7 @@ all_report 	( const struct GAMES 			*g
 
 	calc_obtained_playedby(e->enc, e->n, p->n, r->obtained, r->playedby);
 
-	timelog("calculate output info...");
 
-	calc_output_info( e->enc, e->n, r->ratingof_results, p->n, sdev, out_info);
 
 	// build a list of players that will actually be printed
 	for (sorted_n = 0, j = 0; j < p->n; j++) {
@@ -858,6 +856,10 @@ all_report 	( const struct GAMES 			*g
 			r->sorted[sorted_n++] = j;
 		}
 	}
+
+	timelog("calculate output info...");
+
+	calc_output_info( e->enc, e->n, r->ratingof_results, p->n, sdev, out_info, r->sorted, sorted_n);
 
 	timelog_ld("sort... N=",(long)sorted_n);
 
