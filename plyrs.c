@@ -49,13 +49,14 @@ players_purge (bool_t quiet, struct PLAYERS *pl)
 {
 	player_t n_players = pl->n;
 	const int *performance_type = pl->performance_type;
-	const char **name = pl->name;
+//	const char **name = pl->name;
 	bool_t *flagged = pl->flagged;
 	player_t counter_purged;
-	
-	counter_purged = 0;
 	player_t j;
+
 	assert(pl->perf_set);
+
+	counter_purged = 0;
 	for (j = 0; j < n_players; j++) {
 		if (flagged[j]) continue;
 		if (performance_type[j] != PERF_NORMAL) {
@@ -121,7 +122,7 @@ players_set_super (bool_t quiet, const struct ENCOUNTERS *ee, struct PLAYERS *pl
 	player_t n_players = pl->n;
 	int *perftype  = pl->performance_type;
 	bool_t *ispriored = pl->priored; 
-	const char **name    = pl->name;
+//	const char **name    = pl->name;
 
 	double 		*obt;
 	gamesnum_t	*pla;
