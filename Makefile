@@ -27,7 +27,7 @@ install:
 	cp $(EXE) /usr/local/bin/$(EXE)
 
 clean:
-	rm -f *.o *~ myopt/*.o ordo-v*.tar.gz ordo-v*-win.zip *.out
+	rm -f *.o *~ myopt/*.o ordo-v*.tar.gz sysport/*.o ordo-v*-win.zip *.out
 
 
 

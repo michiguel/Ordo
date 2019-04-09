@@ -80,6 +80,10 @@
 	#error COMPILER NOT DEFINED
 #endif
 
+#if defined(__APPLE__)
+	#define NSPINLOCKS
+#endif
+
 #if defined(MONOTHREAD)
 	#undef MULTI_THREADED_INTERFACE
 #endif
