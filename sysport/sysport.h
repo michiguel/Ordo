@@ -1,6 +1,9 @@
 #if !defined(H_SYSPOR)
 #define H_SYSPOR
-#define NSPINLOCKS
+
+#ifdef __APPLE__
+        #define NSPINLOCKS
+#endif
 
 /*
 	Possible Definitions for POSIX Semaphores:
