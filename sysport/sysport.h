@@ -1,10 +1,6 @@
 #if !defined(H_SYSPOR)
 #define H_SYSPOR
 
-#ifdef __APPLE__
-        #define NSPINLOCKS
-#endif
-
 /*
 	Possible Definitions for POSIX Semaphores:
 		UNNAMED_SEMAPHORES
@@ -82,6 +78,10 @@
 	#define MSWINDOWS_INTEGERS
 #else
 	#error COMPILER NOT DEFINED
+#endif
+
+#if defined(__APPLE__)
+	#define NSPINLOCKS
 #endif
 
 #if defined(MONOTHREAD)
