@@ -567,7 +567,8 @@ init_manchors (bool_t quietmode, const char *fpins_name, struct RATINGS *rat /*@
 		fclose(fpins);
 	}
 	else {
-		file_success = FALSE;
+		fprintf (stderr, "Errors in file \"%s\" (can not open the file)\n",fpins_name);
+		exit(EXIT_FAILURE);
 	}
 
 	if (!file_success) {
