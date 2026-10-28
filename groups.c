@@ -1726,6 +1726,10 @@ well_connected (const struct ENCOUNTERS *pEncounters, const struct PLAYERS *pPla
 	bool_t ok = FALSE;
 	group_var_t *gv;
 
+	/* A simulation can purge every player after an all-win/all-loss result.
+	 * Reject that draw so the caller can generate another simulation. */
+	if (pEncounters->n == 0) return FALSE;
+
 	if (NULL != (gv = GV_make (pEncounters, pPlayers))) {
 		ok = GV_counter(gv) == 1 && GV_non_empty_groups_pop (gv, pPlayers) == 1;
 		GV_kill(gv);
